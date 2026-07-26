@@ -20,6 +20,7 @@ const WordLibrary = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const currentUserId = localStorage.getItem('userId');
 
+  // Category definitions for filtering
   const categories = [
     { id: 'all', name: 'All Categories', color: '#5E4B8C' },
     { id: 'action verbs', name: 'Action Verbs', color: '#B83B5E' },
@@ -27,6 +28,7 @@ const WordLibrary = () => {
     { id: 'academic', name: 'Academic', color: '#1F4E5F' }
   ];
 
+  // Difficulty level definitions for filtering
   const difficultyLevels = [
     { id: 'all', name: 'All Levels', color: '#5E4B8C' },
     { id: 'beginner', name: 'Beginner', color: '#2E7D32' },
@@ -35,10 +37,12 @@ const WordLibrary = () => {
     { id: 'favorites', name: 'Favorites', color: '#C44545' }
   ];
 
+  // Set page loaded state for animation
   useEffect(() => {
     setPageLoaded(true);
   }, []);
 
+  // Load user's favorite words from Firestore
   useEffect(() => {
     const loadFavorites = async () => {
       if (!currentUserId) return;
@@ -56,6 +60,7 @@ const WordLibrary = () => {
     loadFavorites();
   }, [currentUserId]);
 
+  // Fetch all words from Firestore
   useEffect(() => {
     const fetchWords = async () => {
       setWordsLoading(true);
@@ -82,6 +87,7 @@ const WordLibrary = () => {
     fetchWords();
   }, []);
 
+  // Toggle a word as favorite/unfavorite
   const toggleFavorite = async (wordId) => {
     if (!currentUserId) {
       alert('Please login to add favorites');
@@ -97,6 +103,7 @@ const WordLibrary = () => {
         await updateDoc(userRef, { favorites: arrayUnion(wordId) });
         setFavorites(prev => [...prev, wordId]);
       }
+      // Dispatch event to notify other components
       const event = new CustomEvent('favoritesUpdated', { 
         detail: { wordId, action: isFavorite ? 'remove' : 'add' } 
       });
@@ -107,6 +114,7 @@ const WordLibrary = () => {
     }
   };
 
+  // Sort words based on selected sort option
   const sortWords = (wordsToSort) => {
     switch (sortBy) {
       case 'word': return [...wordsToSort].sort((a, b) => a.word?.localeCompare(b.word));
@@ -118,6 +126,7 @@ const WordLibrary = () => {
     }
   };
 
+  // Filter words based on search, difficulty, and category
   const filtered = words.filter(w => {
     const matchesSearch = searchTerm === '' ? true :
       w.word?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -143,7 +152,7 @@ const WordLibrary = () => {
       transform: pageLoaded ? 'translateY(0)' : 'translateY(20px)',
       transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
     }}>
-      {/* HEADER - colors.textPrimary at colors.border na */}
+      {/* HEADER - using colors.textPrimary and colors.border */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -192,7 +201,7 @@ const WordLibrary = () => {
         </div>
       </div>
 
-      {/* FILTERS CONTAINER - colors.surface na */}
+      {/* FILTERS CONTAINER - using colors.surface */}
       <div style={{ 
         background: colors.surface, 
         borderRadius: '12px', 
@@ -250,7 +259,7 @@ const WordLibrary = () => {
 
         {/* FILTER ROW */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'flex-start' }}>
-          {/* Category */}
+          {/* Category Filter */}
           <div style={{ flex: '1 1 280px' }}>
             <label style={{ 
               display: 'block', 
@@ -290,7 +299,7 @@ const WordLibrary = () => {
             </div>
           </div>
 
-          {/* Difficulty */}
+          {/* Difficulty Filter */}
           <div style={{ flex: '1 1 280px' }}>
             <label style={{ 
               display: 'block', 
@@ -347,7 +356,7 @@ const WordLibrary = () => {
             </div>
           </div>
 
-          {/* Sort & View */}
+          {/* Sort & View Controls */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
             <div>
               <label style={{ 
@@ -443,7 +452,7 @@ const WordLibrary = () => {
           </div>
         </div>
 
-        {/* ACTIVE FILTERS */}
+        {/* ACTIVE FILTERS DISPLAY */}
         {(selectedCategory !== 'all' || filterDiff !== 'all' || searchTerm) && (
           <div style={{ 
             marginTop: '16px', 
@@ -621,7 +630,7 @@ const WordLibrary = () => {
           <div style={{ fontSize: '16px', color: colors.textSecondary }}>Loading words...</div>
         </div>
       ) : filterDiff === 'favorites' && favorites.length === 0 ? (
-        /* EMPTY FAVORITES */
+        /* EMPTY FAVORITES STATE */
         <div style={{ 
           textAlign: 'center', 
           padding: '80px 40px', 
@@ -674,7 +683,7 @@ const WordLibrary = () => {
           </button>
         </div>
       ) : sortedAndFilteredWords.length === 0 ? (
-        /* NO RESULTS */
+        /* NO RESULTS STATE */
         <div style={{ 
           textAlign: 'center', 
           padding: '80px 40px', 
@@ -727,7 +736,7 @@ const WordLibrary = () => {
           </button>
         </div>
       ) : (
-        /* WORD LIST */
+        /* WORD LIST DISPLAY */
         <div style={{ 
           display: viewMode === 'grid' ? 'grid' : 'flex', 
           gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(340px, 1fr))' : 'none', 

@@ -306,7 +306,7 @@ const Dashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentGame, setCurrentGame] = useState(null);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [contentKey, setContentKey] = useState(0); // ✅ BAGONG STATE - PARA SA RE-ANIMATION
+  const [contentKey, setContentKey] = useState(0); // NEW STATE - FOR RE-ANIMATION
   
   const userId = localStorage.getItem('userId');
   const { stats, loading, error } = useUserStats(userId);
@@ -326,10 +326,10 @@ const Dashboard = () => {
     };
   });
 
-  // ✅ FUNCTION TO CHANGE MENU WITH RE-ANIMATION
+  // FUNCTION TO CHANGE MENU WITH RE-ANIMATION
   const changeMenu = (menu) => {
     setActiveMenu(menu);
-    setContentKey(prev => prev + 1); // ✅ TRIGGER RE-ANIMATION
+    setContentKey(prev => prev + 1); // TRIGGER RE-ANIMATION
     setCurrentGame(null);
     if (window.innerWidth <= 768) setIsSidebarVisible(false);
   };
@@ -574,16 +574,16 @@ const Dashboard = () => {
         .shortcut-card { transition: border-color 0.15s ease, background 0.15s ease; }
         .shortcut-card:hover { border-color: ${colors.accent}; background: ${colors.accentSoft}; }
 
-        /* ✅ Para klaro/makita ang "Light Mode" text ng ThemeToggle sa loob ng violet sidebar.
-           Naka-scope lang ito sa .theme-toggle-wrap kaya walang ibang bahagi ng app ang maaapektuhan. */
+        /* To ensure "Light Mode" text of ThemeToggle inside the violet sidebar is visible.
+           This is scoped to .theme-toggle-wrap so no other part of the app is affected. */
         .theme-toggle-wrap, .theme-toggle-wrap span, .theme-toggle-wrap p, .theme-toggle-wrap label {
           color: #ffffff !important;
           opacity: 1 !important;
         }
 
-        /* ✅ FADE-IN ANIMATION - applied lang sa main content, hindi sa sidebar,
-           dahil ang transform dito ay nakakasira sa position:fixed ng anak kapag
-           magkasama sila sa parehong parent (creates new containing block). */
+        /* FADE-IN ANIMATION - applied only to main content, not sidebar,
+           because the transform here breaks position:fixed of children when
+           they are in the same parent (creates new containing block). */
         .dashboard-container {
           opacity: 0;
           transform: translateY(20px);
@@ -626,14 +626,13 @@ const Dashboard = () => {
         }
       `}</style>
 
-      {/* ✅ SIDEBAR - INILABAS na sa dashboard-container (yung may transform/animation)
-          para permanenteng manatiling naka-stick ang position:fixed nito kahit
-          mag-scroll ang page. Kulay violet na rin ngayon ang background. */}
+      {/* SIDEBAR - Moved outside dashboard-container (which has transform/animation)
+          so position:fixed remains stable when scrolling. Background is now violet. */}
       <div
         className={`sidebar-fixed ${isSidebarVisible ? 'open' : ''}`}
         style={{
           width: '260px',
-          background: '#6C5CE7', // 🎨 VIOLET background lang ang binago dito
+          background: '#6C5CE7', // VIOLET background - only this was changed
           color: '#ffffff',
           display: 'flex',
           flexDirection: 'column',
@@ -758,8 +757,8 @@ const Dashboard = () => {
         />
       )}
 
-      {/* ✅ MAIN WRAPPER - may key para mag-render ulit; dito na lang nakalagay
-          ang fade-in animation ngayon, hiwalay na sa sidebar */}
+      {/* MAIN WRAPPER - has key to trigger re-render; fade-in animation
+          is now placed here, separate from sidebar */}
       <div key={contentKey} className="dashboard-container" style={{ 
         display: 'flex', 
         minHeight: '100vh', 

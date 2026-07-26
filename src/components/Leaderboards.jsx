@@ -523,7 +523,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     }
   };
 
-  // ✅ REMOVED: handleExportData function - hindi na kailangan
+  // REMOVED: handleExportData function - no longer needed
 
   const handleRetry = () => {
     fetchLeaderboardData();
@@ -840,7 +840,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         }
       `}</style>
 
-      {/* HEADER - COLORS LANG PINALITAN */}
+      {/* HEADER - ONLY COLORS CHANGED */}
       <div className="leaderboard-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -874,7 +874,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
 
         <div className="leaderboard-header-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {/* ✅ REMOVED: Export Data Button */}
+          {/* REMOVED: Export Data Button */}
           
           <button
             onClick={onBack}
@@ -896,7 +896,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       </div>
 
-      {/* TIME FILTER - COLORS LANG PINALITAN */}
+      {/* TIME FILTER - ONLY COLORS CHANGED */}
       <div className="leaderboard-time-filter" style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -949,7 +949,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </span>
       </div>
 
-      {/* LEADERBOARD TYPE SELECTOR - COLORS LANG PINALITAN */}
+      {/* LEADERBOARD TYPE SELECTOR - ONLY COLORS CHANGED */}
       <div className="leaderboard-types" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
@@ -997,7 +997,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         ))}
       </div>
 
-      {/* ADMIN STATS SUMMARY - COLORS LANG PINALITAN */}
+      {/* ADMIN STATS SUMMARY - ONLY COLORS CHANGED */}
       {isAdmin && (
         <div className="leaderboard-admin-stats" style={{
           display: 'grid',
@@ -1048,7 +1048,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       )}
 
-      {/* ERROR STATE - COLORS LANG PINALITAN */}
+      {/* ERROR STATE - ONLY COLORS CHANGED */}
       {error && (
         <div style={{
           background: `${colors.danger}15`,
@@ -1084,7 +1084,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       )}
 
-      {/* LOADING STATE - COLORS LANG PINALITAN */}
+      {/* LOADING STATE - ONLY COLORS CHANGED */}
       {loading ? (
         <div style={{
           textAlign: 'center',
@@ -1103,7 +1103,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       ) : (
         <>
-          {/* TOP 3 PODIUM - COLORS LANG PINALITAN */}
+          {/* TOP 3 PODIUM - ONLY COLORS CHANGED */}
           {!isAdmin && leaderboardData.length >= 3 && (
             <div className="leaderboard-podium" style={{
               display: 'flex',
@@ -1311,7 +1311,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           )}
 
-          {/* LEADERBOARD TABLE - COLORS LANG PINALITAN */}
+          {/* LEADERBOARD TABLE - ONLY COLORS CHANGED */}
           <div style={{
             background: colors.surface,
             borderRadius: '12px',
@@ -1578,7 +1578,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           </div>
 
-          {/* USER'S RANK - COLORS LANG PINALITAN */}
+          {/* USER'S RANK - ONLY COLORS CHANGED */}
           {!isAdmin && (
             <div className="leaderboard-user-rank" style={{
               marginTop: '24px',
@@ -1604,7 +1604,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           )}
 
-          {/* FOOTER STATS - COLORS LANG PINALITAN */}
+          {/* FOOTER STATS - ONLY COLORS CHANGED */}
           {leaderboardData.length > 0 && (
             <div className="leaderboard-footer" style={{
               marginTop: '24px',
@@ -1630,7 +1630,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           )}
 
-          {/* EMPTY STATE - COLORS LANG PINALITAN */}
+          {/* EMPTY STATE - ONLY COLORS CHANGED */}
           {leaderboardData.length === 0 && (
             <div style={{
               textAlign: 'center',
@@ -1662,7 +1662,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </>
       )}
 
-      {/* PROFILE MODAL - COLORS LANG PINALITAN */}
+      {/* PROFILE MODAL - ONLY COLORS CHANGED */}
       {showProfileModal && (
         <div className="profile-modal-overlay" onClick={closeProfileModal}>
           <div className="profile-modal" onClick={(e) => e.stopPropagation()}>

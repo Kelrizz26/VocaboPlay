@@ -334,4 +334,4 @@ const AdminOverview = ({ students, games, words, setActiveMenu }) => {
   );
 };
 
-export default AdminOverview;
+export default AdminOverview; 

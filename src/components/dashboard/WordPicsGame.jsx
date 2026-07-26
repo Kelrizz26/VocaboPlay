@@ -175,6 +175,7 @@ const theme = {
 // ============================================================
 // ===== HELPER FUNCTIONS =====
 // ============================================================
+// Generate random letter options for the puzzle
 const generateLetterOptions = (word) => {
   const letters = word.split('');
   const alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
@@ -187,6 +188,7 @@ const generateLetterOptions = (word) => {
   return finalLetters.sort(() => Math.random() - 0.5);
 };
 
+// Generate positions for blanks and visible letters
 const generateBlankPositions = (word, numBlanks) => {
   const wordLength = word.length;
   const visibleCount = wordLength - numBlanks;
@@ -207,6 +209,7 @@ const generateBlankPositions = (word, numBlanks) => {
   return { visiblePositions, blankPositions };
 };
 
+// Time in seconds for life refill
 const REFILL_TIME = 1800;
 
 // ============================================================
@@ -373,7 +376,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   const [hintUsed, setHintUsed] = useState(false);
   const [showNoLivesMessage, setShowNoLivesMessage] = useState(false);
   
-  // REFS para stable timer
+  // REFS for stable timer
   const timerIntervalRef = useRef(null);
   const lastRefillTimeRef = useRef(Date.now());
   const livesRef = useRef(5);
@@ -511,6 +514,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   }, [currentUser, maxLives, getLivesStorageKey]);
 
+  // Update the time remaining display for life refill
   const updateTimeRemaining = useCallback(() => {
     if (!currentUser || !isMountedRef.current) return;
     
@@ -633,6 +637,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     } catch (e) { return false; }
   };
 
+  // Play a tone for sound effects
   const playTone = (frequency, duration = 0.2, type = 'sine') => {
     if (isMuted) return;
     try {
@@ -651,6 +656,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     } catch (e) {}
   };
 
+  // Sound effects for different game events
   const playCorrectSound = () => {
     if (isMuted) return;
     playTone(523.25, 0.12);
@@ -680,6 +686,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     setTimeout(() => playTone(880, 0.2), 300);
   };
 
+  // Background music control
   useEffect(() => {
     if (!isMuted && gameState !== 'intro') {
       backgroundMusic.start('gameplay');
@@ -690,6 +697,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   // ============================================================
   // ===== GAME FUNCTIONS =====
   // ============================================================
+  // Create a word puzzle from a word pair
   const createWordPuzzle = (pair, level) => {
     const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
     const word = pair.word.toUpperCase();
@@ -714,6 +722,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     };
   };
 
+  // Generate all questions for a level
   const generateQuestions = (level) => {
     const words = getWordsByLevel(level);
     const shuffled = [...words].sort(() => Math.random() - 0.5);
@@ -721,6 +730,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     return selected.map(pair => createWordPuzzle(pair, level));
   };
 
+  // Get the next unanswered question
   const getNextUnansweredQuestion = () => {
     if (retryQuestion && retryPhase) {
       return retryQuestion;
@@ -737,12 +747,14 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     return unanswered[0];
   };
 
+  // Check if all questions have been answered
   const checkIfAllAnswered = () => {
     const answeredCount = answeredQuestions.length;
     const totalQuestions = questions.length;
     return answeredCount >= totalQuestions && totalQuestions === QUESTIONS_PER_LEVEL;
   };
 
+  // Advance to the next level
   const performLevelUp = () => {
     if (currentLevel >= MAX_LEVEL) {
       setAnsweredQuestions([]);
@@ -801,6 +813,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     playLevelUpSound();
   };
 
+  // Process the next wrong question in retry phase
   const retryNextWrongQuestion = () => {
     if (retryIndex >= wrongQuestions.length) {
       setRetryPhase(false);
@@ -845,6 +858,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
+  // Start the retry phase for wrong questions
   const startRetryPhase = () => {
     if (wrongQuestions.length === 0) {
       performLevelUp();
@@ -864,6 +878,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     playTone(440, 0.2);
   };
 
+  // Handle answer during retry phase
   const handleRetryAnswer = (isCorrect) => {
     if (isCorrect) {
       const currentWrongQ = wrongQuestions[retryIndex];
@@ -1090,6 +1105,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
+  // Generate the next question in the game
   const generateNextQuestion = () => {
     if (lives <= 0) return;
     
@@ -1221,6 +1237,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
+  // Use hint to reveal one blank
   const useHint = () => {
     if (!hintUsed && currentQuestion && !answered && lives > 0) {
       setHintUsed(true);
@@ -1246,6 +1263,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
+  // Handle clicking a letter option
   const handleLetterClick = (letter, index) => {
     if (answered || lives <= 0 || timer === 0 || !currentQuestion) return;
     if (usedLetters.includes(index)) return;
@@ -1258,6 +1276,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
+  // Handle clicking a blank to remove a letter
   const handleBlankClick = (position) => {
     if (answered || lives <= 0 || timer === 0 || !currentQuestion) return;
     if (userFilledBlanks[position] === undefined) return;
@@ -1732,7 +1751,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
               boxShadow: '0 0 12px rgba(139,92,246,0.6)',
               animation: 'progressSlide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite'
             }} />
-            {/* shimmer sheen */}
+            {/* Shimmer sheen */}
             <div className="progress-shimmer" />
           </div>
 

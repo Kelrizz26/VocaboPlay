@@ -33,6 +33,7 @@ const AdminWords = ({ words, setWords, loading }) => {
   const [syncing, setSyncing] = useState(false);
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
+  // List of available categories for words
   const categories = [
     'academic',
     'action verbs',
@@ -53,11 +54,13 @@ const AdminWords = ({ words, setWords, loading }) => {
     'Verbs'
   ];
 
+  // Load all WordPics words on component mount
   useEffect(() => {
     const allWordPics = getAllWordPicsWords();
     setWordPicsWords(allWordPics);
   }, []);
 
+  // Get IDs of WordPics words that are already synced
   const getSyncedWordPicsIds = () => {
     const syncedIds = [];
     words.forEach(w => {
@@ -68,15 +71,18 @@ const AdminWords = ({ words, setWords, loading }) => {
     return syncedIds;
   };
 
+  // Check if a WordPics word is already synced
   const isWordPicsSynced = (wordPicsId) => {
     return words.some(w => w.wordPicsId === wordPicsId);
   };
 
+  // Get WordPics words that haven't been synced yet
   const getUnsyncedWordPics = () => {
     const syncedIds = getSyncedWordPicsIds();
     return wordPicsWords.filter(w => !syncedIds.includes(w.id));
   };
 
+  // Filter words based on search term and difficulty filter
   const filtered = words.filter(w => {
     const s = w.word?.toLowerCase().includes(searchTerm.toLowerCase()) || 
               w.definition?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,6 +95,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     return s && d;
   });
 
+  // Calculate statistics for the word library
   const stats = {
     easy:   words.filter(w => w.difficulty === 'Easy' || w.difficulty === 'beginner').length,
     medium: words.filter(w => w.difficulty === 'Medium' || w.difficulty === 'intermediate').length,
@@ -97,6 +104,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     wordPics: words.filter(w => w.fromWordPics).length,
   };
 
+  // Open modal for adding a new word
   const openAdd = () => {
     setEditingId(null);
     setForm({ 
@@ -113,6 +121,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     setShowModal(true);
   };
 
+  // Open modal for editing an existing word
   const openEdit = (w) => {
     setEditingId(w.id);
     const examples = w.examples && Array.isArray(w.examples) ? w.examples : ['', '', ''];
@@ -133,59 +142,70 @@ const AdminWords = ({ words, setWords, loading }) => {
     setShowModal(true);
   };
 
+  // Close the modal
   const closeModal = () => { 
     setShowModal(false); 
     setEditingId(null); 
   };
 
+  // Handle changes to example fields
   const handleExampleChange = (index, value) => {
     const newExamples = [...form.examples];
     newExamples[index] = value;
     setForm({ ...form, examples: newExamples });
   };
 
+  // Handle changes to synonym fields
   const handleSynonymChange = (index, value) => {
     const newSynonyms = [...form.synonyms];
     newSynonyms[index] = value;
     setForm({ ...form, synonyms: newSynonyms });
   };
 
+  // Handle changes to antonym fields
   const handleAntonymChange = (index, value) => {
     const newAntonyms = [...form.antonyms];
     newAntonyms[index] = value;
     setForm({ ...form, antonyms: newAntonyms });
   };
 
+  // Add a new example field
   const addExampleField = () => {
     setForm({ ...form, examples: [...form.examples, ''] });
   };
 
+  // Add a new synonym field
   const addSynonymField = () => {
     setForm({ ...form, synonyms: [...form.synonyms, ''] });
   };
 
+  // Add a new antonym field
   const addAntonymField = () => {
     setForm({ ...form, antonyms: [...form.antonyms, ''] });
   };
 
+  // Remove an example field
   const removeExampleField = (index) => {
     if (form.examples.length <= 1) return;
     const newExamples = form.examples.filter((_, i) => i !== index);
     setForm({ ...form, examples: newExamples });
   };
 
+  // Remove a synonym field
   const removeSynonymField = (index) => {
     if (form.synonyms.length <= 1) return;
     const newSynonyms = form.synonyms.filter((_, i) => i !== index);
     setForm({ ...form, synonyms: newSynonyms });
   };
 
+  // Remove an antonym field
   const removeAntonymField = (index) => {
     if (form.antonyms.length <= 1) return;
     const newAntonyms = form.antonyms.filter((_, i) => i !== index);
     setForm({ ...form, antonyms: newAntonyms });
   };
 
+  // Add a new word to Firestore
   const handleAdd = async () => {
     if (!form.word.trim() || !form.definition.trim()) {
       return alert('Word and definition are required.');
@@ -227,6 +247,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     }
   };
 
+  // Update an existing word in Firestore
   const handleUpdate = async () => {
     if (!form.word.trim() || !form.definition.trim()) {
       return alert('Word and definition are required.');
@@ -265,6 +286,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     }
   };
 
+  // Delete a word from Firestore
   const handleDelete = async (id) => {
     try {
       await deleteDoc(doc(db, 'words', id));
@@ -274,6 +296,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     }
   };
 
+  // Show confirmation dialog before deleting
   const requestDelete = (id) => {
     setConfirmAction({
       title: 'Delete Word',
@@ -284,6 +307,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     });
   };
 
+  // Increment the study count for a word
   const handleIncrement = async (id) => {
     const word = words.find(w => w.id === id);
     const newCount = (word.timesStudied || 0) + 1;
@@ -296,6 +320,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     }
   };
 
+  // Sync a single WordPics word to the library
   const syncSingleWordPics = async (wordData) => {
     setSaving(true);
     try {
@@ -341,6 +366,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     }
   };
 
+  // Sync all unsynced WordPics words to the library
   const syncAllWordPics = async () => {
     const unsynced = getUnsyncedWordPics();
     if (unsynced.length === 0) {
@@ -350,6 +376,7 @@ const AdminWords = ({ words, setWords, loading }) => {
     setShowBulkConfirm(true);
   };
 
+  // Confirm and execute bulk sync of all WordPics words
   const confirmSyncAll = async () => {
     setShowBulkConfirm(false);
     setSyncing(true);
@@ -397,7 +424,7 @@ const AdminWords = ({ words, setWords, loading }) => {
 
   return (
     <div>
-      {/* HEADER - COLORS LANG PINALITAN */}
+      {/* HEADER - ONLY COLORS CHANGED */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -470,7 +497,7 @@ const AdminWords = ({ words, setWords, loading }) => {
         </div>
       </div>
 
-      {/* TABS - COLORS LANG PINALITAN */}
+      {/* TABS - ONLY COLORS CHANGED */}
       <div style={{ 
         display: 'flex', 
         gap: '4px', 
@@ -740,7 +767,7 @@ const AdminWords = ({ words, setWords, loading }) => {
         </div>
       ) : (
         <>
-          {/* SEARCH & FILTER - COLORS LANG PINALITAN */}
+          {/* SEARCH & FILTER - ONLY COLORS CHANGED */}
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
             <div style={{ 
               display: 'flex', 
@@ -803,7 +830,7 @@ const AdminWords = ({ words, setWords, loading }) => {
             </span>
           </div>
 
-          {/* STATS - COLORS LANG PINALITAN */}
+          {/* STATS - ONLY COLORS CHANGED */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -848,7 +875,7 @@ const AdminWords = ({ words, setWords, loading }) => {
             </div>
           </div>
 
-          {/* TABLE - COLORS LANG PINALITAN */}
+          {/* TABLE - ONLY COLORS CHANGED */}
           {loading.words ? (
             <div style={{ 
               textAlign: 'center', 
@@ -1037,7 +1064,7 @@ const AdminWords = ({ words, setWords, loading }) => {
         </>
       )}
 
-      {/* ADD/EDIT MODAL - COLORS LANG PINALITAN */}
+      {/* ADD/EDIT MODAL - ONLY COLORS CHANGED */}
       {showModal && (
         <ModalWrapper onClose={closeModal}>
           <h2 style={{ 

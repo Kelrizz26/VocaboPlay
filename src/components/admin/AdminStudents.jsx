@@ -17,11 +17,13 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
   const [newStudent, setNewStudent] = useState({ displayName: '', email: '', username: '' });
   const [confirmAction, setConfirmAction] = useState(null);
 
+  // Filter students based on search term
   const filtered = students.filter(s =>
     s.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Add a new student to Firestore
   const addStudent = async () => {
     if (!newStudent.displayName || !newStudent.email) return alert('Fill in all fields.');
     
@@ -83,6 +85,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
     }
   };
 
+  // Update an existing student in Firestore
   const updateStudent = async () => {
     try {
       const studentRef = doc(db, 'users', selectedStudent.id);
@@ -104,6 +107,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
     }
   };
 
+  // Delete a student from Firestore
   const deleteStudent = async (id) => {
     try {
       await deleteDoc(doc(db, 'users', id));
@@ -114,6 +118,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
     }
   };
 
+  // Show confirmation dialog before deleting
   const requestDeleteStudent = (id) => {
     setConfirmAction({
       title: 'Remove Student',
@@ -124,6 +129,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
     });
   };
 
+  // Component to display student avatar (image or fallback)
   const StudentAvatar = ({ student }) => {
     const [imgError, setImgError] = useState(false);
     
@@ -142,7 +148,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
 
   return (
     <div>
-      {/* HEADER - REMOVED ADD STUDENT BUTTON */}
+      {/* HEADER - ADD STUDENT BUTTON REMOVED */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -181,7 +187,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
         </div>
       </div>
 
-      {/* SEARCH BAR - COLORS LANG PINALITAN */}
+      {/* SEARCH BAR - ONLY COLORS CHANGED */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -225,7 +231,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
         )}
       </div>
 
-      {/* LOADING STATE - COLORS LANG PINALITAN */}
+      {/* LOADING STATE - ONLY COLORS CHANGED */}
       {loading.students ? (
         <div style={{ 
           textAlign: 'center', 
@@ -233,7 +239,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
           color: colors.textSecondary 
         }}>⏳ Loading Students...</div>
       ) : students.length === 0 ? (
-        /* EMPTY STATE - COLORS LANG PINALITAN */
+        /* EMPTY STATE - ONLY COLORS CHANGED */
         <div style={{ 
           textAlign: 'center', 
           padding: '80px', 
@@ -255,7 +261,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
           {/* ✅ REMOVED: Add Student Manually button */}
         </div>
       ) : (
-        /* TABLE - COLORS LANG PINALITAN */
+        /* TABLE - ONLY COLORS CHANGED */
         <div style={{ 
           background: colors.surface, 
           borderRadius: '8px', 
@@ -413,7 +419,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
         </div>
       )}
 
-      {/* Add Student Modal - COLORS LANG PINALITAN */}
+      {/* Add Student Modal - ONLY COLORS CHANGED */}
       {isAdding && (
         <ModalWrapper onClose={() => setIsAdding(false)}>
           <h2 style={{ 
@@ -460,7 +466,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
         </ModalWrapper>
       )}
 
-      {/* Edit Student Modal - COLORS LANG PINALITAN */}
+      {/* Edit Student Modal - ONLY COLORS CHANGED */}
       {isEditing && (
         <ModalWrapper onClose={() => setIsEditing(false)}>
           <h2 style={{ 
@@ -494,7 +500,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
         </ModalWrapper>
       )}
 
-      {/* Progress Modal - COLORS LANG PINALITAN */}
+      {/* Progress Modal - ONLY COLORS CHANGED */}
       {selectedStudent && !isEditing && (
         <ModalWrapper onClose={() => setSelected(null)}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>

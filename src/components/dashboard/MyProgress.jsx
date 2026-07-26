@@ -55,7 +55,7 @@ const MyProgress = () => {
   const { stats, loading, error } = useUserStats(userId);
   const [fadeIn, setFadeIn] = useState(false);
   const [showContent, setShowContent] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0); // ✅ PARA MA-FORCE RENDER
+  const [refreshKey, setRefreshKey] = useState(0); // TO FORCE RE-RENDER
 
   const [progress, setProgress] = useState({
     wordsLearned: 0,
@@ -65,7 +65,7 @@ const MyProgress = () => {
     gameStats: {}
   });
 
-  // ✅ PAG MAY DATA NA
+  // WHEN DATA IS AVAILABLE
   useEffect(() => {
     if (stats) {
       const gameStats = stats.gameStats || {};
@@ -101,9 +101,9 @@ const MyProgress = () => {
         setFadeIn(true);
       }, 50);
     }
-  }, [stats, refreshKey]); // ✅ DINAGDAGAN KO NG refreshKey
+  }, [stats, refreshKey]); // ADDED refreshKey
 
-  // ✅ PAG TAPOS NA MAG-LOAD PERO WALANG DATA
+  // AFTER LOADING FINISHES BUT NO DATA
   useEffect(() => {
     if (!loading && !stats) {
       setShowContent(true);
@@ -113,7 +113,7 @@ const MyProgress = () => {
     }
   }, [loading, stats]);
 
-  // ✅ AUTO REFRESH EVERY 3 SECONDS - ITO LANG ANG BAGONG CODE
+  // AUTO REFRESH EVERY 3 SECONDS - THIS IS THE ONLY NEW CODE
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);
@@ -121,7 +121,7 @@ const MyProgress = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ LOADING STATE
+  // LOADING STATE
   if (loading) {
     return (
       <div
@@ -158,7 +158,7 @@ const MyProgress = () => {
     );
   }
 
-  // ✅ ERROR STATE
+  // ERROR STATE
   if (error) {
     return (
       <div
@@ -192,7 +192,7 @@ const MyProgress = () => {
     );
   }
 
-  // ✅ KUNG WALA PANG DATA
+  // WHEN NO DATA YET
   if (!showContent) {
     return (
       <div
@@ -232,7 +232,7 @@ const MyProgress = () => {
   const gameStatsData = progress.gameStats || {};
 
   // ===== GAME TYPES WITH IMAGES =====
-  // ✅ FIXED: keys must match the actual field names inside Firestore's gameStats map
+  // FIXED: keys must match the actual field names inside Firestore's gameStats map
   const gameTypes = [
     {
       key: 'wordPics',
@@ -291,7 +291,7 @@ const MyProgress = () => {
   const wordsLearned = stats?.wordsLearned || 0;
   const correctAnswers = stats?.correctAnswers || 0;
 
-  // ✅ Maximum na 100 games
+  // Maximum of 100 games
   const maxPlayed = 100;
 
   return (
@@ -511,7 +511,7 @@ const MyProgress = () => {
         </div>
 
         {gameTypes.map((game, i) => {
-          // ✅ FIXED: Firestore field is "gamesPlayed", not "played"
+          // FIXED: Firestore field is "gamesPlayed", not "played"
           const gamesPlayedCount = game.data.gamesPlayed || 0;
           const barPct = Math.min((gamesPlayedCount / maxPlayed) * 100, 100);
 
@@ -527,7 +527,7 @@ const MyProgress = () => {
                   i !== gameTypes.length - 1 ? `1px solid ${colors.border}` : 'none'
               }}
             >
-              {/* image */}
+              {/* Image */}
               <img
                 src={game.image}
                 alt={game.label}
@@ -543,7 +543,7 @@ const MyProgress = () => {
                 }}
               />
 
-              {/* label */}
+              {/* Label */}
               <span
                 style={{
                   fontSize: '14px',
@@ -556,7 +556,7 @@ const MyProgress = () => {
                 {game.label}
               </span>
 
-              {/* bar */}
+              {/* Progress Bar */}
               <div
                 style={{
                   flex: 1,
@@ -577,7 +577,7 @@ const MyProgress = () => {
                 />
               </div>
 
-              {/* pill count */}
+              {/* Pill count */}
               <Pill>{gamesPlayedCount} games</Pill>
             </div>
           );
