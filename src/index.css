@@ -1,0 +1,142 @@
+/* src/index.css
+   Global reset + base typography for the "Clean-Minimalist" design system.
+   Individual pages still set their own layout styles; this just ensures
+   every screen starts from the same neutral baseline. */
+
+/* ============================================================
+   Theme tokens (Clean-Minimalist design system)
+   Light values are the default; [data-theme="dark"] on <html>
+   overrides them. Components read these via CSS variables so
+   the whole app can flip theme without per-component logic.
+   ============================================================ */
+:root {
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-accent: #5C6AC4;
+  --color-accent-hover: #4E5AB0;
+  --color-accent-soft: #EEF0FB;
+  --color-danger: #DC2626;
+  --color-danger-soft: #FEF2F2;
+  --color-success: #16A34A;
+  --color-success-soft: #F0FDF4;
+  --color-warning: #D97706;
+  --color-warning-soft: #FFFBEB;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0F172A;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-strong: #475569;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-accent: #8B98E5;
+  --color-accent-hover: #A2AEEB;
+  --color-accent-soft: rgba(139, 152, 229, 0.16);
+  --color-danger: #F87171;
+  --color-danger-soft: rgba(220, 38, 38, 0.16);
+  --color-success: #4ADE80;
+  --color-success-soft: rgba(22, 163, 74, 0.16);
+  --color-warning: #FBBF24;
+  --color-warning-soft: rgba(217, 119, 6, 0.16);
+}
+
+html {
+  transition: background-color 0.2s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   Global interaction feedback
+   Every button, and every element marked cursor:pointer (menu
+   items, cards, thumbnails, mascots, etc. across the whole app),
+   gets a subtle hover lift/dim and a "press" shrink on click.
+   Elements that already set their own hover/active styles via
+   inline JS handlers (onMouseEnter/onMouseDown) simply override
+   this, since inline styles always win — so nothing here can
+   clash with per-component effects.
+   ============================================================ */
+
+button:not(:disabled),
+[style*="cursor: pointer"],
+[style*="cursor:pointer"] {
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease,
+    background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:not(:disabled):hover,
+[style*="cursor: pointer"]:hover,
+[style*="cursor:pointer"]:hover {
+  filter: brightness(0.96);
+}
+
+button:not(:disabled):active,
+[style*="cursor: pointer"]:active,
+[style*="cursor:pointer"]:active {
+  transform: scale(0.97);
+  filter: brightness(0.92);
+}
+
+/* Buttons already get a slight lift on hover in addition to the dim */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Keyboard-focus visibility — only shows for keyboard nav, not mouse clicks */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
