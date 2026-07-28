@@ -48,7 +48,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '15-20 min',
       difficulty: 'intermediate',
       players: '1 player',
-      available: true
+      available: false
     },
     {
       id: 'quiz',
@@ -61,7 +61,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '10-15 min',
       difficulty: 'intermediate',
       players: '1 player',
-      available: true
+      available: false
     },
     {
       id: 'guesswhat',
@@ -74,7 +74,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '8-12 min',
       difficulty: 'advanced',
       players: '1 player',
-      available: true
+      available: false
     },
     {
       id: 'sentence-builder',
@@ -87,7 +87,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '6-10 min',
       difficulty: 'beginner',
       players: '1 player',
-      available: true
+      available: false
     },
   ];
 
@@ -345,18 +345,17 @@ const PlayGames = ({ startGame }) => {
             onMouseLeave={() => setHoveredGame(null)}
             style={{
               background: colors.surface,
-              border: `1px solid ${hoveredGame === game.id ? colors.accent : colors.border}`,
+              border: `1px solid ${hoveredGame === game.id && game.available ? colors.accent : colors.border}`,
               borderRadius: '12px',
               overflow: 'hidden',
               cursor: game.available ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s ease',
-              boxShadow: hoveredGame === game.id
+              boxShadow: hoveredGame === game.id && game.available
                 ? `0 8px 16px -8px ${game.accentColor}30`
                 : '0 2px 4px rgba(0,0,0,0.02)',
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
-              opacity: game.available ? 1 : 0.5,
             }}
           >
             {/* Image on top - spans full width */}
@@ -374,8 +373,9 @@ const PlayGames = ({ startGame }) => {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
-                  transition: 'transform 0.2s ease',
-                  transform: hoveredGame === game.id ? 'scale(1.03)' : 'scale(1)',
+                  transition: 'transform 0.2s ease, filter 0.2s ease',
+                  transform: hoveredGame === game.id && game.available ? 'scale(1.03)' : 'scale(1)',
+                  filter: game.available ? 'none' : 'blur(4px)',
                 }}
                 onError={(e) => {
                   e.target.style.display = 'none';
@@ -394,7 +394,35 @@ const PlayGames = ({ startGame }) => {
                   e.target.parentNode.appendChild(fallback);
                 }}
               />
-              
+
+              {/* Locked overlay */}
+              {!game.available && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  background: 'rgba(255, 255, 255, 0.35)',
+                  zIndex: 1,
+                }}>
+                  <span style={{ fontSize: '22px' }}>🔒</span>
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: colors.textPrimary,
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    padding: '3px 10px',
+                    borderRadius: '10px',
+                    fontFamily,
+                  }}>
+                    Coming Soon
+                  </span>
+                </div>
+              )}
+
               {/* Difficulty Badge Overlay */}
               <span className="playgames-badge" style={{
                 position: 'absolute',
@@ -408,7 +436,7 @@ const PlayGames = ({ startGame }) => {
                 color: getDifficultyColor(game.difficulty),
                 textTransform: 'capitalize',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                zIndex: 1,
+                zIndex: 2,
                 fontFamily,
               }}>
                 {game.difficulty}

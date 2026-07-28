@@ -125,6 +125,9 @@ const images = {
   educate: `${imageBasePath}educate.png`,
   learn: `${imageBasePath}learn.png`,
   caring: `${imageBasePath}caring.png`,
+
+  // ===== NEW: pixel-art loading background =====
+  'pixel-town': `${imageBasePath}pixel-town.png`,
 };
 
 // ============================================================
@@ -1624,22 +1627,58 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== LOADING SCREEN (NEW - Animated Sticker Style) =====
+  // ===== LOADING SCREEN (UPDATED v2 — full image visible, right-flowing scroll, forces top layer) =====
   // ============================================================
   if (gameState === 'loading') {
     return (
       <div style={{
-        ...fullScreenBg,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
-        position: 'relative',
-        overflow: 'hidden'
+        fontFamily: "'Poppins', -apple-system, sans-serif",
+        zIndex: 999999, // sits above any parent header/nav bar
+        background: '#2b2a4a', // fallback color while the image loads (or if the path is wrong)
       }}>
-        {bgAnimationStyle}
+        {/* ===== Scrolling pixel-art background — full image visible, flows continuously to the LEFT (Flappy-Bird style forward motion) ===== */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+          zIndex: 0,
+        }}>
+          <div className="loading-scroll-track">
+            <img
+              src={images['pixel-town']}
+              className="loading-scroll-img"
+              alt=""
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <img
+              src={images['pixel-town']}
+              className="loading-scroll-img"
+              alt=""
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+          {/* Dark overlay so the card text stays readable */}
+          <div style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'linear-gradient(135deg, rgba(49,46,110,0.45), rgba(13,11,26,0.5))',
+            pointerEvents: 'none'
+          }} />
+        </div>
 
-        {/* Animated background elements */}
+        {/* Floating decorative dots (kept from before, on top of new bg) */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1649,46 +1688,13 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
           zIndex: 0,
           pointerEvents: 'none'
         }}>
-          <div style={{
-            position: 'absolute',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: 'rgba(139,92,246,0.05)',
-            top: '10%',
-            left: '5%',
-            animation: 'floatShape 8s ease-in-out infinite'
-          }} />
-          <div style={{
-            position: 'absolute',
-            width: '150px',
-            height: '150px',
-            borderRadius: '50%',
-            background: 'rgba(99,102,241,0.04)',
-            bottom: '15%',
-            right: '8%',
-            animation: 'floatShape 10s ease-in-out infinite reverse'
-          }} />
-          <div style={{
-            position: 'absolute',
-            width: '100px',
-            height: '100px',
-            borderRadius: '50%',
-            background: 'rgba(139,92,246,0.03)',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            animation: 'pulseShape 4s ease-in-out infinite'
-          }} />
-
-          {/* Decorative dots */}
           {[...Array(12)].map((_, i) => (
             <div key={i} style={{
               position: 'absolute',
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              background: 'rgba(139,92,246,0.1)',
+              background: 'rgba(255,255,255,0.25)',
               top: `${10 + Math.random() * 80}%`,
               left: `${10 + Math.random() * 80}%`,
               animation: `twinkle 2s ease-in-out ${i * 0.3}s infinite`
@@ -1767,14 +1773,24 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
         </div>
 
         <style>{`
-          @keyframes floatShape {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-30px); }
+          /* ===== Continuous one-direction scroll — image shown FULLY (height-based, no cropping), flowing left (Flappy-Bird forward feel) ===== */
+          .loading-scroll-track {
+            display: flex;
+            height: 100%;
+            width: max-content;
+            animation: loadingScroll 14s linear infinite;
           }
-
-          @keyframes pulseShape {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.1; }
+          .loading-scroll-img {
+            height: 100%;
+            width: auto;
+            max-width: none;
+            flex-shrink: 0;
+            display: block;
+            object-fit: contain;
+          }
+          @keyframes loadingScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
           }
 
           @keyframes twinkle {

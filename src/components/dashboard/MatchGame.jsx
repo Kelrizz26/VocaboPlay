@@ -6,6 +6,36 @@ import { updateUserStats } from '../../services/firebaseService';
 import { auth } from '../../pages/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
+// ============================================================
+// ===== IMAGE / FULLSCREEN BACKGROUND CONFIGURATION =====
+// ============================================================
+const imageBasePath = 'src/image/';
+
+const fullScreenBg = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
+  overflowY: 'auto',
+  backgroundImage: `linear-gradient(135deg, rgba(10,20,60,0.25), rgba(10,20,60,0.35)), url(${imageBasePath}bg-matchgame.png)`,
+  backgroundSize: '130% 130%',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  animation: 'bgPan 30s ease-in-out infinite alternate',
+  fontFamily: "'Poppins', -apple-system, sans-serif",
+};
+
+const bgAnimationStyle = (
+  <style>{`
+    @keyframes bgPan {
+      0% { background-position: 0% 0%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 50% 100%; }
+    }
+  `}</style>
+);
+
 const MatchGame = ({ onBack, updateProgress }) => {
   // ===== GAME STATE =====
   const [gameState, setGameState] = useState('intro'); // 'intro', 'loading', 'playing', 'gameover', 'finished'
@@ -969,29 +999,26 @@ const MatchGame = ({ onBack, updateProgress }) => {
   );
 
   // ============================================================
-  // ===== LOADING SCREEN (NEW) =====
+  // ===== LOADING SCREEN =====
   // ============================================================
   if (gameState === 'loading') {
     return (
       <div style={{
-        minHeight: '100vh',
+        ...fullScreenBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
-        background: '#f8fafc',
-        fontFamily: "'Poppins', -apple-system, sans-serif",
-        position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Animated background elements */}
+        {bgAnimationStyle}
+        {/* Decorative floating elements (no solid backdrop, so the comic bg shows through) */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(135deg, #f0f0ff 0%, #f8fafc 50%, #f0f0ff 100%)',
           zIndex: 0
         }}>
           {/* Floating geometric shapes */}
@@ -1000,7 +1027,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
             width: '200px',
             height: '200px',
             borderRadius: '50%',
-            background: 'rgba(92, 106, 196, 0.05)',
+            background: 'rgba(255,255,255,0.06)',
             top: '10%',
             left: '5%',
             animation: 'floatShape 8s ease-in-out infinite'
@@ -1010,7 +1037,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
             width: '150px',
             height: '150px',
             borderRadius: '50%',
-            background: 'rgba(92, 106, 196, 0.04)',
+            background: 'rgba(255,255,255,0.05)',
             bottom: '15%',
             right: '8%',
             animation: 'floatShape 10s ease-in-out infinite reverse'
@@ -1020,7 +1047,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
             width: '100px',
             height: '100px',
             borderRadius: '50%',
-            background: 'rgba(92, 106, 196, 0.03)',
+            background: 'rgba(255,255,255,0.04)',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
@@ -1034,7 +1061,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              background: 'rgba(92, 106, 196, 0.1)',
+              background: 'rgba(255,255,255,0.15)',
               top: `${10 + Math.random() * 80}%`,
               left: `${10 + Math.random() * 80}%`,
               animation: `twinkle 2s ease-in-out ${i * 0.3}s infinite`
@@ -1048,7 +1075,11 @@ const MatchGame = ({ onBack, updateProgress }) => {
           textAlign: 'center',
           maxWidth: '400px',
           width: '100%',
-          padding: '40px'
+          padding: '40px',
+          background: 'rgba(13, 20, 50, 0.45)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(255,255,255,0.15)'
         }}>
           {/* Loading Animation - Spinning Puzzle Piece */}
           <div style={{
@@ -1062,9 +1093,9 @@ const MatchGame = ({ onBack, updateProgress }) => {
               position: 'absolute',
               width: '100%',
               height: '100%',
-              border: '4px solid #E2E8F0',
+              border: '4px solid rgba(255,255,255,0.2)',
               borderRadius: '16px',
-              borderTop: '4px solid #5C6AC4',
+              borderTop: '4px solid #FDE047',
               animation: 'spinBorder 1.2s ease-in-out infinite'
             }}>
               <div style={{
@@ -1083,7 +1114,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           <h2 style={{
             fontSize: '24px',
             fontWeight: '700',
-            color: '#1E293B',
+            color: '#FFFFFF',
             marginBottom: '8px',
             animation: 'fadeInOut 1.5s ease-in-out infinite'
           }}>
@@ -1102,7 +1133,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                background: '#5C6AC4',
+                background: '#FDE047',
                 animation: `bounceDot 1.4s ease-in-out ${i * 0.3}s infinite`
               }} />
             ))}
@@ -1111,7 +1142,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           {/* Small text */}
           <p style={{
             fontSize: '12px',
-            color: '#94a3b8',
+            color: 'rgba(255,255,255,0.75)',
             marginTop: '16px',
             fontStyle: 'italic'
           }}>
@@ -1168,34 +1199,34 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
     return (
       <div style={{
-        minHeight: '100vh',
+        ...fullScreenBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
-        background: '#f8fafc',
-        fontFamily: "'Poppins', -apple-system, sans-serif"
+        padding: '20px'
       }}>
+        {bgAnimationStyle}
         {showExitConfirm && <ExitConfirmModal />}
 
         <div style={{
-          maxWidth: '500px',
+          maxWidth: '520px',
           width: '100%',
-          background: 'white',
-          borderRadius: '24px',
-          padding: '40px',
+          background: 'linear-gradient(160deg, #1a1730 0%, #0d0b1a 100%)',
+          border: '1px solid rgba(139,92,246,0.28)',
+          borderRadius: '28px',
+          padding: '32px 28px',
           textAlign: 'center',
-          boxShadow: 'none'
+          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.7), 0 0 0 1px rgba(139,92,246,0.05) inset'
         }}>
           {currentUser && (
             <div style={{
-              background: 'rgba(92, 106, 196, 0.08)',
+              background: 'rgba(139,92,246,0.16)',
               padding: '8px 16px',
               borderRadius: '12px',
               marginBottom: '16px',
               display: 'inline-block'
             }}>
-              <span style={{ fontSize: '13px', color: '#5C6AC4', fontWeight: '600' }}>
+              <span style={{ fontSize: '13px', color: '#C4B5FD', fontWeight: '600' }}>
                 👤 {currentUser.displayName || currentUser.email || 'Player'}
               </span>
             </div>
@@ -1206,11 +1237,12 @@ const MatchGame = ({ onBack, updateProgress }) => {
             height: '100px',
             margin: '0 auto 16px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #5C6AC4, #5C6AC4)',
+            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '48px'
+            fontSize: '48px',
+            boxShadow: '0 10px 30px rgba(139,92,246,0.35)'
           }}>
             🧩
           </div>
@@ -1218,21 +1250,21 @@ const MatchGame = ({ onBack, updateProgress }) => {
           <h1 style={{
             fontSize: '28px',
             fontWeight: '800',
-            color: '#1E293B',
+            color: '#F5F3FF',
             marginBottom: '4px'
           }}>
             Match Game
           </h1>
           <p style={{
             fontSize: '15px',
-            color: '#64748B',
+            color: '#C4B5FD',
             marginBottom: '4px'
           }}>
             Pair words with their emojis
           </p>
           <p style={{
             fontSize: '12px',
-            color: '#94a3b8',
+            color: '#9CA3AF',
             marginBottom: '20px'
           }}>
             🎯 {totalPairs} pairs • ⏱️ {timeLimit}s • 🎵 8-bit music
@@ -1244,7 +1276,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
             gap: '10px',
             marginBottom: '20px',
             padding: '12px',
-            background: '#F8FAFC',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: '14px'
           }}>
             {['easy', 'medium', 'hard'].map(d => {
@@ -1258,9 +1291,9 @@ const MatchGame = ({ onBack, updateProgress }) => {
                     flex: 1,
                     padding: '10px 8px',
                     borderRadius: '10px',
-                    border: `2px solid ${difficulty === d ? '#5C6AC4' : '#E2E8F0'}`,
-                    background: difficulty === d ? 'rgba(92, 106, 196, 0.08)' : 'transparent',
-                    color: difficulty === d ? '#5C6AC4' : '#64748B',
+                    border: `2px solid ${difficulty === d ? '#A78BFA' : 'rgba(255,255,255,0.10)'}`,
+                    background: difficulty === d ? 'rgba(139,92,246,0.16)' : 'transparent',
+                    color: difficulty === d ? '#C4B5FD' : '#9CA3AF',
                     cursor: 'pointer',
                     fontSize: '12px',
                     fontWeight: '600',
@@ -1287,31 +1320,34 @@ const MatchGame = ({ onBack, updateProgress }) => {
           }}>
             <div style={{
               padding: '14px',
-              background: '#F8FAFC',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.10)',
               borderRadius: '12px'
             }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#5C6AC4' }}>
+              <div style={{ fontSize: '20px', fontWeight: '700', color: '#A78BFA' }}>
                 {difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12}
               </div>
-              <div style={{ fontSize: '10px', color: '#94a3b8' }}>Pairs</div>
+              <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Pairs</div>
             </div>
             <div style={{
               padding: '14px',
-              background: '#F8FAFC',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.10)',
               borderRadius: '12px'
             }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#f59e0b' }}>
+              <div style={{ fontSize: '20px', fontWeight: '700', color: '#FBBF24' }}>
                 {difficulty === 'easy' ? 70 : difficulty === 'medium' ? 60 : 50}s
               </div>
-              <div style={{ fontSize: '10px', color: '#94a3b8' }}>Time Limit</div>
+              <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Time Limit</div>
             </div>
             <div style={{
               padding: '14px',
-              background: '#F8FAFC',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.10)',
               borderRadius: '12px'
             }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#5C6AC4' }}>🧠</div>
-              <div style={{ fontSize: '10px', color: '#94a3b8' }}>Memory</div>
+              <div style={{ fontSize: '20px', fontWeight: '700', color: '#A78BFA' }}>🧠</div>
+              <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Memory</div>
             </div>
           </div>
 
@@ -1323,7 +1359,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
             gap: '12px',
             marginBottom: '16px',
             padding: '8px 16px',
-            background: '#F8FAFC',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: '12px'
           }}>
             <button
@@ -1344,7 +1381,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
             >
               {isMuted ? '🔇' : '🔊'} {isMuted ? 'Music Off' : 'Music On'}
             </button>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
               🎵 8-bit vibes
             </span>
           </div>
@@ -1355,14 +1392,14 @@ const MatchGame = ({ onBack, updateProgress }) => {
             style={{
               width: '100%',
               padding: '16px',
-              background: 'linear-gradient(135deg, #5C6AC4, #5C6AC4)',
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '14px',
               fontSize: '16px',
               fontWeight: '600',
               cursor: 'pointer',
-              boxShadow: 'none',
+              boxShadow: '0 10px 30px rgba(139,92,246,0.4)',
               transition: 'transform 0.2s'
             }}
             onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
@@ -1378,8 +1415,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
               padding: '12px',
               marginTop: '8px',
               background: 'transparent',
-              color: '#94a3b8',
-              border: '1px solid #E2E8F0',
+              color: '#C4B5FD',
+              border: '1px solid rgba(255,255,255,0.10)',
               borderRadius: '14px',
               cursor: 'pointer',
               fontSize: '14px',
@@ -1397,13 +1434,12 @@ const MatchGame = ({ onBack, updateProgress }) => {
   if (!isUserLoaded) {
     return (
       <div style={{
-        minHeight: '100vh',
+        ...fullScreenBg,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f8fafc',
-        fontFamily: "'Poppins', -apple-system, sans-serif"
+        justifyContent: 'center'
       }}>
+        {bgAnimationStyle}
         <div style={{
           background: 'white',
           borderRadius: '16px',
@@ -1411,7 +1447,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           textAlign: 'center',
           maxWidth: '400px',
           width: '100%',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.5)'
         }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
           <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1E293B' }}>Loading...</h2>
@@ -1425,13 +1461,13 @@ const MatchGame = ({ onBack, updateProgress }) => {
   if (gameState === 'gameover') {
     return (
       <div style={{
-        minHeight: '100vh',
+        ...fullScreenBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
-        background: '#f8fafc'
+        padding: '20px'
       }}>
+        {bgAnimationStyle}
         <div style={{
           background: 'white',
           borderRadius: '24px',
@@ -1439,7 +1475,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           textAlign: 'center',
           maxWidth: '400px',
           width: '100%',
-          boxShadow: 'none'
+          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.5)'
         }}>
           <div style={{ fontSize: '64px', marginBottom: '8px' }}>⏰</div>
           <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1E293B', marginBottom: '4px' }}>Time's Up!</h2>
@@ -1473,11 +1509,10 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
     return (
       <div style={{
-        minHeight: '100vh',
-        background: '#f8fafc',
-        padding: '16px',
-        fontFamily: "'Poppins', -apple-system, sans-serif"
+        ...fullScreenBg,
+        padding: '16px'
       }}>
+        {bgAnimationStyle}
         <AchievementPopup />
         {showExitConfirm && <ExitConfirmModal />}
         {showSettings && <SettingsModal />}
@@ -1553,7 +1588,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
         {/* PROGRESS - Minimal */}
         <div style={{ maxWidth: '700px', margin: '0 auto 12px' }}>
-          <div style={{ width: '100%', height: '3px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.35)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{
               height: '100%',
               background: 'linear-gradient(90deg, #5C6AC4, #5C6AC4)',
@@ -1678,13 +1713,13 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
     return (
       <div style={{
-        minHeight: '100vh',
+        ...fullScreenBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
-        background: '#f8fafc'
+        padding: '20px'
       }}>
+        {bgAnimationStyle}
         <div style={{
           background: 'white',
           borderRadius: '24px',
@@ -1692,7 +1727,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           textAlign: 'center',
           maxWidth: '400px',
           width: '100%',
-          boxShadow: 'none'
+          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.5)'
         }}>
           <div style={{ fontSize: '72px', marginBottom: '4px' }}>
             {isPerfect ? '👑' : '🎉'}
