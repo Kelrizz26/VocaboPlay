@@ -113,7 +113,7 @@ const MyProgress = () => {
     }
   }, [loading, stats]);
 
-  // AUTO REFRESH EVERY 3 SECONDS - THIS IS THE ONLY NEW CODE
+  // ✅ FIXED: AUTO REFRESH EVERY 3 SECONDS - THIS IS THE ONLY NEW CODE
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);

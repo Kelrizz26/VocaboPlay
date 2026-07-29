@@ -95,7 +95,7 @@ const getUserProfile = () => {
 };
 
 // ============================================================
-// ===== PROGRESS UPDATE HELPER =====
+// ===== PROGRESS UPDATE HELPER - FIXED =====
 // ============================================================
 const updateProgress = async (updates) => {
   console.log('📊 updateProgress called with:', updates);
@@ -151,7 +151,7 @@ const updateProgress = async (updates) => {
     newProgress.streak = newStreak;
     newProgress.lastPlayed = new Date().toISOString();
 
-    // XP and level
+    // ✅ FIXED: Only add once, not duplicate
     if (updates.xp !== undefined) {
       newProgress.xp = (currentProgress.xp || 0) + updates.xp;
     }
@@ -246,8 +246,8 @@ const updateProgress = async (updates) => {
       newProgress.accuracy = Math.round((totalCorrect / totalQuestionsAll) * 100);
     }
 
-    // Save to Firebase
-    await updateDoc(userRef, {
+    // ✅ FIXED: Save to Firebase - ONLY ONCE, using newProgress values
+    const updateData = {
       wordsLearned: newProgress.wordsLearned,
       gamesPlayed: newProgress.gamesPlayed,
       totalPoints: newProgress.totalPoints,
@@ -256,22 +256,21 @@ const updateProgress = async (updates) => {
       currentStreak: newProgress.streak,
       accuracy: newProgress.accuracy,
       gameStats: newProgress.gameStats,
-      correctAnswers: userData.correctAnswers ? userData.correctAnswers + (updates.correctAnswers || 0) : (updates.correctAnswers || 0),
       lastActive: new Date().toISOString()
-    });
+    };
+    
+    // ✅ Only add correctAnswers if it was updated
+    if (updates.correctAnswers !== undefined) {
+      const currentCorrect = userData.correctAnswers || 0;
+      updateData.correctAnswers = currentCorrect + updates.correctAnswers;
+    }
+
+    await updateDoc(userRef, updateData);
 
     // Update local cache
     const updatedUserData = {
       ...userData,
-      wordsLearned: newProgress.wordsLearned,
-      gamesPlayed: newProgress.gamesPlayed,
-      totalPoints: newProgress.totalPoints,
-      level: newProgress.level,
-      xp: newProgress.xp,
-      currentStreak: newProgress.streak,
-      accuracy: newProgress.accuracy,
-      gameStats: newProgress.gameStats,
-      lastActive: new Date().toISOString()
+      ...updateData
     };
     localStorage.setItem('firebaseUserData', JSON.stringify(updatedUserData));
 

@@ -33,12 +33,295 @@ const bgAnimationStyle = (
       50% { background-position: 100% 50%; }
       100% { background-position: 50% 100%; }
     }
+
+    /* ===== MOBILE RESPONSIVE STYLES ===== */
+    @media (max-width: 768px) {
+      .match-game-container {
+        padding: 8px !important;
+      }
+      
+      .match-game-header {
+        padding: 8px 12px !important;
+        margin-bottom: 8px !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+      }
+      
+      .match-game-header > div {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+      }
+      
+      .match-game-cards {
+        gap: 4px !important;
+        padding: 8px !important;
+      }
+      
+      .match-game-card {
+        aspect-ratio: 1 !important;
+        min-height: 50px !important;
+      }
+      
+      .match-game-card-back {
+        font-size: 14px !important;
+      }
+      
+      .match-game-card-front {
+        font-size: 12px !important;
+      }
+      
+      .match-game-card-front-emoji {
+        font-size: 20px !important;
+      }
+      
+      .match-game-footer {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        font-size: 10px !important;
+        padding: 6px 12px !important;
+      }
+      
+      .match-game-intro {
+        padding: 20px 16px !important;
+        margin: 12px !important;
+      }
+      
+      .match-game-intro h1 {
+        font-size: 22px !important;
+      }
+      
+      .match-game-intro p {
+        font-size: 13px !important;
+      }
+      
+      .match-game-difficulty {
+        gap: 6px !important;
+        padding: 8px !important;
+        flex-wrap: wrap !important;
+      }
+      
+      .match-game-difficulty button {
+        padding: 8px 6px !important;
+        font-size: 11px !important;
+        min-width: 60px !important;
+      }
+      
+      .match-game-stats-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+      }
+      
+      .match-game-stats-grid > div {
+        padding: 10px !important;
+      }
+      
+      .match-game-stats-grid > div div:first-child {
+        font-size: 16px !important;
+      }
+      
+      .match-game-modal {
+        padding: 20px !important;
+        max-width: 320px !important;
+        margin: 12px !important;
+      }
+      
+      .match-game-modal h3 {
+        font-size: 16px !important;
+      }
+      
+      .match-game-result {
+        padding: 24px 16px !important;
+        margin: 12px !important;
+      }
+      
+      .match-game-result h2 {
+        font-size: 22px !important;
+      }
+      
+      .match-game-result-stats {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+      }
+      
+      .match-game-result-stats > div {
+        padding: 8px !important;
+      }
+      
+      .match-game-result-stats > div div:first-child {
+        font-size: 16px !important;
+      }
+      
+      .match-game-progress {
+        height: 2px !important;
+        margin-bottom: 8px !important;
+      }
+      
+      .match-game-timer {
+        font-size: 14px !important;
+        min-width: 24px !important;
+      }
+      
+      .match-game-score {
+        font-size: 13px !important;
+        padding: 2px 10px !important;
+      }
+      
+      .match-game-music-toggle {
+        font-size: 14px !important;
+        padding: 2px 8px !important;
+      }
+      
+      .match-game-loading {
+        padding: 24px !important;
+      }
+      
+      .match-game-loading h2 {
+        font-size: 20px !important;
+      }
+      
+      .match-game-loading-spinner {
+        width: 60px !important;
+        height: 60px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .match-game-cards {
+        gap: 3px !important;
+        padding: 6px !important;
+      }
+      
+      .match-game-card {
+        min-height: 40px !important;
+      }
+      
+      .match-game-card-back {
+        font-size: 10px !important;
+        border-radius: 8px !important;
+      }
+      
+      .match-game-card-front {
+        font-size: 9px !important;
+        border-radius: 8px !important;
+      }
+      
+      .match-game-card-front-emoji {
+        font-size: 16px !important;
+      }
+      
+      .match-game-header {
+        padding: 6px 10px !important;
+        border-radius: 10px !important;
+      }
+      
+      .match-game-header span {
+        font-size: 12px !important;
+      }
+      
+      .match-game-intro h1 {
+        font-size: 18px !important;
+      }
+      
+      .match-game-intro p {
+        font-size: 11px !important;
+      }
+      
+      .match-game-difficulty button {
+        padding: 6px 4px !important;
+        font-size: 10px !important;
+        min-width: 50px !important;
+      }
+      
+      .match-game-difficulty button div:first-child {
+        font-size: 12px !important;
+      }
+      
+      .match-game-stats-grid > div div:first-child {
+        font-size: 14px !important;
+      }
+      
+      .match-game-result h2 {
+        font-size: 18px !important;
+      }
+      
+      .match-game-result-stats > div div:first-child {
+        font-size: 14px !important;
+      }
+      
+      .match-game-modal {
+        padding: 16px !important;
+        max-width: 280px !important;
+      }
+      
+      .match-game-modal button {
+        font-size: 12px !important;
+        padding: 8px !important;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .match-game-cards {
+        gap: 2px !important;
+        padding: 4px !important;
+      }
+      
+      .match-game-card {
+        min-height: 32px !important;
+      }
+      
+      .match-game-card-back {
+        font-size: 8px !important;
+      }
+      
+      .match-game-card-front {
+        font-size: 7px !important;
+      }
+      
+      .match-game-card-front-emoji {
+        font-size: 12px !important;
+      }
+      
+      .match-game-header {
+        padding: 4px 8px !important;
+        border-radius: 8px !important;
+      }
+      
+      .match-game-header span {
+        font-size: 10px !important;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 600px) {
+      .match-game-cards {
+        gap: 4px !important;
+        padding: 6px !important;
+      }
+      
+      .match-game-card {
+        min-height: 44px !important;
+      }
+      
+      .match-game-header {
+        padding: 4px 12px !important;
+        margin-bottom: 4px !important;
+      }
+      
+      .match-game-footer {
+        padding: 4px 12px !important;
+        margin-top: 4px !important;
+      }
+      
+      .match-game-progress {
+        height: 2px !important;
+        margin-bottom: 4px !important;
+      }
+    }
   `}</style>
 );
 
 const MatchGame = ({ onBack, updateProgress }) => {
   // ===== GAME STATE =====
-  const [gameState, setGameState] = useState('intro'); // 'intro', 'loading', 'playing', 'gameover', 'finished'
+  const [gameState, setGameState] = useState('intro');
   const [score, setScore] = useState(0);
   const [matches, setMatches] = useState(0);
   const [attempts, setAttempts] = useState(0);
@@ -83,50 +366,48 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
   // Nintendo-style nostalgic melody notes (C major scale)
   const NINTENDO_MELODY = [
-    { note: 523.25, duration: 0.15 }, // C5
-    { note: 587.33, duration: 0.15 }, // D5
-    { note: 659.25, duration: 0.15 }, // E5
-    { note: 783.99, duration: 0.15 }, // G5
-    { note: 659.25, duration: 0.15 }, // E5
-    { note: 587.33, duration: 0.15 }, // D5
-    { note: 523.25, duration: 0.15 }, // C5
-    { note: 659.25, duration: 0.15 }, // E5
-    { note: 783.99, duration: 0.15 }, // G5
-    { note: 880.00, duration: 0.15 }, // A5
-    { note: 783.99, duration: 0.15 }, // G5
-    { note: 659.25, duration: 0.15 }, // E5
-    { note: 783.99, duration: 0.15 }, // G5
-    { note: 880.00, duration: 0.15 }, // A5
-    { note: 987.77, duration: 0.20 }, // B5
-    { note: 880.00, duration: 0.20 }, // A5
-    { note: 783.99, duration: 0.20 }, // G5
-    { note: 659.25, duration: 0.15 }, // E5
-    { note: 783.99, duration: 0.15 }, // G5
-    { note: 880.00, duration: 0.15 }, // A5
-    { note: 1046.50, duration: 0.25 }, // C6
-    { note: 987.77, duration: 0.15 }, // B5
-    { note: 880.00, duration: 0.15 }, // A5
-    { note: 783.99, duration: 0.15 }, // G5
+    { note: 523.25, duration: 0.15 },
+    { note: 587.33, duration: 0.15 },
+    { note: 659.25, duration: 0.15 },
+    { note: 783.99, duration: 0.15 },
+    { note: 659.25, duration: 0.15 },
+    { note: 587.33, duration: 0.15 },
+    { note: 523.25, duration: 0.15 },
+    { note: 659.25, duration: 0.15 },
+    { note: 783.99, duration: 0.15 },
+    { note: 880.00, duration: 0.15 },
+    { note: 783.99, duration: 0.15 },
+    { note: 659.25, duration: 0.15 },
+    { note: 783.99, duration: 0.15 },
+    { note: 880.00, duration: 0.15 },
+    { note: 987.77, duration: 0.20 },
+    { note: 880.00, duration: 0.20 },
+    { note: 783.99, duration: 0.20 },
+    { note: 659.25, duration: 0.15 },
+    { note: 783.99, duration: 0.15 },
+    { note: 880.00, duration: 0.15 },
+    { note: 1046.50, duration: 0.25 },
+    { note: 987.77, duration: 0.15 },
+    { note: 880.00, duration: 0.15 },
+    { note: 783.99, duration: 0.15 },
   ];
 
-  // Bass line for nostalgic feel
   const BASS_LINE = [
-    { note: 130.81, duration: 0.4 }, // C3
-    { note: 130.81, duration: 0.4 }, // C3
-    { note: 146.83, duration: 0.4 }, // D3
-    { note: 146.83, duration: 0.4 }, // D3
-    { note: 164.81, duration: 0.4 }, // E3
-    { note: 164.81, duration: 0.4 }, // E3
-    { note: 196.00, duration: 0.4 }, // G3
-    { note: 196.00, duration: 0.4 }, // G3
+    { note: 130.81, duration: 0.4 },
+    { note: 130.81, duration: 0.4 },
+    { note: 146.83, duration: 0.4 },
+    { note: 146.83, duration: 0.4 },
+    { note: 164.81, duration: 0.4 },
+    { note: 164.81, duration: 0.4 },
+    { note: 196.00, duration: 0.4 },
+    { note: 196.00, duration: 0.4 },
   ];
 
-  // Chord progression (C, G, Am, F)
   const CHORD_PROGRESSION = [
-    { notes: [261.63, 329.63, 392.00], duration: 1.0 }, // C major
-    { notes: [392.00, 493.88, 587.33], duration: 1.0 }, // G major
-    { notes: [440.00, 523.25, 659.25], duration: 1.0 }, // A minor
-    { notes: [349.23, 440.00, 523.25], duration: 1.0 }, // F major
+    { notes: [261.63, 329.63, 392.00], duration: 1.0 },
+    { notes: [392.00, 493.88, 587.33], duration: 1.0 },
+    { notes: [440.00, 523.25, 659.25], duration: 1.0 },
+    { notes: [349.23, 440.00, 523.25], duration: 1.0 },
   ];
 
   // ============================================================
@@ -149,7 +430,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
   }, []);
 
   // ============================================================
-  // ===== ✅ NEW: SAVE TO FIREBASE =====
+  // ===== SAVE TO FIREBASE - FIXED: 1 POINT ONLY =====
   // ============================================================
   const saveGameToFirebase = async (isWin) => {
     if (!currentUser) {
@@ -160,7 +441,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     const userId = currentUser.uid;
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
     const isPerfect = matches === totalPairs;
-    const pointsEarned = score;
+    const pointsEarned = matches; // ✅ 1 point per match
 
     const gameData = {
       gameType: 'matchGame',
@@ -169,7 +450,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
       correctAnswers: matches,
       totalQuestions: attempts,
       won: isWin || isPerfect,
-      score: score,
+      score: matches,
       isPerfect: isPerfect,
       difficulty: difficulty,
       timeRemaining: timer,
@@ -490,7 +771,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     return deck.sort(() => Math.random() - 0.5);
   };
 
-  // ===== INITIALIZE GAME =====
+  // ===== INITIALIZE GAME - FIXED: RESET SESSION SAVED =====
   const initializeGame = () => {
     const newCards = generateCards();
     setCards(newCards);
@@ -505,7 +786,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     setTimerRunning(true);
     setGameState('playing');
     setShowWinScreen(false);
-    setSessionSaved(false);
+    setSessionSaved(false); // ✅ FIXED: Reset session saved flag for new game
     
     const saved = localStorage.getItem('matchgame_leaderboard');
     if (saved) setLeaderboardData(JSON.parse(saved));
@@ -514,12 +795,10 @@ const MatchGame = ({ onBack, updateProgress }) => {
     if (savedStats) setStats(JSON.parse(savedStats));
   };
 
-  // ===== START GAME FROM INTRO WITH LOADING =====
+  // ===== START GAME FROM INTRO WITH LOADING - FIXED =====
   const startGame = () => {
-    // Show loading screen first
+    setSessionSaved(false); // ✅ FIXED: Reset before starting
     setGameState('loading');
-    
-    // After 2 seconds, initialize the game
     setTimeout(() => {
       initializeGame();
     }, 2000);
@@ -550,7 +829,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
       const isPerfect = matches === totalPairs;
       const newStats = {
         gamesPlayed: stats.gamesPlayed + 1,
-        bestScore: Math.max(stats.bestScore, score),
+        bestScore: Math.max(stats.bestScore, matches),
         bestTime: stats.bestTime === 0 ? timer : Math.min(stats.bestTime, timer),
         perfectGames: isPerfect ? (stats.perfectGames || 0) + 1 : (stats.perfectGames || 0),
         bestMoves: stats.bestMoves === 0 ? attempts : Math.min(stats.bestMoves, attempts)
@@ -560,7 +839,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
       
       const newEntry = {
         name: currentUser?.displayName || currentUser?.email || 'Player',
-        score: score,
+        score: matches,
         pairs: matches,
         time: timer,
         difficulty: difficulty,
@@ -579,10 +858,14 @@ const MatchGame = ({ onBack, updateProgress }) => {
   }, [matches, difficulty]);
 
   // ============================================================
-  // ===== SAVE GAME PROGRESS =====
+  // ===== SAVE GAME PROGRESS - FIXED: 1 POINT PER MATCH =====
   // ============================================================
   const saveGameProgress = (isWin) => {
-    if (sessionSaved) return;
+    // ✅ FIXED: Prevent duplicate saves
+    if (sessionSaved) {
+      console.log('⚠️ Game progress already saved, skipping duplicate save');
+      return;
+    }
     setSessionSaved(true);
     
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
@@ -609,10 +892,12 @@ const MatchGame = ({ onBack, updateProgress }) => {
       localStorage.setItem('vocaboplay_lastPlayed', today);
     }
     
+    // ✅ FIXED: Use 'matches' for points, words, and correct answers
+    // 1 match = 1 point = 1 word learned = 1 correct answer
     const progressData = {
       gamesPlayed: (currentProgress.gamesPlayed || 0) + 1,
-      totalPoints: (currentProgress.totalPoints || 0) + score,
-      xp: (currentProgress.xp || 0) + score,
+      totalPoints: (currentProgress.totalPoints || 0) + matches,
+      xp: (currentProgress.xp || 0) + matches,
       totalAnswers: (currentProgress.totalAnswers || 0) + attempts,
       correctAnswers: (currentProgress.correctAnswers || 0) + matches,
       wordsLearned: (currentProgress.wordsLearned || 0) + matches,
@@ -638,7 +923,9 @@ const MatchGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // ===== HANDLE CARD CLICK =====
+  // ============================================================
+  // ===== HANDLE CARD CLICK - FIXED: 1 POINT PER MATCH =====
+  // ============================================================
   const handleCardClick = (index) => {
     if (isLocked) return;
     if (cards[index].isMatched) return;
@@ -665,7 +952,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
           matched[newFlipped[1]].isMatched = true;
           setCards(matched);
           setMatches(prev => prev + 1);
-          setScore(prev => prev + 10 + Math.floor(timer / 10));
+          // ✅ FIXED: 1 point per match
+          setScore(prev => prev + 1);
           setAttempts(prev => prev + 1);
           setCorrectAnswers(prev => prev + 1);
           setTotalAnswers(prev => prev + 1);
@@ -1012,7 +1300,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
         overflow: 'hidden'
       }}>
         {bgAnimationStyle}
-        {/* Decorative floating elements (no solid backdrop, so the comic bg shows through) */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1021,7 +1308,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
           bottom: 0,
           zIndex: 0
         }}>
-          {/* Floating geometric shapes */}
           <div style={{
             position: 'absolute',
             width: '200px',
@@ -1054,7 +1340,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
             animation: 'pulseShape 4s ease-in-out infinite'
           }} />
           
-          {/* Decorative dots */}
           {[...Array(12)].map((_, i) => (
             <div key={i} style={{
               position: 'absolute',
@@ -1081,7 +1366,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
           borderRadius: '24px',
           border: '1px solid rgba(255,255,255,0.15)'
         }}>
-          {/* Loading Animation - Spinning Puzzle Piece */}
           <div style={{
             width: '80px',
             height: '80px',
@@ -1110,7 +1394,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
             </div>
           </div>
 
-          {/* Loading Text with Animation */}
           <h2 style={{
             fontSize: '24px',
             fontWeight: '700',
@@ -1121,7 +1404,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
             Loading...
           </h2>
 
-          {/* Animated Dots */}
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -1139,7 +1421,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
             ))}
           </div>
 
-          {/* Small text */}
           <p style={{
             fontSize: '12px',
             color: 'rgba(255,255,255,0.75)',
@@ -1208,7 +1489,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
         {bgAnimationStyle}
         {showExitConfirm && <ExitConfirmModal />}
 
-        <div style={{
+        <div className="match-game-intro" style={{
           maxWidth: '520px',
           width: '100%',
           background: 'linear-gradient(160deg, #1a1730 0%, #0d0b1a 100%)',
@@ -1270,8 +1551,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
             🎯 {totalPairs} pairs • ⏱️ {timeLimit}s • 🎵 8-bit music
           </p>
 
-          {/* DIFFICULTY SELECTOR */}
-          <div style={{
+          <div className="match-game-difficulty" style={{
             display: 'flex',
             gap: '10px',
             marginBottom: '20px',
@@ -1311,8 +1591,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
             })}
           </div>
 
-          {/* GAME INFO */}
-          <div style={{
+          <div className="match-game-stats-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '10px',
@@ -1351,7 +1630,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
             </div>
           </div>
 
-          {/* MUSIC TOGGLE */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -1386,7 +1664,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
             </span>
           </div>
 
-          {/* START BUTTON */}
           <button
             onClick={startGame}
             style={{
@@ -1400,10 +1677,13 @@ const MatchGame = ({ onBack, updateProgress }) => {
               fontWeight: '600',
               cursor: 'pointer',
               boxShadow: '0 10px 30px rgba(139,92,246,0.4)',
-              transition: 'transform 0.2s'
+              transition: 'transform 0.2s',
+              touchAction: 'manipulation'
             }}
             onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
             onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            onTouchStart={(e) => e.target.style.transform = 'scale(0.98)'}
+            onTouchEnd={(e) => e.target.style.transform = 'scale(1)'}
           >
             🚀 Start Game
           </button>
@@ -1420,7 +1700,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
               borderRadius: '14px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: '500'
+              fontWeight: '500',
+              touchAction: 'manipulation'
             }}
           >
             ← Back
@@ -1468,7 +1749,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
         padding: '20px'
       }}>
         {bgAnimationStyle}
-        <div style={{
+        <div className="match-game-result" style={{
           background: 'white',
           borderRadius: '24px',
           padding: '40px',
@@ -1481,10 +1762,15 @@ const MatchGame = ({ onBack, updateProgress }) => {
           <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1E293B', marginBottom: '4px' }}>Time's Up!</h2>
           <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '20px' }}>You matched {matches} pairs</p>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '24px' }}>
+          <div className="match-game-result-stats" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '10px',
+            marginBottom: '24px'
+          }}>
             <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '12px' }}>
-              <div style={{ fontSize: '22px', fontWeight: '700', color: '#5C6AC4' }}>{score}</div>
-              <div style={{ fontSize: '11px', color: '#64748B' }}>Score</div>
+              <div style={{ fontSize: '22px', fontWeight: '700', color: '#5C6AC4' }}>{matches}</div>
+              <div style={{ fontSize: '11px', color: '#64748B' }}>Pairs</div>
             </div>
             <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '12px' }}>
               <div style={{ fontSize: '22px', fontWeight: '700', color: '#5C6AC4' }}>{attempts}</div>
@@ -1493,9 +1779,9 @@ const MatchGame = ({ onBack, updateProgress }) => {
           </div>
 
           <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
-            <button onClick={handleRestart} style={{ padding: '12px', background: '#5C6AC4', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>🔄 Play Again</button>
-            <button onClick={() => setGameState('intro')} style={{ padding: '12px', background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>← Back to Menu</button>
-            <button onClick={onBack} style={{ padding: '12px', background: 'transparent', color: '#94a3b8', border: '1px solid #E2E8F0', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>← Exit</button>
+            <button onClick={handleRestart} style={{ padding: '12px', background: '#5C6AC4', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', touchAction: 'manipulation' }}>🔄 Play Again</button>
+            <button onClick={() => setGameState('intro')} style={{ padding: '12px', background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', touchAction: 'manipulation' }}>← Back to Menu</button>
+            <button onClick={onBack} style={{ padding: '12px', background: 'transparent', color: '#94a3b8', border: '1px solid #E2E8F0', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', touchAction: 'manipulation' }}>← Exit</button>
           </div>
         </div>
       </div>
@@ -1508,7 +1794,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     const progress = (matches / totalPairs) * 100;
 
     return (
-      <div style={{
+      <div className="match-game-container" style={{
         ...fullScreenBg,
         padding: '16px'
       }}>
@@ -1518,8 +1804,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
         {showSettings && <SettingsModal />}
         {showLeaderboard && <LeaderboardModal />}
 
-        {/* HEADER - Minimal */}
-        <div style={{
+        <div className="match-game-header" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1531,7 +1816,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', padding: '4px' }}>⚙️</button>
+            <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', padding: '4px', touchAction: 'manipulation' }}>⚙️</button>
             <span style={{ fontWeight: '600', color: '#1E293B', fontSize: '15px' }}>Match</span>
             <span style={{
               padding: '2px 10px',
@@ -1553,7 +1838,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
                 fontSize: '16px',
                 cursor: 'pointer',
                 padding: '2px 4px',
-                opacity: isMuted ? 0.3 : 1
+                opacity: isMuted ? 0.3 : 1,
+                touchAction: 'manipulation'
               }}
               title={isMuted ? 'Turn music on' : 'Turn music off'}
             >
@@ -1566,14 +1852,14 @@ const MatchGame = ({ onBack, updateProgress }) => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: '14px' }}>⏱️</span>
-              <span style={{
+              <span className="match-game-timer" style={{
                 fontWeight: '700',
                 fontSize: '16px',
                 color: timer <= 10 ? '#ef4444' : timer <= 20 ? '#f59e0b' : '#10b981',
                 minWidth: '28px'
               }}>{timer}s</span>
             </div>
-            <div style={{
+            <div className="match-game-score" style={{
               background: '#5C6AC4',
               padding: '2px 14px',
               borderRadius: '8px',
@@ -1581,13 +1867,12 @@ const MatchGame = ({ onBack, updateProgress }) => {
               fontWeight: '700',
               fontSize: '15px'
             }}>
-              {score}
+              {matches}
             </div>
           </div>
         </div>
 
-        {/* PROGRESS - Minimal */}
-        <div style={{ maxWidth: '700px', margin: '0 auto 12px' }}>
+        <div className="match-game-progress" style={{ maxWidth: '700px', margin: '0 auto 12px' }}>
           <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.35)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{
               height: '100%',
@@ -1598,8 +1883,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           </div>
         </div>
 
-        {/* CARDS - Clean Grid */}
-        <div style={{
+        <div className="match-game-cards" style={{
           maxWidth: '700px',
           margin: '0 auto',
           display: 'grid',
@@ -1613,12 +1897,14 @@ const MatchGame = ({ onBack, updateProgress }) => {
           {cards.map((card, index) => (
             <div
               key={card.id}
+              className="match-game-card"
               onClick={() => handleCardClick(index)}
               style={{
                 aspectRatio: '1',
                 cursor: card.isMatched || flippedCards.includes(index) || isLocked ? 'default' : 'pointer',
                 opacity: card.isMatched ? 0.4 : 1,
-                perspective: '800px'
+                perspective: '800px',
+                touchAction: 'manipulation'
               }}
             >
               <div
@@ -1631,8 +1917,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
                   transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
               >
-                {/* Back */}
                 <div
+                  className="match-game-card-back"
                   style={{
                     position: 'absolute',
                     width: '100%',
@@ -1651,8 +1937,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
                   ✦
                 </div>
 
-                {/* Front */}
                 <div
+                  className="match-game-card-front"
                   style={{
                     position: 'absolute',
                     width: '100%',
@@ -1674,15 +1960,18 @@ const MatchGame = ({ onBack, updateProgress }) => {
                     color: '#1E293B'
                   }}
                 >
-                  {card.type === 'emoji' ? card.content : card.content}
+                  {card.type === 'emoji' ? (
+                    <span className="match-game-card-front-emoji">{card.content}</span>
+                  ) : (
+                    card.content
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* FOOTER - Clean */}
-        <div style={{
+        <div className="match-game-footer" style={{
           maxWidth: '700px',
           margin: '12px auto 0',
           display: 'flex',
@@ -1720,7 +2009,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
         padding: '20px'
       }}>
         {bgAnimationStyle}
-        <div style={{
+        <div className="match-game-result" style={{
           background: 'white',
           borderRadius: '24px',
           padding: '36px',
@@ -1743,13 +2032,18 @@ const MatchGame = ({ onBack, updateProgress }) => {
           </h2>
           
           <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '16px' }}>
-            {score} points • {matches} pairs • {accuracy}% accuracy
+            {matches} pairs • {attempts} attempts • {accuracy}% accuracy
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '20px' }}>
+          <div className="match-game-result-stats" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '8px',
+            marginBottom: '20px'
+          }}>
             <div style={{ padding: '10px', background: '#F8FAFC', borderRadius: '10px' }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#5C6AC4' }}>{score}</div>
-              <div style={{ fontSize: '10px', color: '#64748B' }}>Score</div>
+              <div style={{ fontSize: '20px', fontWeight: '700', color: '#5C6AC4' }}>{matches}</div>
+              <div style={{ fontSize: '10px', color: '#64748B' }}>Pairs</div>
             </div>
             <div style={{ padding: '10px', background: '#F8FAFC', borderRadius: '10px' }}>
               <div style={{ fontSize: '20px', fontWeight: '700', color: '#5C6AC4' }}>{attempts}</div>
@@ -1770,16 +2064,16 @@ const MatchGame = ({ onBack, updateProgress }) => {
           )}
 
           <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-            <button onClick={() => setShowLeaderboard(true)} style={{ padding: '11px', background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+            <button onClick={() => setShowLeaderboard(true)} style={{ padding: '11px', background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', touchAction: 'manipulation' }}>
               🏆 Leaderboard
             </button>
-            <button onClick={handleRestart} style={{ padding: '11px', background: '#5C6AC4', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+            <button onClick={handleRestart} style={{ padding: '11px', background: '#5C6AC4', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', touchAction: 'manipulation' }}>
               🔄 Play Again
             </button>
-            <button onClick={() => setGameState('intro')} style={{ padding: '11px', background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+            <button onClick={() => setGameState('intro')} style={{ padding: '11px', background: 'transparent', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', touchAction: 'manipulation' }}>
               ← Back to Menu
             </button>
-            <button onClick={onBack} style={{ padding: '11px', background: 'transparent', color: '#94a3b8', border: '1px solid #E2E8F0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+            <button onClick={onBack} style={{ padding: '11px', background: 'transparent', color: '#94a3b8', border: '1px solid #E2E8F0', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', touchAction: 'manipulation' }}>
               ← Exit
             </button>
           </div>

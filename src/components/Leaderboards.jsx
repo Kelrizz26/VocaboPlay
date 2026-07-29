@@ -182,7 +182,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   };
 
   // ============================================================
-  // ===== FETCH LEADERBOARD - FIXED QUERY =====
+  // ===== FETCH LEADERBOARD - FIXED MERGE LOGIC =====
   // ============================================================
   const fetchLeaderboardData = useCallback(async () => {
     setLoading(true);
@@ -198,8 +198,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
       console.log('📊 Sort field:', sortField);
 
-      // FIXED: Removed where clause to avoid composite index requirement
-      // Filtering is done in code instead
       const q = query(
         usersRef,
         orderBy(sortField, 'desc'),
@@ -210,7 +208,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       
       console.log('📊 Snapshot size:', snapshot.size);
       
-      // Filter out users with null stats
+      // FIXED: Use Firebase data as primary source, local storage as fallback ONLY
       const firebaseUsers = snapshot.docs
         .map((doc, index) => {
           const data = doc.data();
@@ -247,38 +245,31 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               correctAnswers: stats.correctAnswers || 0,
               totalQuestions: stats.totalQuestions || 0
             },
-            isLocal: false
+            isLocal: false,
+            // Store Firebase data as source of truth
+            _source: 'firebase'
           };
         })
         .filter(user => user !== null);
 
-      // 2. GET LOCAL DATA (for backup/merge)
+      // 2. GET LOCAL DATA (for backup/merge - ONLY for users NOT in Firebase)
       const localData = getLeaderboard();
       console.log('📊 Local data from localStorage:', localData.length);
 
-      // 3. CREATE MAP FOR MERGING
+      // 3. CREATE MAP - PRIORITIZE FIREBASE DATA
       const mergedMap = new Map();
       
+      // First, add all Firebase users (they take priority)
       firebaseUsers.forEach(user => {
         if (user) mergedMap.set(user.id, { ...user });
       });
       
+      // Then, add local users ONLY if they don't exist in Firebase
       localData.forEach(localUser => {
         const userId = localUser.userId;
         
-        if (mergedMap.has(userId)) {
-          const existing = mergedMap.get(userId);
-          const stats = existing.stats || {};
-          existing.stats = {
-            totalPoints: Math.max(stats.totalPoints || 0, localUser.totalPoints || 0),
-            wordsLearned: Math.max(stats.wordsLearned || 0, localUser.wordsLearned || 0),
-            gamesPlayed: Math.max(stats.gamesPlayed || 0, localUser.gamesPlayed || 0),
-            longestStreak: Math.max(stats.longestStreak || 0, localUser.streak || 0),
-            level: Math.max(stats.level || 1, localUser.level || 1)
-          };
-          existing.progress = existing.stats;
-          mergedMap.set(userId, existing);
-        } else {
+        // CRITICAL FIX: Only add local user if NOT already in Firebase
+        if (!mergedMap.has(userId)) {
           mergedMap.set(userId, {
             id: userId,
             rank: mergedMap.size + 1,
@@ -300,8 +291,12 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               longestStreak: localUser.streak || 0,
               level: localUser.level || 1
             },
-            isLocal: true
+            isLocal: true,
+            _source: 'local'
           });
+        } else {
+          // If user exists in Firebase, DO NOT override with local data
+          console.log(`⚠️ User ${userId} already in Firebase, skipping local data`);
         }
       });
 
@@ -376,7 +371,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   }, [fetchLeaderboardData]);
 
   // ============================================================
-  // ===== REAL-TIME LISTENER - FIXED =====
+  // ===== REAL-TIME LISTENER - FIXED MERGE LOGIC =====
   // ============================================================
   useEffect(() => {
     // Clean up previous listener
@@ -387,7 +382,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
     const usersRef = collection(db, 'users');
     
-    // FIXED: Removed where clause to avoid composite index requirement
     const q = query(
       usersRef,
       orderBy('stats.totalPoints', 'desc'),
@@ -424,7 +418,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   longestStreak: stats.longestStreak || 0,
                   level: stats.level || 1
                 },
-                isLocal: false
+                isLocal: false,
+                _source: 'firebase'
               };
             })
             .filter(user => user !== null);
@@ -432,25 +427,15 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
           const localData = getLeaderboard();
           const mergedMap = new Map();
           
+          // First, add all Firebase users
           firebaseUsers.forEach(user => {
             if (user) mergedMap.set(user.id, { ...user });
           });
           
+          // Then, add local users ONLY if not in Firebase
           localData.forEach(localUser => {
             const userId = localUser.userId;
-            if (mergedMap.has(userId)) {
-              const existing = mergedMap.get(userId);
-              const stats = existing.stats || {};
-              existing.stats = {
-                totalPoints: Math.max(stats.totalPoints || 0, localUser.totalPoints || 0),
-                wordsLearned: Math.max(stats.wordsLearned || 0, localUser.wordsLearned || 0),
-                gamesPlayed: Math.max(stats.gamesPlayed || 0, localUser.gamesPlayed || 0),
-                longestStreak: Math.max(stats.longestStreak || 0, localUser.streak || 0),
-                level: Math.max(stats.level || 1, localUser.level || 1)
-              };
-              existing.progress = existing.stats;
-              mergedMap.set(userId, existing);
-            } else {
+            if (!mergedMap.has(userId)) {
               mergedMap.set(userId, {
                 id: userId,
                 rank: mergedMap.size + 1,
@@ -472,9 +457,11 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   longestStreak: localUser.streak || 0,
                   level: localUser.level || 1
                 },
-                isLocal: true
+                isLocal: true,
+                _source: 'local'
               });
             }
+            // Don't override Firebase data with local data
           });
 
           let mergedData = Array.from(mergedMap.values());

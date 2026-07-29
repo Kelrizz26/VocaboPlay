@@ -213,7 +213,7 @@ const generateBlankPositions = (word, numBlanks) => {
 };
 
 // Time in seconds for life refill
-const REFILL_TIME = 1800;
+const REFILL_TIME = 2;
 
 // ============================================================
 // ===== LEVEL CONFIGURATION =====
@@ -1036,7 +1036,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== ✅ NEW: SAVE TO FIREBASE =====
+  // ===== ✅ FIXED: SAVE TO FIREBASE - 1 POINT ONLY =====
   // ============================================================
   const saveGameToFirebase = async () => {
     if (!currentUser) {
@@ -1053,7 +1053,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
 
     const gameData = {
       gameType: 'wordPics',
-      pointsEarned: pointsEarned * 10,
+      pointsEarned: pointsEarned, // ✅ FIXED: 1 point per correct answer (was pointsEarned * 10)
       newWordsLearned: totalCorrect,
       correctAnswers: totalCorrect,
       totalQuestions: totalQuestionsAnswered,
@@ -1080,7 +1080,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== SAVE TO FIREBASE ON LEVEL UP =====
+  // ===== ✅ FIXED: SAVE TO FIREBASE ON LEVEL UP - 1 POINT ONLY =====
   // ============================================================
   const saveProgressOnLevelUp = async () => {
     if (!currentUser) return;
@@ -1091,7 +1091,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     
     const gameData = {
       gameType: 'wordPics',
-      pointsEarned: pointsEarned * 5,
+      pointsEarned: pointsEarned, // ✅ FIXED: 1 point per correct answer (was pointsEarned * 5)
       newWordsLearned: Math.min(totalCorrect, 5),
       correctAnswers: totalCorrect,
       totalQuestions: questionNumber || 10,
