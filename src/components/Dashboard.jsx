@@ -576,8 +576,12 @@ const Dashboard = () => {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Poppins', system-ui, sans-serif; background: ${colors.bg}; }
         .menu-item { transition: background 0.15s ease, color 0.15s ease; }
-        .menu-item:hover { background: rgba(255,255,255,0.12); }
-        .menu-item.active { background: rgba(255,255,255,0.18); border-left: 3px solid #ffffff; padding-left: 22px; }
+        .menu-item:hover { background: rgba(255,255,255,0.15); }
+        .menu-item.active { 
+          background: rgba(255,255,255,0.20); 
+          border-left: 3px solid #ffffff; 
+          padding-left: 22px; 
+        }
         .shortcut-card { transition: border-color 0.15s ease, background 0.15s ease; }
         .shortcut-card:hover { border-color: ${colors.accent}; background: ${colors.accentSoft}; }
 
@@ -634,12 +638,13 @@ const Dashboard = () => {
       `}</style>
 
       {/* SIDEBAR - Moved outside dashboard-container (which has transform/animation)
-          so position:fixed remains stable when scrolling. Background is now violet. */}
+          so position:fixed remains stable when scrolling. 
+          Background color: EXACT SAME AS WELCOME SECTION */}
       <div
         className={`sidebar-fixed ${isSidebarVisible ? 'open' : ''}`}
         style={{
           width: '260px',
-          background: '#6C5CE7', // VIOLET background - only this was changed
+          background: '#6C5CE7', // VIOLET - same as welcome section background
           color: '#ffffff',
           display: 'flex',
           flexDirection: 'column',
@@ -652,11 +657,12 @@ const Dashboard = () => {
           zIndex: 1000,
           transition: 'transform 0.3s ease',
           transform: isSidebarVisible ? 'translateX(0)' : 'translateX(-100%)',
+          boxShadow: '4px 0 20px rgba(108, 92, 231, 0.3)',
         }}
       >
         <div style={{
           padding: '24px 24px',
-          fontSize: '20px',
+          fontSize: '22px',
           fontWeight: 700,
           borderBottom: '1px solid rgba(255,255,255,0.15)',
           letterSpacing: '-0.3px',
@@ -664,34 +670,35 @@ const Dashboard = () => {
           fontFamily,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src="src/image/logo.png" alt="VocaboPlay" style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'block', flexShrink: 0 }} />
-            <span>VocaboPlay</span>
+            <img src="src/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'block', flexShrink: 0 }} />
+            <span style={{ fontSize: '20px' }}>VocaboPlay</span>
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: '16px 0' }}>
+        <nav style={{ flex: 1, padding: '20px 0' }}>
           {menuItems.map((item) => (
             <div
               key={item.name}
               className={`menu-item ${activeMenu === item.name ? 'active' : ''}`}
               onClick={() => changeMenu(item.name)}
               style={{
-                padding: '11px 24px',
-                margin: '2px 12px',
+                padding: '14px 24px',
+                margin: '4px 12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: '14px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: activeMenu === item.name ? 600 : 500,
+                fontSize: '17px', // PALAKIHIN ANG TEXT SIZE
+                fontWeight: activeMenu === item.name ? 700 : 500,
                 color: '#ffffff',
                 fontFamily,
                 background: 'transparent',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 borderLeft: '3px solid transparent',
+                letterSpacing: '0.3px',
               }}
             >
-              <span style={{ fontSize: '16px', width: '18px', textAlign: 'center' }}>{item.icon}</span>
+              <span style={{ fontSize: '20px', width: '22px', textAlign: 'center' }}>{item.icon}</span>
               <span>{item.name}</span>
             </div>
           ))}
@@ -705,21 +712,22 @@ const Dashboard = () => {
             className="menu-item"
             onClick={() => changeMenu('My Profile')}
             style={{
-              padding: '11px 24px',
-              margin: '0 12px',
+              padding: '14px 24px',
+              margin: '4px 12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: '14px',
               cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: activeMenu === 'My Profile' ? 600 : 500,
+              fontSize: '17px', // PALAKIHIN ANG TEXT SIZE
+              fontWeight: activeMenu === 'My Profile' ? 700 : 500,
               color: '#ffffff',
               fontFamily,
               background: 'transparent',
-              borderRadius: '8px',
+              borderRadius: '10px',
+              letterSpacing: '0.3px',
             }}
           >
-            <span style={{ fontSize: '16px', width: '18px', textAlign: 'center' }}>⊙</span>
+            <span style={{ fontSize: '20px', width: '22px', textAlign: 'center' }}>⊙</span>
             <span>Profile</span>
           </div>
         </div>
@@ -952,9 +960,9 @@ const Dashboard = () => {
           {/* Dashboard Home */}
           {!currentGame && activeMenu === 'Dashboard' && (
             <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-              {/* Welcome Section */}
+              {/* Welcome Section - STAYS THE SAME, NOT CHANGED */}
               <div className="dashboard-welcome" style={{
-                background: colors.accent,
+                background: '#6C5CE7', // VIOLET - same color
                 borderRadius: '12px',
                 padding: '24px 32px',
                 marginBottom: '24px',
@@ -970,7 +978,7 @@ const Dashboard = () => {
                   <h2 className="dashboard-welcome-title" style={{ ...textType.h1, color: 'white', margin: '0 0 6px 0' }}>Welcome back, {displayName}</h2>
                   <p style={{ fontSize: '14px', opacity: '0.9', marginBottom: '18px', fontFamily }}>Continue your vocabulary journey with {Math.max(0, 30 - (displayProgress.wordsLearned || 0))} words to master.</p>
                   <div className="dashboard-welcome-buttons" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <button onClick={() => changeMenu('Games')} style={{ background: 'white', color: colors.accent, border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily }}>Continue Learning</button>
+                    <button onClick={() => changeMenu('Games')} style={{ background: 'white', color: '#6C5CE7', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily }}>Continue Learning</button>
                     <button onClick={() => changeMenu('Word Library')} style={{ background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.5)', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily }}>Browse Library</button>
                   </div>
                 </div>

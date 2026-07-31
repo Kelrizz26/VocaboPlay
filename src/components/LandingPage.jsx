@@ -158,7 +158,75 @@ const Landing = () => {
               grid-column: span 1;
             }
           }
-          
+
+          /* ===== STATS STRIP ===== */
+          .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 64px auto 0;
+            position: relative;
+            z-index: 1;
+          }
+          @media (max-width: 768px) {
+            .stats-strip {
+              grid-template-columns: repeat(2, 1fr);
+              gap: 16px;
+              margin-top: 48px;
+            }
+          }
+
+          /* ===== GAMES SHOWCASE GRID ===== */
+          .games-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+          }
+          @media (max-width: 992px) {
+            .games-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+          @media (max-width: 560px) {
+            .games-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          /* ===== FEATURES 4-CARD GRID ===== */
+          .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+          }
+          @media (max-width: 992px) {
+            .grid-4 {
+              grid-template-columns: repeat(2, 1fr);
+            }
+          }
+          @media (max-width: 480px) {
+            .grid-4 {
+              grid-template-columns: 1fr;
+            }
+          }
+
+          .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+          }
+          .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(108, 92, 231, 0.18);
+          }
+
+          .game-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+          }
+          .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 36px rgba(108, 92, 231, 0.22);
+          }
+
           /* ===== HAMBURGER MENU ===== */
           .hamburger {
             display: none;
@@ -217,7 +285,7 @@ const Landing = () => {
               margin-top: 20px;
               text-align: center !important;
               justify-content: center !important;
-              background: linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%) !important;
+              background: linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%) !important;
               color: white !important;
               border: none !important;
               padding: 14px !important;
@@ -284,13 +352,13 @@ const Landing = () => {
           }}>
             {/* Logo */}
             <div style={{
-              background: 'linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%)',
+              background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)',
               color: 'white',
               padding: isScrolled ? '8px 20px' : '12px 28px',
               borderRadius: '12px',
               fontWeight: '700',
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(124, 111, 214, 0.3)',
+              boxShadow: '0 4px 15px rgba(108, 92, 231, 0.3)',
               transition: 'all 0.3s ease',
               flexShrink: 0,
             }}>
@@ -303,11 +371,11 @@ const Landing = () => {
               </div>
             </div>
 
-            {/* ===== DESKTOP NAV ===== */}
+       {/* ===== DESKTOP NAV ===== */}
             <div className="nav-desktop" style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '30px'
+              gap: '24px'
             }}>
               <button
                 onClick={() => scrollToSection('about')}
@@ -325,13 +393,68 @@ const Landing = () => {
                   transition: 'all 0.3s ease',
                   whiteSpace: 'nowrap',
                 }}
+                onMouseOver={e => e.currentTarget.style.color = '#6C5CE7'}
+                onMouseOut={e => e.currentTarget.style.color = '#555'}
               >
-                <svg width={isScrolled ? "14" : "16"} height={isScrolled ? "14" : "16"} viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width={isScrolled ? "14" : "16"} height={isScrolled ? "14" : "16"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="12" y1="16" x2="12" y2="12"/>
                   <line x1="12" y1="8" x2="12.01" y2="8"/>
                 </svg>
                 About
+              </button>
+              <button
+                onClick={() => scrollToSection('why')}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: isScrolled ? '14px' : '15px', 
+                  fontWeight: '500', 
+                  color: '#555', 
+                  fontFamily: "'Poppins', sans-serif", 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseOver={e => e.currentTarget.style.color = '#6C5CE7'}
+                onMouseOut={e => e.currentTarget.style.color = '#555'}
+              >
+                <svg width={isScrolled ? "14" : "16"} height={isScrolled ? "14" : "16"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                Why
+              </button>
+              <button
+                onClick={() => scrollToSection('how')}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: isScrolled ? '14px' : '15px', 
+                  fontWeight: '500', 
+                  color: '#555', 
+                  fontFamily: "'Poppins', sans-serif", 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseOver={e => e.currentTarget.style.color = '#6C5CE7'}
+                onMouseOut={e => e.currentTarget.style.color = '#555'}
+              >
+                <svg width={isScrolled ? "14" : "16"} height={isScrolled ? "14" : "16"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"/>
+                  <line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                How
               </button>
               <button
                 onClick={() => scrollToSection('start')}
@@ -349,8 +472,10 @@ const Landing = () => {
                   transition: 'all 0.3s ease',
                   whiteSpace: 'nowrap',
                 }}
+                onMouseOver={e => e.currentTarget.style.color = '#6C5CE7'}
+                onMouseOut={e => e.currentTarget.style.color = '#555'}
               >
-                <svg width={isScrolled ? "14" : "16"} height={isScrolled ? "14" : "16"} viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width={isScrolled ? "14" : "16"} height={isScrolled ? "14" : "16"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
                 Start Now
@@ -358,7 +483,7 @@ const Landing = () => {
               <button
                 onClick={() => navigate('/login')}
                 style={{
-                  background: 'linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%)',
+                  background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)',
                   color: 'white',
                   border: 'none',
                   padding: isScrolled ? '10px 24px' : '12px 30px',
@@ -366,7 +491,7 @@ const Landing = () => {
                   fontSize: isScrolled ? '14px' : '15px',
                   fontWeight: '600',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(124, 111, 214, 0.3)',
+                  boxShadow: '0 4px 15px rgba(108, 92, 231, 0.3)',
                   fontFamily: "'Poppins', sans-serif",
                   transition: 'all 0.3s ease',
                   whiteSpace: 'nowrap',
@@ -377,7 +502,7 @@ const Landing = () => {
                 Log in
               </button>
             </div>
-
+            
             {/* ===== HAMBURGER BUTTON ===== */}
             <button 
               className="hamburger"
@@ -390,15 +515,32 @@ const Landing = () => {
             {/* ===== MOBILE NAV ===== */}
             <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
               <button onClick={() => scrollToSection('about')}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c6fd6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6C5CE7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px' }}>
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="12" y1="16" x2="12" y2="12"/>
                   <line x1="12" y1="8" x2="12.01" y2="8"/>
                 </svg>
                 About
               </button>
+              <button onClick={() => scrollToSection('why')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6C5CE7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px' }}>
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                Why
+              </button>
+              <button onClick={() => scrollToSection('how')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6C5CE7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px' }}>
+                  <line x1="8" y1="6" x2="21" y2="6"/>
+                  <line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                How
+              </button>
               <button onClick={() => scrollToSection('start')}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c6fd6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6C5CE7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px' }}>
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
                 Start Now
@@ -430,7 +572,7 @@ const Landing = () => {
             width: '350px', 
             height: '350px', 
             borderRadius: '50%', 
-            background: 'rgba(124, 111, 214, 0.08)', 
+            background: 'rgba(108, 92, 231, 0.08)', 
             top: '50px', 
             right: '5%',
             animation: 'heroFloat1 10s ease-in-out infinite',
@@ -441,7 +583,7 @@ const Landing = () => {
             width: '250px', 
             height: '250px', 
             borderRadius: '50%', 
-            background: 'rgba(155, 141, 232, 0.06)', 
+            background: 'rgba(139, 127, 238, 0.06)', 
             bottom: '20px', 
             left: '8%',
             animation: 'heroFloat2 12s ease-in-out infinite',
@@ -452,7 +594,7 @@ const Landing = () => {
             width: '180px', 
             height: '180px', 
             borderRadius: '50%', 
-            background: 'rgba(124, 111, 214, 0.05)', 
+            background: 'rgba(108, 92, 231, 0.05)', 
             top: '40%', 
             right: '15%',
             animation: 'heroFloat3 14s ease-in-out infinite',
@@ -463,7 +605,7 @@ const Landing = () => {
             width: '220px', 
             height: '220px', 
             borderRadius: '50%', 
-            background: 'rgba(155, 141, 232, 0.07)', 
+            background: 'rgba(139, 127, 238, 0.07)', 
             bottom: '30%', 
             left: '12%',
             animation: 'heroFloat1 11s ease-in-out infinite',
@@ -503,6 +645,52 @@ const Landing = () => {
             }}>
               Learn New Words, Play Smart, Level Up Your Vocabulary
             </h1>
+            <p style={{
+              fontSize: 'clamp(15px, 1.2vw, 18px)',
+              color: '#666',
+              maxWidth: '620px',
+              margin: '0 auto',
+              lineHeight: '1.7',
+              fontFamily: "'Poppins', sans-serif",
+            }}>
+              Six interactive game modes, a growing word library, and progress tracking that keeps you coming back — vocabulary learning that actually feels like play.
+            </p>
+
+            <div className="stats-strip">
+              {[
+                { value: '6', label: 'Game Modes' },
+                { value: '3', label: 'Difficulty Levels' },
+                { value: '100%', label: 'Free to Start' },
+                { value: '24/7', label: 'Learn Anytime' },
+              ].map((stat, i) => (
+                <div key={i} style={{
+                  background: 'white',
+                  borderRadius: '16px',
+                  padding: '18px 12px',
+                  boxShadow: '0 6px 20px rgba(108, 92, 231, 0.10)',
+                  border: '1px solid rgba(108, 92, 231, 0.08)',
+                }}>
+                  <div style={{
+                    fontSize: 'clamp(22px, 2.4vw, 28px)',
+                    fontWeight: '800',
+                    color: '#6C5CE7',
+                    fontFamily: "'Poppins', sans-serif",
+                    lineHeight: 1.1,
+                  }}>
+                    {stat.value}
+                  </div>
+                  <div style={{
+                    fontSize: 'clamp(11px, 1vw, 13px)',
+                    color: '#777',
+                    fontWeight: '600',
+                    marginTop: '4px',
+                    fontFamily: "'Poppins', sans-serif",
+                  }}>
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -603,102 +791,157 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ===== WHY CHOOSE ===== */}
-        <section style={{ padding: '60px 20px', background: '#ffffff' }}>
+        {/* ===== GAMES SHOWCASE ===== */}
+        <section style={{ padding: '60px 20px', background: '#f8f7ff' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <h2 style={{ 
-              fontSize: 'clamp(28px, 4vw, 36px)', 
-              fontWeight: '700', 
-              color: '#1a1a1a', 
-              textAlign: 'center', 
-              marginBottom: '40px', 
-              lineHeight: '1.3', 
-              fontFamily: "'Poppins', sans-serif" 
+            <h2 style={{
+              fontSize: 'clamp(28px, 4vw, 36px)',
+              fontWeight: '700',
+              color: '#1a1a1a',
+              textAlign: 'center',
+              marginBottom: '14px',
+              lineHeight: '1.3',
+              fontFamily: "'Poppins', sans-serif"
             }}>
-              Why Choose VocaboPlay?
+              Six Ways to Play, One Goal: Bigger Vocabulary
             </h2>
-            <div className="grid-3">
-              <div style={{ 
-                textAlign: 'center', 
-                padding: 'clamp(20px, 3vw, 30px)', 
-                borderRadius: '16px', 
-                background: 'white', 
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)', 
-                transition: 'all 0.3s ease', 
-                height: '100%' 
-              }}
-                onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'}
-                onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                <h3 style={{ 
-                  fontSize: 'clamp(20px, 2vw, 22px)', 
-                  fontWeight: '700', 
-                  color: '#7c6fd6', 
-                  marginBottom: '15px', 
-                  fontFamily: "'Poppins', sans-serif" 
+            <p style={{
+              fontSize: 'clamp(15px, 1.1vw, 17px)',
+              color: '#666',
+              textAlign: 'center',
+              maxWidth: '640px',
+              margin: '0 auto 40px',
+              lineHeight: '1.7',
+              fontFamily: "'Poppins', sans-serif",
+            }}>
+              Every learner is different, so VocaboPlay gives you six distinct game modes — mix and match to keep practice fresh.
+            </p>
+            <div className="games-grid">
+              {[
+                { title: 'Word Pics', desc: 'Match words to pictures and build visual memory.' },
+                { title: 'Quiz Master', desc: 'Timed multiple-choice quizzes that sharpen recall.' },
+                { title: 'Match Game', desc: 'Pair words with meanings in a fast-paced memory game.' },
+                { title: 'Guess What', desc: 'Decode clues and guess the hidden vocabulary word.' },
+                { title: 'Short Story', desc: 'Read bite-sized stories, then answer comprehension quizzes.' },
+                { title: 'Sentence Builder', desc: 'Arrange words into correct, meaningful sentences.' },
+              ].map((game, i) => (
+                <div key={i} className="game-card" style={{
+                  background: 'white',
+                  borderRadius: '18px',
+                  overflow: 'hidden',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.06)',
+                  border: '1px solid rgba(108, 92, 231, 0.08)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  padding: '32px 26px',
+                  height: '100%',
                 }}>
-                  Fun Learning Experience
-                </h3>
-                <p style={{ 
-                  fontSize: 'clamp(15px, 1vw, 16px)', 
-                  color: '#666', 
-                  lineHeight: '1.6', 
-                  fontFamily: "'Poppins', sans-serif" 
+                  <div style={{
+                    width: '48px',
+                    height: '4px',
+                    borderRadius: '2px',
+                    background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)',
+                    marginBottom: '18px',
+                  }}></div>
+                  <h3 style={{
+                    fontSize: 'clamp(17px, 1.4vw, 19px)',
+                    fontWeight: '700',
+                    color: '#1a1a1a',
+                    marginBottom: '10px',
+                    fontFamily: "'Poppins', sans-serif",
+                  }}>
+                    {game.title}
+                  </h3>
+                  <p style={{
+                    fontSize: 'clamp(13px, 1vw, 14px)',
+                    color: '#666',
+                    lineHeight: '1.6',
+                    fontFamily: "'Poppins', sans-serif",
+                    margin: 0,
+                  }}>
+                    {game.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== WHY CHOOSE ===== */}
+        <section id="why" style={{ padding: '60px 20px', background: '#ffffff' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px',
+              flexWrap: 'wrap',
+              marginBottom: '40px',
+              textAlign: 'center',
+            }}>
+              <img
+                src="src/image/mascot-happy.png"
+                alt="Happy Mascot"
+                className="animate-pulse-custom"
+                style={{ display: 'block', width: 'min(90px, 20%)', height: 'auto', maxWidth: '90px' }}
+              />
+              <h2 style={{
+                fontSize: 'clamp(28px, 4vw, 36px)',
+                fontWeight: '700',
+                color: '#1a1a1a',
+                lineHeight: '1.3',
+                margin: 0,
+                fontFamily: "'Poppins', sans-serif"
+              }}>
+                Why Choose VocaboPlay?
+              </h2>
+            </div>
+            <div className="grid-4">
+              {[
+                { icon: '🎮', title: 'Fun Learning Experience', desc: 'Say goodbye to boring memorization! Our interactive games make vocabulary learning enjoyable and engaging.' },
+                { icon: '🧠', title: 'Effective Learning', desc: 'Our methods use repetition and active recall to help you remember words better, longer.' },
+                { icon: '📈', title: 'Track Your Progress', desc: 'Watch your word count, streaks, and accuracy grow with clear, motivating stats.' },
+                { icon: '🌍', title: 'Learn Anywhere', desc: 'Fully responsive on mobile, tablet, and desktop — practice whenever you have a few minutes.' },
+              ].map((feature, i) => (
+                <div key={i} className="feature-card" style={{
+                  textAlign: 'center',
+                  padding: 'clamp(20px, 3vw, 28px)',
+                  borderRadius: '16px',
+                  background: 'white',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  border: '1px solid rgba(108, 92, 231, 0.06)',
+                  height: '100%'
                 }}>
-                  Say goodbye to boring memorization! Our interactive games and activities make vocabulary learning enjoyable and engaging.
-                </p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }} className="animate-pulse-custom">
-                <img 
-                  src="src/image/mascot-happy.png" 
-                  alt="Happy Mascot" 
-                  style={{ 
-                    display: 'block',
-                    width: 'min(220px, 60%)', 
-                    height: 'auto',
-                    margin: '0 auto',
-                    maxWidth: '220px',
-                  }} 
-                />
-              </div>
-              <div style={{ 
-                textAlign: 'center', 
-                padding: 'clamp(20px, 3vw, 30px)', 
-                borderRadius: '16px', 
-                background: 'white', 
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)', 
-                transition: 'all 0.3s ease', 
-                height: '100%' 
-              }}
-                onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'}
-                onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                <h3 style={{ 
-                  fontSize: 'clamp(20px, 2vw, 22px)', 
-                  fontWeight: '700', 
-                  color: '#7c6fd6', 
-                  marginBottom: '15px', 
-                  fontFamily: "'Poppins', sans-serif" 
-                }}>
-                  Effective Learning
-                </h3>
-                <p style={{ 
-                  fontSize: 'clamp(15px, 1vw, 16px)', 
-                  color: '#666', 
-                  lineHeight: '1.6', 
-                  fontFamily: "'Poppins', sans-serif" 
-                }}>
-                  Our learning methods help you remember words better and build vocabulary over time.
-                </p>
-              </div>
+                  <div style={{ fontSize: '36px', marginBottom: '12px' }}>{feature.icon}</div>
+                  <h3 style={{
+                    fontSize: 'clamp(17px, 1.6vw, 19px)',
+                    fontWeight: '700',
+                    color: '#6C5CE7',
+                    marginBottom: '10px',
+                    fontFamily: "'Poppins', sans-serif"
+                  }}>
+                    {feature.title}
+                  </h3>
+                  <p style={{
+                    fontSize: 'clamp(13px, 1vw, 15px)',
+                    color: '#666',
+                    lineHeight: '1.6',
+                    fontFamily: "'Poppins', sans-serif"
+                  }}>
+                    {feature.desc}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* ===== HOW IT WORKS ===== */}
-        <section style={{ 
+        <section id="how" style={{ 
           padding: '60px 20px', 
-          background: 'linear-gradient(135deg, #9b8de8 0%, #7c6fd6 50%, #6b5ec5 100%)',
+          background: 'linear-gradient(135deg, #8B7FEE 0%, #6C5CE7 50%, #5A4BD4 100%)',
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -763,7 +1006,7 @@ const Landing = () => {
                   background: 'white', 
                   transition: 'all 0.3s ease', 
                   alignItems: 'center', 
-                  boxShadow: '0 4px 15px rgba(124, 111, 214, 0.1)',
+                  boxShadow: '0 4px 15px rgba(108, 92, 231, 0.1)',
                   flexDirection: window.innerWidth < 480 ? 'column' : 'row',
                   textAlign: window.innerWidth < 480 ? 'center' : 'left',
                 }}
@@ -773,7 +1016,7 @@ const Landing = () => {
                   <div style={{ 
                     width: window.innerWidth < 480 ? '50px' : '60px', 
                     height: window.innerWidth < 480 ? '50px' : '60px', 
-                    background: 'linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%)', 
+                    background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)', 
                     color: 'white', 
                     borderRadius: '50%', 
                     display: 'flex', 
@@ -825,7 +1068,7 @@ const Landing = () => {
             width: '80px', 
             height: '80px', 
             borderRadius: '50%', 
-            background: 'linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%)',
+            background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)',
             opacity: 0.15,
             top: '10%', 
             left: '10%',
@@ -836,7 +1079,7 @@ const Landing = () => {
             width: '60px', 
             height: '60px', 
             borderRadius: '50%', 
-            background: 'linear-gradient(135deg, #9b8de8 0%, #7c6fd6 100%)',
+            background: 'linear-gradient(135deg, #8B7FEE 0%, #6C5CE7 100%)',
             opacity: 0.12,
             top: '20%', 
             right: '15%',
@@ -847,7 +1090,7 @@ const Landing = () => {
             width: '100px', 
             height: '100px', 
             borderRadius: '50%', 
-            background: 'linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%)',
+            background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)',
             opacity: 0.1,
             bottom: '15%', 
             right: '8%',
@@ -858,7 +1101,7 @@ const Landing = () => {
             width: '70px', 
             height: '70px', 
             borderRadius: '50%', 
-            background: 'linear-gradient(135deg, #9b8de8 0%, #7c6fd6 100%)',
+            background: 'linear-gradient(135deg, #8B7FEE 0%, #6C5CE7 100%)',
             opacity: 0.13,
             bottom: '10%', 
             left: '12%',
@@ -901,7 +1144,7 @@ const Landing = () => {
               flexWrap: 'wrap',
             }}>
               <button onClick={() => navigate('/signup')} style={{
-                background: 'linear-gradient(135deg, #7c6fd6 0%, #9b8de8 100%)',
+                background: 'linear-gradient(135deg, #6C5CE7 0%, #8B7FEE 100%)',
                 color: 'white',
                 border: 'none',
                 padding: 'clamp(14px, 2vw, 16px) clamp(30px, 4vw, 45px)',
@@ -909,18 +1152,18 @@ const Landing = () => {
                 fontSize: 'clamp(16px, 1.5vw, 18px)',
                 fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 10px 30px rgba(124, 111, 214, 0.4)',
+                boxShadow: '0 10px 30px rgba(108, 92, 231, 0.4)',
                 transition: 'all 0.3s ease',
                 fontFamily: "'Poppins', sans-serif",
                 width: 'auto',
               }}
                 onMouseOver={e => { 
                   e.currentTarget.style.transform = 'translateY(-5px) scale(1.05)'; 
-                  e.currentTarget.style.boxShadow = '0 15px 40px rgba(124, 111, 214, 0.5)'; 
+                  e.currentTarget.style.boxShadow = '0 15px 40px rgba(108, 92, 231, 0.5)'; 
                 }}
                 onMouseOut={e => { 
                   e.currentTarget.style.transform = 'translateY(0) scale(1)'; 
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(124, 111, 214, 0.4)'; 
+                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(108, 92, 231, 0.4)'; 
                 }}
               >
                 Start Now
