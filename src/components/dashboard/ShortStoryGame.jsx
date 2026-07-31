@@ -1,6 +1,6 @@
 // src/components/dashboard/ShortStoryGame.jsx
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -16,8 +16,10 @@ const REFILL_TIME = 1800; // 30 minutes
 
 // ============================================================
 // ===== SIMPLE CHARACTER =====
+// ===== (memoized so it only re-renders when its own props change,
+// ===== not on every parent re-render from the typewriter effect) =====
 // ============================================================
-const Character3D = ({ emotion, isWalking, isSpeaking }) => {
+const Character3D = React.memo(({ emotion, isWalking, isSpeaking }) => {
   const groupRef = useRef();
   
   useFrame((state) => {
@@ -174,19 +176,68 @@ const Character3D = ({ emotion, isWalking, isSpeaking }) => {
       </Text>
     </group>
   );
-};
+});
+
+// ============================================================
+// ===== FLOATING BOOK =====
+// ===== Each book now animates its own position every frame via
+// ===== useFrame (smooth, stable), instead of recomputing a random
+// ===== position on every React re-render (which caused the jumpy /
+// ===== unstable look whenever the typewriter effect updated text). =====
+// ============================================================
+const FLOATING_BOOK_COLORS = ['#fcd34d', '#f472b6', '#60a5fa', '#34d399', '#5C6AC4', '#fb923c'];
+
+const FloatingBook = React.memo(({ index }) => {
+  const meshRef = useRef();
+  const angle = (index / 6) * Math.PI * 2;
+  // Radius is randomized once per book instance (stable ref), not every render
+  const radiusRef = useRef(2 + Math.random() * 0.5);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      const t = state.clock.elapsedTime;
+      const radius = radiusRef.current;
+      meshRef.current.position.x = Math.cos(angle + t * 0.05) * radius;
+      meshRef.current.position.z = Math.sin(angle + t * 0.05) * radius - 4;
+      meshRef.current.position.y = 0.5 + Math.sin(t * 0.3 + index) * 0.3;
+    }
+  });
+
+  const color = FLOATING_BOOK_COLORS[index % FLOATING_BOOK_COLORS.length];
+
+  return (
+    <mesh ref={meshRef}>
+      <boxGeometry args={[0.2, 0.3, 0.05]} />
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.1} />
+    </mesh>
+  );
+});
 
 // ============================================================
 // ===== 3D LIBRARY SCENE =====
+// ===== Memoized (no props) so it mounts once and stays put instead
+// ===== of re-rendering (and re-rolling all its random book sizes)
+// ===== every time the parent's typewriter state changes. =====
 // ============================================================
-const LibraryScene = () => {
+const LibraryScene = React.memo(() => {
   const groupRef = useRef();
   
-  useFrame(() => {
+  useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(Date.now() * 0.0003) * 0.02;
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
     }
   });
+
+  // Random book sizes computed once and memoized, so the shelves
+  // don't visually "reshuffle" on re-render.
+  const shelfBooks = useMemo(() => {
+    return [-3.5, -1.5, 0.5, 2.5, 4.5].map(() => (
+      Array.from({ length: 10 }).map(() => ({
+        height: 0.2 + Math.random() * 0.2,
+        width: 0.05 + Math.random() * 0.05
+      }))
+    ));
+  }, []);
   
   return (
     <group ref={groupRef}>
@@ -233,15 +284,13 @@ const LibraryScene = () => {
               <meshStandardMaterial color="#5a3a2a" roughness={0.7} />
             </mesh>
           ))}
-          {Array.from({ length: 10 }).map((_, bIdx) => {
+          {shelfBooks[idx].map((book, bIdx) => {
             const bookX = -0.4 + (bIdx % 4) * 0.25;
             const bookY = -0.6 + Math.floor(bIdx / 4) * 1.0;
-            const bookHeight = 0.2 + Math.random() * 0.2;
-            const bookWidth = 0.05 + Math.random() * 0.05;
             const colors = ['#5C6AC4', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#5C6AC4', '#f472b6'];
             return (
               <mesh key={`book-${idx}-${bIdx}`} position={[bookX, bookY, 0.15]}>
-                <boxGeometry args={[bookWidth, bookHeight, 0.25]} />
+                <boxGeometry args={[book.width, book.height, 0.25]} />
                 <meshStandardMaterial color={colors[bIdx % colors.length]} roughness={0.6} />
               </mesh>
             );
@@ -249,21 +298,10 @@ const LibraryScene = () => {
         </group>
       ))}
       
-      {/* Floating books */}
-      {Array.from({ length: 6 }).map((_, i) => {
-        const angle = (i / 6) * Math.PI * 2;
-        const radius = 2 + Math.random() * 0.5;
-        const time = Date.now() / 1000;
-        const colors = ['#fcd34d', '#f472b6', '#60a5fa', '#34d399', '#5C6AC4', '#fb923c'];
-        return (
-          <group key={`float-${i}`} position={[Math.cos(angle + time * 0.05) * radius, 0.5 + Math.sin(time * 0.3 + i) * 0.3, Math.sin(angle + time * 0.05) * radius - 4]}>
-            <mesh>
-              <boxGeometry args={[0.2, 0.3, 0.05]} />
-              <meshStandardMaterial color={colors[i % colors.length]} emissive={colors[i % colors.length]} emissiveIntensity={0.1} />
-            </mesh>
-          </group>
-        );
-      })}
+      {/* Floating books - smooth per-frame animation, no jitter */}
+      {Array.from({ length: 6 }).map((_, i) => (
+        <FloatingBook key={`float-${i}`} index={i} />
+      ))}
       
       {/* Lighting */}
       <ambientLight intensity={0.4} />
@@ -273,7 +311,7 @@ const LibraryScene = () => {
       <directionalLight position={[5, 5, 5]} intensity={0.2} />
     </group>
   );
-};
+});
 
 // ============================================================
 // ===== FIXED VOCABULARY STORY SCENES (NO RANDOMIZATION) =====
@@ -517,7 +555,7 @@ const allScenes = [
 // ============================================================
 const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== GAME STATE =====
-  const [gameState, setGameState] = useState('intro');
+  const [gameState, setGameState] = useState('intro'); // 'intro', 'loading', 'playing', 'gameover', 'finished'
   const [storyScenes, setStoryScenes] = useState(allScenes);
   const [currentScene, setCurrentScene] = useState(0);
   const [score, setScore] = useState(0);
@@ -550,6 +588,9 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== FIREBASE USER =====
   const [currentUser, setCurrentUser] = useState(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
+  
+  // ===== RENDER STATE =====
+  const [isReady, setIsReady] = useState(false);
 
   // ===== REFS =====
   const textTimerRef = useRef(null);
@@ -557,32 +598,51 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   const timerIntervalRef = useRef(null);
   const currentTextRef = useRef('');
   const isSpeakingRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   // ============================================================
   // ===== FIREBASE AUTH - GET CURRENT USER =====
   // ============================================================
   useEffect(() => {
+    isMountedRef.current = true;
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        setIsUserLoaded(true);
-        console.log('✅ ShortStoryGame: User loaded:', user.uid, user.email);
-      } else {
-        setCurrentUser(null);
-        setIsUserLoaded(true);
-        console.log('❌ ShortStoryGame: No user logged in');
+      if (isMountedRef.current) {
+        if (user) {
+          setCurrentUser(user);
+          setIsUserLoaded(true);
+          console.log('✅ ShortStoryGame: User loaded:', user.uid, user.email);
+          // Mark as ready after user is loaded
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setIsReady(true);
+            }
+          }, 100);
+        } else {
+          setCurrentUser(null);
+          setIsUserLoaded(true);
+          console.log('❌ ShortStoryGame: No user logged in');
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setIsReady(true);
+            }
+          }, 100);
+        }
       }
     });
     
-    return () => unsubscribe();
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+    };
   }, []);
 
   // ============================================================
   // ===== SAVE TO FIREBASE =====
   // ============================================================
   const saveGameToFirebase = async (isComplete) => {
-    if (!currentUser) {
-      console.log('⚠️ No user logged in, skipping Firebase save');
+    if (!currentUser || !isMountedRef.current) {
+      console.log('⚠️ No user logged in or component unmounted, skipping Firebase save');
       return;
     }
 
@@ -610,9 +670,15 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       
       if (result.achievements && result.achievements.length > 0) {
         console.log('🏆 New Achievements Unlocked:', result.achievements);
-        setFeedbackMessage(`🏆 New Achievements: ${result.achievements.join(', ')} 🎉`);
-        setShowFeedback(true);
-        setTimeout(() => setShowFeedback(false), 5000);
+        if (isMountedRef.current) {
+          setFeedbackMessage(`🏆 New Achievements: ${result.achievements.join(', ')} 🎉`);
+          setShowFeedback(true);
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setShowFeedback(false);
+            }
+          }, 5000);
+        }
       }
       
       console.log('✅ ShortStory game saved to Firebase successfully!');
@@ -624,7 +690,9 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ============================================================
   // ===== LIVES SYSTEM =====
   // ============================================================
-  const checkAndRefillLives = () => {
+  const checkAndRefillLives = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     const now = Date.now();
     const secondsPassed = (now - lastRefillTime) / 1000;
     if (secondsPassed >= REFILL_TIME && lives < maxLives) {
@@ -636,9 +704,11 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
         lastRefillTime: now
       }));
     }
-  };
+  }, [lives, lastRefillTime, maxLives]);
 
-  const updateTimeRemaining = () => {
+  const updateTimeRemaining = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     const now = Date.now();
     const elapsed = (now - lastRefillTime) / 1000;
     const remaining = Math.max(0, REFILL_TIME - elapsed);
@@ -651,27 +721,23 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     } else {
       setTimeRemaining('');
     }
-  };
+  }, [lives, lastRefillTime, maxLives]);
 
+  // ===== LIVES EFFECTS =====
   useEffect(() => {
     checkAndRefillLives();
     updateTimeRemaining();
+    
     const interval = setInterval(() => {
       checkAndRefillLives();
       updateTimeRemaining();
     }, 1000);
+    
     return () => clearInterval(interval);
-  }, [lives, lastRefillTime, maxLives]);
+  }, [checkAndRefillLives, updateTimeRemaining]);
 
   useEffect(() => {
-    if (lives < maxLives && timeRemaining !== 'Full ❤️') {
-      const interval = setInterval(updateTimeRemaining, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [lives, lastRefillTime, maxLives]);
-
-  useEffect(() => {
-    if (gameState !== 'intro') {
+    if (gameState !== 'intro' && isMountedRef.current) {
       localStorage.setItem('storyquest_lives', JSON.stringify({
         lives: lives,
         lastRefillTime: lastRefillTime
@@ -702,7 +768,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       setLives(maxLives);
       setLastRefillTime(Date.now());
     }
-  }, []);
+  }, [maxLives]);
 
   // ============================================================
   // ===== VOICE NARRATION - FIXED: Sync with typing =====
@@ -719,7 +785,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   }, []);
 
   const speakText = useCallback((text) => {
-    if (!isVoiceEnabled || !window.speechSynthesis) return;
+    if (!isVoiceEnabled || !window.speechSynthesis || !isMountedRef.current) return;
     
     // Cancel any ongoing speech
     if (speechSynthRef.current) {
@@ -730,7 +796,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     isSpeakingRef.current = false;
     
     setTimeout(() => {
-      if (!window.speechSynthesis) return;
+      if (!window.speechSynthesis || !isMountedRef.current) return;
       
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9;
@@ -738,16 +804,22 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       utterance.volume = 0.9;
       utterance.lang = 'en-US';
       utterance.onstart = () => {
-        setIsSpeaking(true);
-        isSpeakingRef.current = true;
+        if (isMountedRef.current) {
+          setIsSpeaking(true);
+          isSpeakingRef.current = true;
+        }
       };
       utterance.onend = () => {
-        setIsSpeaking(false);
-        isSpeakingRef.current = false;
+        if (isMountedRef.current) {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+        }
       };
       utterance.onerror = () => {
-        setIsSpeaking(false);
-        isSpeakingRef.current = false;
+        if (isMountedRef.current) {
+          setIsSpeaking(false);
+          isSpeakingRef.current = false;
+        }
         console.log('⚠️ Speech error, continuing...');
       };
       speechSynthRef.current.speak(utterance);
@@ -757,8 +829,10 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   const stopSpeaking = useCallback(() => {
     if (speechSynthRef.current) {
       speechSynthRef.current.cancel();
-      setIsSpeaking(false);
-      isSpeakingRef.current = false;
+      if (isMountedRef.current) {
+        setIsSpeaking(false);
+        isSpeakingRef.current = false;
+      }
     }
   }, []);
 
@@ -766,12 +840,17 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== TYPEWRITER EFFECT - FIXED: Voice syncs with typing =====
   // ============================================================
   const typeText = useCallback((text, callback) => {
+    if (!isMountedRef.current) return;
+    
     // Stop any existing speech
     stopSpeaking();
     
     setIsTyping(true);
     setDisplayText('');
-    if (textTimerRef.current) clearInterval(textTimerRef.current);
+    if (textTimerRef.current) {
+      clearInterval(textTimerRef.current);
+      textTimerRef.current = null;
+    }
     
     const textToSpeak = text;
     
@@ -783,11 +862,18 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     let index = 0;
     
     textTimerRef.current = setInterval(() => {
+      if (!isMountedRef.current) {
+        clearInterval(textTimerRef.current);
+        textTimerRef.current = null;
+        return;
+      }
+      
       if (index < textToSpeak.length) {
         setDisplayText(prev => prev + textToSpeak[index]);
         index++;
       } else {
         clearInterval(textTimerRef.current);
+        textTimerRef.current = null;
         setIsTyping(false);
         if (callback) callback();
       }
@@ -798,7 +884,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== SAVE PROGRESS =====
   // ============================================================
   const saveGameProgress = useCallback((isComplete = false) => {
-    if (sessionSaved) return;
+    if (sessionSaved || !isMountedRef.current) return;
     setSessionSaved(true);
     
     const totalScenes = storyScenes.length;
@@ -860,11 +946,13 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== TIMER EFFECT =====
   // ============================================================
   useEffect(() => {
-    if (timerRunning && timer > 0) {
+    if (timerRunning && timer > 0 && isMountedRef.current) {
       timerIntervalRef.current = setInterval(() => {
-        setTimer(prev => prev - 1);
+        if (isMountedRef.current) {
+          setTimer(prev => prev - 1);
+        }
       }, 1000);
-    } else if (timer === 0 && timerRunning) {
+    } else if (timer === 0 && timerRunning && isMountedRef.current) {
       setTimerRunning(false);
       if (selectedChoice === null && lives > 0) {
         const scene = storyScenes[currentScene];
@@ -882,16 +970,19 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
               const newLives = prev - 1;
               if (newLives === 0) {
                 setTimeout(() => {
-                  saveGameProgress(false);
-                  saveGameToFirebase(false);
-                  setGameState('gameover');
-                  stopSpeaking();
+                  if (isMountedRef.current) {
+                    saveGameProgress(false);
+                    saveGameToFirebase(false);
+                    setGameState('gameover');
+                    stopSpeaking();
+                  }
                 }, 1500);
               }
               return newLives;
             });
             
             setTimeout(() => {
+              if (!isMountedRef.current) return;
               setShowFeedback(false);
               setSelectedChoice(null);
               if (lives <= 0) {
@@ -911,11 +1002,16 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
         }
       }
     }
-    return () => clearInterval(timerIntervalRef.current);
-  }, [timer, timerRunning, selectedChoice, lives, currentScene, storyScenes]);
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [timer, timerRunning, selectedChoice, lives, currentScene, storyScenes, saveGameProgress, saveGameToFirebase, stopSpeaking, typeText]);
 
   // ============================================================
-  // ===== START GAME =====
+  // ===== START GAME FROM INTRO WITH LOADING =====
   // ============================================================
   const startGame = () => {
     if (lives <= 0) {
@@ -923,32 +1019,42 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       setFeedbackMessage(`😢 No lives left! Next heart in ${timeRemaining || '30 minutes'}`);
       setShowFeedback(true);
       setTimeout(() => {
-        setShowFeedback(false);
-        setGameState('intro');
+        if (isMountedRef.current) {
+          setShowFeedback(false);
+          setGameState('intro');
+        }
       }, 3000);
       return;
     }
-    setStoryScenes(allScenes);
-    setGameState('playing');
-    setCurrentScene(0);
-    setScore(0);
-    setCorrectAnswers(0);
-    setTotalAnswers(0);
-    setTimer(15);
-    setTimerRunning(true);
-    setSelectedChoice(null);
-    setSessionSaved(false);
-    const scene = storyScenes[0] || allScenes[0];
-    if (scene) {
-      typeText(scene.text);
-    }
+
+    // Show loading screen first
+    setGameState('loading');
+
+    // After 2 seconds, initialize the game
+    setTimeout(() => {
+      if (!isMountedRef.current) return;
+      setStoryScenes(allScenes);
+      setGameState('playing');
+      setCurrentScene(0);
+      setScore(0);
+      setCorrectAnswers(0);
+      setTotalAnswers(0);
+      setTimer(15);
+      setTimerRunning(true);
+      setSelectedChoice(null);
+      setSessionSaved(false);
+      const scene = allScenes[0];
+      if (scene) {
+        typeText(scene.text);
+      }
+    }, 2000);
   };
 
   // ============================================================
   // ===== HANDLE CHOICE =====
   // ============================================================
   const handleChoice = (choice) => {
-    if (selectedChoice !== null || lives <= 0) return;
+    if (selectedChoice !== null || lives <= 0 || !isMountedRef.current) return;
     
     stopSpeaking();
     setTimerRunning(false);
@@ -968,10 +1074,12 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
         const newLives = prev - 1;
         if (newLives === 0) {
           setTimeout(() => {
-            saveGameProgress(false);
-            saveGameToFirebase(false);
-            setGameState('gameover');
-            stopSpeaking();
+            if (isMountedRef.current) {
+              saveGameProgress(false);
+              saveGameToFirebase(false);
+              setGameState('gameover');
+              stopSpeaking();
+            }
           }, 1500);
         }
         return newLives;
@@ -979,6 +1087,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     }
     
     setTimeout(() => {
+      if (!isMountedRef.current) return;
       setShowFeedback(false);
       setSelectedChoice(null);
       if (lives <= 0) {
@@ -996,8 +1105,10 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
           
           if (nextScene.id === 20) {
             setTimeout(() => {
-              saveGameProgress(true);
-              saveGameToFirebase(true);
+              if (isMountedRef.current) {
+                saveGameProgress(true);
+                saveGameToFirebase(true);
+              }
             }, 1000);
           }
         }
@@ -1010,6 +1121,14 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ============================================================
   const restartGame = () => {
     stopSpeaking();
+    if (textTimerRef.current) {
+      clearInterval(textTimerRef.current);
+      textTimerRef.current = null;
+    }
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     setGameState('intro');
     setCurrentScene(0);
     setScore(0);
@@ -1037,19 +1156,55 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       saveGameToFirebase(false);
     }
     stopSpeaking(); 
+    if (textTimerRef.current) {
+      clearInterval(textTimerRef.current);
+      textTimerRef.current = null;
+    }
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     setShowExitConfirm(true);
   };
   
   const confirmExit = () => {
-    stopSpeaking(); 
+    stopSpeaking();
+    if (textTimerRef.current) {
+      clearInterval(textTimerRef.current);
+      textTimerRef.current = null;
+    }
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     setShowExitConfirm(false); 
     if (onBack) onBack();
   };
   
   const cancelExit = () => setShowExitConfirm(false);
 
-  // ===== LOADING SCREEN =====
-  if (!isUserLoaded) {
+  // ============================================================
+  // ===== CLEANUP ON UNMOUNT =====
+  // ============================================================
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (textTimerRef.current) {
+        clearInterval(textTimerRef.current);
+        textTimerRef.current = null;
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      if (speechSynthRef.current) {
+        speechSynthRef.current.cancel();
+      }
+    };
+  }, []);
+
+  // ===== LOADING SCREEN (Initial Firebase auth) =====
+  if (!isUserLoaded || !isReady) {
     return (
       <div style={{
         minHeight: '100vh', background: '#1E293B',
@@ -1061,9 +1216,29 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
           backdropFilter: 'blur(20px)', borderRadius: '24px', padding: '40px',
           border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'white' }}>Loading...</h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8' }}>Please wait while we set up your adventure.</p>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📚</div>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'white' }}>Loading Story Quest...</h2>
+          <div style={{ 
+            marginTop: '20px', 
+            width: '100%', 
+            height: '4px', 
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '2px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(90deg, #5C6AC4, #ec4899)',
+              animation: 'loadingProgress 1.5s ease-in-out infinite'
+            }} />
+          </div>
+          <style>{`
+            @keyframes loadingProgress {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
+          `}</style>
         </div>
       </div>
     );
@@ -1092,6 +1267,73 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       </div>
     </div>
   );
+
+  // ============================================================
+  // ===== LOADING SCREEN (start-game loading, StoryQuest style) =====
+  // ============================================================
+  if (gameState === 'loading') {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#1E293B',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+        fontFamily: "'Poppins', -apple-system, sans-serif"
+      }}>
+        <div style={{
+          maxWidth: '420px', width: '100%', background: 'rgba(255,255,255,0.04)',
+          backdropFilter: 'blur(20px)', borderRadius: '24px', padding: '40px',
+          border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center'
+        }}>
+          {/* "Loading..." title with sparkles */}
+          <div style={{ position: 'relative', display: 'inline-block', marginBottom: '24px' }}>
+            <span style={{
+              position: 'absolute', left: '-26px', top: '2px',
+              color: '#FDE047', fontSize: '16px',
+              animation: 'sparkleTwinkle 1.6s ease-in-out infinite'
+            }}>✦</span>
+            <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#A78BFA', margin: 0, letterSpacing: '0.5px' }}>
+              Loading...
+            </h2>
+            <span style={{
+              position: 'absolute', right: '-26px', top: '-6px',
+              color: '#FDE047', fontSize: '14px',
+              animation: 'sparkleTwinkle 1.6s ease-in-out 0.6s infinite'
+            }}>✦</span>
+          </div>
+
+          {/* Segmented loading bar */}
+          <div style={{
+            display: 'flex', gap: '4px', padding: '6px',
+            border: '2px solid #A78BFA', borderRadius: '999px',
+            background: 'rgba(0,0,0,0.35)'
+          }}>
+            {[...Array(14)].map((_, i) => (
+              <div key={i} style={{
+                flex: 1, height: '18px', borderRadius: '4px',
+                background: '#A78BFA',
+                opacity: 0.2,
+                animation: `segmentFill 1.4s ease-in-out ${i * 0.08}s infinite`
+              }} />
+            ))}
+          </div>
+
+          <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '18px', fontStyle: 'italic' }}>
+            Preparing your Story Quest adventure...
+          </p>
+        </div>
+
+        <style>{`
+          @keyframes sparkleTwinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.3) rotate(20deg); }
+          }
+          @keyframes segmentFill {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   // ============================================================
   // ===== GAME OVER SCREEN =====
@@ -1130,8 +1372,19 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
           </div>
           <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
             <button onClick={startGame} disabled={lives <= 0} style={{ padding: '14px', background: lives > 0 ? 'linear-gradient(135deg, #5C6AC4, #5C6AC4)' : '#4a4a5a', color: lives > 0 ? 'white' : '#94a3b8', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '600', cursor: lives > 0 ? 'pointer' : 'not-allowed' }}>{lives > 0 ? '🔄 Play Again' : '⏳ No Lives - Wait 30 mins'}</button>
-            <button onClick={() => setGameState('intro')} style={{ padding: '12px', background: 'transparent', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', cursor: 'pointer', fontSize: '14px' }}>← Back to Menu</button>
-            <button onClick={onBack} style={{ padding: '12px', background: 'transparent', color: '#64748b', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '14px', cursor: 'pointer', fontSize: '14px' }}>← Exit Game</button>
+            <button onClick={restartGame} style={{ padding: '12px', background: 'transparent', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', cursor: 'pointer', fontSize: '14px' }}>← Back to Menu</button>
+            <button onClick={() => { 
+              stopSpeaking();
+              if (textTimerRef.current) {
+                clearInterval(textTimerRef.current);
+                textTimerRef.current = null;
+              }
+              if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+              }
+              if (onBack) onBack(); 
+            }} style={{ padding: '12px', background: 'transparent', color: '#64748b', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '14px', cursor: 'pointer', fontSize: '14px' }}>← Exit Game</button>
           </div>
         </div>
       </div>
@@ -1174,7 +1427,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '56px',
             animation: 'float 3s ease-in-out infinite'
           }}>📚</div>
-          <h1 style={{ fontSize: '32px', fontWeight: '800', color: 'white', marginBottom: '4px' }}>Vocabulary Quest</h1>
+          <h1 style={{ fontSize: '32px', fontWeight: '800', color: 'white', marginBottom: '4px' }}>Story Quest</h1>
           <p style={{ fontSize: '16px', color: '#94a3b8', marginBottom: '4px' }}>The Dictionary of Power</p>
           <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>📖 21 Vocabulary Words • 🎙️ Voice Narration • ⏱️ 15s Timer</p>
           
@@ -1199,7 +1452,18 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
               ⏳ No Lives - Come back in {timeRemaining || '30 minutes'}
             </div>
           )}
-          <button onClick={onBack} style={{ width: '100%', padding: '12px', marginTop: '8px', background: 'transparent', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', cursor: 'pointer', fontSize: '14px' }}>← Back</button>
+          <button onClick={() => {
+            stopSpeaking();
+            if (textTimerRef.current) {
+              clearInterval(textTimerRef.current);
+              textTimerRef.current = null;
+            }
+            if (timerIntervalRef.current) {
+              clearInterval(timerIntervalRef.current);
+              timerIntervalRef.current = null;
+            }
+            if (onBack) onBack();
+          }} style={{ width: '100%', padding: '12px', marginTop: '8px', background: 'transparent', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', cursor: 'pointer', fontSize: '14px' }}>← Back</button>
         </div>
         <style>{`@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }`}</style>
       </div>
@@ -1232,14 +1496,18 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
         {/* ===== 3D SCENE ===== */}
         <Canvas
           camera={{ position: [4, 3, 6], fov: 45 }}
+          dpr={[1, 2]}
           style={{ width: '100vw', height: '100vh', background: '#0a0a1a', display: 'block' }}
         >
-          <LibraryScene />
-          <Character3D 
-            emotion={scene.emotion || 'happy'}
-            isWalking={currentScene % 2 === 0}
-            isSpeaking={isSpeaking}
-          />
+          <Suspense fallback={null}>
+            <LibraryScene />
+            <Character3D 
+              emotion={scene.emotion || 'happy'}
+              isWalking={currentScene % 2 === 0}
+              isSpeaking={isSpeaking}
+            />
+            <Environment preset="night" background={false} />
+          </Suspense>
           <OrbitControls 
             enablePan={true}
             enableZoom={true}
@@ -1249,7 +1517,6 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
             target={[0, 0.8, 0]}
             dampingFactor={0.05}
           />
-          <Environment preset="night" background={false} />
         </Canvas>
 
         {/* ===== UI OVERLAY ===== */}
@@ -1266,7 +1533,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
             pointerEvents: 'auto', maxWidth: '900px', width: '100%', margin: '0 auto'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontWeight: '600', color: 'white', fontSize: '14px' }}>📖 Vocabulary Quest</span>
+              <span style={{ fontWeight: '600', color: 'white', fontSize: '14px' }}>📖 Story Quest</span>
               <span style={{ padding: '2px 10px', borderRadius: '8px', background: 'rgba(124, 111, 214, 0.2)', color: '#5C6AC4', fontSize: '10px', fontWeight: '600' }}>📚 {storyScenes.length} Words</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
