@@ -35,7 +35,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '3-5 min',
       difficulty: 'beginner',
       players: '1 player',
-      available: true
+      available: false  // 👈 Match Game is now Coming Soon
     },
     {
       id: 'short-story',
@@ -48,7 +48,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '15-20 min',
       difficulty: 'intermediate',
       players: '1 player',
-      available: false
+      available: true  // 👈 Story Quest is now available to play
     },
     {
       id: 'quiz',

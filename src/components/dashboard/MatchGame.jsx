@@ -82,41 +82,41 @@ const bgAnimationStyle = (
       }
       
       .match-game-intro {
-        padding: 20px 16px !important;
-        margin: 12px !important;
+        padding: 16px 12px !important;
+        margin: 8px !important;
       }
       
       .match-game-intro h1 {
-        font-size: 22px !important;
+        font-size: 20px !important;
       }
       
       .match-game-intro p {
-        font-size: 13px !important;
+        font-size: 12px !important;
       }
       
       .match-game-difficulty {
-        gap: 6px !important;
-        padding: 8px !important;
+        gap: 4px !important;
+        padding: 6px !important;
         flex-wrap: wrap !important;
       }
       
       .match-game-difficulty button {
-        padding: 8px 6px !important;
-        font-size: 11px !important;
-        min-width: 60px !important;
+        padding: 6px 4px !important;
+        font-size: 10px !important;
+        min-width: 50px !important;
       }
       
       .match-game-stats-grid {
         grid-template-columns: repeat(3, 1fr) !important;
-        gap: 6px !important;
+        gap: 4px !important;
       }
       
       .match-game-stats-grid > div {
-        padding: 10px !important;
+        padding: 8px !important;
       }
       
       .match-game-stats-grid > div div:first-child {
-        font-size: 16px !important;
+        font-size: 14px !important;
       }
       
       .match-game-modal {
@@ -219,25 +219,25 @@ const bgAnimationStyle = (
       }
       
       .match-game-intro h1 {
-        font-size: 18px !important;
+        font-size: 16px !important;
       }
       
       .match-game-intro p {
-        font-size: 11px !important;
+        font-size: 10px !important;
       }
       
       .match-game-difficulty button {
-        padding: 6px 4px !important;
-        font-size: 10px !important;
-        min-width: 50px !important;
+        padding: 4px 3px !important;
+        font-size: 9px !important;
+        min-width: 40px !important;
       }
       
       .match-game-difficulty button div:first-child {
-        font-size: 12px !important;
+        font-size: 10px !important;
       }
       
       .match-game-stats-grid > div div:first-child {
-        font-size: 14px !important;
+        font-size: 12px !important;
       }
       
       .match-game-result h2 {
@@ -441,7 +441,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     const userId = currentUser.uid;
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
     const isPerfect = matches === totalPairs;
-    const pointsEarned = matches; // ✅ 1 point per match
+    const pointsEarned = matches;
 
     const gameData = {
       gameType: 'matchGame',
@@ -786,7 +786,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     setTimerRunning(true);
     setGameState('playing');
     setShowWinScreen(false);
-    setSessionSaved(false); // ✅ FIXED: Reset session saved flag for new game
+    setSessionSaved(false);
     
     const saved = localStorage.getItem('matchgame_leaderboard');
     if (saved) setLeaderboardData(JSON.parse(saved));
@@ -797,7 +797,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
   // ===== START GAME FROM INTRO WITH LOADING - FIXED =====
   const startGame = () => {
-    setSessionSaved(false); // ✅ FIXED: Reset before starting
+    setSessionSaved(false);
     setGameState('loading');
     setTimeout(() => {
       initializeGame();
@@ -861,7 +861,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
   // ===== SAVE GAME PROGRESS - FIXED: 1 POINT PER MATCH =====
   // ============================================================
   const saveGameProgress = (isWin) => {
-    // ✅ FIXED: Prevent duplicate saves
     if (sessionSaved) {
       console.log('⚠️ Game progress already saved, skipping duplicate save');
       return;
@@ -892,8 +891,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
       localStorage.setItem('vocaboplay_lastPlayed', today);
     }
     
-    // ✅ FIXED: Use 'matches' for points, words, and correct answers
-    // 1 match = 1 point = 1 word learned = 1 correct answer
     const progressData = {
       gamesPlayed: (currentProgress.gamesPlayed || 0) + 1,
       totalPoints: (currentProgress.totalPoints || 0) + matches,
@@ -952,7 +949,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
           matched[newFlipped[1]].isMatched = true;
           setCards(matched);
           setMatches(prev => prev + 1);
-          // ✅ FIXED: 1 point per match
           setScore(prev => prev + 1);
           setAttempts(prev => prev + 1);
           setCorrectAnswers(prev => prev + 1);
@@ -1472,7 +1468,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
   }
 
   // ============================================================
-  // ===== INTRO SCREEN =====
+  // ===== INTRO SCREEN - SMALLER CARD SIZE =====
   // ============================================================
   if (gameState === 'intro') {
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
@@ -1484,228 +1480,237 @@ const MatchGame = ({ onBack, updateProgress }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: '16px'
       }}>
         {bgAnimationStyle}
         {showExitConfirm && <ExitConfirmModal />}
 
         <div className="match-game-intro" style={{
-          maxWidth: '520px',
+          maxWidth: '460px',
           width: '100%',
           background: 'linear-gradient(160deg, #1a1730 0%, #0d0b1a 100%)',
-          border: '1px solid rgba(139,92,246,0.28)',
+          border: '1px solid rgba(139,92,246,0.25)',
           borderRadius: '28px',
-          padding: '32px 28px',
+          padding: '20px 18px 24px',
           textAlign: 'center',
-          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.7), 0 0 0 1px rgba(139,92,246,0.05) inset'
+          boxShadow: '0 20px 50px -15px rgba(0,0,0,0.7), 0 0 0 1px rgba(139,92,246,0.04) inset'
         }}>
-          {currentUser && (
+          <div style={{
+            background: '#14151e',
+            border: '1px solid #2b2d44',
+            borderRadius: '24px',
+            padding: '16px 14px 20px',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+          }}>
+            {currentUser && (
+              <div style={{
+                background: 'rgba(139,92,246,0.15)',
+                padding: '4px 14px',
+                borderRadius: '10px',
+                marginBottom: '12px',
+                display: 'inline-block'
+              }}>
+                <span style={{ fontSize: '12px', color: '#C4B5FD', fontWeight: '500' }}>
+                  👤 {currentUser.displayName || currentUser.email || 'Player'}
+                </span>
+              </div>
+            )}
+
             <div style={{
-              background: 'rgba(139,92,246,0.16)',
-              padding: '8px 16px',
-              borderRadius: '12px',
-              marginBottom: '16px',
-              display: 'inline-block'
+              width: '70px',
+              height: '70px',
+              margin: '0 auto 10px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '34px',
+              boxShadow: '0 8px 24px rgba(139,92,246,0.3)'
             }}>
-              <span style={{ fontSize: '13px', color: '#C4B5FD', fontWeight: '600' }}>
-                👤 {currentUser.displayName || currentUser.email || 'Player'}
+              🧩
+            </div>
+
+            <h1 style={{
+              fontSize: '22px',
+              fontWeight: '700',
+              color: '#F5F3FF',
+              marginBottom: '2px',
+              letterSpacing: '-0.3px'
+            }}>
+              Match Game
+            </h1>
+            <p style={{
+              fontSize: '13px',
+              color: '#C4B5FD',
+              marginBottom: '2px'
+            }}>
+              Pair words with their emojis
+            </p>
+            <p style={{
+              fontSize: '11px',
+              color: '#9CA3AF',
+              marginBottom: '14px'
+            }}>
+              🎯 {totalPairs} pairs • ⏱️ {timeLimit}s • 🎵 8-bit music
+            </p>
+
+            <div className="match-game-difficulty" style={{
+              display: 'flex',
+              gap: '6px',
+              marginBottom: '14px',
+              padding: '8px',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px'
+            }}>
+              {['easy', 'medium', 'hard'].map(d => {
+                const pairCount = d === 'easy' ? 8 : d === 'medium' ? 10 : 12;
+                const time = d === 'easy' ? 70 : d === 'medium' ? 60 : 50;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => setDifficulty(d)}
+                    style={{
+                      flex: 1,
+                      padding: '6px 4px',
+                      borderRadius: '8px',
+                      border: `2px solid ${difficulty === d ? '#A78BFA' : 'rgba(255,255,255,0.08)'}`,
+                      background: difficulty === d ? 'rgba(139,92,246,0.15)' : 'transparent',
+                      color: difficulty === d ? '#C4B5FD' : '#9CA3AF',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      textTransform: 'capitalize',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: '14px' }}>{d === 'easy' ? '🟢' : d === 'medium' ? '🟡' : '🔴'}</div>
+                    <div style={{fontSize: '11px'}}>{d}</div>
+                    <div style={{ fontSize: '8px', fontWeight: '400', opacity: 0.7 }}>
+                      {pairCount}p • {time}s
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="match-game-stats-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '6px',
+              marginBottom: '14px'
+            }}>
+              <div style={{
+                padding: '10px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '10px'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#A78BFA' }}>
+                  {difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12}
+                </div>
+                <div style={{ fontSize: '9px', color: '#9CA3AF' }}>Pairs</div>
+              </div>
+              <div style={{
+                padding: '10px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '10px'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#FBBF24' }}>
+                  {difficulty === 'easy' ? 70 : difficulty === 'medium' ? 60 : 50}s
+                </div>
+                <div style={{ fontSize: '9px', color: '#9CA3AF' }}>Time Limit</div>
+              </div>
+              <div style={{
+                padding: '10px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '10px'
+              }}>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#A78BFA' }}>🧠</div>
+                <div style={{ fontSize: '9px', color: '#9CA3AF' }}>Memory</div>
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              marginBottom: '12px',
+              padding: '4px 12px',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '30px'
+            }}>
+              <button
+                onClick={toggleMusic}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  border: 'none',
+                  background: isMuted ? '#ef4444' : '#10b981',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {isMuted ? '🔇' : '🔊'} {isMuted ? 'Music Off' : 'Music On'}
+              </button>
+              <span style={{ fontSize: '10px', color: '#9CA3AF' }}>
+                🎵 8-bit vibes
               </span>
             </div>
-          )}
 
-          <div style={{
-            width: '100px',
-            height: '100px',
-            margin: '0 auto 16px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '48px',
-            boxShadow: '0 10px 30px rgba(139,92,246,0.35)'
-          }}>
-            🧩
-          </div>
-
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '800',
-            color: '#F5F3FF',
-            marginBottom: '4px'
-          }}>
-            Match Game
-          </h1>
-          <p style={{
-            fontSize: '15px',
-            color: '#C4B5FD',
-            marginBottom: '4px'
-          }}>
-            Pair words with their emojis
-          </p>
-          <p style={{
-            fontSize: '12px',
-            color: '#9CA3AF',
-            marginBottom: '20px'
-          }}>
-            🎯 {totalPairs} pairs • ⏱️ {timeLimit}s • 🎵 8-bit music
-          </p>
-
-          <div className="match-game-difficulty" style={{
-            display: 'flex',
-            gap: '10px',
-            marginBottom: '20px',
-            padding: '12px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: '14px'
-          }}>
-            {['easy', 'medium', 'hard'].map(d => {
-              const pairCount = d === 'easy' ? 8 : d === 'medium' ? 10 : 12;
-              const time = d === 'easy' ? 70 : d === 'medium' ? 60 : 50;
-              return (
-                <button
-                  key={d}
-                  onClick={() => setDifficulty(d)}
-                  style={{
-                    flex: 1,
-                    padding: '10px 8px',
-                    borderRadius: '10px',
-                    border: `2px solid ${difficulty === d ? '#A78BFA' : 'rgba(255,255,255,0.10)'}`,
-                    background: difficulty === d ? 'rgba(139,92,246,0.16)' : 'transparent',
-                    color: difficulty === d ? '#C4B5FD' : '#9CA3AF',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    textTransform: 'capitalize',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <div style={{ fontSize: '16px' }}>{d === 'easy' ? '🟢' : d === 'medium' ? '🟡' : '🔴'}</div>
-                  <div>{d}</div>
-                  <div style={{ fontSize: '10px', fontWeight: '400', opacity: 0.7 }}>
-                    {pairCount} pairs • {time}s
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="match-game-stats-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '10px',
-            marginBottom: '24px'
-          }}>
-            <div style={{
-              padding: '14px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: '12px'
-            }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#A78BFA' }}>
-                {difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12}
-              </div>
-              <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Pairs</div>
-            </div>
-            <div style={{
-              padding: '14px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: '12px'
-            }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#FBBF24' }}>
-                {difficulty === 'easy' ? 70 : difficulty === 'medium' ? 60 : 50}s
-              </div>
-              <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Time Limit</div>
-            </div>
-            <div style={{
-              padding: '14px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: '12px'
-            }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#A78BFA' }}>🧠</div>
-              <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Memory</div>
-            </div>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            marginBottom: '16px',
-            padding: '8px 16px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: '12px'
-          }}>
             <button
-              onClick={toggleMusic}
+              onClick={startGame}
               style={{
-                padding: '6px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: isMuted ? '#ef4444' : '#10b981',
+                width: '100%',
+                padding: '12px',
+                background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
                 color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(139,92,246,0.35)',
+                transition: 'transform 0.15s',
+                touchAction: 'manipulation'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+              onTouchStart={(e) => e.target.style.transform = 'scale(0.97)'}
+              onTouchEnd={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              🚀 Start Game
+            </button>
+
+            <button
+              onClick={onBack}
+              style={{
+                width: '100%',
+                padding: '8px',
+                marginTop: '6px',
+                background: 'transparent',
+                color: '#7c79a3',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
                 cursor: 'pointer',
                 fontSize: '12px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
+                fontWeight: '500',
+                touchAction: 'manipulation'
               }}
             >
-              {isMuted ? '🔇' : '🔊'} {isMuted ? 'Music Off' : 'Music On'}
+              ← Back
             </button>
-            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
-              🎵 8-bit vibes
-            </span>
           </div>
-
-          <button
-            onClick={startGame}
-            style={{
-              width: '100%',
-              padding: '16px',
-              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '14px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 10px 30px rgba(139,92,246,0.4)',
-              transition: 'transform 0.2s',
-              touchAction: 'manipulation'
-            }}
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
-            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-            onTouchStart={(e) => e.target.style.transform = 'scale(0.98)'}
-            onTouchEnd={(e) => e.target.style.transform = 'scale(1)'}
-          >
-            🚀 Start Game
-          </button>
-
-          <button
-            onClick={onBack}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginTop: '8px',
-              background: 'transparent',
-              color: '#C4B5FD',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: '14px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              touchAction: 'manipulation'
-            }}
-          >
-            ← Back
-          </button>
         </div>
       </div>
     );
@@ -1788,7 +1793,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     );
   }
 
-  // ===== PLAYING SCREEN =====
+  // ===== PLAYING SCREEN - DARK MODE WITH PURPLE CARDS =====
   if (gameState === 'playing') {
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
     const progress = (matches / totalPairs) * 100;
@@ -1808,38 +1813,41 @@ const MatchGame = ({ onBack, updateProgress }) => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '12px 16px',
-          background: 'white',
-          borderRadius: '16px',
+          padding: '10px 14px',
+          background: '#1a1b2e',
+          borderRadius: '14px',
           maxWidth: '700px',
-          margin: '0 auto 12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          margin: '0 auto 10px',
+          border: '1px solid #2b2d44',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', padding: '4px', touchAction: 'manipulation' }}>⚙️</button>
-            <span style={{ fontWeight: '600', color: '#1E293B', fontSize: '15px' }}>Match</span>
+            <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', padding: '4px', touchAction: 'manipulation', color: '#b9b7d4' }}>⚙️</button>
+            <span style={{ fontWeight: '600', color: '#d0cee6', fontSize: '14px' }}>Match</span>
             <span style={{
               padding: '2px 10px',
-              borderRadius: '8px',
-              background: '#F8FAFC',
-              color: '#64748B',
-              fontSize: '10px',
+              borderRadius: '6px',
+              background: '#25273b',
+              color: '#b0adcc',
+              fontSize: '9px',
               fontWeight: '600',
-              textTransform: 'capitalize'
+              textTransform: 'capitalize',
+              border: '1px solid #373a4e'
             }}>{difficulty}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={toggleMusic}
               style={{
                 background: 'none',
                 border: 'none',
-                fontSize: '16px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 padding: '2px 4px',
                 opacity: isMuted ? 0.3 : 1,
-                touchAction: 'manipulation'
+                touchAction: 'manipulation',
+                color: '#b9b7d4'
               }}
               title={isMuted ? 'Turn music on' : 'Turn music off'}
             >
@@ -1847,36 +1855,36 @@ const MatchGame = ({ onBack, updateProgress }) => {
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '14px' }}>🎯</span>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1E293B' }}>{matches}/{totalPairs}</span>
+              <span style={{ fontSize: '12px', color: '#b9b7d4' }}>🎯</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#d0cee6' }}>{matches}/{totalPairs}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '14px' }}>⏱️</span>
+              <span style={{ fontSize: '12px', color: '#b9b7d4' }}>⏱️</span>
               <span className="match-game-timer" style={{
                 fontWeight: '700',
-                fontSize: '16px',
+                fontSize: '14px',
                 color: timer <= 10 ? '#ef4444' : timer <= 20 ? '#f59e0b' : '#10b981',
-                minWidth: '28px'
+                minWidth: '24px'
               }}>{timer}s</span>
             </div>
             <div className="match-game-score" style={{
               background: '#5C6AC4',
-              padding: '2px 14px',
-              borderRadius: '8px',
+              padding: '2px 12px',
+              borderRadius: '6px',
               color: 'white',
               fontWeight: '700',
-              fontSize: '15px'
+              fontSize: '13px'
             }}>
               {matches}
             </div>
           </div>
         </div>
 
-        <div className="match-game-progress" style={{ maxWidth: '700px', margin: '0 auto 12px' }}>
-          <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.35)', borderRadius: '4px', overflow: 'hidden' }}>
+        <div className="match-game-progress" style={{ maxWidth: '700px', margin: '0 auto 10px' }}>
+          <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{
               height: '100%',
-              background: 'linear-gradient(90deg, #5C6AC4, #5C6AC4)',
+              background: 'linear-gradient(90deg, #5C6AC4, #8B5CF6)',
               width: `${progress}%`,
               transition: 'width 0.4s ease'
             }} />
@@ -1890,9 +1898,10 @@ const MatchGame = ({ onBack, updateProgress }) => {
           gridTemplateColumns: `repeat(${difficulty === 'easy' ? 4 : difficulty === 'medium' ? 5 : 6}, 1fr)`,
           gap: '8px',
           padding: '12px',
-          background: 'white',
-          borderRadius: '16px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          background: '#14151e',
+          borderRadius: '14px',
+          border: '1px solid #2b2d44',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
         }}>
           {cards.map((card, index) => (
             <div
@@ -1902,7 +1911,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
               style={{
                 aspectRatio: '1',
                 cursor: card.isMatched || flippedCards.includes(index) || isLocked ? 'default' : 'pointer',
-                opacity: card.isMatched ? 0.4 : 1,
+                opacity: card.isMatched ? 0.3 : 1,
                 perspective: '800px',
                 touchAction: 'manipulation'
               }}
@@ -1924,14 +1933,14 @@ const MatchGame = ({ onBack, updateProgress }) => {
                     width: '100%',
                     height: '100%',
                     backfaceVisibility: 'hidden',
-                    background: 'linear-gradient(135deg, #5C6AC4, #5C6AC4)',
-                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #5C6AC4, #8B5CF6)',
+                    borderRadius: '10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '20px',
+                    fontSize: '18px',
                     boxShadow: 'none',
-                    border: '1px solid rgba(255,255,255,0.1)'
+                    border: '1px solid rgba(255,255,255,0.08)'
                   }}
                 >
                   ✦
@@ -1945,19 +1954,19 @@ const MatchGame = ({ onBack, updateProgress }) => {
                     height: '100%',
                     backfaceVisibility: 'hidden',
                     transform: 'rotateY(180deg)',
-                    background: 'white',
-                    borderRadius: '12px',
+                    background: '#1e1f30',
+                    borderRadius: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: card.type === 'emoji' ? '28px' : '12px',
+                    fontSize: card.type === 'emoji' ? '26px' : '11px',
                     fontWeight: card.type === 'word' ? '600' : 'normal',
                     boxShadow: 'none',
-                    border: `1px solid ${card.isMatched ? '#10b981' : '#E2E8F0'}`,
+                    border: `1px solid ${card.isMatched ? '#10b981' : '#2f314a'}`,
                     padding: '2px',
                     textAlign: 'center',
-                    color: '#1E293B'
+                    color: '#d3d0ec'
                   }}
                 >
                   {card.type === 'emoji' ? (
@@ -1973,21 +1982,21 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
         <div className="match-game-footer" style={{
           maxWidth: '700px',
-          margin: '12px auto 0',
+          margin: '10px auto 0',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '8px 16px',
-          background: 'white',
-          borderRadius: '12px',
-          fontSize: '12px',
-          color: '#64748B',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          padding: '6px 14px',
+          background: '#1a1b2e',
+          borderRadius: '10px',
+          fontSize: '11px',
+          color: '#b0adcc',
+          border: '1px solid #2b2d44'
         }}>
           <span>💡 Match words with emojis</span>
           <span>🔄 {attempts} attempts</span>
           {!isMuted && (
-            <span style={{ fontSize: '10px', color: '#5C6AC4', fontStyle: 'italic' }}>🎵 8-bit vibes</span>
+            <span style={{ fontSize: '9px', color: '#7a77a0', fontStyle: 'italic' }}>🎵 8-bit vibes</span>
           )}
         </div>
       </div>

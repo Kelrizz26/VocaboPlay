@@ -444,8 +444,16 @@ const Dashboard = () => {
     navigate('/');
   };
 
-  // Start game
+  // Start game - ONLY available games
   const startGame = (gameId) => {
+    // List of available games
+    const availableGames = ['wordpics', 'short-story']; // 👈 ONLY Syno Quest and Story Quest
+    
+    if (!availableGames.includes(gameId)) {
+      console.log('Game not available yet');
+      return;
+    }
+    
     setCurrentGame(gameId);
     setActiveMenu(null);
     setIsSidebarVisible(false);
@@ -923,13 +931,15 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Game Components */}
+          {/* Game Components - ONLY AVAILABLE GAMES */}
           {currentGame === 'wordpics' && <WordPicsGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'quiz' && <QuizGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'match' && <MatchGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'guesswhat' && <GuessWhatGame onBack={exitGame} updateProgress={updateProgress} />}
           {currentGame === 'short-story' && <ShortStoryGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'sentence-builder' && <SentenceBuilder onBack={exitGame} updateProgress={updateProgress} />}
+          
+          {/* UNAVAILABLE GAMES - will not render */}
+          {currentGame === 'quiz' && null}
+          {currentGame === 'match' && null}
+          {currentGame === 'guesswhat' && null}
+          {currentGame === 'sentence-builder' && null}
 
           {/* Main Menu Components */}
           {!currentGame && activeMenu === 'Word Library' && <WordLibrary />}
@@ -1006,13 +1016,47 @@ const Dashboard = () => {
                 <div style={{ background: colors.surface, borderRadius: '12px', padding: '24px', border: `1px solid ${colors.border}` }}>
                   <h3 style={{ ...textType.sub, marginBottom: '16px' }}>Quick Actions</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    {['Word Pics', 'Match Game', 'Quiz', 'Story'].map((name, i) => (
-                      <button key={i} onClick={() => startGame(['wordpics', 'match', 'quiz', 'short-story'][i])} style={{ position: 'relative', height: '110px', borderRadius: '10px', overflow: 'hidden', border: `1px solid ${colors.border}`, cursor: 'pointer', padding: 0 }}>
-                        <img src={`src/image/${['wordpics', 'matchgame', 'quizgame', 'shortstory'][i]}.png`} alt={name} style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.55), rgba(15,23,42,0.05))' }} />
-                        <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', alignItems: 'flex-end', padding: '12px' }}><span style={{ color: 'white', fontSize: '13px', fontWeight: 600, fontFamily }}>{name}</span></div>
-                      </button>
-                    ))}
+                    {['Word Pics', 'Match Game', 'Quiz', 'Story'].map((name, i) => {
+                      // Map to game IDs
+                      const gameIds = ['wordpics', 'match', 'quiz', 'short-story'];
+                      const isAvailable = gameIds[i] === 'wordpics' || gameIds[i] === 'short-story';
+                      
+                      return (
+                        <button 
+                          key={i} 
+                          onClick={() => isAvailable && startGame(gameIds[i])}
+                          style={{ 
+                            position: 'relative', 
+                            height: '110px', 
+                            borderRadius: '10px', 
+                            overflow: 'hidden', 
+                            border: `1px solid ${isAvailable ? colors.border : colors.border}`,
+                            cursor: isAvailable ? 'pointer' : 'not-allowed',
+                            padding: 0,
+                            opacity: isAvailable ? 1 : 0.6,
+                          }}
+                        >
+                          <img 
+                            src={`src/image/${['wordpics', 'matchgame', 'quizgame', 'shortstory'][i]}.png`} 
+                            alt={name} 
+                            style={{ 
+                              position: 'absolute', 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'cover',
+                              filter: isAvailable ? 'none' : 'grayscale(0.5)',
+                            }} 
+                          />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.55), rgba(15,23,42,0.05))' }} />
+                          <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '12px' }}>
+                            <span style={{ color: 'white', fontSize: '13px', fontWeight: 600, fontFamily }}>{name}</span>
+                            {!isAvailable && (
+                              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px', fontFamily }}>🔒 Coming Soon</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                   <button onClick={() => changeMenu('Games')} style={{ width: '100%', marginTop: '16px', padding: '10px', background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: colors.accent, cursor: 'pointer', fontFamily }}>View All Games</button>
                 </div>

@@ -129,7 +129,7 @@ export const getUserStats = async (userId) => {
   }
 };
 
-// ✅ UPDATE USER STATS AFTER GAME (MAIN FUNCTION)
+// ✅ UPDATE USER STATS AFTER GAME - FIXED: OVERWRITE ENTIRE STATS OBJECT
 export const updateUserStats = async (userId, gameData) => {
   try {
     console.log('🔄 Updating stats for user:', userId);
@@ -184,7 +184,7 @@ export const updateUserStats = async (userId, gameData) => {
       bestScore: Math.max(currentGameStats.bestScore || 0, gameData.pointsEarned),
       correctAnswers: (currentGameStats.correctAnswers || 0) + gameData.correctAnswers,
       totalQuestions: (currentGameStats.totalQuestions || 0) + gameData.totalQuestions,
-      level: Math.floor(((currentGameStats.gamesPlayed || 0) + 1) / 5) + 1 // Level up every 5 games
+      level: Math.floor(((currentGameStats.gamesPlayed || 0) + 1) / 5) + 1
     };
     
     // ========== CHECK ACHIEVEMENTS ==========
@@ -220,37 +220,62 @@ export const updateUserStats = async (userId, gameData) => {
       unlocked.push('🎓 Vocabulary Master!');
     }
     
-    // ========== UPDATE FIREBASE ==========
+    // ========== CREATE COMPLETE STATS OBJECT ==========
+    const completeStats = {
+      totalPoints: newTotalPoints,
+      wordsLearned: newWordsLearned,
+      gamesPlayed: newGamesPlayed,
+      currentStreak: newCurrentStreak,
+      longestStreak: newLongestStreak,
+      level: newLevel,
+      xpProgress: newXpProgress,
+      accuracy: newAccuracy,
+      correctAnswers: newCorrectAnswers,
+      totalQuestions: newTotalQuestions
+    };
     
-    // Update overall stats
+    // ========== ✅ FIXED: OVERWRITE ENTIRE STATS OBJECT ==========
     await updateDoc(userRef, {
-      'stats.totalPoints': newTotalPoints,
-      'stats.wordsLearned': newWordsLearned,
-      'stats.gamesPlayed': newGamesPlayed,
-      'stats.currentStreak': newCurrentStreak,
-      'stats.longestStreak': newLongestStreak,
-      'stats.level': newLevel,
-      'stats.xpProgress': newXpProgress,
-      'stats.accuracy': newAccuracy,
-      'stats.correctAnswers': newCorrectAnswers,
-      'stats.totalQuestions': newTotalQuestions,
-      'progress.achievements': newAchievements,
-      'lastUpdated': serverTimestamp()
-    });
-    
-    // Update per-game stats
-    await updateDoc(userRef, {
-      [`gameStats.${gameData.gameType}`]: newGameStats
-    });
-    
-    console.log('✅ Stats updated successfully!');
-    console.log('📊 New stats:', {
+      stats: completeStats,  // ← OVERWRITE ang buong stats!
+      
+      // Also update root level for quick access
       totalPoints: newTotalPoints,
       wordsLearned: newWordsLearned,
       gamesPlayed: newGamesPlayed,
       level: newLevel,
-      accuracy: newAccuracy
+      accuracy: newAccuracy,
+      correctAnswers: newCorrectAnswers,
+      currentStreak: newCurrentStreak,
+      longestStreak: newLongestStreak,
+      totalQuestions: newTotalQuestions,
+      xpProgress: newXpProgress,
+      xp: newTotalPoints,
+      
+      // Update progress - OVERWRITE
+      progress: {
+        ...userData.progress || {},
+        achievements: newAchievements,
+        totalPoints: newTotalPoints,
+        wordsLearned: newWordsLearned,
+        gamesPlayed: newGamesPlayed,
+        level: newLevel,
+        xp: newTotalPoints,
+        accuracy: newAccuracy,
+        correctAnswers: newCorrectAnswers,
+        totalQuestions: newTotalQuestions,
+        streak: newCurrentStreak,
+        longestStreak: newLongestStreak,
+        xpProgress: newXpProgress
+      },
+      
+      // Update game stats - OVERWRITE
+      [`gameStats.${gameData.gameType}`]: newGameStats,
+      
+      lastUpdated: serverTimestamp()
     });
+    
+    console.log('✅ Stats updated successfully!');
+    console.log('📊 New stats:', completeStats);
     
     if (unlocked.length > 0) {
       console.log('🏆 New Achievements Unlocked:', unlocked);
@@ -258,33 +283,11 @@ export const updateUserStats = async (userId, gameData) => {
     
     // Save to localStorage as backup
     localStorage.setItem('userStats', JSON.stringify({
-      stats: {
-        totalPoints: newTotalPoints,
-        wordsLearned: newWordsLearned,
-        gamesPlayed: newGamesPlayed,
-        currentStreak: newCurrentStreak,
-        longestStreak: newLongestStreak,
-        level: newLevel,
-        xpProgress: newXpProgress,
-        accuracy: newAccuracy,
-        correctAnswers: newCorrectAnswers,
-        totalQuestions: newTotalQuestions
-      }
+      stats: completeStats
     }));
     
     return { 
-      stats: {
-        totalPoints: newTotalPoints,
-        wordsLearned: newWordsLearned,
-        gamesPlayed: newGamesPlayed,
-        currentStreak: newCurrentStreak,
-        longestStreak: newLongestStreak,
-        level: newLevel,
-        xpProgress: newXpProgress,
-        accuracy: newAccuracy,
-        correctAnswers: newCorrectAnswers,
-        totalQuestions: newTotalQuestions
-      },
+      stats: completeStats,
       achievements: unlocked
     };
     
@@ -325,6 +328,18 @@ export const createNewUser = async (userId, displayName = 'Player') => {
         correctAnswers: 0,
         totalQuestions: 0
       },
+      
+      totalPoints: 0,
+      wordsLearned: 0,
+      gamesPlayed: 0,
+      level: 1,
+      accuracy: 0,
+      correctAnswers: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      totalQuestions: 0,
+      xpProgress: 0,
+      xp: 0,
       
       gameStats: {
         wordPics: {
@@ -389,7 +404,18 @@ export const createNewUser = async (userId, displayName = 'Player') => {
         },
         knownWords: [],
         masteredWords: [],
-        sessionsCompleted: 0
+        sessionsCompleted: 0,
+        totalPoints: 0,
+        wordsLearned: 0,
+        gamesPlayed: 0,
+        level: 1,
+        xp: 0,
+        accuracy: 0,
+        correctAnswers: 0,
+        totalQuestions: 0,
+        streak: 0,
+        longestStreak: 0,
+        xpProgress: 0
       }
     });
     

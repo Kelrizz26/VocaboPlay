@@ -276,218 +276,239 @@ const LibraryScene = () => {
 };
 
 // ============================================================
-// ===== STORY SCENES DATA =====
+// ===== FIXED VOCABULARY STORY SCENES (NO RANDOMIZATION) =====
 // ============================================================
-const storyScenes = [
+const allScenes = [
   {
-    id: 0, narrator: "A powerful Queen", emotion: 'curious',
-    text: "In the heart of the old kingdom, there was a library that no one had entered for a hundred years. Queen Elara stood before its ancient doors.",
+    id: 0, narrator: "The Queen's Journey", emotion: 'curious',
+    text: "Queen Elara found a magical book in the library. This book had the power to teach her new words. Each word she learned made her wiser and stronger.",
+    vocabulary: 'Wisdom',
+    wordDefinition: 'Knowledge and good judgment',
     choices: [
-      { id: 'A', text: '🔓 Try to open the door', nextScene: 1, correct: true },
-      { id: 'B', text: '🔍 Look for another entrance', nextScene: 2, correct: false },
-      { id: 'C', text: '📖 Read the inscription', nextScene: 3, correct: false }
-    ],
-    vocabulary: 'Ancient', wordDefinition: 'Very old or belonging to a time long past'
+      { id: 'A', text: 'Knowledge and good judgment', nextScene: 1, correct: true },
+      { id: 'B', text: 'Being fast and strong', nextScene: 2, correct: false },
+      { id: 'C', text: 'Being rich and famous', nextScene: 3, correct: false }
+    ]
   },
   {
-    id: 1, narrator: "The Mysterious Door", emotion: 'determined',
-    text: "The Queen pushed the heavy door. It creaked open, revealing a vast hall filled with books that seemed to glow with their own light.",
+    id: 1, narrator: "The Brave Queen", emotion: 'determined',
+    text: "The Queen was brave. She decided to explore the deepest part of the library. She knew she would find amazing things there.",
+    vocabulary: 'Explore',
+    wordDefinition: 'To travel and discover new places',
     choices: [
-      { id: 'A', text: '📚 Explore the bookshelves', nextScene: 4, correct: true },
-      { id: 'B', text: '🔦 Look for a light source', nextScene: 5, correct: false },
-      { id: 'C', text: '👻 Call out to see if anyone is there', nextScene: 6, correct: false }
-    ],
-    vocabulary: 'Illuminate', wordDefinition: 'To light up or make something brighter'
+      { id: 'A', text: 'To stay in one place', nextScene: 4, correct: false },
+      { id: 'B', text: 'To travel and discover', nextScene: 5, correct: true },
+      { id: 'C', text: 'To hide from danger', nextScene: 6, correct: false }
+    ]
   },
   {
-    id: 2, narrator: "The Secret Passage", emotion: 'sneaky',
-    text: "The Queen found a hidden passage behind a tapestry. It led to a small room filled with scrolls and ancient maps.",
+    id: 2, narrator: "The Beautiful Library", emotion: 'amazed',
+    text: "The library was beautiful. Books of all colors floated in the air. The Queen felt happy and peaceful in this magical place.",
+    vocabulary: 'Peaceful',
+    wordDefinition: 'Calm and quiet',
     choices: [
-      { id: 'A', text: '🗺️ Study the maps', nextScene: 4, correct: true },
-      { id: 'B', text: '📜 Read the scrolls', nextScene: 5, correct: false },
-      { id: 'C', text: '🚪 Go back to the main hall', nextScene: 1, correct: false }
-    ],
-    vocabulary: 'Discover', wordDefinition: 'To find something unexpectedly'
+      { id: 'A', text: 'Loud and chaotic', nextScene: 7, correct: false },
+      { id: 'B', text: 'Calm and quiet', nextScene: 8, correct: true },
+      { id: 'C', text: 'Dark and scary', nextScene: 9, correct: false }
+    ]
   },
   {
-    id: 3, narrator: "The Inscription", emotion: 'thinking',
-    text: '"Only those who seek knowledge shall find it," the inscription read. The Queen realized this was a test of her determination.',
+    id: 3, narrator: "The Queen's Courage", emotion: 'thinking',
+    text: "The Queen showed great courage. She was not afraid to face the unknown. Her heart was filled with hope and excitement.",
+    vocabulary: 'Courage',
+    wordDefinition: 'Being brave in the face of fear',
     choices: [
-      { id: 'A', text: '🔑 Try the door again', nextScene: 1, correct: false },
-      { id: 'B', text: '🔍 Look for clues', nextScene: 2, correct: false },
-      { id: 'C', text: '📖 Speak the words aloud', nextScene: 4, correct: true }
-    ],
-    vocabulary: 'Determination', wordDefinition: 'The quality of being determined'
+      { id: 'A', text: 'Being very scared', nextScene: 10, correct: false },
+      { id: 'B', text: 'Being brave and fearless', nextScene: 11, correct: true },
+      { id: 'C', text: 'Being lazy and weak', nextScene: 12, correct: false }
+    ]
   },
   {
-    id: 4, narrator: "The Heart of the Library", emotion: 'amazed',
-    text: "The Queen discovered the heart of the library - a magnificent room where books floated and whispered their secrets.",
+    id: 4, narrator: "The Queen's Discovery", emotion: 'curious',
+    text: "The Queen discovered a hidden room. Inside were thousands of books. She knew this was a place of great learning.",
+    vocabulary: 'Discover',
+    wordDefinition: 'To find something for the first time',
     choices: [
-      { id: 'A', text: '📖 Read a floating book', nextScene: 7, correct: true },
-      { id: 'B', text: '🔮 Touch the glowing orb', nextScene: 8, correct: false },
-      { id: 'C', text: '🕊️ Follow the whispering voices', nextScene: 9, correct: false }
-    ],
-    vocabulary: 'Wisdom', wordDefinition: 'The quality of having experience and knowledge'
+      { id: 'A', text: 'To lose something', nextScene: 13, correct: false },
+      { id: 'B', text: 'To find something new', nextScene: 14, correct: true },
+      { id: 'C', text: 'To break something', nextScene: 15, correct: false }
+    ]
   },
   {
-    id: 5, narrator: "The Dark Corner", emotion: 'scared',
-    text: "In the darkest corner, the Queen found a book that seemed to be alive. It pulsed with strange energy.",
+    id: 5, narrator: "The Queen's Strength", emotion: 'glowing',
+    text: "The Queen felt strong. She could read any book and understand any word. Her mind was powerful and sharp.",
+    vocabulary: 'Powerful',
+    wordDefinition: 'Having great strength or ability',
     choices: [
-      { id: 'A', text: '📖 Open the book', nextScene: 7, correct: false },
-      { id: 'B', text: '🔮 Try to understand its power', nextScene: 8, correct: true },
-      { id: 'C', text: '🚫 Leave it alone', nextScene: 9, correct: false }
-    ],
-    vocabulary: 'Mysterious', wordDefinition: 'Difficult to understand or explain'
+      { id: 'A', text: 'Being very weak', nextScene: 16, correct: false },
+      { id: 'B', text: 'Having great strength', nextScene: 17, correct: true },
+      { id: 'C', text: 'Being very small', nextScene: 18, correct: false }
+    ]
   },
   {
-    id: 6, narrator: "The Echo", emotion: 'confused',
-    text: "The Queen's voice echoed through the halls. She realized the library had been waiting for someone brave enough to enter.",
+    id: 6, narrator: "The Queen's Kindness", emotion: 'happy',
+    text: "The Queen was kind to everyone she met. She shared her knowledge with the people of her kingdom. They loved her for her kindness.",
+    vocabulary: 'Kindness',
+    wordDefinition: 'Being friendly and caring',
     choices: [
-      { id: 'A', text: '🎵 Sing a song', nextScene: 7, correct: false },
-      { id: 'B', text: '📖 Speak your name', nextScene: 8, correct: true },
-      { id: 'C', text: '🌙 Wait for the moon', nextScene: 9, correct: false }
-    ],
-    vocabulary: 'Courage', wordDefinition: 'The ability to do something that frightens one'
+      { id: 'A', text: 'Being mean and rude', nextScene: 19, correct: false },
+      { id: 'B', text: 'Being friendly and caring', nextScene: 20, correct: true },
+      { id: 'C', text: 'Being selfish and greedy', nextScene: 0, correct: false }
+    ]
   },
   {
-    id: 7, narrator: "The Guardian Spirit", emotion: 'wise',
-    text: "A guardian spirit appeared. 'You have shown great courage, Queen. Continue your journey, for knowledge is endless.'",
+    id: 7, narrator: "The Queen's Dream", emotion: 'thinking',
+    text: "The Queen had a dream. She dreamed of a world where everyone could read and learn. She wanted to make this dream come true.",
+    vocabulary: 'Dream',
+    wordDefinition: 'A hope or wish for the future',
     choices: [
-      { id: 'A', text: '📖 Continue exploring', nextScene: 8, correct: true },
-      { id: 'B', text: '🔮 Ask for a blessing', nextScene: 9, correct: false },
-      { id: 'C', text: '🕊️ Thank the guardian', nextScene: 0, correct: false }
-    ],
-    vocabulary: 'Guardian', wordDefinition: 'A person who protects or defends something'
+      { id: 'A', text: 'A scary nightmare', nextScene: 1, correct: false },
+      { id: 'B', text: 'A hope or wish', nextScene: 2, correct: true },
+      { id: 'C', text: 'A boring thought', nextScene: 3, correct: false }
+    ]
   },
   {
-    id: 8, narrator: "The Queen's Vision", emotion: 'glowing',
-    text: "The book pulsed with ancient power. The Queen felt a surge of energy as she touched it. She saw visions of the library's past.",
+    id: 8, narrator: "The Queen's Happiness", emotion: 'glowing',
+    text: "The Queen was happy. She had found the greatest treasure of all - knowledge. She knew this treasure would last forever.",
+    vocabulary: 'Treasure',
+    wordDefinition: 'Something very valuable and precious',
     choices: [
-      { id: 'A', text: '📖 Embrace the vision', nextScene: 9, correct: true },
-      { id: 'B', text: '🔮 Try to control the power', nextScene: 10, correct: false },
-      { id: 'C', text: '🚫 Close the book and step back', nextScene: 11, correct: false }
-    ],
-    vocabulary: 'Vision', wordDefinition: 'A mental image of something'
+      { id: 'A', text: 'Something worthless', nextScene: 4, correct: false },
+      { id: 'B', text: 'Something valuable', nextScene: 5, correct: true },
+      { id: 'C', text: 'Something dangerous', nextScene: 6, correct: false }
+    ]
   },
   {
-    id: 9, narrator: "The Whispering Voice", emotion: 'awakened',
-    text: "A voice whispered: 'The library is alive, and it remembers everything. Seek the Chamber of Echoes to unlock its greatest secret.'",
+    id: 9, narrator: "The Queen's Learning", emotion: 'wise',
+    text: "The Queen loved learning. Every new word she learned opened a door to a new world. She wanted to learn everything.",
+    vocabulary: 'Learning',
+    wordDefinition: 'Gaining knowledge and skills',
     choices: [
-      { id: 'A', text: '🔍 Find the Chamber of Echoes', nextScene: 10, correct: true },
-      { id: 'B', text: '📖 Search for more clues', nextScene: 11, correct: false },
-      { id: 'C', text: '🕊️ Wait for the voice to speak again', nextScene: 12, correct: false }
-    ],
-    vocabulary: 'Chamber', wordDefinition: 'A large room or hall'
+      { id: 'A', text: 'Forgetting everything', nextScene: 7, correct: false },
+      { id: 'B', text: 'Gaining knowledge', nextScene: 8, correct: true },
+      { id: 'C', text: 'Being very bored', nextScene: 9, correct: false }
+    ]
   },
   {
-    id: 10, narrator: "The Chamber of Echoes", emotion: 'amazed',
-    text: "The Queen found the Chamber of Echoes - a vast circular room where every whisper repeated a thousand times.",
+    id: 10, narrator: "The Queen's Adventure", emotion: 'curious',
+    text: "Every day was a new adventure for the Queen. She explored the library and found new books to read. Life was exciting!",
+    vocabulary: 'Adventure',
+    wordDefinition: 'An exciting and unusual experience',
     choices: [
-      { id: 'A', text: '📖 Read the glowing book', nextScene: 11, correct: true },
-      { id: 'B', text: '🔮 Listen to the echoes', nextScene: 12, correct: false },
-      { id: 'C', text: '🕊️ Call out to the library', nextScene: 13, correct: false }
-    ],
-    vocabulary: 'Echo', wordDefinition: 'A sound that is repeated'
+      { id: 'A', text: 'A boring routine', nextScene: 10, correct: false },
+      { id: 'B', text: 'An exciting experience', nextScene: 11, correct: true },
+      { id: 'C', text: 'A scary nightmare', nextScene: 12, correct: false }
+    ]
   },
   {
-    id: 11, narrator: "The Magic Orb", emotion: 'curious',
-    text: "The Queen touched the glowing orb. It showed her the history of the library - how it was built by ancient scholars.",
+    id: 11, narrator: "The Queen's Patience", emotion: 'thinking',
+    text: "The Queen was patient. She knew that learning took time. She read each book carefully and understood every word.",
+    vocabulary: 'Patient',
+    wordDefinition: 'Able to wait calmly without complaining',
     choices: [
-      { id: 'A', text: '📖 Explore the library\'s history', nextScene: 12, correct: true },
-      { id: 'B', text: '🔮 Ask the orb a question', nextScene: 13, correct: false },
-      { id: 'C', text: '🕊️ Share the vision with others', nextScene: 14, correct: false }
-    ],
-    vocabulary: 'Preserve', wordDefinition: 'To maintain or keep safe from harm'
+      { id: 'A', text: 'Being impatient and angry', nextScene: 13, correct: false },
+      { id: 'B', text: 'Waiting calmly', nextScene: 14, correct: true },
+      { id: 'C', text: 'Being very fast', nextScene: 15, correct: false }
+    ]
   },
   {
-    id: 12, narrator: "The Queen's Trial", emotion: 'determined',
-    text: "The library presented the Queen with a final trial - she had to prove her worth by solving the riddle of the infinite pages.",
+    id: 12, narrator: "The Queen's Gratitude", emotion: 'happy',
+    text: "The Queen was grateful for all the knowledge she had gained. She thanked the library and all the books that taught her.",
+    vocabulary: 'Grateful',
+    wordDefinition: 'Feeling thankful for something',
     choices: [
-      { id: 'A', text: '📖 Solve the riddle', nextScene: 13, correct: true },
-      { id: 'B', text: '🔮 Ask for help from the library', nextScene: 14, correct: false },
-      { id: 'C', text: '🕊️ Trust your instincts', nextScene: 15, correct: false }
-    ],
-    vocabulary: 'Riddle', wordDefinition: 'A question requiring ingenuity to find its answer'
+      { id: 'A', text: 'Feeling angry', nextScene: 16, correct: false },
+      { id: 'B', text: 'Feeling thankful', nextScene: 17, correct: true },
+      { id: 'C', text: 'Feeling bored', nextScene: 18, correct: false }
+    ]
   },
   {
-    id: 13, narrator: "The Infinite Pages", emotion: 'curious',
-    text: "The Queen opened the infinite book. It contained every story ever written and every story that would ever be written.",
+    id: 13, narrator: "The Queen's Wisdom", emotion: 'wise',
+    text: "The Queen became the wisest ruler in the kingdom. Her people came to her for advice because she always gave good answers.",
+    vocabulary: 'Advice',
+    wordDefinition: 'A suggestion or recommendation on what to do',
     choices: [
-      { id: 'A', text: '📖 Read a random page', nextScene: 14, correct: true },
-      { id: 'B', text: '🔮 Search for a specific story', nextScene: 15, correct: false },
-      { id: 'C', text: '🕊️ Close the book and reflect', nextScene: 16, correct: false }
-    ],
-    vocabulary: 'Possibility', wordDefinition: 'Something that is possible or may happen'
+      { id: 'A', text: 'A confusing question', nextScene: 19, correct: false },
+      { id: 'B', text: 'A helpful suggestion', nextScene: 20, correct: true },
+      { id: 'C', text: 'A silly joke', nextScene: 0, correct: false }
+    ]
   },
   {
-    id: 14, narrator: "The Library's Spirit", emotion: 'wise',
-    text: "The spirit of the library appeared. 'You have proven yourself worthy, Queen. The knowledge of the ages is now yours to explore.'",
+    id: 14, narrator: "The Queen's Imagination", emotion: 'curious',
+    text: "The Queen had a great imagination. She could picture entire worlds just by reading words. Her mind was full of wonderful ideas.",
+    vocabulary: 'Imagination',
+    wordDefinition: 'The ability to create new ideas and pictures in your mind',
     choices: [
-      { id: 'A', text: '📖 Begin your eternal exploration', nextScene: 15, correct: true },
-      { id: 'B', text: '🔮 Ask for a specific boon', nextScene: 16, correct: false },
-      { id: 'C', text: '🕊️ Share this gift with the world', nextScene: 17, correct: false }
-    ],
-    vocabulary: 'Eternal', wordDefinition: 'Lasting or existing forever'
+      { id: 'A', text: 'Having no ideas', nextScene: 1, correct: false },
+      { id: 'B', text: 'Creating new ideas', nextScene: 2, correct: true },
+      { id: 'C', text: 'Being very confused', nextScene: 3, correct: false }
+    ]
   },
   {
-    id: 15, narrator: "The Eternal Queen", emotion: 'glowing',
-    text: "The Queen became the Eternal Guardian - a protector of infinite knowledge. She would spend her days exploring the endless library.",
+    id: 15, narrator: "The Queen's Goal", emotion: 'determined',
+    text: "The Queen had a goal. She wanted to read every book in the library. She worked hard every day to achieve her goal.",
+    vocabulary: 'Goal',
+    wordDefinition: 'Something you want to achieve',
     choices: [
-      { id: 'A', text: '📖 Continue exploring', nextScene: 16, correct: true },
-      { id: 'B', text: '🔮 Seek deeper secrets', nextScene: 17, correct: false },
-      { id: 'C', text: '🕊️ Share your knowledge with others', nextScene: 18, correct: false }
-    ],
-    vocabulary: 'Eternal', wordDefinition: 'Lasting or existing forever'
+      { id: 'A', text: 'Something you avoid', nextScene: 4, correct: false },
+      { id: 'B', text: 'Something you want to achieve', nextScene: 5, correct: true },
+      { id: 'C', text: 'Something you forget', nextScene: 6, correct: false }
+    ]
   },
   {
-    id: 16, narrator: "The Wisdom of Ages", emotion: 'thinking',
-    text: "The Queen accessed the wisdom of ages - the combined knowledge of every scholar who had ever entered the library.",
+    id: 16, narrator: "The Queen's Success", emotion: 'happy',
+    text: "The Queen was successful. She had learned many new words and became very smart. Her kingdom was proud of her.",
+    vocabulary: 'Success',
+    wordDefinition: 'Achieving what you wanted to do',
     choices: [
-      { id: 'A', text: '📖 Read the collective memory', nextScene: 17, correct: true },
-      { id: 'B', text: '🔮 Ask the collective a question', nextScene: 18, correct: false },
-      { id: 'C', text: '🕊️ Share the wisdom with the world', nextScene: 19, correct: false }
-    ],
-    vocabulary: 'Collective', wordDefinition: 'Done by people acting as a group'
+      { id: 'A', text: 'Failing at something', nextScene: 7, correct: false },
+      { id: 'B', text: 'Achieving your goal', nextScene: 8, correct: true },
+      { id: 'C', text: 'Giving up easily', nextScene: 9, correct: false }
+    ]
   },
   {
-    id: 17, narrator: "The Library's Guardian", emotion: 'wise',
-    text: "The Queen was appointed as the new Guardian of the Library. She would protect the ancient knowledge and guide future seekers.",
+    id: 17, narrator: "The Queen's Joy", emotion: 'glowing',
+    text: "The Queen felt great joy. She had found the most wonderful thing in the world - the love of learning. Her heart was full of happiness.",
+    vocabulary: 'Joy',
+    wordDefinition: 'A feeling of great happiness',
     choices: [
-      { id: 'A', text: '📖 Begin your guardianship', nextScene: 18, correct: true },
-      { id: 'B', text: '🔮 Explore hidden sections', nextScene: 19, correct: false },
-      { id: 'C', text: '🕊️ Invite others to learn', nextScene: 20, correct: false }
-    ],
-    vocabulary: 'Guardian', wordDefinition: 'A person who protects or defends something'
+      { id: 'A', text: 'A feeling of sadness', nextScene: 10, correct: false },
+      { id: 'B', text: 'A feeling of great happiness', nextScene: 11, correct: true },
+      { id: 'C', text: 'A feeling of anger', nextScene: 12, correct: false }
+    ]
   },
   {
-    id: 18, narrator: "The Infinite Journey", emotion: 'happy',
-    text: "The Queen's journey continued, with new discoveries around every corner. The library was infinite, and so was her thirst for knowledge.",
+    id: 18, narrator: "The Queen's Future", emotion: 'awakened',
+    text: "The Queen looked to the future with hope. She knew there were still many words to learn and many books to read. Her journey would never end.",
+    vocabulary: 'Future',
+    wordDefinition: 'The time yet to come',
     choices: [
-      { id: 'A', text: '📖 Continue the adventure', nextScene: 19, correct: true },
-      { id: 'B', text: '🔮 Seek the library\'s oldest secret', nextScene: 20, correct: false },
-      { id: 'C', text: '🕊️ Rest and reflect on your journey', nextScene: 0, correct: false }
-    ],
-    vocabulary: 'Adventure', wordDefinition: 'An exciting and unusual experience'
+      { id: 'A', text: 'The time that has passed', nextScene: 13, correct: false },
+      { id: 'B', text: 'The time yet to come', nextScene: 14, correct: true },
+      { id: 'C', text: 'The present moment', nextScene: 15, correct: false }
+    ]
   },
   {
-    id: 19, narrator: "The Oldest Secret", emotion: 'curious',
-    text: "The Queen discovered the library's oldest secret - a book written by the founder herself. It revealed the true purpose of the library.",
+    id: 19, narrator: "The Queen's Knowledge", emotion: 'wise',
+    text: "The Queen shared her knowledge with everyone. She taught children to read and helped adults learn new things. Her kingdom became a place of learning.",
+    vocabulary: 'Knowledge',
+    wordDefinition: 'Information and understanding about a subject',
     choices: [
-      { id: 'A', text: '📖 Read the founder\'s book', nextScene: 20, correct: true },
-      { id: 'B', text: '🔮 Pass the knowledge forward', nextScene: 0, correct: false },
-      { id: 'C', text: '🕊️ Keep the secret safe', nextScene: 18, correct: false }
-    ],
-    vocabulary: 'Preserve', wordDefinition: 'To maintain or keep safe from harm'
+      { id: 'A', text: 'Being confused and lost', nextScene: 16, correct: false },
+      { id: 'B', text: 'Information and understanding', nextScene: 17, correct: true },
+      { id: 'C', text: 'Being very ignorant', nextScene: 18, correct: false }
+    ]
   },
   {
-    id: 20, narrator: "The New Beginning", emotion: 'awakened',
-    text: "Every ending is a new beginning. The Queen closed one book and opened another, ready for the next chapter of her endless adventure.",
+    id: 20, narrator: "The Queen's Legacy", emotion: 'awakened',
+    text: "The Queen's legacy lived on. She had taught her people the value of words and learning. Her kingdom became the most educated in the world.",
+    vocabulary: 'Legacy',
+    wordDefinition: 'Something handed down from the past',
     choices: [
-      { id: 'A', text: '📖 Start a new chapter', nextScene: 0, correct: true },
-      { id: 'B', text: '🔮 Search for something new', nextScene: 18, correct: false },
-      { id: 'C', text: '🕊️ Share your story with the world', nextScene: 17, correct: false }
-    ],
-    vocabulary: 'Beginning', wordDefinition: 'The point at which something starts'
+      { id: 'A', text: 'Something forgotten', nextScene: 19, correct: false },
+      { id: 'B', text: 'Something handed down', nextScene: 20, correct: true },
+      { id: 'C', text: 'Something destroyed', nextScene: 0, correct: false }
+    ]
   }
 ];
 
@@ -497,6 +518,7 @@ const storyScenes = [
 const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== GAME STATE =====
   const [gameState, setGameState] = useState('intro');
+  const [storyScenes, setStoryScenes] = useState(allScenes);
   const [currentScene, setCurrentScene] = useState(0);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(5);
@@ -533,6 +555,8 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   const textTimerRef = useRef(null);
   const speechSynthRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  const currentTextRef = useRef('');
+  const isSpeakingRef = useRef(false);
 
   // ============================================================
   // ===== FIREBASE AUTH - GET CURRENT USER =====
@@ -554,7 +578,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   }, []);
 
   // ============================================================
-  // ===== ✅ NEW: SAVE TO FIREBASE =====
+  // ===== SAVE TO FIREBASE =====
   // ============================================================
   const saveGameToFirebase = async (isComplete) => {
     if (!currentUser) {
@@ -565,16 +589,16 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     const userId = currentUser.uid;
     const totalScenes = storyScenes.length;
     const scenesCompleted = currentScene + 1;
-    const pointsEarned = score;
+    const pointsEarned = correctAnswers;
 
     const gameData = {
       gameType: 'shortStory',
       pointsEarned: pointsEarned,
-      newWordsLearned: correctAnswers, // Each correct = new word learned
+      newWordsLearned: correctAnswers,
       correctAnswers: correctAnswers,
       totalQuestions: totalAnswers,
       won: isComplete || scenesCompleted >= totalScenes / 2,
-      score: score,
+      score: correctAnswers,
       isComplete: isComplete,
       scenesCompleted: scenesCompleted,
       totalScenes: totalScenes
@@ -681,7 +705,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   }, []);
 
   // ============================================================
-  // ===== VOICE NARRATION =====
+  // ===== VOICE NARRATION - FIXED: Sync with typing =====
   // ============================================================
   useEffect(() => {
     if (window.speechSynthesis) {
@@ -696,48 +720,82 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
 
   const speakText = useCallback((text) => {
     if (!isVoiceEnabled || !window.speechSynthesis) return;
-    if (speechSynthRef.current) speechSynthRef.current.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.85;
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
-    utterance.lang = 'en-US';
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    speechSynthRef.current.speak(utterance);
+    
+    // Cancel any ongoing speech
+    if (speechSynthRef.current) {
+      speechSynthRef.current.cancel();
+    }
+    
+    setIsSpeaking(false);
+    isSpeakingRef.current = false;
+    
+    setTimeout(() => {
+      if (!window.speechSynthesis) return;
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.9;
+      utterance.lang = 'en-US';
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        isSpeakingRef.current = true;
+      };
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        isSpeakingRef.current = false;
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        isSpeakingRef.current = false;
+        console.log('⚠️ Speech error, continuing...');
+      };
+      speechSynthRef.current.speak(utterance);
+    }, 50);
   }, [isVoiceEnabled]);
 
   const stopSpeaking = useCallback(() => {
     if (speechSynthRef.current) {
       speechSynthRef.current.cancel();
       setIsSpeaking(false);
+      isSpeakingRef.current = false;
     }
   }, []);
 
   // ============================================================
-  // ===== TYPEWRITER EFFECT =====
+  // ===== TYPEWRITER EFFECT - FIXED: Voice syncs with typing =====
   // ============================================================
   const typeText = useCallback((text, callback) => {
+    // Stop any existing speech
+    stopSpeaking();
+    
     setIsTyping(true);
     setDisplayText('');
     if (textTimerRef.current) clearInterval(textTimerRef.current);
-    if (isVoiceEnabled) speakText(text);
+    
+    const textToSpeak = text;
+    
+    // Start speaking the FULL text immediately (while typing begins)
+    if (isVoiceEnabled && textToSpeak) {
+      speakText(textToSpeak);
+    }
+    
     let index = 0;
+    
     textTimerRef.current = setInterval(() => {
-      if (index < text.length) {
-        setDisplayText(prev => prev + text[index]);
+      if (index < textToSpeak.length) {
+        setDisplayText(prev => prev + textToSpeak[index]);
         index++;
       } else {
         clearInterval(textTimerRef.current);
         setIsTyping(false);
         if (callback) callback();
       }
-    }, 18);
-  }, [isVoiceEnabled, speakText]);
+    }, 25);
+  }, [isVoiceEnabled, speakText, stopSpeaking]);
 
   // ============================================================
-  // ===== SAVE PROGRESS - UPDATED with ShortStorvGame =====
+  // ===== SAVE PROGRESS =====
   // ============================================================
   const saveGameProgress = useCallback((isComplete = false) => {
     if (sessionSaved) return;
@@ -767,11 +825,10 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       localStorage.setItem('vocaboplay_lastPlayed', today);
     }
     
-    // ✅ UPDATED: Use ShortStorvGame to match Firebase
     const progressData = {
       gamesPlayed: 1,
-      totalPoints: score,
-      xp: score,
+      totalPoints: correctAnswers,
+      xp: correctAnswers,
       wordsLearned: correctAnswers,
       totalAnswers: totalAnswers,
       correctAnswers: correctAnswers,
@@ -797,7 +854,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
           console.error('❌ ShortStoryGame: Error saving progress:', err);
         });
     }
-  }, [score, correctAnswers, totalAnswers, currentScene, updateProgress, sessionSaved]);
+  }, [correctAnswers, totalAnswers, currentScene, updateProgress, sessionSaved, storyScenes]);
 
   // ============================================================
   // ===== TIMER EFFECT =====
@@ -810,29 +867,52 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     } else if (timer === 0 && timerRunning) {
       setTimerRunning(false);
       if (selectedChoice === null && lives > 0) {
-        setLives(prev => {
-          const newLives = prev - 1;
-          setTotalAnswers(prevTotal => prevTotal + 1);
-          if (newLives === 0) {
+        const scene = storyScenes[currentScene];
+        if (scene && scene.choices) {
+          const wrongChoices = scene.choices.filter(c => !c.correct);
+          if (wrongChoices.length > 0) {
+            const randomWrong = wrongChoices[Math.floor(Math.random() * wrongChoices.length)];
+            setSelectedChoice(randomWrong.id);
+            setTotalAnswers(prev => prev + 1);
+            setShowFeedback(true);
+            setFeedbackType('wrong');
+            setFeedbackMessage('⏰ Time\'s up! -1 life');
+            
+            setLives(prev => {
+              const newLives = prev - 1;
+              if (newLives === 0) {
+                setTimeout(() => {
+                  saveGameProgress(false);
+                  saveGameToFirebase(false);
+                  setGameState('gameover');
+                  stopSpeaking();
+                }, 1500);
+              }
+              return newLives;
+            });
+            
             setTimeout(() => {
-              saveGameProgress(false);
-              saveGameToFirebase(false);
-              setGameState('gameover');
-              stopSpeaking();
+              setShowFeedback(false);
+              setSelectedChoice(null);
+              if (lives <= 0) {
+                setGameState('gameover');
+                stopSpeaking();
+                return;
+              }
+              const nextScene = storyScenes.find(s => s.id === randomWrong.nextScene);
+              if (nextScene) {
+                setCurrentScene(storyScenes.indexOf(nextScene));
+                setTimer(15);
+                setTimerRunning(true);
+                typeText(nextScene.text);
+              }
             }, 1500);
           }
-          return newLives;
-        });
-        setFeedbackType('wrong');
-        setFeedbackMessage('⏰ Time\'s up! -1 life');
-        setShowFeedback(true);
-        setTimeout(() => {
-          setShowFeedback(false);
-        }, 1500);
+        }
       }
     }
     return () => clearInterval(timerIntervalRef.current);
-  }, [timer, timerRunning, selectedChoice, lives]);
+  }, [timer, timerRunning, selectedChoice, lives, currentScene, storyScenes]);
 
   // ============================================================
   // ===== START GAME =====
@@ -848,6 +928,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
       }, 3000);
       return;
     }
+    setStoryScenes(allScenes);
     setGameState('playing');
     setCurrentScene(0);
     setScore(0);
@@ -857,31 +938,32 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     setTimerRunning(true);
     setSelectedChoice(null);
     setSessionSaved(false);
-    const scene = storyScenes[0];
+    const scene = storyScenes[0] || allScenes[0];
     if (scene) {
       typeText(scene.text);
     }
   };
 
   // ============================================================
-  // ===== HANDLE CHOICE - UPDATED: 1 point only =====
+  // ===== HANDLE CHOICE =====
   // ============================================================
   const handleChoice = (choice) => {
     if (selectedChoice !== null || lives <= 0) return;
-    setTimerRunning(false);
+    
     stopSpeaking();
+    setTimerRunning(false);
     setSelectedChoice(choice.id);
     setTotalAnswers(prev => prev + 1);
     setShowFeedback(true);
     
     if (choice.correct) {
       setFeedbackType('correct');
-      setFeedbackMessage('✅ Excellent choice! +1 point'); // CHANGED from +10 to +1
-      setScore(prev => prev + 1); // CHANGED from +10 to +1
+      setFeedbackMessage('✅ Excellent! You know your vocabulary! +1 point');
+      setScore(prev => prev + 1);
       setCorrectAnswers(prev => prev + 1);
     } else {
       setFeedbackType('wrong');
-      setFeedbackMessage('❌ Not quite. -1 life');
+      setFeedbackMessage('❌ Incorrect. Keep learning! -1 life');
       setLives(prev => {
         const newLives = prev - 1;
         if (newLives === 0) {
@@ -943,6 +1025,7 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
     setTimerRunning(false);
     setShowNoLivesMessage(false);
     setSessionSaved(false);
+    setStoryScenes(allScenes);
   };
 
   // ============================================================
@@ -1029,12 +1112,12 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
           <div style={{ fontSize: '64px', marginBottom: '8px' }}>💀</div>
           <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'white', marginBottom: '4px' }}>Game Over!</h2>
           <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '20px' }}>
-            You reached <strong style={{ color: '#fbbf24' }}>Scene {currentScene + 1}</strong> with <strong style={{ color: '#5C6AC4' }}>{score}</strong> points!
+            You reached <strong style={{ color: '#fbbf24' }}>Scene {currentScene + 1}</strong> with <strong style={{ color: '#5C6AC4' }}>{correctAnswers}</strong> correct answers!
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '24px' }}>
             <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '12px' }}>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>{score}</div>
-              <div style={{ fontSize: '11px', color: '#94a3b8' }}>Score</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>{correctAnswers}</div>
+              <div style={{ fontSize: '11px', color: '#94a3b8' }}>Correct</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '12px' }}>
               <div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>{currentScene + 1}</div>
@@ -1090,10 +1173,10 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
             background: 'linear-gradient(135deg, #5C6AC4, #5C6AC4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '56px',
             animation: 'float 3s ease-in-out infinite'
-          }}>📖</div>
-          <h1 style={{ fontSize: '32px', fontWeight: '800', color: 'white', marginBottom: '4px' }}>Story Quest</h1>
-          <p style={{ fontSize: '16px', color: '#94a3b8', marginBottom: '4px' }}>The Infinite Library</p>
-          <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>🏛️ 3D World • 🎙️ Voice Narration • ⏱️ 15s Timer</p>
+          }}>📚</div>
+          <h1 style={{ fontSize: '32px', fontWeight: '800', color: 'white', marginBottom: '4px' }}>Vocabulary Quest</h1>
+          <p style={{ fontSize: '16px', color: '#94a3b8', marginBottom: '4px' }}>The Dictionary of Power</p>
+          <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>📖 21 Vocabulary Words • 🎙️ Voice Narration • ⏱️ 15s Timer</p>
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px', padding: '8px 16px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <button onClick={() => setIsVoiceEnabled(!isVoiceEnabled)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: isVoiceEnabled ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: isVoiceEnabled ? '#4ade80' : '#f87171', cursor: 'pointer', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1105,12 +1188,12 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '24px' }}>
             <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '12px' }}><div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>🧙</div><div style={{ fontSize: '11px', color: '#94a3b8' }}>3D Character</div></div>
-            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '12px' }}><div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>♾️</div><div style={{ fontSize: '11px', color: '#94a3b8' }}>{storyScenes.length} Scenes</div></div>
+            <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '12px' }}><div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>📖</div><div style={{ fontSize: '11px', color: '#94a3b8' }}>{allScenes.length} Words</div></div>
             <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '12px' }}><div style={{ fontSize: '24px', fontWeight: '700', color: '#5C6AC4' }}>⏱️</div><div style={{ fontSize: '11px', color: '#94a3b8' }}>15s Timer</div></div>
           </div>
           
           {lives > 0 ? (
-            <button onClick={startGame} style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #5C6AC4, #5C6AC4)', color: 'white', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', boxShadow: 'none' }}>🚀 Begin Adventure</button>
+            <button onClick={startGame} style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #5C6AC4, #5C6AC4)', color: 'white', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', boxShadow: 'none' }}>🚀 Begin Vocabulary Adventure</button>
           ) : (
             <div style={{ width: '100%', padding: '16px', background: 'rgba(255,255,255,0.04)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', fontSize: '16px', fontWeight: '600' }}>
               ⏳ No Lives - Come back in {timeRemaining || '30 minutes'}
@@ -1127,7 +1210,16 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
   // ===== PLAYING SCREEN =====
   // ============================================================
   if (gameState === 'playing') {
-    const scene = storyScenes[currentScene] || storyScenes[0];
+    const scene = storyScenes[currentScene] || allScenes[0];
+
+    // Display exactly maxLives hearts (5)
+    const displayHearts = () => {
+      const hearts = [];
+      for (let i = 0; i < maxLives; i++) {
+        hearts.push(i < lives ? '❤️' : '🖤');
+      }
+      return hearts.join('');
+    };
 
     return (
       <div style={{
@@ -1174,12 +1266,12 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
             pointerEvents: 'auto', maxWidth: '900px', width: '100%', margin: '0 auto'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontWeight: '600', color: 'white', fontSize: '14px' }}>📖 StoryQuest</span>
-              <span style={{ padding: '2px 10px', borderRadius: '8px', background: 'rgba(124, 111, 214, 0.2)', color: '#5C6AC4', fontSize: '10px', fontWeight: '600' }}>♾️ {storyScenes.length} Scenes</span>
+              <span style={{ fontWeight: '600', color: 'white', fontSize: '14px' }}>📖 Vocabulary Quest</span>
+              <span style={{ padding: '2px 10px', borderRadius: '8px', background: 'rgba(124, 111, 214, 0.2)', color: '#5C6AC4', fontSize: '10px', fontWeight: '600' }}>📚 {storyScenes.length} Words</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button onClick={() => setIsVoiceEnabled(!isVoiceEnabled)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: isVoiceEnabled ? '#4ade80' : '#f87171' }}>{isVoiceEnabled ? '🔊' : '🔇'}</button>
-              <span style={{ fontSize: '14px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '2px' }}>❤️ {Array(Math.max(0, lives)).fill('❤️').join('')}{Array(Math.max(0, maxLives - lives)).fill('🖤').join('')}</span>
+              <span style={{ fontSize: '14px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '2px' }}>{displayHearts()}</span>
               <span style={{ fontSize: '14px', color: '#fbbf24', fontWeight: '600' }}>⭐ {score}</span>
               <div style={{
                 width: '34px', height: '34px', borderRadius: '50%',
@@ -1204,10 +1296,11 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
             margin: '0 auto', maxHeight: '45vh', overflow: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '11px', color: '#94a3b8' }}>
-              <span>📖 Scene {currentScene + 1} of {storyScenes.length}</span>
+              <span>📖 Word {currentScene + 1} of {storyScenes.length}</span>
               <span style={{ color: '#5C6AC4' }}>❤️ {lives}/{maxLives}</span>
             </div>
 
+            {/* Scene Text Display */}
             <div style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', marginBottom: '10px', minHeight: '50px', maxHeight: '80px', overflow: 'auto' }}>
               <p style={{ color: '#e2e8f0', fontSize: '14px', lineHeight: '1.7', margin: 0 }}>
                 {isTyping ? (
@@ -1217,9 +1310,22 @@ const ShortStoryGame = ({ onBack, updateProgress }) => {
               </p>
             </div>
 
+            {/* UPDATED: Only shows vocabulary word, no definition/clue */}
             {scene.vocabulary && (
-              <div style={{ padding: '6px 12px', background: 'rgba(124, 111, 214, 0.1)', borderRadius: '8px', marginBottom: '10px', border: '1px solid rgba(124, 111, 214, 0.2)' }}>
-                <div style={{ fontSize: '12px', color: '#5C6AC4', fontWeight: '600' }}>📚 <strong>{scene.vocabulary}</strong><span style={{ color: '#94a3b8', fontWeight: '400', marginLeft: '8px' }}>{scene.wordDefinition}</span></div>
+              <div style={{ 
+                padding: '6px 12px', 
+                background: 'rgba(124, 111, 214, 0.1)', 
+                borderRadius: '8px', 
+                marginBottom: '10px',
+                display: 'inline-block'
+              }}>
+                <span style={{ 
+                  fontSize: '15px', 
+                  color: '#5C6AC4', 
+                  fontWeight: '600'
+                }}>
+                  📚 {scene.vocabulary}
+                </span>
               </div>
             )}
 
