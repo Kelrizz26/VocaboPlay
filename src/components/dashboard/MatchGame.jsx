@@ -1793,7 +1793,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
     );
   }
 
-  // ===== PLAYING SCREEN - DARK MODE WITH PURPLE CARDS =====
+  // ===== PLAYING SCREEN - DARK MODE WITH BLUE CARDS =====
   if (gameState === 'playing') {
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
     const progress = (matches / totalPairs) * 100;
@@ -1868,7 +1868,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
               }}>{timer}s</span>
             </div>
             <div className="match-game-score" style={{
-              background: '#5C6AC4',
+              background: '#2563EB',
               padding: '2px 12px',
               borderRadius: '6px',
               color: 'white',
@@ -1884,7 +1884,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
           <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{
               height: '100%',
-              background: 'linear-gradient(90deg, #5C6AC4, #8B5CF6)',
+              background: 'linear-gradient(90deg, #2563EB, #38BDF8)',
               width: `${progress}%`,
               transition: 'width 0.4s ease'
             }} />
@@ -1933,17 +1933,19 @@ const MatchGame = ({ onBack, updateProgress }) => {
                     width: '100%',
                     height: '100%',
                     backfaceVisibility: 'hidden',
-                    background: 'linear-gradient(135deg, #5C6AC4, #8B5CF6)',
+                    background: '#cbdffe',
                     borderRadius: '10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    gap: '3px',
                     fontSize: '18px',
                     boxShadow: 'none',
-                    border: '1px solid rgba(255,255,255,0.08)'
+                    border: '1px solid rgba(255,255,255,0.12)'
                   }}
                 >
-                  ✦
+                  <span style={{ fontSize: '15px', filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.5))' }}>✦</span>
+                  <span style={{ fontSize: '15px', filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.5))' }}>⚡</span>
                 </div>
 
                 <div

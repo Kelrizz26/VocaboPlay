@@ -444,10 +444,10 @@ const Dashboard = () => {
     navigate('/');
   };
 
-  // Start game - ONLY available games
+  // Start game - UPDATED: Available games are now Syno Quest, Match Game, and Story Quest
   const startGame = (gameId) => {
     // List of available games
-    const availableGames = ['wordpics', 'short-story']; // 👈 ONLY Syno Quest and Story Quest
+    const availableGames = ['wordpics', 'match', 'short-story']; // 👈 NOW includes Match Game
     
     if (!availableGames.includes(gameId)) {
       console.log('Game not available yet');
@@ -931,13 +931,13 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Game Components - ONLY AVAILABLE GAMES */}
+          {/* Game Components - AVAILABLE GAMES: wordpics, match, short-story */}
           {currentGame === 'wordpics' && <WordPicsGame onBack={exitGame} updateProgress={updateProgress} />}
+          {currentGame === 'match' && <MatchGame onBack={exitGame} updateProgress={updateProgress} />}
           {currentGame === 'short-story' && <ShortStoryGame onBack={exitGame} updateProgress={updateProgress} />}
           
           {/* UNAVAILABLE GAMES - will not render */}
           {currentGame === 'quiz' && null}
-          {currentGame === 'match' && null}
           {currentGame === 'guesswhat' && null}
           {currentGame === 'sentence-builder' && null}
 
@@ -1011,7 +1011,7 @@ const Dashboard = () => {
                 })}
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Actions - UPDATED: Match Game is now available */}
               <div className="quick-actions-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 <div style={{ background: colors.surface, borderRadius: '12px', padding: '24px', border: `1px solid ${colors.border}` }}>
                   <h3 style={{ ...textType.sub, marginBottom: '16px' }}>Quick Actions</h3>
@@ -1019,7 +1019,8 @@ const Dashboard = () => {
                     {['Word Pics', 'Match Game', 'Quiz', 'Story'].map((name, i) => {
                       // Map to game IDs
                       const gameIds = ['wordpics', 'match', 'quiz', 'short-story'];
-                      const isAvailable = gameIds[i] === 'wordpics' || gameIds[i] === 'short-story';
+                      // UPDATED: Match Game is now available
+                      const isAvailable = gameIds[i] === 'wordpics' || gameIds[i] === 'match' || gameIds[i] === 'short-story';
                       
                       return (
                         <button 

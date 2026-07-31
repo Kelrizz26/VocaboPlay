@@ -213,7 +213,7 @@ const generateBlankPositions = (word, numBlanks) => {
 };
 
 // Time in seconds for life refill
-const REFILL_TIME = 2;
+const REFILL_TIME = 1800;
 
 // ============================================================
 // ===== LEVEL CONFIGURATION =====

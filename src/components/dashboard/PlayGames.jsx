@@ -35,7 +35,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '3-5 min',
       difficulty: 'beginner',
       players: '1 player',
-      available: false  // 👈 Match Game is now Coming Soon
+      available: true  // 👈 Match Game is now available again
     },
     {
       id: 'short-story',
@@ -48,7 +48,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '15-20 min',
       difficulty: 'intermediate',
       players: '1 player',
-      available: true  // 👈 Story Quest is now available to play
+      available: true
     },
     {
       id: 'quiz',
@@ -61,7 +61,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '10-15 min',
       difficulty: 'intermediate',
       players: '1 player',
-      available: false
+      available: false  // 👈 Coming Soon
     },
     {
       id: 'guesswhat',
@@ -74,7 +74,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '8-12 min',
       difficulty: 'advanced',
       players: '1 player',
-      available: false
+      available: false  // 👈 Coming Soon
     },
     {
       id: 'sentence-builder',
@@ -87,7 +87,7 @@ const PlayGames = ({ startGame }) => {
       timeEstimate: '6-10 min',
       difficulty: 'beginner',
       players: '1 player',
-      available: false
+      available: false  // 👈 Coming Soon
     },
   ];
 
@@ -395,7 +395,7 @@ const PlayGames = ({ startGame }) => {
                 }}
               />
 
-              {/* Locked overlay */}
+              {/* Locked overlay - ONLY for unavailable games */}
               {!game.available && (
                 <div style={{
                   position: 'absolute',
