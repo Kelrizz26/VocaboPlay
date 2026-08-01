@@ -1,7 +1,7 @@
 // src/hooks/useUserStats.js
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../pages/firebase';  // ✅ Tama na 'to!
+import { db } from '../pages/firebase';  // 
 
 export const useUserStats = (userId) => {
   const [stats, setStats] = useState(null);

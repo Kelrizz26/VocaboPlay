@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStats } from '../../hooks/useUserStats';
 import { colors, fontFamily } from './dashboardStyles';
+import { auth } from '../../pages/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // ===== IMPORT IMAGES =====
-import wordPicsImg from '../../image/Wordpics.png';
+import synoQuestImg from '../../image/Wordpics.png';
 import quizGameImg from '../../image/quizgame.png';
 import matchGameImg from '../../image/matchgame.png';
 import guessWhatImg from '../../image/guesswhatgame.png';
@@ -51,11 +53,26 @@ const Pill = ({ children }) => (
 );
 
 const MyProgress = () => {
-  const userId = localStorage.getItem('userId');
+  // ✅ FIXED: get userId from Firebase Auth (matches SynoQuest.jsx / MatchGame.jsx),
+  // instead of localStorage.getItem('userId') which can be stale/mismatched
+  // and was causing MyProgress to read a different Firestore doc than the
+  // one the games actually write to.
+  const [userId, setUserId] = useState(localStorage.getItem('userId'));
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+        console.log('✅ MyProgress: Using auth uid:', user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const { stats, loading, error } = useUserStats(userId);
   const [fadeIn, setFadeIn] = useState(false);
   const [showContent, setShowContent] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0); // TO FORCE RE-RENDER
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [progress, setProgress] = useState({
     wordsLearned: 0,
@@ -65,7 +82,6 @@ const MyProgress = () => {
     gameStats: {}
   });
 
-  // WHEN DATA IS AVAILABLE
   useEffect(() => {
     if (stats) {
       const gameStats = stats.gameStats || {};
@@ -78,7 +94,6 @@ const MyProgress = () => {
         if (game && typeof game === 'object') {
           totalGames += game.gamesPlayed || 0;
           totalCorrect += game.correctAnswers || 0;
-          // sentenceBuilder uses "totalSentences" instead of "totalQuestions"
           totalQuestions += game.totalQuestions || game.totalSentences || 0;
         }
       });
@@ -101,9 +116,8 @@ const MyProgress = () => {
         setFadeIn(true);
       }, 50);
     }
-  }, [stats, refreshKey]); // ADDED refreshKey
+  }, [stats, refreshKey]);
 
-  // AFTER LOADING FINISHES BUT NO DATA
   useEffect(() => {
     if (!loading && !stats) {
       setShowContent(true);
@@ -113,7 +127,6 @@ const MyProgress = () => {
     }
   }, [loading, stats]);
 
-  // ✅ FIXED: AUTO REFRESH EVERY 3 SECONDS - THIS IS THE ONLY NEW CODE
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshKey(prev => prev + 1);
@@ -121,7 +134,6 @@ const MyProgress = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // LOADING STATE
   if (loading) {
     return (
       <div
@@ -158,7 +170,6 @@ const MyProgress = () => {
     );
   }
 
-  // ERROR STATE
   if (error) {
     return (
       <div
@@ -192,7 +203,6 @@ const MyProgress = () => {
     );
   }
 
-  // WHEN NO DATA YET
   if (!showContent) {
     return (
       <div
@@ -232,25 +242,30 @@ const MyProgress = () => {
   const gameStatsData = progress.gameStats || {};
 
   // ===== GAME TYPES WITH IMAGES =====
-  // FIXED: keys must match the actual field names inside Firestore's gameStats map
   const gameTypes = [
     {
-      key: 'wordPics',
-      label: 'Word Pics',
-      image: wordPicsImg,
-      data: gameStatsData.wordPics || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
-    },
-    {
-      key: 'quizMaster',
-      label: 'Quiz Master',
-      image: quizGameImg,
-      data: gameStatsData.quizMaster || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+      key: 'synoQuest',
+      label: 'Syno Quest',
+      image: synoQuestImg,
+      data: gameStatsData.synoQuest || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
     },
     {
       key: 'matchGame',
       label: 'Match Game',
       image: matchGameImg,
       data: gameStatsData.matchGame || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+    },
+    {
+      key: 'shortStory',
+      label: 'Short Story',
+      image: shortStoryImg,
+      data: gameStatsData.shortStory || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+    },
+    {
+      key: 'quizMaster',
+      label: 'Quiz Master',
+      image: quizGameImg,
+      data: gameStatsData.quizMaster || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
     },
     {
       key: 'guessWhat',
@@ -263,12 +278,6 @@ const MyProgress = () => {
       label: 'Sentence Builder',
       image: sentenceBuilderImg,
       data: gameStatsData.sentenceBuilder || { gamesPlayed: 0, correctAnswers: 0, totalSentences: 0 }
-    },
-    {
-      key: 'shortStory',
-      label: 'Short Story',
-      image: shortStoryImg,
-      data: gameStatsData.shortStory || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
     }
   ];
 
@@ -291,7 +300,6 @@ const MyProgress = () => {
   const wordsLearned = stats?.wordsLearned || 0;
   const correctAnswers = stats?.correctAnswers || 0;
 
-  // Maximum of 100 games
   const maxPlayed = 100;
 
   return (
@@ -511,7 +519,6 @@ const MyProgress = () => {
         </div>
 
         {gameTypes.map((game, i) => {
-          // FIXED: Firestore field is "gamesPlayed", not "played"
           const gamesPlayedCount = game.data.gamesPlayed || 0;
           const barPct = Math.min((gamesPlayedCount / maxPlayed) * 100, 100);
 
@@ -527,7 +534,6 @@ const MyProgress = () => {
                   i !== gameTypes.length - 1 ? `1px solid ${colors.border}` : 'none'
               }}
             >
-              {/* Image */}
               <img
                 src={game.image}
                 alt={game.label}
@@ -543,7 +549,6 @@ const MyProgress = () => {
                 }}
               />
 
-              {/* Label */}
               <span
                 style={{
                   fontSize: '14px',
@@ -556,7 +561,6 @@ const MyProgress = () => {
                 {game.label}
               </span>
 
-              {/* Progress Bar */}
               <div
                 style={{
                   flex: 1,
@@ -577,7 +581,6 @@ const MyProgress = () => {
                 />
               </div>
 
-              {/* Pill count */}
               <Pill>{gamesPlayedCount} games</Pill>
             </div>
           );

@@ -1,4 +1,4 @@
-// src/components/dashboard/WordPicsGame.jsx
+// src/components/dashboard/SynoQuest.jsx
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -126,7 +126,6 @@ const images = {
   learn: `${imageBasePath}learn.png`,
   caring: `${imageBasePath}caring.png`,
 
-  // ===== NEW: pixel-art loading background =====
   'pixel-town': `${imageBasePath}pixel-town.png`,
 };
 
@@ -178,7 +177,6 @@ const theme = {
 // ============================================================
 // ===== HELPER FUNCTIONS =====
 // ============================================================
-// Generate random letter options for the puzzle
 const generateLetterOptions = (word) => {
   const letters = word.split('');
   const alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
@@ -191,7 +189,6 @@ const generateLetterOptions = (word) => {
   return finalLetters.sort(() => Math.random() - 0.5);
 };
 
-// Generate positions for blanks and visible letters
 const generateBlankPositions = (word, numBlanks) => {
   const wordLength = word.length;
   const visibleCount = wordLength - numBlanks;
@@ -212,7 +209,6 @@ const generateBlankPositions = (word, numBlanks) => {
   return { visiblePositions, blankPositions };
 };
 
-// Time in seconds for life refill
 const REFILL_TIME = 1800;
 
 // ============================================================
@@ -233,7 +229,7 @@ const MAX_LEVEL = 8;
 const QUESTIONS_PER_LEVEL = 10;
 
 // ============================================================
-// ===== WORD PAIRS (10 words per level) =====
+// ===== WORD PAIRS =====
 // ============================================================
 const wordPairs = {
   beginner: [
@@ -334,9 +330,6 @@ const wordPairs = {
   ]
 };
 
-// ============================================================
-// ===== GET WORDS BY LEVEL =====
-// ============================================================
 const getWordsByLevel = (level) => {
   const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
   const diff = config.difficulty;
@@ -345,11 +338,11 @@ const getWordsByLevel = (level) => {
 };
 
 // ============================================================
-// ===== WORDPICSGAME COMPONENT =====
+// ===== SYNOQUEST COMPONENT =====
 // ============================================================
-const WordPicsGame = ({ onBack, updateProgress }) => {
+const SynoQuest = ({ onBack, updateProgress }) => {
   // ===== GAME STATE =====
-  const [gameState, setGameState] = useState('intro'); // 'intro', 'loading', 'playing', 'gameover', 'finished'
+  const [gameState, setGameState] = useState('intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -371,7 +364,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   const [timer, setTimer] = useState(15);
   const [timerRunning, setTimerRunning] = useState(false);
   
-  // ===== LIVES - STABLE TIMER =====
+  // ===== LIVES =====
   const [lives, setLives] = useState(5);
   const [maxLives] = useState(5);
   const [lastRefillTime, setLastRefillTime] = useState(Date.now());
@@ -379,7 +372,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   const [hintUsed, setHintUsed] = useState(false);
   const [showNoLivesMessage, setShowNoLivesMessage] = useState(false);
   
-  // REFS for stable timer
   const timerIntervalRef = useRef(null);
   const lastRefillTimeRef = useRef(Date.now());
   const livesRef = useRef(5);
@@ -429,32 +421,32 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
 
   const getLivesStorageKey = useCallback(() => {
     const userId = getUserId();
-    return `wordpics_lives_${userId}`;
+    return `synoquest_lives_${userId}`;
   }, [getUserId]);
 
   const getStatsStorageKey = useCallback(() => {
     const userId = getUserId();
-    return `wordpics_stats_${userId}`;
+    return `synoquest_stats_${userId}`;
   }, [getUserId]);
 
   const getLeaderboardStorageKey = useCallback(() => {
     const userId = getUserId();
-    return `wordpics_leaderboard_${userId}`;
+    return `synoquest_leaderboard_${userId}`;
   }, [getUserId]);
 
   // ============================================================
-  // ===== FIREBASE AUTH - GET CURRENT USER =====
+  // ===== FIREBASE AUTH =====
   // ============================================================
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
         setIsUserLoaded(true);
-        console.log('✅ WordPicsGame: User loaded:', user.uid, user.email);
+        console.log('✅ SynoQuest: User loaded:', user.uid, user.email);
       } else {
         setCurrentUser(null);
         setIsUserLoaded(true);
-        console.log('❌ WordPicsGame: No user logged in');
+        console.log('❌ SynoQuest: No user logged in');
       }
     });
     
@@ -517,7 +509,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   }, [currentUser, maxLives, getLivesStorageKey]);
 
-  // Update the time remaining display for life refill
   const updateTimeRemaining = useCallback(() => {
     if (!currentUser || !isMountedRef.current) return;
     
@@ -542,7 +533,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   }, [currentUser, maxLives, checkAndRefillLives]);
 
   // ============================================================
-  // ===== START TIMER - ONCE =====
+  // ===== START TIMER =====
   // ============================================================
   useEffect(() => {
     if (currentUser && isUserLoaded) {
@@ -623,7 +614,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   }, []);
 
   // ============================================================
-  // ===== INITIALIZE GAME =====
+  // ===== INITIALIZE AUDIO =====
   // ============================================================
   const initAudio = () => {
     try {
@@ -640,7 +631,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     } catch (e) { return false; }
   };
 
-  // Play a tone for sound effects
   const playTone = (frequency, duration = 0.2, type = 'sine') => {
     if (isMuted) return;
     try {
@@ -659,7 +649,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     } catch (e) {}
   };
 
-  // Sound effects for different game events
   const playCorrectSound = () => {
     if (isMuted) return;
     playTone(523.25, 0.12);
@@ -689,7 +678,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     setTimeout(() => playTone(880, 0.2), 300);
   };
 
-  // Background music control
   useEffect(() => {
     if (!isMuted && gameState !== 'intro') {
       backgroundMusic.start('gameplay');
@@ -700,7 +688,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   // ============================================================
   // ===== GAME FUNCTIONS =====
   // ============================================================
-  // Create a word puzzle from a word pair
   const createWordPuzzle = (pair, level) => {
     const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
     const word = pair.word.toUpperCase();
@@ -725,7 +712,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     };
   };
 
-  // Generate all questions for a level
   const generateQuestions = (level) => {
     const words = getWordsByLevel(level);
     const shuffled = [...words].sort(() => Math.random() - 0.5);
@@ -733,7 +719,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     return selected.map(pair => createWordPuzzle(pair, level));
   };
 
-  // Get the next unanswered question
   const getNextUnansweredQuestion = () => {
     if (retryQuestion && retryPhase) {
       return retryQuestion;
@@ -750,14 +735,12 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     return unanswered[0];
   };
 
-  // Check if all questions have been answered
   const checkIfAllAnswered = () => {
     const answeredCount = answeredQuestions.length;
     const totalQuestions = questions.length;
     return answeredCount >= totalQuestions && totalQuestions === QUESTIONS_PER_LEVEL;
   };
 
-  // Advance to the next level
   const performLevelUp = () => {
     if (currentLevel >= MAX_LEVEL) {
       setAnsweredQuestions([]);
@@ -816,7 +799,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     playLevelUpSound();
   };
 
-  // Process the next wrong question in retry phase
   const retryNextWrongQuestion = () => {
     if (retryIndex >= wrongQuestions.length) {
       setRetryPhase(false);
@@ -861,7 +843,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // Start the retry phase for wrong questions
   const startRetryPhase = () => {
     if (wrongQuestions.length === 0) {
       performLevelUp();
@@ -881,7 +862,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     playTone(440, 0.2);
   };
 
-  // Handle answer during retry phase
   const handleRetryAnswer = (isCorrect) => {
     if (isCorrect) {
       const currentWrongQ = wrongQuestions[retryIndex];
@@ -930,7 +910,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== CHECK WORD - UPDATED WITH FIREBASE =====
+  // ===== CHECK WORD =====
   // ============================================================
   const checkWord = async () => {
     if (answered || lives <= 0 || !currentQuestion) return;
@@ -1036,7 +1016,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== ✅ FIXED: SAVE TO FIREBASE - 1 POINT ONLY =====
+  // ===== ✅ SAVE TO FIREBASE - synoQuest =====
   // ============================================================
   const saveGameToFirebase = async () => {
     if (!currentUser) {
@@ -1052,8 +1032,8 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     const won = totalCorrect >= totalQuestionsAnswered / 2;
 
     const gameData = {
-      gameType: 'wordPics',
-      pointsEarned: pointsEarned, // ✅ FIXED: 1 point per correct answer (was pointsEarned * 10)
+      gameType: 'synoQuest',
+      pointsEarned: pointsEarned,
       newWordsLearned: totalCorrect,
       correctAnswers: totalCorrect,
       totalQuestions: totalQuestionsAnswered,
@@ -1063,7 +1043,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     };
 
     try {
-      console.log('💾 Saving WordPics game to Firebase...');
+      console.log('💾 Saving synoQuest game to Firebase...');
       const result = await updateUserStats(userId, gameData);
       
       if (result.achievements && result.achievements.length > 0) {
@@ -1073,14 +1053,14 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
         setTimeout(() => setShowFeedback(false), 5000);
       }
       
-      console.log('✅ WordPics game saved to Firebase successfully!');
+      console.log('✅ synoQuest game saved to Firebase successfully!');
     } catch (error) {
       console.error('❌ Error saving to Firebase:', error);
     }
   };
 
   // ============================================================
-  // ===== ✅ FIXED: SAVE TO FIREBASE ON LEVEL UP - 1 POINT ONLY =====
+  // ===== ✅ SAVE TO FIREBASE ON LEVEL UP - synoQuest =====
   // ============================================================
   const saveProgressOnLevelUp = async () => {
     if (!currentUser) return;
@@ -1090,8 +1070,8 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     const pointsEarned = score || 0;
     
     const gameData = {
-      gameType: 'wordPics',
-      pointsEarned: pointsEarned, // ✅ FIXED: 1 point per correct answer (was pointsEarned * 5)
+      gameType: 'synoQuest',
+      pointsEarned: pointsEarned,
       newWordsLearned: Math.min(totalCorrect, 5),
       correctAnswers: totalCorrect,
       totalQuestions: questionNumber || 10,
@@ -1108,7 +1088,9 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // Generate the next question in the game
+  // ============================================================
+  // ===== GENERATE NEXT QUESTION =====
+  // ============================================================
   const generateNextQuestion = () => {
     if (lives <= 0) return;
     
@@ -1182,7 +1164,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== START GAME FROM INTRO WITH LOADING =====
+  // ===== START GAME =====
   // ============================================================
   const startGame = () => {
     if (!currentUser) {
@@ -1203,10 +1185,8 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
       return;
     }
     
-    // Show loading screen first
     setGameState('loading');
     
-    // After 2 seconds, initialize the game
     setTimeout(() => {
       setScore(0);
       setCorrectCount(0);
@@ -1240,7 +1220,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Use hint to reveal one blank
   const useHint = () => {
     if (!hintUsed && currentQuestion && !answered && lives > 0) {
       setHintUsed(true);
@@ -1266,7 +1245,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // Handle clicking a letter option
   const handleLetterClick = (letter, index) => {
     if (answered || lives <= 0 || timer === 0 || !currentQuestion) return;
     if (usedLetters.includes(index)) return;
@@ -1279,7 +1257,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // Handle clicking a blank to remove a letter
   const handleBlankClick = (position) => {
     if (answered || lives <= 0 || timer === 0 || !currentQuestion) return;
     if (userFilledBlanks[position] === undefined) return;
@@ -1416,7 +1393,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   }, [timer, timerRunning, lives, currentLevel, currentQuestion]);
 
   // ============================================================
-  // ===== SAVE PROGRESS TO DASHBOARD (OLD - KEPT FOR COMPATIBILITY) =====
+  // ===== SAVE PROGRESS TO DASHBOARD =====
   // ============================================================
   useEffect(() => {
     if (gameState === 'gameover' && updateProgress) {
@@ -1463,9 +1440,9 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
           knownWords: []
         }
       }).then(() => {
-        console.log('✅ WordPicsGame: Progress saved successfully!');
+        console.log('✅ SynoQuest: Progress saved successfully!');
       }).catch(err => {
-        console.error('❌ WordPicsGame: Error saving progress:', err);
+        console.error('❌ SynoQuest: Error saving progress:', err);
       });
     }
   }, [gameState, score, correctCount, questionNumber, updateProgress]);
@@ -1497,9 +1474,9 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
             cardsViewed: totalQuestions
           }
         }).then(() => {
-          console.log('✅ WordPicsGame: Progress saved on exit!');
+          console.log('✅ SynoQuest: Progress saved on exit!');
         }).catch(err => {
-          console.error('❌ WordPicsGame: Error saving progress on exit:', err);
+          console.error('❌ SynoQuest: Error saving progress on exit:', err);
         });
       }
     }
@@ -1627,7 +1604,7 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== LOADING SCREEN (UPDATED v2 — full image visible, right-flowing scroll, forces top layer) =====
+  // ===== LOADING SCREEN =====
   // ============================================================
   if (gameState === 'loading') {
     return (
@@ -1642,10 +1619,9 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: "'Poppins', -apple-system, sans-serif",
-        zIndex: 999999, // sits above any parent header/nav bar
-        background: '#2b2a4a', // fallback color while the image loads (or if the path is wrong)
+        zIndex: 999999,
+        background: '#2b2a4a',
       }}>
-        {/* ===== Scrolling pixel-art background — full image visible, flows continuously to the LEFT (Flappy-Bird style forward motion) ===== */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1669,7 +1645,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
-          {/* Dark overlay so the card text stays readable */}
           <div style={{
             position: 'absolute',
             top: 0, left: 0, right: 0, bottom: 0,
@@ -1678,7 +1653,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
           }} />
         </div>
 
-        {/* Floating decorative dots (kept from before, on top of new bg) */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1714,7 +1688,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
           borderRadius: '24px',
           border: '1px solid rgba(139,92,246,0.2)'
         }}>
-          {/* ===== "Loading..." bubble text with sparkles ===== */}
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: '28px' }}>
             <span className="sparkle-star" style={{ left: '-26px', top: '2px', fontSize: '18px', animationDelay: '0s' }}>✦</span>
             <h2 style={{
@@ -1735,7 +1708,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
             <span className="sparkle-star" style={{ right: '-26px', top: '-6px', fontSize: '16px', animationDelay: '0.6s' }}>✦</span>
           </div>
 
-          {/* ===== Animated rainbow pill progress bar ===== */}
           <div style={{
             position: 'relative',
             width: '100%',
@@ -1757,11 +1729,9 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
               boxShadow: '0 0 12px rgba(139,92,246,0.6)',
               animation: 'progressSlide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite'
             }} />
-            {/* Shimmer sheen */}
             <div className="progress-shimmer" />
           </div>
 
-          {/* Small text */}
           <p style={{
             fontSize: '12px',
             color: '#9CA3AF',
@@ -1773,7 +1743,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
         </div>
 
         <style>{`
-          /* ===== Continuous one-direction scroll — image shown FULLY (height-based, no cropping), flowing left (Flappy-Bird forward feel) ===== */
           .loading-scroll-track {
             display: flex;
             height: 100%;
@@ -1792,39 +1761,32 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
             from { transform: translateX(0); }
             to { transform: translateX(-50%); }
           }
-
           @keyframes twinkle {
             0%, 100% { opacity: 0.1; transform: scale(1); }
             50% { opacity: 0.6; transform: scale(1.5); }
           }
-
           @keyframes textBounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
           }
-
           @keyframes sparkleTwinkle {
             0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(0deg); }
             50% { opacity: 1; transform: scale(1.3) rotate(20deg); }
           }
-
           .sparkle-star {
             position: absolute;
             color: #FDE047;
             animation: sparkleTwinkle 1.6s ease-in-out infinite;
           }
-
           .loading-dots {
             display: inline-block;
             animation: textBounce 1.4s ease-in-out infinite;
           }
-
           @keyframes progressSlide {
             0% { left: 3px; width: 20%; }
             50% { left: 40%; width: 45%; }
             100% { left: 97%; width: 20%; transform: translateX(-100%); }
           }
-
           .progress-shimmer {
             position: absolute;
             top: 0; left: -40%;
@@ -1832,7 +1794,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
             background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 100%);
             animation: shimmerSweep 1.8s linear infinite;
           }
-
           @keyframes shimmerSweep {
             0% { left: -40%; }
             100% { left: 100%; }
@@ -1842,9 +1803,6 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
     );
   }
 
-  // ============================================================
-  // ===== LOADING SCREEN (Initial Firebase auth) =====
-  // ============================================================
   if (!isUserLoaded) {
     return (
       <div style={{
@@ -2191,4 +2149,4 @@ const WordPicsGame = ({ onBack, updateProgress }) => {
   return null;
 };
 
-export default WordPicsGame;
+export default SynoQuest;

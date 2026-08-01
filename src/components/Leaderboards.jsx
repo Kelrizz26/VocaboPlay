@@ -8,13 +8,13 @@ import {
   query, 
   orderBy, 
   limit,
-  where,
   onSnapshot,
   doc,
   getDoc
 } from 'firebase/firestore';
 import { getLeaderboard } from '../utils/streakHelper';
 import { colors, fontFamily } from "./dashboard/dashboardStyles";
+import { resetUserStats, removeUserFromLeaderboard, resetAllUserStats } from '../services/adminService';
 
 const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -26,10 +26,21 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   const [error, setError] = useState(null);
   const unsubscribeRef = useRef(null);
   
-  // NEW: State for profile modal
+  // State for profile modal
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // State for custom confirmation dialog
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    danger: false,
+    onConfirm: null
+  });
 
   // ============================================================
   // ===== LOAD USER FROM LOCALSTORAGE =====
@@ -208,7 +219,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       
       console.log('📊 Snapshot size:', snapshot.size);
       
-      // FIXED: Use Firebase data as primary source, local storage as fallback ONLY
+      // Use Firebase data as primary source, local storage as fallback ONLY
       const firebaseUsers = snapshot.docs
         .map((doc, index) => {
           const data = doc.data();
@@ -216,6 +227,12 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
           
           // Skip users with no stats
           if (!data.stats || Object.keys(stats).length === 0) {
+            return null;
+          }
+          
+          // SKIP USERS MARKED AS REMOVED FROM LEADERBOARD
+          if (data.removedFromLeaderboard === true) {
+            console.log(`🚫 User ${data.displayName} is removed from leaderboard`);
             return null;
           }
           
@@ -246,7 +263,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               totalQuestions: stats.totalQuestions || 0
             },
             isLocal: false,
-            // Store Firebase data as source of truth
             _source: 'firebase'
           };
         })
@@ -274,21 +290,21 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             id: userId,
             rank: mergedMap.size + 1,
             displayName: localUser.username || 'Player',
-            avatar: '👤',
-            email: '',
+            avatar: localUser.avatar || '👤',
+            email: localUser.email || '',
             username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
             stats: {
               totalPoints: localUser.totalPoints || 0,
               wordsLearned: localUser.wordsLearned || 0,
               gamesPlayed: localUser.gamesPlayed || 0,
-              longestStreak: localUser.streak || 0,
+              longestStreak: localUser.longestStreak || localUser.streak || 0,
               level: localUser.level || 1
             },
             progress: {
               totalPoints: localUser.totalPoints || 0,
               wordsLearned: localUser.wordsLearned || 0,
               gamesPlayed: localUser.gamesPlayed || 0,
-              longestStreak: localUser.streak || 0,
+              longestStreak: localUser.longestStreak || localUser.streak || 0,
               level: localUser.level || 1
             },
             isLocal: true,
@@ -338,21 +354,21 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         id: entry.userId || `local_${index}`,
         rank: index + 1,
         displayName: entry.username || 'Player',
-        avatar: '👤',
-        email: '',
+        avatar: entry.avatar || '👤',
+        email: entry.email || '',
         username: `@${entry.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
         stats: {
           totalPoints: entry.totalPoints || 0,
           wordsLearned: entry.wordsLearned || 0,
           gamesPlayed: entry.gamesPlayed || 0,
-          longestStreak: entry.streak || 0,
+          longestStreak: entry.longestStreak || entry.streak || 0,
           level: entry.level || 1
         },
         progress: {
           totalPoints: entry.totalPoints || 0,
           wordsLearned: entry.wordsLearned || 0,
           gamesPlayed: entry.gamesPlayed || 0,
-          longestStreak: entry.streak || 0,
+          longestStreak: entry.longestStreak || entry.streak || 0,
           level: entry.level || 1
         },
         isLocal: true
@@ -393,7 +409,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       
       if (!loading) {
         try {
-          // Filter out users with null stats
+          // Filter out users with null stats and removed users
           const firebaseUsers = snapshot.docs
             .map((doc) => {
               const data = doc.data();
@@ -401,6 +417,11 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               
               // Skip users with no stats
               if (!data.stats || Object.keys(stats).length === 0) {
+                return null;
+              }
+              
+              // SKIP USERS MARKED AS REMOVED FROM LEADERBOARD
+              if (data.removedFromLeaderboard === true) {
                 return null;
               }
               
@@ -440,21 +461,21 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                 id: userId,
                 rank: mergedMap.size + 1,
                 displayName: localUser.username || 'Player',
-                avatar: '👤',
-                email: '',
+                avatar: localUser.avatar || '👤',
+                email: localUser.email || '',
                 username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
                 stats: {
                   totalPoints: localUser.totalPoints || 0,
                   wordsLearned: localUser.wordsLearned || 0,
                   gamesPlayed: localUser.gamesPlayed || 0,
-                  longestStreak: localUser.streak || 0,
+                  longestStreak: localUser.longestStreak || localUser.streak || 0,
                   level: localUser.level || 1
                 },
                 progress: {
                   totalPoints: localUser.totalPoints || 0,
                   wordsLearned: localUser.wordsLearned || 0,
                   gamesPlayed: localUser.gamesPlayed || 0,
-                  longestStreak: localUser.streak || 0,
+                  longestStreak: localUser.longestStreak || localUser.streak || 0,
                   level: localUser.level || 1
                 },
                 isLocal: true,
@@ -494,26 +515,106 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   }, [loading, getValue]);
 
   // ============================================================
-  // ===== HANDLE FUNCTIONS =====
+  // ===== ADMIN FUNCTIONS - UPDATED WITH CONFIRMATION =====
   // ============================================================
-  const handleResetStats = (userId) => {
-    if (isAdmin && window.confirm('Reset stats for this user?')) {
-      console.log('Reset user:', userId);
-      alert('Reset functionality - implement as needed');
-    }
+  const handleResetStats = async (userId) => {
+    if (!isAdmin) return;
+    
+    // Find user for confirmation message
+    const user = leaderboardData.find(u => u.id === userId);
+    const userName = user?.displayName || 'this user';
+    
+    // Show custom confirmation dialog
+    setConfirmDialog({
+      isOpen: true,
+      title: '⚠️ Reset User Stats',
+      message: `Are you sure you want to reset ALL stats for "${userName}"?\n\nThis will:\n• Set all points to 0\n• Reset level to 1\n• Clear word progress\n• Reset streak\n\nThis action CANNOT be undone!`,
+      confirmText: 'Yes, Reset Stats',
+      cancelText: 'Cancel',
+      danger: true,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+        try {
+          setLoading(true);
+          const result = await resetUserStats(userId);
+          
+          if (result.success) {
+            alert(`✅ Successfully reset stats for "${userName}"`);
+            // Refresh leaderboard data
+            await fetchLeaderboardData();
+          }
+        } catch (error) {
+          console.error('❌ Reset failed:', error);
+          alert(`❌ Failed to reset stats: ${error.message}`);
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
-  const handleRemoveUser = (userId) => {
-    if (isAdmin && window.confirm('Remove this user from leaderboard?')) {
-      console.log('Remove user:', userId);
-      alert('Remove functionality - implement as needed');
-    }
+  const handleRemoveUser = async (userId) => {
+    if (!isAdmin) return;
+    
+    // Find user for confirmation message
+    const user = leaderboardData.find(u => u.id === userId);
+    const userName = user?.displayName || 'this user';
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: '🗑️ Remove User',
+      message: `Are you sure you want to remove "${userName}" from the leaderboard?\n\nThis will:\n• Remove user from leaderboard display\n• User will reappear when they log in again\n• Stats are preserved\n\nThis action CAN be reversed when user logs in again.`,
+      confirmText: 'Yes, Remove User',
+      cancelText: 'Cancel',
+      danger: true,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+        try {
+          setLoading(true);
+          const result = await removeUserFromLeaderboard(userId);
+          
+          if (result.success) {
+            alert(`✅ "${userName}" removed from leaderboard\nThey will reappear when they log in again.`);
+            await fetchLeaderboardData();
+          }
+        } catch (error) {
+          console.error('❌ Remove failed:', error);
+          alert(`❌ Failed to remove user: ${error.message}`);
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
-  // REMOVED: handleExportData function - no longer needed
-
-  const handleRetry = () => {
-    fetchLeaderboardData();
+  const handleResetAllStats = async () => {
+    if (!isAdmin) return;
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: '⚠️ DANGER: Reset ALL Stats',
+      message: '⚠️ WARNING: This will reset ALL users\' stats!\n\nThis will:\n• Set all points to 0 for ALL users\n• Reset all levels to 1\n• Clear all word progress\n• Reset all streaks\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?',
+      confirmText: 'Yes, Reset ALL',
+      cancelText: 'Cancel',
+      danger: true,
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+        try {
+          setLoading(true);
+          const result = await resetAllUserStats();
+          
+          if (result.success) {
+            alert(`✅ Successfully reset stats for ALL ${result.totalUsers} users`);
+            await fetchLeaderboardData();
+          }
+        } catch (error) {
+          console.error('❌ Reset all failed:', error);
+          alert(`❌ Failed to reset all stats: ${error.message}`);
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // ============================================================
@@ -522,6 +623,13 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   const closeProfileModal = () => {
     setShowProfileModal(false);
     setSelectedProfile(null);
+  };
+
+  // ============================================================
+  // ===== CLOSE CONFIRMATION DIALOG =====
+  // ============================================================
+  const closeConfirmDialog = () => {
+    setConfirmDialog({ ...confirmDialog, isOpen: false });
   };
 
   const leaderboardTypes = [
@@ -538,6 +646,98 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   ];
 
   const currentType = leaderboardTypes.find(t => t.id === selectedLeaderboard) || leaderboardTypes[0];
+
+  // ============================================================
+  // ===== CONFIRMATION DIALOG COMPONENT =====
+  // ============================================================
+  const ConfirmationDialog = () => {
+    if (!confirmDialog.isOpen) return null;
+    
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000,
+        padding: '20px',
+      }} onClick={closeConfirmDialog}>
+        <div style={{
+          background: colors.surface,
+          borderRadius: '24px',
+          maxWidth: '500px',
+          width: '100%',
+          padding: '32px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          fontFamily: fontFamily,
+        }} onClick={(e) => e.stopPropagation()}>
+          <h3 style={{ 
+            fontSize: '20px', 
+            fontWeight: '600', 
+            color: confirmDialog.danger ? colors.danger : colors.textPrimary,
+            margin: '0 0 12px 0'
+          }}>
+            {confirmDialog.title}
+          </h3>
+          <p style={{
+            fontSize: '15px',
+            color: colors.textSecondary,
+            margin: '0 0 24px 0',
+            lineHeight: '1.6',
+            whiteSpace: 'pre-line'
+          }}>
+            {confirmDialog.message}
+          </p>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'flex-end',
+          }}>
+            <button
+              onClick={closeConfirmDialog}
+              style={{
+                padding: '10px 24px',
+                background: colors.bg,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                color: colors.textSecondary,
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                fontFamily: fontFamily,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {confirmDialog.cancelText}
+            </button>
+            <button
+              onClick={confirmDialog.onConfirm}
+              style={{
+                padding: '10px 24px',
+                background: confirmDialog.danger ? colors.danger : colors.accent,
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                fontFamily: fontFamily,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {confirmDialog.confirmText}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ============================================================
   // ===== RENDER =====
@@ -827,7 +1027,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         }
       `}</style>
 
-      {/* HEADER - ONLY COLORS CHANGED */}
+      {/* HEADER */}
       <div className="leaderboard-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -861,7 +1061,25 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
 
         <div className="leaderboard-header-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {/* REMOVED: Export Data Button */}
+          {isAdmin && (
+            <button
+              onClick={handleResetAllStats}
+              style={{
+                padding: '10px 20px',
+                background: colors.danger,
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontFamily: fontFamily,
+              }}
+            >
+              🔄 Reset All Stats
+            </button>
+          )}
           
           <button
             onClick={onBack}
@@ -883,7 +1101,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       </div>
 
-      {/* TIME FILTER - ONLY COLORS CHANGED */}
+      {/* TIME FILTER */}
       <div className="leaderboard-time-filter" style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -936,7 +1154,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </span>
       </div>
 
-      {/* LEADERBOARD TYPE SELECTOR - ONLY COLORS CHANGED */}
+      {/* LEADERBOARD TYPE SELECTOR */}
       <div className="leaderboard-types" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
@@ -984,7 +1202,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         ))}
       </div>
 
-      {/* ADMIN STATS SUMMARY - ONLY COLORS CHANGED */}
+      {/* ADMIN STATS SUMMARY */}
       {isAdmin && (
         <div className="leaderboard-admin-stats" style={{
           display: 'grid',
@@ -1035,7 +1253,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       )}
 
-      {/* ERROR STATE - ONLY COLORS CHANGED */}
+      {/* ERROR STATE */}
       {error && (
         <div style={{
           background: `${colors.danger}15`,
@@ -1054,7 +1272,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             <div style={{ fontSize: '14px', color: colors.textSecondary }}>{error}</div>
           </div>
           <button
-            onClick={handleRetry}
+            onClick={fetchLeaderboardData}
             style={{
               padding: '8px 20px',
               background: colors.danger,
@@ -1071,7 +1289,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       )}
 
-      {/* LOADING STATE - ONLY COLORS CHANGED */}
+      {/* LOADING STATE */}
       {loading ? (
         <div style={{
           textAlign: 'center',
@@ -1090,7 +1308,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
       ) : (
         <>
-          {/* TOP 3 PODIUM - ONLY COLORS CHANGED */}
+          {/* TOP 3 PODIUM */}
           {!isAdmin && leaderboardData.length >= 3 && (
             <div className="leaderboard-podium" style={{
               display: 'flex',
@@ -1298,7 +1516,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           )}
 
-          {/* LEADERBOARD TABLE - ONLY COLORS CHANGED */}
+          {/* LEADERBOARD TABLE */}
           <div style={{
             background: colors.surface,
             borderRadius: '12px',
@@ -1565,7 +1783,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           </div>
 
-          {/* USER'S RANK - ONLY COLORS CHANGED */}
+          {/* USER'S RANK */}
           {!isAdmin && (
             <div className="leaderboard-user-rank" style={{
               marginTop: '24px',
@@ -1591,7 +1809,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           )}
 
-          {/* FOOTER STATS - ONLY COLORS CHANGED */}
+          {/* FOOTER STATS */}
           {leaderboardData.length > 0 && (
             <div className="leaderboard-footer" style={{
               marginTop: '24px',
@@ -1617,7 +1835,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           )}
 
-          {/* EMPTY STATE - ONLY COLORS CHANGED */}
+          {/* EMPTY STATE */}
           {leaderboardData.length === 0 && (
             <div style={{
               textAlign: 'center',
@@ -1649,7 +1867,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </>
       )}
 
-      {/* PROFILE MODAL - ONLY COLORS CHANGED */}
+      {/* PROFILE MODAL */}
       {showProfileModal && (
         <div className="profile-modal-overlay" onClick={closeProfileModal}>
           <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
@@ -1783,6 +2001,9 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
           </div>
         </div>
       )}
+
+      {/* CONFIRMATION DIALOG */}
+      <ConfirmationDialog />
     </div>
   );
 };

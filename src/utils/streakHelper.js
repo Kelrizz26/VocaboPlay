@@ -107,12 +107,27 @@ const syncToFirebase = async (progress) => {
     const { db } = await import('../pages/firebase');
     const { doc, setDoc } = await import('firebase/firestore');
     
-    // Save to Firebase
+    // Save to Firebase - preserve removedFromLeaderboard flag if it exists
     const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    const existingData = userDoc.exists() ? userDoc.data() : {};
+    
     await setDoc(userRef, {
       displayName: username,
       avatar: avatar,
       email: email,
+      stats: {
+        totalPoints: progress.totalPoints || 0,
+        wordsLearned: progress.wordsLearned || 0,
+        streak: progress.streak || 0,
+        longestStreak: progress.longestStreak || progress.streak || 0,
+        gamesPlayed: progress.gamesPlayed || 0,
+        level: progress.level || 1,
+        correctAnswers: progress.correctAnswers || 0,
+        totalQuestions: progress.totalQuestions || progress.totalAnswers || 0,
+        accuracy: progress.accuracy || 0,
+        lastUpdated: new Date().toISOString()
+      },
       progress: {
         totalPoints: progress.totalPoints || 0,
         wordsLearned: progress.wordsLearned || 0,
@@ -129,13 +144,21 @@ const syncToFirebase = async (progress) => {
         sentenceBuilder: progress.sentenceBuilder || {},
         shortStory: progress.shortStory || {},
         achievements: progress.achievements || {}
-      }
+      },
+      // Preserve removedFromLeaderboard flag if it exists
+      removedFromLeaderboard: existingData.removedFromLeaderboard || false
     }, { merge: true });
     
     console.log('✅ Progress synced to Firebase!');
   } catch (error) {
     console.error('❌ Error syncing to Firebase:', error);
   }
+};
+
+// Helper to get document
+const getDoc = async (docRef) => {
+  const { getDoc } = await import('firebase/firestore');
+  return getDoc(docRef);
 };
 
 /**
@@ -183,6 +206,19 @@ export const getLeaderboard = () => {
 };
 
 /**
+ * Saves the leaderboard data to localStorage
+ * @param {Array} data - The leaderboard data to save
+ */
+export const saveLeaderboard = (data) => {
+  try {
+    localStorage.setItem('vocaboplay_leaderboard', JSON.stringify(data));
+    console.log('✅ Leaderboard saved to localStorage');
+  } catch (e) {
+    console.error('Error saving leaderboard:', e);
+  }
+};
+
+/**
  * Updates the leaderboard with current user data
  * @param {Object} progress - The current progress object
  */
@@ -192,10 +228,11 @@ export const updateLeaderboard = (progress) => {
   const username = localStorage.getItem('username') || 
                    localStorage.getItem('userEmail')?.split('@')[0] || 
                    'Player';
+  const avatar = localStorage.getItem('avatar') || '👤';
+  const email = localStorage.getItem('userEmail') || '';
   
   // Get existing leaderboard
-  const saved = localStorage.getItem('vocaboplay_leaderboard');
-  let leaderboard = saved ? JSON.parse(saved) : [];
+  let leaderboard = getLeaderboard();
   
   // Check if user already exists
   const existingIndex = leaderboard.findIndex(entry => entry.userId === userId);
@@ -204,12 +241,17 @@ export const updateLeaderboard = (progress) => {
   const entry = {
     userId: userId,
     username: username,
+    avatar: avatar,
+    email: email,
     level: progress.level || 1,
     totalPoints: progress.totalPoints || 0,
     gamesPlayed: progress.gamesPlayed || 0,
     streak: progress.streak || 0,
+    longestStreak: progress.longestStreak || progress.streak || 0,
     wordsLearned: progress.wordsLearned || 0,
     correctAnswers: progress.correctAnswers || 0,
+    totalAnswers: progress.totalAnswers || 0,
+    accuracy: progress.accuracy || 0,
     lastUpdated: new Date().toISOString()
   };
   
@@ -233,7 +275,7 @@ export const updateLeaderboard = (progress) => {
   }
   
   // Save to localStorage
-  localStorage.setItem('vocaboplay_leaderboard', JSON.stringify(leaderboard));
+  saveLeaderboard(leaderboard);
   
   // Dispatch event for Leaderboards component
   window.dispatchEvent(new CustomEvent('leaderboardUpdate', { 
@@ -241,4 +283,205 @@ export const updateLeaderboard = (progress) => {
   }));
   
   console.log('🏆 Leaderboard updated!', entry);
+};
+
+/**
+ * Check if user was removed from leaderboard and restore them on login
+ * @param {string} userId - The user ID
+ * @returns {Promise<boolean>} - True if restored
+ */
+export const checkAndRestoreUserOnLogin = async (userId) => {
+  try {
+    // Get user data from Firebase
+    const { db } = await import('../pages/firebase');
+    const { doc, getDoc } = await import('firebase/firestore');
+    
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      
+      // If user was removed from leaderboard, restore them
+      if (data.removedFromLeaderboard === true) {
+        console.log('🔄 User was removed, restoring on login...');
+        const { restoreUserToLeaderboard } = await import('../services/adminService');
+        const result = await restoreUserToLeaderboard(userId);
+        return result.success;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('❌ Error checking user restoration:', error);
+    return false;
+  }
+};
+
+/**
+ * Resets a user's stats in the leaderboard
+ * @param {string} userId - The user ID to reset
+ * @returns {boolean} Success or failure
+ */
+export const resetUserLeaderboard = (userId) => {
+  try {
+    let leaderboard = getLeaderboard();
+    
+    const userIndex = leaderboard.findIndex(entry => entry.userId === userId);
+    
+    if (userIndex !== -1) {
+      // Reset all stats to 0
+      leaderboard[userIndex] = {
+        ...leaderboard[userIndex],
+        level: 1,
+        totalPoints: 0,
+        gamesPlayed: 0,
+        streak: 0,
+        longestStreak: 0,
+        wordsLearned: 0,
+        correctAnswers: 0,
+        totalAnswers: 0,
+        accuracy: 0,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      saveLeaderboard(leaderboard);
+      console.log('✅ User stats reset in leaderboard:', userId);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('❌ Error resetting user leaderboard:', error);
+    return false;
+  }
+};
+
+/**
+ * Removes a user from the leaderboard
+ * @param {string} userId - The user ID to remove
+ * @returns {boolean} Success or failure
+ */
+export const removeUserFromLocalLeaderboard = (userId) => {
+  try {
+    let leaderboard = getLeaderboard();
+    const initialLength = leaderboard.length;
+    
+    leaderboard = leaderboard.filter(entry => entry.userId !== userId);
+    
+    if (leaderboard.length < initialLength) {
+      saveLeaderboard(leaderboard);
+      console.log('✅ User removed from leaderboard:', userId);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('❌ Error removing user from leaderboard:', error);
+    return false;
+  }
+};
+
+/**
+ * Resets ALL users in the leaderboard
+ * @returns {number} Number of users reset
+ */
+export const resetAllLeaderboard = () => {
+  try {
+    let leaderboard = getLeaderboard();
+    const count = leaderboard.length;
+    
+    leaderboard = leaderboard.map(entry => ({
+      ...entry,
+      level: 1,
+      totalPoints: 0,
+      gamesPlayed: 0,
+      streak: 0,
+      longestStreak: 0,
+      wordsLearned: 0,
+      correctAnswers: 0,
+      totalAnswers: 0,
+      accuracy: 0,
+      lastUpdated: new Date().toISOString()
+    }));
+    
+    saveLeaderboard(leaderboard);
+    console.log('✅ All leaderboard stats reset, users:', count);
+    return count;
+  } catch (error) {
+    console.error('❌ Error resetting all leaderboard:', error);
+    return 0;
+  }
+};
+
+/**
+ * Gets user's rank in leaderboard
+ * @param {string} userId - The user ID
+ * @returns {number} The user's rank (1-based), or -1 if not found
+ */
+export const getUserRank = (userId) => {
+  const leaderboard = getLeaderboard();
+  const index = leaderboard.findIndex(entry => entry.userId === userId);
+  return index !== -1 ? index + 1 : -1;
+};
+
+/**
+ * Gets top N users from leaderboard
+ * @param {number} limit - Number of users to get
+ * @returns {Array} Array of top users
+ */
+export const getTopUsers = (limit = 10) => {
+  const leaderboard = getLeaderboard();
+  return leaderboard.slice(0, limit);
+};
+
+/**
+ * Clears the entire leaderboard
+ * @returns {boolean} Success or failure
+ */
+export const clearLeaderboard = () => {
+  try {
+    localStorage.removeItem('vocaboplay_leaderboard');
+    console.log('✅ Leaderboard cleared');
+    return true;
+  } catch (error) {
+    console.error('❌ Error clearing leaderboard:', error);
+    return false;
+  }
+};
+
+/**
+ * Gets the leaderboard with user details
+ * @param {string} userId - Optional user ID to highlight
+ * @returns {Array} Array of leaderboard entries with rank
+ */
+export const getLeaderboardWithRank = (userId = null) => {
+  const leaderboard = getLeaderboard();
+  
+  // Add rank to each entry
+  const ranked = leaderboard.map((entry, index) => ({
+    ...entry,
+    rank: index + 1,
+    isCurrentUser: userId ? entry.userId === userId : false
+  }));
+  
+  return ranked;
+};
+
+export default {
+  updateStreak,
+  saveProgressWithStreak,
+  getStreak,
+  hasPlayedToday,
+  getLeaderboard,
+  saveLeaderboard,
+  updateLeaderboard,
+  resetUserLeaderboard,
+  removeUserFromLocalLeaderboard,
+  resetAllLeaderboard,
+  getUserRank,
+  getTopUsers,
+  clearLeaderboard,
+  getLeaderboardWithRank,
+  checkAndRestoreUserOnLogin
 };

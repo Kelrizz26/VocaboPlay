@@ -14,12 +14,10 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  deleteField,
-  increment
 } from 'firebase/firestore';
 
 // ============================================================
-// 1. VOCABULARY SERVICES (EXISTING - KEEP)
+// 1. VOCABULARY SERVICES
 // ============================================================
 
 export const getAllWords = async () => {
@@ -104,10 +102,9 @@ export const seedVocabulary = async () => {
 };
 
 // ============================================================
-// 2. USER STATS SERVICES (NEW - FOR LEADERBOARDS)
+// 2. USER STATS SERVICES - FIXED FOR ALL GAMES
 // ============================================================
 
-// ✅ GET USER STATS
 export const getUserStats = async (userId) => {
   try {
     const userRef = doc(db, 'users', userId);
@@ -129,184 +126,7 @@ export const getUserStats = async (userId) => {
   }
 };
 
-// ✅ UPDATE USER STATS AFTER GAME - FIXED: OVERWRITE ENTIRE STATS OBJECT
-export const updateUserStats = async (userId, gameData) => {
-  try {
-    console.log('🔄 Updating stats for user:', userId);
-    console.log('📊 Game data:', gameData);
-    
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    
-    // If user doesn't exist, create with default stats
-    if (!userSnap.exists()) {
-      console.log('⚠️ User not found, creating new user...');
-      await createNewUser(userId);
-    }
-    
-    // Get current data
-    const userData = (await getDoc(userRef)).data();
-    const currentStats = userData.stats || {};
-    const currentAchievements = userData.progress?.achievements || {};
-    const currentGameStats = userData.gameStats?.[gameData.gameType] || {};
-    
-    // ========== CALCULATE NEW STATS ==========
-    
-    // 1. Overall Stats
-    const newTotalPoints = (currentStats.totalPoints || 0) + gameData.pointsEarned;
-    const newWordsLearned = (currentStats.wordsLearned || 0) + gameData.newWordsLearned;
-    const newGamesPlayed = (currentStats.gamesPlayed || 0) + 1;
-    const newCorrectAnswers = (currentStats.correctAnswers || 0) + gameData.correctAnswers;
-    const newTotalQuestions = (currentStats.totalQuestions || 0) + gameData.totalQuestions;
-    
-    // Calculate accuracy
-    const newAccuracy = newTotalQuestions > 0 
-      ? Math.round((newCorrectAnswers / newTotalQuestions) * 100)
-      : 0;
-    
-    // Calculate streak
-    let newCurrentStreak = 0;
-    if (gameData.won) {
-      newCurrentStreak = (currentStats.currentStreak || 0) + 1;
-    }
-    const newLongestStreak = Math.max(
-      currentStats.longestStreak || 0,
-      newCurrentStreak
-    );
-    
-    // Calculate level (1 level per 100 points)
-    const newLevel = Math.floor(newTotalPoints / 100) + 1;
-    const newXpProgress = newTotalPoints % 100;
-    
-    // 2. Per-Game Stats
-    const newGameStats = {
-      gamesPlayed: (currentGameStats.gamesPlayed || 0) + 1,
-      bestScore: Math.max(currentGameStats.bestScore || 0, gameData.pointsEarned),
-      correctAnswers: (currentGameStats.correctAnswers || 0) + gameData.correctAnswers,
-      totalQuestions: (currentGameStats.totalQuestions || 0) + gameData.totalQuestions,
-      level: Math.floor(((currentGameStats.gamesPlayed || 0) + 1) / 5) + 1
-    };
-    
-    // ========== CHECK ACHIEVEMENTS ==========
-    const newAchievements = { ...currentAchievements };
-    const unlocked = [];
-    
-    if (newGamesPlayed >= 1 && !newAchievements.firstGame) {
-      newAchievements.firstGame = true;
-      unlocked.push('🎯 First Game!');
-    }
-    if (newWordsLearned >= 10 && !newAchievements.tenWords) {
-      newAchievements.tenWords = true;
-      unlocked.push('📚 10 Words Learned!');
-    }
-    if (newLongestStreak >= 3 && !newAchievements.threeDayStreak) {
-      newAchievements.threeDayStreak = true;
-      unlocked.push('🔥 3-Day Streak!');
-    }
-    if (newAccuracy === 100 && !newAchievements.perfectScore) {
-      newAchievements.perfectScore = true;
-      unlocked.push('⭐ Perfect Score!');
-    }
-    if (newGamesPlayed >= 10 && !newAchievements.speedDemon) {
-      newAchievements.speedDemon = true;
-      unlocked.push('⚡ Speed Demon!');
-    }
-    if (newLevel >= 10 && !newAchievements.masterLearner) {
-      newAchievements.masterLearner = true;
-      unlocked.push('🏅 Master Learner!');
-    }
-    if (newWordsLearned >= 50 && !newAchievements.vocabularyMaster) {
-      newAchievements.vocabularyMaster = true;
-      unlocked.push('🎓 Vocabulary Master!');
-    }
-    
-    // ========== CREATE COMPLETE STATS OBJECT ==========
-    const completeStats = {
-      totalPoints: newTotalPoints,
-      wordsLearned: newWordsLearned,
-      gamesPlayed: newGamesPlayed,
-      currentStreak: newCurrentStreak,
-      longestStreak: newLongestStreak,
-      level: newLevel,
-      xpProgress: newXpProgress,
-      accuracy: newAccuracy,
-      correctAnswers: newCorrectAnswers,
-      totalQuestions: newTotalQuestions
-    };
-    
-    // ========== ✅ FIXED: OVERWRITE ENTIRE STATS OBJECT ==========
-    await updateDoc(userRef, {
-      stats: completeStats,  // ← OVERWRITE ang buong stats!
-      
-      // Also update root level for quick access
-      totalPoints: newTotalPoints,
-      wordsLearned: newWordsLearned,
-      gamesPlayed: newGamesPlayed,
-      level: newLevel,
-      accuracy: newAccuracy,
-      correctAnswers: newCorrectAnswers,
-      currentStreak: newCurrentStreak,
-      longestStreak: newLongestStreak,
-      totalQuestions: newTotalQuestions,
-      xpProgress: newXpProgress,
-      xp: newTotalPoints,
-      
-      // Update progress - OVERWRITE
-      progress: {
-        ...userData.progress || {},
-        achievements: newAchievements,
-        totalPoints: newTotalPoints,
-        wordsLearned: newWordsLearned,
-        gamesPlayed: newGamesPlayed,
-        level: newLevel,
-        xp: newTotalPoints,
-        accuracy: newAccuracy,
-        correctAnswers: newCorrectAnswers,
-        totalQuestions: newTotalQuestions,
-        streak: newCurrentStreak,
-        longestStreak: newLongestStreak,
-        xpProgress: newXpProgress
-      },
-      
-      // Update game stats - OVERWRITE
-      [`gameStats.${gameData.gameType}`]: newGameStats,
-      
-      lastUpdated: serverTimestamp()
-    });
-    
-    console.log('✅ Stats updated successfully!');
-    console.log('📊 New stats:', completeStats);
-    
-    if (unlocked.length > 0) {
-      console.log('🏆 New Achievements Unlocked:', unlocked);
-    }
-    
-    // Save to localStorage as backup
-    localStorage.setItem('userStats', JSON.stringify({
-      stats: completeStats
-    }));
-    
-    return { 
-      stats: completeStats,
-      achievements: unlocked
-    };
-    
-  } catch (error) {
-    console.error('❌ Error updating stats:', error);
-    
-    // Save to localStorage as fallback
-    const pendingData = {
-      userId: userId,
-      gameData: gameData,
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('pendingGameData', JSON.stringify(pendingData));
-    
-    throw error;
-  }
-};
-
-// ✅ CREATE NEW USER
+// ✅ CREATE NEW USER WITH ALL GAME TYPES
 export const createNewUser = async (userId, displayName = 'Player') => {
   try {
     const userRef = doc(db, 'users', userId);
@@ -385,6 +205,16 @@ export const createNewUser = async (userId, displayName = 'Player') => {
           storiesCompleted: 0,
           chaptersRead: 0,
           quizzesPassed: 0,
+          level: 1,
+          gamesPlayed: 0,
+          correctAnswers: 0,
+          totalQuestions: 0
+        },
+        synoQuest: {
+          gamesPlayed: 2,
+          bestScores: 0,
+          correctAnswers: 0,
+          totalQuestions: 0,
           level: 1
         }
       },
@@ -427,7 +257,226 @@ export const createNewUser = async (userId, displayName = 'Player') => {
   }
 };
 
-// ✅ SYNC PENDING DATA
+// ✅ UPDATE USER STATS - FIXED FOR ALL GAMES INCLUDING synoQuest
+export const updateUserStats = async (userId, gameData) => {
+  try {
+    console.log('🔄 Updating stats for user:', userId);
+    console.log('📊 Game data:', gameData);
+    
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      console.log('⚠️ User not found, creating new user...');
+      await createNewUser(userId);
+    }
+    
+    const userData = (await getDoc(userRef)).data();
+    const currentStats = userData.stats || {};
+    const currentAchievements = userData.progress?.achievements || {};
+    const currentGameStats = userData.gameStats || {};
+    const gameType = gameData.gameType || 'unknown';
+    
+    console.log(`🎮 Game type: ${gameType}`);
+    console.log(`📊 Current gameStats:`, currentGameStats);
+    
+    // ✅ GET CURRENT GAME STATS
+    let currentGame = currentGameStats[gameType] || {};
+    console.log(`📊 Current ${gameType} stats:`, currentGame);
+    console.log(`📊 Current ${gameType} gamesPlayed:`, currentGame.gamesPlayed);
+    
+    // ✅ IF GAME STATS DOESN'T EXIST, CREATE DEFAULT
+    if (!currentGameStats[gameType]) {
+      console.log(`📝 Creating new game stats for: ${gameType}`);
+      currentGame = {
+        gamesPlayed: 0,
+        correctAnswers: 0,
+        totalQuestions: 0,
+        level: 1
+      };
+      if (gameType === 'matchGame') {
+        currentGame.bestScore = 0;
+        currentGame.bestMoves = 0;
+        currentGame.bestTime = 0;
+        currentGame.perfectGames = 0;
+        currentGame.totalPairs = 0;
+      } else if (gameType === 'shortStory') {
+        currentGame.storiesCompleted = 0;
+        currentGame.chaptersRead = 0;
+        currentGame.quizzesPassed = 0;
+      } else if (gameType === 'synoQuest' || gameType === 'wordPics') {
+        currentGame.bestScores = 0;
+      } else if (gameType === 'sentenceBuilder') {
+        currentGame.totalSentences = 0;
+      }
+    }
+    
+    // ========== CALCULATE NEW STATS ==========
+    const newTotalPoints = (currentStats.totalPoints || 0) + (gameData.pointsEarned || 0);
+    const newWordsLearned = (currentStats.wordsLearned || 0) + (gameData.newWordsLearned || 0);
+    const newGamesPlayed = (currentStats.gamesPlayed || 0) + 1;
+    const newCorrectAnswers = (currentStats.correctAnswers || 0) + (gameData.correctAnswers || 0);
+    const newTotalQuestions = (currentStats.totalQuestions || 0) + (gameData.totalQuestions || 0);
+    
+    const newAccuracy = newTotalQuestions > 0 
+      ? Math.round((newCorrectAnswers / newTotalQuestions) * 100)
+      : 0;
+    
+    let newCurrentStreak = 0;
+    if (gameData.won) {
+      newCurrentStreak = (currentStats.currentStreak || 0) + 1;
+    }
+    const newLongestStreak = Math.max(
+      currentStats.longestStreak || 0,
+      newCurrentStreak
+    );
+    
+    const newLevel = Math.floor(newTotalPoints / 100) + 1;
+    const newXpProgress = newTotalPoints % 100;
+    
+    // ========== ✅ UPDATE PER-GAME STATS - FIXED ==========
+    const newGameStats = {
+      ...currentGame,
+      gamesPlayed: (currentGame.gamesPlayed || 0) + 1,  // ✅ +1 GAMES PLAYED
+      correctAnswers: (currentGame.correctAnswers || 0) + (gameData.correctAnswers || 0),
+      totalQuestions: (currentGame.totalQuestions || 0) + (gameData.totalQuestions || 0),
+      level: Math.floor(((currentGame.gamesPlayed || 0) + 1) / 5) + 1
+    };
+    
+    // ✅ Update best score/points
+    const pointsToCompare = gameData.pointsEarned || gameData.score || 0;
+    if (pointsToCompare > (currentGame.bestScore || currentGame.bestScores || 0)) {
+      newGameStats.bestScore = pointsToCompare;
+      newGameStats.bestScores = pointsToCompare;
+    }
+    
+    console.log(`📊 ${gameType} stats BEFORE:`, currentGame);
+    console.log(`📊 ${gameType} stats AFTER:`, newGameStats);
+    console.log(`📊 ${gameType} gamesPlayed: ${currentGame.gamesPlayed || 0} → ${newGameStats.gamesPlayed}`);
+    
+    // ========== CHECK ACHIEVEMENTS ==========
+    const newAchievements = { ...currentAchievements };
+    const unlocked = [];
+    
+    if (newGamesPlayed >= 1 && !newAchievements.firstGame) {
+      newAchievements.firstGame = true;
+      unlocked.push('🎯 First Game!');
+    }
+    if (newWordsLearned >= 10 && !newAchievements.tenWords) {
+      newAchievements.tenWords = true;
+      unlocked.push('📚 10 Words Learned!');
+    }
+    if (newLongestStreak >= 3 && !newAchievements.threeDayStreak) {
+      newAchievements.threeDayStreak = true;
+      unlocked.push('🔥 3-Day Streak!');
+    }
+    if (newAccuracy === 100 && !newAchievements.perfectScore) {
+      newAchievements.perfectScore = true;
+      unlocked.push('⭐ Perfect Score!');
+    }
+    if (newGamesPlayed >= 10 && !newAchievements.speedDemon) {
+      newAchievements.speedDemon = true;
+      unlocked.push('⚡ Speed Demon!');
+    }
+    if (newLevel >= 10 && !newAchievements.masterLearner) {
+      newAchievements.masterLearner = true;
+      unlocked.push('🏅 Master Learner!');
+    }
+    if (newWordsLearned >= 50 && !newAchievements.vocabularyMaster) {
+      newAchievements.vocabularyMaster = true;
+      unlocked.push('🎓 Vocabulary Master!');
+    }
+    
+    // ========== CREATE COMPLETE STATS OBJECT ==========
+    const completeStats = {
+      totalPoints: newTotalPoints,
+      wordsLearned: newWordsLearned,
+      gamesPlayed: newGamesPlayed,
+      currentStreak: newCurrentStreak,
+      longestStreak: newLongestStreak,
+      level: newLevel,
+      xpProgress: newXpProgress,
+      accuracy: newAccuracy,
+      correctAnswers: newCorrectAnswers,
+      totalQuestions: newTotalQuestions
+    };
+    
+    // ✅ UPDATE GAME STATS IN gameStats OBJECT
+    const updatedGameStats = {
+      ...currentGameStats,
+      [gameType]: newGameStats
+    };
+    
+    console.log(`📊 All gameStats:`, updatedGameStats);
+    
+    // ========== ✅ UPDATE FIREBASE ==========
+    await updateDoc(userRef, {
+      stats: completeStats,
+      totalPoints: newTotalPoints,
+      wordsLearned: newWordsLearned,
+      gamesPlayed: newGamesPlayed,
+      level: newLevel,
+      accuracy: newAccuracy,
+      correctAnswers: newCorrectAnswers,
+      currentStreak: newCurrentStreak,
+      longestStreak: newLongestStreak,
+      totalQuestions: newTotalQuestions,
+      xpProgress: newXpProgress,
+      xp: newTotalPoints,
+      
+      progress: {
+        ...userData.progress || {},
+        achievements: newAchievements,
+        totalPoints: newTotalPoints,
+        wordsLearned: newWordsLearned,
+        gamesPlayed: newGamesPlayed,
+        level: newLevel,
+        xp: newTotalPoints,
+        accuracy: newAccuracy,
+        correctAnswers: newCorrectAnswers,
+        totalQuestions: newTotalQuestions,
+        streak: newCurrentStreak,
+        longestStreak: newLongestStreak,
+        xpProgress: newXpProgress
+      },
+      
+      // ✅ OVERWRITE ENTIRE gameStats
+      gameStats: updatedGameStats,
+      
+      lastUpdated: serverTimestamp()
+    });
+    
+    console.log('✅ Stats updated successfully!');
+    console.log('📊 New stats:', completeStats);
+    console.log(`📊 ${gameType} gamesPlayed:`, newGameStats.gamesPlayed);
+    
+    if (unlocked.length > 0) {
+      console.log('🏆 New Achievements Unlocked:', unlocked);
+    }
+    
+    localStorage.setItem('userStats', JSON.stringify({
+      stats: completeStats
+    }));
+    
+    return { 
+      stats: completeStats,
+      achievements: unlocked
+    };
+    
+  } catch (error) {
+    console.error('❌ Error updating stats:', error);
+    
+    const pendingData = {
+      userId: userId,
+      gameData: gameData,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem('pendingGameData', JSON.stringify(pendingData));
+    
+    throw error;
+  }
+};
+
 export const syncPendingData = async () => {
   const pendingData = localStorage.getItem('pendingGameData');
   if (pendingData) {
@@ -445,7 +494,6 @@ export const syncPendingData = async () => {
   return true;
 };
 
-// ✅ UPDATE DISPLAY NAME
 export const updateDisplayName = async (userId, newName) => {
   try {
     const userRef = doc(db, 'users', userId);
@@ -462,12 +510,10 @@ export const updateDisplayName = async (userId, newName) => {
 };
 
 // ============================================================
-// 3. LEADERBOARD SERVICES (NEW)
+// 3. LEADERBOARD SERVICES
 // ============================================================
 
-// ✅ GET LEADERBOARD (REAL-TIME)
 export const getLeaderboard = (category = 'totalPoints', limitCount = 20, callback) => {
-  // Categories: 'totalPoints', 'wordsLearned', 'gamesPlayed', 'longestStreak'
   try {
     const usersRef = collection(db, 'users');
     const q = query(
@@ -511,7 +557,6 @@ export const getLeaderboard = (category = 'totalPoints', limitCount = 20, callba
   }
 };
 
-// ✅ GET LEADERBOARD (ONE-TIME)
 export const getLeaderboardOnce = async (category = 'totalPoints', limitCount = 20) => {
   try {
     const usersRef = collection(db, 'users');
@@ -563,7 +608,6 @@ export const getUserProgress = async (userId) => {
       console.log('✅ Found existing progress for user:', userId);
       return progressDoc.data();
     } else {
-      // Create default progress
       const defaultProgress = {
         userId: userId,
         level: 1,

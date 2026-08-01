@@ -8,7 +8,7 @@ import Profile from './Profile';
 import Leaderboards from './Leaderboards';
 
 // Import dashboard components
-import WordPicsGame from './dashboard/WordPicsGame';
+import WordPicsGame from './dashboard/SynoQuest';
 import QuizGame from './dashboard/QuizGame';
 import MatchGame from './dashboard/MatchGame';
 import GuessWhatGame from './dashboard/GuessWhatGame';
@@ -1024,7 +1024,7 @@ const Dashboard = () => {
                 <div style={{ background: colors.surface, borderRadius: '12px', padding: '24px', border: `1px solid ${colors.border}` }}>
                   <h3 style={{ ...textType.sub, marginBottom: '16px' }}>Quick Actions</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    {['Word Pics', 'Match Game', 'Quiz', 'Story'].map((name, i) => {
+                    {['Syno Quest', 'Match Game', 'Quiz', 'Story'].map((name, i) => {
                       // Map to game IDs
                       const gameIds = ['wordpics', 'match', 'quiz', 'short-story'];
                       // UPDATED: Match Game is now available
