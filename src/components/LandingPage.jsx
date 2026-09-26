@@ -16,6 +16,18 @@ const Landing = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -131,7 +143,7 @@ const Landing = () => {
   };
 
   const headingStyle = {
-    fontSize: 'clamp(28px, 3.5vw, 42px)',
+    fontSize: 'clamp(26px, 3.5vw, 42px)',
     fontWeight: '800',
     color: palette.deepNavy,
     lineHeight: '1.2',
@@ -151,7 +163,7 @@ const Landing = () => {
 
   const sectionTitle = {
     fontFamily: "'Fredoka', sans-serif",
-    fontSize: 'clamp(24px, 3vw, 36px)',
+    fontSize: 'clamp(22px, 3vw, 36px)',
     fontWeight: '800',
     color: palette.deepNavy,
     textAlign: 'center',
@@ -265,6 +277,96 @@ const Landing = () => {
             .grid-4 { grid-template-columns: 1fr; }
           }
 
+          /* ===== HERO STATS: 4 cols → 2 cols on mobile ===== */
+          .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 760px;
+            margin: 0 auto;
+            width: 100%;
+          }
+          @media (max-width: 768px) {
+            .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          }
+          @media (max-width: 400px) {
+            .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          }
+
+          /* ===== RESPONSIVE SECTION PADDING ===== */
+          .section-padding {
+            padding: 96px 24px;
+          }
+          @media (max-width: 768px) {
+            .section-padding { padding: 64px 20px; }
+          }
+          @media (max-width: 480px) {
+            .section-padding { padding: 48px 16px; }
+          }
+
+          .section-padding-hero {
+            padding-top: 140px;
+            padding-bottom: 80px;
+            padding-left: 24px;
+            padding-right: 24px;
+          }
+          @media (max-width: 768px) {
+            .section-padding-hero {
+              padding-top: 110px;
+              padding-bottom: 60px;
+              padding-left: 20px;
+              padding-right: 20px;
+            }
+          }
+          @media (max-width: 480px) {
+            .section-padding-hero {
+              padding-top: 100px;
+              padding-bottom: 48px;
+              padding-left: 16px;
+              padding-right: 16px;
+            }
+          }
+
+          .section-padding-cta {
+            padding: 120px 24px;
+          }
+          @media (max-width: 768px) {
+            .section-padding-cta { padding: 80px 20px; }
+          }
+          @media (max-width: 480px) {
+            .section-padding-cta { padding: 64px 16px; }
+          }
+
+          /* ===== RESPONSIVE CARD PADDING ===== */
+          @media (max-width: 768px) {
+            .card-responsive { padding: 24px !important; }
+            .small-card-responsive { padding: 20px !important; }
+          }
+          @media (max-width: 480px) {
+            .card-responsive { padding: 20px !important; }
+            .small-card-responsive { padding: 16px !important; }
+          }
+
+          /* ===== RESPONSIVE HOW IT WORKS ===== */
+          .how-step {
+            display: flex;
+            gap: 24px;
+            padding: 28px;
+            align-items: center;
+            background: white;
+            border-radius: 16px;
+            border: 2px solid ${palette.border};
+            box-shadow: 0 4px 0 rgba(0,0,0,0.05);
+          }
+          @media (max-width: 560px) {
+            .how-step {
+              flex-direction: column;
+              text-align: center;
+              gap: 16px;
+              padding: 24px 20px;
+            }
+          }
+
           .feature-card { transition: transform 0.2s ease; }
           .feature-card:hover { transform: translateY(-4px); }
 
@@ -291,6 +393,7 @@ const Landing = () => {
               top: 0;
               right: -100%;
               width: 280px;
+              max-width: 80vw;
               height: 100vh;
               background: white;
               padding: 80px 30px 30px;
@@ -343,6 +446,12 @@ const Landing = () => {
           @media (min-width: 769px) {
             .nav-mobile { display: none !important; }
             .nav-desktop { display: flex !important; }
+          }
+
+          /* ===== RESPONSIVE CTA TEXT ===== */
+          @media (max-width: 560px) {
+            .cta-title { font-size: 26px !important; }
+            .cta-button { font-size: 17px !important; padding: 16px 36px !important; }
           }
         `}
       </style>
@@ -431,6 +540,7 @@ const Landing = () => {
             <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
               <button onClick={() => scrollToSection('about')}>About</button>
               <button onClick={() => scrollToSection('why')}>Why</button>
+              <button onClick={() => scrollToSection('levels')}>Levels</button>
               <button onClick={() => scrollToSection('how')}>How</button>
               <button onClick={() => scrollToSection('start')}>Start Now</button>
               <button 
@@ -443,8 +553,8 @@ const Landing = () => {
           </div>
         </nav>
 
-        {/* ===== HERO SECTION (RESTORED BG) ===== */}
-        <section style={{
+        {/* ===== HERO SECTION ===== */}
+        <section className="section-padding-hero" style={{
           position: 'relative',
           width: '100%',
           minHeight: '100vh',
@@ -452,8 +562,6 @@ const Landing = () => {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          paddingTop: '140px',
-          paddingBottom: '80px',
         }}>
           <div style={blurredBg('/image/game-world-bg.jpg', '3px')} />
           <div style={{
@@ -475,7 +583,7 @@ const Landing = () => {
             
             <h1 style={{
               color: palette.white,
-              fontSize: 'clamp(32px, 4vw, 52px)',
+              fontSize: 'clamp(28px, 4vw, 52px)',
               fontWeight: '900',
               fontFamily: "'Fredoka', sans-serif",
               lineHeight: 1.15,
@@ -489,7 +597,7 @@ const Landing = () => {
 
             <p style={{
               color: palette.white,
-              fontSize: 'clamp(18px, 1.2vw, 22px)',
+              fontSize: 'clamp(16px, 1.2vw, 22px)',
               fontFamily: "'Nunito', sans-serif",
               fontWeight: '600',
               lineHeight: 1.6,
@@ -500,13 +608,7 @@ const Landing = () => {
               Build your vocabulary with an ever-growing word library and progress tracking that makes learning engaging, structured, and rewarding.
             </p>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '16px',
-              maxWidth: '760px',
-              margin: '0 auto',
-            }}>
+            <div className="hero-stats">
               {[
                 { value: '6', label: 'Game Modes' },
                 { value: '6', label: 'CEFR Levels' },
@@ -522,7 +624,7 @@ const Landing = () => {
                   border: '2px solid rgba(255,255,255,0.3)',
                 }}>
                   <div style={{
-                    fontSize: 'clamp(24px, 2.5vw, 32px)',
+                    fontSize: 'clamp(20px, 2.5vw, 32px)',
                     fontWeight: '900',
                     color: palette.white,
                     fontFamily: "'Fredoka', sans-serif",
@@ -532,7 +634,7 @@ const Landing = () => {
                     {stat.value}
                   </div>
                   <div style={{
-                    fontSize: 'clamp(12px, 1vw, 14px)',
+                    fontSize: 'clamp(10px, 1vw, 14px)',
                     color: 'rgba(255,255,255,0.9)',
                     fontWeight: '700',
                     fontFamily: "'Nunito', sans-serif",
@@ -547,10 +649,9 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ===== MASTER VOCABULARY (RESTORED IMAGE) ===== */}
-        <section style={{ 
+        {/* ===== MASTER VOCABULARY ===== */}
+        <section className="section-padding" style={{ 
           position: 'relative',
-          padding: '96px 24px',
           background: palette.white,
         }}>
           <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
@@ -584,10 +685,9 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ===== ABOUT (RESTORED IMAGE) ===== */}
-        <section id="about" style={{ 
+        {/* ===== ABOUT ===== */}
+        <section id="about" className="section-padding" style={{ 
           position: 'relative',
-          padding: '96px 24px',
           background: palette.cream,
         }}>
           <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
@@ -625,9 +725,8 @@ const Landing = () => {
         </section>
 
         {/* ===== CEFR LEVEL GUIDE ===== */}
-        <section id="levels" style={{
+        <section id="levels" className="section-padding" style={{
           position: 'relative',
-          padding: '96px 24px',
           background: palette.white,
         }}>
           <div style={{ maxWidth: '1060px', margin: '0 auto' }}>
@@ -681,7 +780,7 @@ const Landing = () => {
                       padding: '14px 8px',
                       cursor: 'pointer',
                       fontFamily: "'Fredoka', sans-serif",
-                      fontSize: '20px',
+                      fontSize: 'clamp(16px, 2vw, 20px)',
                       fontWeight: '700',
                       boxShadow: active ? `0 4px 0 ${palette.tealShadow}` : 'none',
                       transform: active ? 'translateY(-2px)' : 'none',
@@ -694,13 +793,13 @@ const Landing = () => {
               })}
             </div>
 
-            <div style={{
+            <div className="card-responsive cefr-detail" style={{
               ...cardStyle,
               display: 'grid',
               gridTemplateColumns: '1fr 1.6fr',
               gap: '32px',
               alignItems: 'center',
-            }} className="cefr-detail">
+            }}>
               <div style={{
                 background: palette.cream,
                 borderRadius: '12px',
@@ -710,7 +809,7 @@ const Landing = () => {
               }}>
                 <div style={{
                   fontFamily: "'Fredoka', sans-serif",
-                  fontSize: '56px',
+                  fontSize: 'clamp(40px, 6vw, 56px)',
                   lineHeight: 1,
                   fontWeight: '800',
                   color: palette.teal,
@@ -729,7 +828,7 @@ const Landing = () => {
               <div>
                 <h3 style={{
                   fontFamily: "'Fredoka', sans-serif",
-                  fontSize: '28px',
+                  fontSize: 'clamp(22px, 3vw, 28px)',
                   fontWeight: '700',
                   color: palette.deepNavy,
                   marginBottom: '12px',
@@ -771,7 +870,7 @@ const Landing = () => {
                 ['Oxford', 'A1 to C1', 'CEFR-aligned vocabulary references used for word selection.'],
                 ['Cambridge', 'A1 to C2', 'Vocabulary information including advanced C2 vocabulary.'],
               ].map(([name, level, desc]) => (
-                <div key={name} style={smallCardStyle}>
+                <div key={name} className="small-card-responsive" style={smallCardStyle}>
                   <div style={{
                     fontFamily: "'Fredoka', sans-serif",
                     fontSize: '20px',
@@ -802,9 +901,8 @@ const Landing = () => {
         </section>
 
         {/* ===== GAMES SHOWCASE ===== */}
-        <section style={{ 
+        <section className="section-padding" style={{ 
           position: 'relative',
-          padding: '96px 24px', 
           background: palette.cream,
         }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -826,7 +924,7 @@ const Landing = () => {
                 { title: 'Short Story', desc: 'Read bite-sized stories, then answer comprehension quizzes.', color: palette.deepNavy, icon: 'chart' },
                 { title: 'Sentence Builder', desc: 'Arrange words into correct, meaningful sentences.', color: palette.teal, icon: 'arrowRight' },
               ].map((game, i) => (
-                <div key={i} className="game-card" style={{ 
+                <div key={i} className="game-card card-responsive" style={{ 
                   ...cardStyle,
                   display: 'flex',
                   flexDirection: 'column',
@@ -851,7 +949,7 @@ const Landing = () => {
                   </div>
                   
                   <h3 style={{
-                    fontSize: '24px',
+                    fontSize: 'clamp(20px, 2.5vw, 24px)',
                     fontWeight: '800',
                     color: palette.deepNavy,
                     marginBottom: '8px',
@@ -890,10 +988,9 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ===== WHY CHOOSE (RESTORED IMAGE) ===== */}
-        <section id="why" style={{ 
+        {/* ===== WHY CHOOSE ===== */}
+        <section id="why" className="section-padding" style={{ 
           position: 'relative',
-          padding: '96px 24px',
           overflow: 'hidden',
         }}>
           <div style={blurredBg('/image/why-choose-bg.jpg', '4px')} />
@@ -914,7 +1011,7 @@ const Landing = () => {
                   className="animate-pulse-custom"
                   style={{ 
                     display: 'block', 
-                    width: 'clamp(80px, 10vw, 120px)',
+                    width: 'clamp(70px, 10vw, 120px)',
                     height: 'auto', 
                     maxWidth: '120px',
                     filter: `drop-shadow(0 10px 25px ${palette.warmOrange}50)`,
@@ -933,7 +1030,7 @@ const Landing = () => {
                 { icon: 'chart', title: 'Track Progress', desc: 'Watch your word count, streaks, and accuracy grow with clear stats.', color: palette.coral },
                 { icon: 'globe', title: 'Learn Anywhere', desc: 'Fully responsive on mobile, tablet, and desktop — practice anytime.', color: palette.softGreen },
               ].map((feature, i) => (
-                <div key={i} className="feature-card" style={{ 
+                <div key={i} className="feature-card small-card-responsive" style={{ 
                   ...smallCardStyle,
                   textAlign: 'center',
                   height: '100%',
@@ -954,7 +1051,7 @@ const Landing = () => {
                     <Icon name={feature.icon} size={28} color={feature.color} secondaryColor={`${feature.color}80`} />
                   </div>
                   <h3 style={{
-                    fontSize: '20px',
+                    fontSize: 'clamp(18px, 2vw, 20px)',
                     fontWeight: '800',
                     color: palette.deepNavy,
                     marginBottom: '10px',
@@ -979,9 +1076,8 @@ const Landing = () => {
         </section>
 
         {/* ===== HOW IT WORKS ===== */}
-        <section id="how" style={{ 
+        <section id="how" className="section-padding" style={{ 
           position: 'relative',
-          padding: '96px 24px',
           background: palette.white,
         }}>
           <div style={{ 
@@ -1001,16 +1097,7 @@ const Landing = () => {
                 { num: 3, title: 'Learn Through Games', desc: 'Practice with flashcards, take quizzes, and engage with interactive activities. Learn new words in a fun, effective way!', color: palette.coral },
                 { num: 4, title: 'Track Your Progress', desc: 'Monitor your improvement, earn achievements', color: palette.softGreen },
               ].map(step => (
-                <div key={step.num} style={{ 
-                  display: 'flex', 
-                  gap: '24px', 
-                  padding: '28px', 
-                  alignItems: 'center',
-                  background: palette.white,
-                  borderRadius: '16px',
-                  border: `2px solid ${palette.border}`,
-                  boxShadow: '0 4px 0 rgba(0,0,0,0.05)',
-                }}>
+                <div key={step.num} className="how-step">
                   <div style={{ 
                     width: '64px', 
                     height: '64px', 
@@ -1030,7 +1117,7 @@ const Landing = () => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ 
-                      fontSize: '22px', 
+                      fontSize: 'clamp(18px, 2.5vw, 22px)', 
                       fontWeight: '800', 
                       color: palette.deepNavy, 
                       marginBottom: '6px', 
@@ -1055,10 +1142,9 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* ===== CTA SECTION (RESTORED IMAGE) ===== */}
-        <section id="start" style={{ 
+        {/* ===== CTA SECTION ===== */}
+        <section id="start" className="section-padding-cta" style={{ 
           position: 'relative',
-          padding: '120px 24px',
           textAlign: 'center',
           overflow: 'hidden',
         }}>
@@ -1077,8 +1163,8 @@ const Landing = () => {
             position: 'relative', 
             zIndex: 2,
           }}>
-            <h2 style={{ 
-              fontSize: 'clamp(32px, 4vw, 48px)', 
+            <h2 className="cta-title" style={{ 
+              fontSize: 'clamp(26px, 4vw, 48px)', 
               fontWeight: '900', 
               color: palette.white, 
               marginBottom: '32px', 
@@ -1107,6 +1193,7 @@ const Landing = () => {
 
             <button 
               onClick={() => navigate('/signup')} 
+              className="cta-button"
               style={{
                 ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'lg'),
                 fontSize: '20px',
