@@ -98,6 +98,28 @@ const releaseBtn = (e, shadowColor) => {
   e.currentTarget.style.boxShadow = `0 4px 0 ${shadowColor}`;
 };
 
+// ===== 3D-STYLE ICON BADGE (Dashboard profile menu) =====
+const MenuIconBadge = ({ emoji, color, size = 36 }) => (
+  <div
+    style={{
+      width: size,
+      height: size,
+      borderRadius: '10px',
+      background: `${color}18`,
+      border: `2px solid ${color}30`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      fontSize: size * 0.5,
+      lineHeight: 1,
+      boxShadow: `0 3px 0 ${color}25`,
+    }}
+  >
+    {emoji}
+  </div>
+);
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -595,6 +617,12 @@ const Dashboard = () => {
         .theme-toggle-wrap, .theme-toggle-wrap span, .theme-toggle-wrap p, .theme-toggle-wrap label { color: #ffffff !important; opacity: 1 !important; }
         .dashboard-container { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease-out forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .profile-menu-item {
+          transition: background 0.15s ease;
+        }
+        .profile-menu-item:hover {
+          background: #FFF8F0;
+        }
         @media (max-width: 768px) {
           .sidebar-fixed { transform: translateX(-100%) !important; }
           .sidebar-fixed.open { transform: translateX(0) !important; }
@@ -686,7 +714,8 @@ const Dashboard = () => {
             {showProfileMenu && (
               <>
                 <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-                <div style={{ position: 'absolute', top: '50px', right: '0', background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '220px', overflow: 'hidden', border: `2px solid ${palette.border}`, fontFamily: "'Nunito', sans-serif", boxShadow: '0 10px 30px rgba(244, 162, 97, 0.18)' }}>
+                <div style={{ position: 'absolute', top: '50px', right: '0', background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '240px', overflow: 'hidden', border: `2px solid ${palette.border}`, fontFamily: "'Nunito', sans-serif", boxShadow: '0 10px 30px rgba(244, 162, 97, 0.18)' }}>
+                  {/* Profile header */}
                   <div style={{ padding: '12px 14px', background: palette.cream, borderBottom: `2px solid ${palette.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
                       {equippedAvatar ? (
@@ -697,17 +726,117 @@ const Dashboard = () => {
                         </div>
                       )}
                     </div>
-                    <div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif" }}>{displayName}</div>
-                      <div style={{ fontSize: '11px', color: palette.bodyText, fontWeight: 600 }}>{displayEmail || 'student@email.com'}</div>
+                      <div style={{ fontSize: '11px', color: palette.bodyText, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayEmail || 'student@email.com'}</div>
                     </div>
                   </div>
-                  <div style={{ padding: '4px' }}>
-                    <button onClick={() => { setShowProfileMenu(false); changeMenu('My Profile'); }} style={{ width: '100%', padding: '9px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: palette.bodyText, fontFamily: "'Nunito', sans-serif", fontWeight: 600 }}>👤 My Profile</button>
-                    <button onClick={() => { setShowProfileMenu(false); changeMenu('My Progress'); }} style={{ width: '100%', padding: '9px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: palette.bodyText, fontFamily: "'Nunito', sans-serif", fontWeight: 600 }}>📊 My Progress</button>
-                    <button onClick={() => { setShowProfileMenu(false); changeMenu('Leaderboards'); }} style={{ width: '100%', padding: '9px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: palette.bodyText, fontFamily: "'Nunito', sans-serif", fontWeight: 600 }}>🏆 Leaderboards</button>
-                    <div style={{ height: '2px', background: palette.border, margin: '4px 0' }}></div>
-                    <button onClick={handleLogout} style={{ width: '100%', padding: '9px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: '#d32f2f', fontFamily: "'Nunito', sans-serif", fontWeight: 600 }}>🚪 Sign Out</button>
+
+                  {/* Menu items with 3D icon badges */}
+                  <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+
+                    {/* My Profile */}
+                    <button
+                      onClick={() => { setShowProfileMenu(false); changeMenu('My Profile'); }}
+                      className="profile-menu-item"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: 'none',
+                        background: 'none',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        color: palette.bodyText,
+                        fontFamily: "'Nunito', sans-serif",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <MenuIconBadge emoji="👤" color={palette.warmOrange} size={36} />
+                      <span>My Profile</span>
+                    </button>
+
+                    {/* My Progress */}
+                    <button
+                      onClick={() => { setShowProfileMenu(false); changeMenu('My Progress'); }}
+                      className="profile-menu-item"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: 'none',
+                        background: 'none',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        color: palette.bodyText,
+                        fontFamily: "'Nunito', sans-serif",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <MenuIconBadge emoji="📊" color={palette.coral} size={36} />
+                      <span>My Progress</span>
+                    </button>
+
+                    {/* Leaderboards */}
+                    <button
+                      onClick={() => { setShowProfileMenu(false); changeMenu('Leaderboards'); }}
+                      className="profile-menu-item"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: 'none',
+                        background: 'none',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        color: palette.bodyText,
+                        fontFamily: "'Nunito', sans-serif",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <MenuIconBadge emoji="🏆" color={palette.softGreen} size={36} />
+                      <span>Leaderboards</span>
+                    </button>
+
+                    <div style={{ height: '2px', background: palette.border, margin: '6px 8px' }}></div>
+
+                    {/* Sign Out */}
+                    <button
+                      onClick={handleLogout}
+                      className="profile-menu-item"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: 'none',
+                        background: 'none',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        color: '#d32f2f',
+                        fontFamily: "'Nunito', sans-serif",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <MenuIconBadge emoji="🚪" color="#d32f2f" size={36} />
+                      <span>Sign Out</span>
+                    </button>
+
                   </div>
                 </div>
               </>
