@@ -223,6 +223,19 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const isCompact = screenWidth < 480;
   const isPhone = screenWidth < 640;
 
+  // ===== FORCE GRID COLUMNS VIA JAVASCRIPT (bypasses CSS specificity) =====
+  const forceGridStyle = isMobileView ? {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+    gap: '4px',
+    width: '100%',
+    boxSizing: 'border-box'
+  } : {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+    gap: '12px'
+  };
+
   // ===== LOADING =====
   if (loading) {
     return (
@@ -271,7 +284,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      boxSizing: 'border-box'
     }}>
 
       {/* WARM OVERLAY (brand tint) */}
@@ -285,25 +299,32 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       {/* CONTENT WRAPPER */}
       <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* LOCAL RESPONSIVE STYLES — HIGHEST PRIORITY (no inline conflicts) */}
+        {/* LOCAL RESPONSIVE STYLES — FORCE 5 COLUMNS */}
         <style>{`
-          /* Base grid (desktop) */
-          .shop-avatar-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-          }
-          
-          /* FORCE 5 COLUMNS on mobile/tablet */
           @media (max-width: 900px) {
             .shop-avatar-grid {
-              grid-template-columns: repeat(5, 1fr) !important;
+              grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
               gap: 4px !important;
             }
-          }
-          
-          /* FORCE 5 COLUMNS on phone */
-          @media (max-width: 640px) {
+            .shop-avatar-card {
+              padding: 3px !important;
+              min-width: 0 !important;
+            }
+            .shop-avatar-img-wrap {
+              margin-top: 6px !important;
+              padding: 1px !important;
+            }
+            .shop-avatar-name {
+              font-size: 6px !important;
+              margin-top: 3px !important;
+            }
+            .shop-avatar-price {
+              font-size: 5px !important;
+            }
+            .shop-rarity-badge {
+              font-size: 5px !important;
+              padding: 1px 2px !important;
+            }
             .shop-preview-panel {
               padding: 14px !important;
             }
@@ -318,57 +339,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               width: 100px !important;
               height: 100px !important;
             }
-            .shop-avatar-grid {
-              grid-template-columns: repeat(5, 1fr) !important;
-              gap: 4px !important;
-            }
-            .shop-avatar-card {
-              padding: 3px !important;
-            }
-            .shop-avatar-img-wrap {
-              margin-top: 6px !important;
-              padding: 1px !important;
-            }
-            .shop-avatar-name {
-              font-size: 6px !important;
-              margin-top: 3px !important;
-            }
-            .shop-avatar-price {
-              font-size: 5px !important;
-            }
-            .shop-rarity-badge {
-              font-size: 5px !important;
-              padding: 1px 2px !important;
-            }
           }
-          
-          /* FORCE 5 COLUMNS on small phone */
-          @media (max-width: 480px) {
-            .shop-avatar-grid {
-              grid-template-columns: repeat(5, 1fr) !important;
-              gap: 4px !important;
-            }
-            .shop-avatar-card {
-              padding: 3px !important;
-            }
-            .shop-avatar-img-wrap {
-              margin-top: 6px !important;
-              padding: 1px !important;
-            }
-            .shop-avatar-name {
-              font-size: 6px !important;
-              margin-top: 3px !important;
-            }
-            .shop-avatar-price {
-              font-size: 5px !important;
-            }
-            .shop-rarity-badge {
-              font-size: 5px !important;
-              padding: 1px 2px !important;
-            }
-          }
-          
-          /* Compact on tiny phone */
           @media (max-width: 400px) {
             .shop-modal-content {
               padding: 16px 12px !important;
@@ -376,9 +347,6 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             .shop-modal-image {
               width: 80px !important;
               height: 80px !important;
-            }
-            .shop-avatar-grid {
-              gap: 3px !important;
             }
           }
         `}</style>
@@ -570,7 +538,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
           )}
 
           {/* MIDDLE: AVATAR GRID */}
-          <div>
+          <div style={{ minWidth: 0 }}>
             {isMobileView && (
               <div style={{
                 display: 'flex',
@@ -614,6 +582,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             <motion.div
               layout
               className="shop-avatar-grid"
+              style={forceGridStyle}
             >
               <AnimatePresence>
                 {filteredAvatars.map((avatar, index) => {
@@ -651,7 +620,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         cursor: 'pointer',
                         textAlign: 'center',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        minWidth: 0
                       }}
                     >
                       <div 
