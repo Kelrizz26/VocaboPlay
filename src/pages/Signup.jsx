@@ -631,7 +631,7 @@ const Signup = () => {
             }
             
             .illustration-subtitle {
-              font-size: 14px !important;
+              font-size: 16px !important;
             }
 
             .mascot-svg-wrap {
@@ -734,7 +734,7 @@ const Signup = () => {
             .left-side {
               width: 100% !important;
               max-width: 100% !important;
-              padding: 16px 14px 40px !important;
+              padding: 16px 14px 24px !important;
               min-height: auto !important;
               flex: none !important;
               display: flex !important;
@@ -743,8 +743,18 @@ const Signup = () => {
               box-sizing: border-box !important;
             }
             
+            /* ===== SHOW THE MASCOT ON MOBILE (BELOW FORM) ===== */
             .right-side {
-              display: none !important;
+              display: flex !important;
+              position: relative !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              flex: none !important;
+              min-height: auto !important;
+              padding: 24px 16px 36px !important;
+              border-radius: 0 !important;
+              overflow: hidden !important;
+              box-sizing: border-box !important;
             }
             
             .card-wrapper {
@@ -862,6 +872,36 @@ const Signup = () => {
             .verified-badge {
               font-size: 11px !important;
             }
+
+            /* ===== MASCOT ON MOBILE ===== */
+            .mascot-stage-wrap-mobile {
+              margin-bottom: 12px !important;
+              height: 160px !important;
+            }
+
+            .mascot-svg-wrap-mobile {
+              width: 120px !important;
+              height: 120px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 16px !important;
+              margin-bottom: 2px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 13px !important;
+            }
+
+            .illustration-container-mobile {
+              padding: 8px !important;
+              max-width: 100% !important;
+            }
+
+            /* Reduce confetti and sparkles on mobile */
+            .bg-sparkle, .confetti-dot {
+              opacity: 0.5 !important;
+            }
           }
 
           /* ===== SMALL PHONE (max 400px) ===== */
@@ -904,6 +944,23 @@ const Signup = () => {
               font-size: 13px !important;
               padding: 12px 16px !important;
             }
+
+            .mascot-stage-wrap-mobile {
+              height: 140px !important;
+            }
+
+            .mascot-svg-wrap-mobile {
+              width: 100px !important;
+              height: 100px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 15px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 12px !important;
+            }
           }
 
           /* ===== EXTRA SMALL (max 360px) ===== */
@@ -940,6 +997,30 @@ const Signup = () => {
             }
             .nav-desktop {
               display: flex !important;
+            }
+
+            /* Hide mobile-only classes on desktop */
+            .mascot-stage-wrap-mobile {
+              margin-bottom: 28px !important;
+              height: 260px !important;
+            }
+
+            .mascot-svg-wrap-mobile {
+              width: 190px !important;
+              height: 190px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 28px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 22px !important;
+            }
+
+            .illustration-container-mobile {
+              padding: 20px !important;
+              max-width: 440px !important;
             }
           }
 
@@ -1387,6 +1468,7 @@ const Signup = () => {
             </div>
           </div>
 
+          {/* ===== RIGHT SIDE — MASCOT + ANIMATIONS (SHOWS ON MOBILE BELOW FORM) ===== */}
           <div style={styles.rightSide} className="right-side animate-fade-in">
             <div className="bg-pattern"></div>
 
@@ -1403,9 +1485,9 @@ const Signup = () => {
             <span className="confetti-dot" style={{ width: 7, height: 7, background: '#a685e2', top: '26%', left: '20%', animationDelay: '1.2s', borderRadius: '50%' }}></span>
             <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ff9f43', top: '34%', left: '38%', animationDelay: '0.6s' }}></span>
 
-            <div style={styles.illustrationContainer}>
-              <div style={styles.mascotStageWrap}>
-                <div className="mascot-stage mascot-svg-wrap" style={styles.mascotSvgWrap}>
+            <div style={styles.illustrationContainer} className="illustration-container-mobile">
+              <div style={styles.mascotStageWrap} className="mascot-stage-wrap-mobile">
+                <div className="mascot-stage mascot-svg-wrap mascot-svg-wrap-mobile" style={styles.mascotSvgWrap}>
                   <div className="mascot-squash">
                     <svg viewBox="0 0 200 200" width="100%" height="100%">
                       <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
@@ -1451,8 +1533,8 @@ const Signup = () => {
                 </div>
               </div>
 
-              <h2 style={styles.illustrationTitle} className="illustration-title">Level up your vocabulary,</h2>
-              <p style={styles.illustrationSubtitle} className="illustration-subtitle">one word at a time.</p>
+              <h2 style={styles.illustrationTitle} className="illustration-title-mobile">Level up your vocabulary,</h2>
+              <p style={styles.illustrationSubtitle} className="illustration-subtitle-mobile">one word at a time.</p>
             </div>
           </div>
         </div>
