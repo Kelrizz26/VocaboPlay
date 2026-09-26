@@ -268,7 +268,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       width: '100%',
       maxWidth: '1400px',
       margin: '0 auto',
-      padding: isMobileView ? '4px' : '20px',
+      padding: isMobileView ? '0px' : '20px',
       fontFamily: BRAND_FONT_BODY,
       borderRadius: isMobileView ? '0px' : '24px',
       position: 'relative',
@@ -293,7 +293,6 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
 
         {/* LOCAL RESPONSIVE STYLES — FORCED 5 COLUMNS */}
         <style>{`
-          /* FORCE 5 COLUMNS on mobile - highest specificity */
           @media (max-width: 900px) {
             .shop-avatar-grid {
               grid-template-columns: repeat(5, 1fr) !important;
@@ -302,7 +301,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
           }
           @media (max-width: 640px) {
             .shop-preview-panel {
-              padding: 12px !important;
+              padding: 14px !important;
             }
             .shop-preview-image {
               aspect-ratio: 1.6 !important;
@@ -387,8 +386,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '20px',
-            padding: isMobileView ? '10px' : '20px 24px',
-            marginBottom: '8px',
+            padding: isMobileView ? '10px 12px' : '20px 24px',
+            margin: isMobileView ? '6px 6px 8px' : '0 0 8px',
             color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
@@ -470,7 +469,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 color: 'white',
                 padding: '10px 14px',
                 borderRadius: '12px',
-                marginBottom: '8px',
+                margin: isMobileView ? '0 6px 8px' : '0 0 8px',
                 fontSize: '13px',
                 fontWeight: 700,
                 fontFamily: BRAND_FONT_BODY,
@@ -488,7 +487,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
           display: 'grid',
           gridTemplateColumns: isMobileView ? '1fr' : '80px 1fr 340px',
           gap: '8px',
-          alignItems: 'stretch'
+          alignItems: 'stretch',
+          padding: isMobileView ? '0 6px' : '0'
         }}>
 
           {/* LEFT: RARITY SIDEBAR (desktop only) */}
@@ -794,7 +794,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               boxShadow: previewRarity === 'legendary' 
                 ? `0 0 50px ${previewConfig.color}66, inset 0 1px 0 rgba(255,255,255,0.3)` 
                 : '0 8px 32px rgba(45, 42, 94, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              marginBottom: isMobileView ? '6px' : '0'
             }}
           >
             <div style={{
