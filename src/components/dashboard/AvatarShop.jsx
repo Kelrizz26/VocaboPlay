@@ -219,12 +219,6 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const isPreviewEquipped = equippedAvatar === previewAvatar;
   const canAfford = currentPoints >= (previewData?.price || 0);
 
-  // ===== DYNAMIC GRID COLUMNS (5 ON MOBILE, AUTO ON DESKTOP) =====
-  const getGridColumns = () => {
-    if (screenWidth < 900) return 'repeat(5, 1fr)';   // FORCE 5 columns sa mobile/tablet
-    return 'repeat(auto-fill, minmax(120px, 1fr))';   // auto-fill sa desktop
-  };
-
   // ===== DYNAMIC CARD SIZES =====
   const isCompact = screenWidth < 480;
   const isPhone = screenWidth < 640;
@@ -264,11 +258,11 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   }
 
   return (
-    <div style={{
+    <div className="avatar-shop-root" style={{
       width: '100%',
       maxWidth: '1400px',
       margin: '0 auto',
-      padding: isMobileView ? '0px' : '20px',
+      padding: isMobileView ? '4px' : '20px',
       fontFamily: BRAND_FONT_BODY,
       borderRadius: isMobileView ? '0px' : '24px',
       position: 'relative',
@@ -291,14 +285,24 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       {/* CONTENT WRAPPER */}
       <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* LOCAL RESPONSIVE STYLES — FORCED 5 COLUMNS */}
+        {/* LOCAL RESPONSIVE STYLES — HIGHEST PRIORITY (no inline conflicts) */}
         <style>{`
+          /* Base grid (desktop) */
+          .shop-avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+          }
+          
+          /* FORCE 5 COLUMNS on mobile/tablet */
           @media (max-width: 900px) {
             .shop-avatar-grid {
               grid-template-columns: repeat(5, 1fr) !important;
               gap: 4px !important;
             }
           }
+          
+          /* FORCE 5 COLUMNS on phone */
           @media (max-width: 640px) {
             .shop-preview-panel {
               padding: 14px !important;
@@ -337,6 +341,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               padding: 1px 2px !important;
             }
           }
+          
+          /* FORCE 5 COLUMNS on small phone */
           @media (max-width: 480px) {
             .shop-avatar-grid {
               grid-template-columns: repeat(5, 1fr) !important;
@@ -361,6 +367,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               padding: 1px 2px !important;
             }
           }
+          
+          /* Compact on tiny phone */
           @media (max-width: 400px) {
             .shop-modal-content {
               padding: 16px 12px !important;
@@ -387,7 +395,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             border: '1px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '20px',
             padding: isMobileView ? '10px 12px' : '20px 24px',
-            margin: isMobileView ? '6px 6px 8px' : '0 0 8px',
+            margin: isMobileView ? '4px 4px 8px' : '0 0 8px',
             color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
@@ -469,7 +477,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 color: 'white',
                 padding: '10px 14px',
                 borderRadius: '12px',
-                margin: isMobileView ? '0 6px 8px' : '0 0 8px',
+                margin: isMobileView ? '0 4px 8px' : '0 0 8px',
                 fontSize: '13px',
                 fontWeight: 700,
                 fontFamily: BRAND_FONT_BODY,
@@ -488,7 +496,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
           gridTemplateColumns: isMobileView ? '1fr' : '80px 1fr 340px',
           gap: '8px',
           alignItems: 'stretch',
-          padding: isMobileView ? '0 6px' : '0'
+          padding: isMobileView ? '0 4px' : '0'
         }}>
 
           {/* LEFT: RARITY SIDEBAR (desktop only) */}
@@ -606,11 +614,6 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             <motion.div
               layout
               className="shop-avatar-grid"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: getGridColumns(),
-                gap: isMobileView ? '4px' : '12px'
-              }}
             >
               <AnimatePresence>
                 {filteredAvatars.map((avatar, index) => {
