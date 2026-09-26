@@ -535,7 +535,48 @@ const Signup = () => {
             animation: fadeIn 0.8s ease-out forwards;
           }
 
-          /* ===== MOBILE-SPECIFIC FIXES ===== */
+          /* ===== DEFAULT LAYOUT (Desktop) ===== */
+          .split-container {
+            display: flex;
+            min-height: 100vh;
+            padding-top: 80px;
+            background: #ffffff;
+            overflow: hidden;
+          }
+          
+          .left-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 60px;
+            background: #FFF8F0;
+            min-height: calc(100vh - 80px);
+          }
+          
+          .right-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #F4A261 0%, #E76F51 100%);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            min-height: calc(100vh - 80px);
+          }
+
+          .card-wrapper {
+            width: 100%;
+            max-width: 440px;
+            background: #FFFFFF;
+            border: 2px solid #E2E8F0;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(45, 42, 94, 0.14);
+            padding: clamp(24px, 3vw, 36px);
+          }
+
+          /* ===== MOBILE LAYOUT ===== */
           @media (max-width: 768px) {
             body {
               padding-top: 0;
@@ -556,6 +597,7 @@ const Signup = () => {
               top: 0;
               right: -100%;
               width: 280px;
+              max-width: 85vw;
               height: 100vh;
               background: white;
               padding: 80px 30px 30px;
@@ -610,6 +652,7 @@ const Signup = () => {
               transform: scale(0.95);
             }
             
+            /* SPLIT CONTAINER — STACK VERTICALLY */
             .split-container {
               flex-direction: column !important;
               padding-top: 70px !important;
@@ -630,8 +673,10 @@ const Signup = () => {
             .card-wrapper {
               max-width: 100% !important;
               padding: 24px 20px !important;
+              border-radius: 20px !important;
             }
             
+            /* ===== TYPOGRAPHY ===== */
             .title {
               font-size: 24px !important;
             }
@@ -647,8 +692,9 @@ const Signup = () => {
             }
             
             .input, .select {
-              padding: 10px 14px !important;
+              padding: 12px 14px !important;
               font-size: 14px !important;
+              width: 100% !important;
             }
             
             .label {
@@ -668,6 +714,7 @@ const Signup = () => {
               font-size: 11px !important;
             }
 
+            /* ===== ROLE SELECTION ===== */
             .role-btn {
               padding: 16px 12px !important;
               max-width: 140px !important;
@@ -689,6 +736,7 @@ const Signup = () => {
               font-size: 10px !important;
             }
 
+            /* ===== AGE ROW ===== */
             .age-row {
               flex-direction: column !important;
               gap: 10px !important;
@@ -700,6 +748,7 @@ const Signup = () => {
 
             .age-row select {
               width: 100% !important;
+              flex: none !important;
             }
 
             .checkbox-row {
@@ -718,8 +767,42 @@ const Signup = () => {
             .verified-badge {
               font-size: 11px !important;
             }
+
+            /* ===== ROLE OPTIONS ===== */
+            .role-options {
+              gap: 10px !important;
+            }
           }
-          
+
+          /* ===== SMALL PHONE (max 400px) ===== */
+          @media (max-width: 400px) {
+            .card-wrapper {
+              padding: 20px 16px !important;
+            }
+            
+            .title {
+              font-size: 22px !important;
+            }
+
+            .role-btn {
+              padding: 12px 8px !important;
+              max-width: 120px !important;
+            }
+
+            .role-icon {
+              font-size: 26px !important;
+            }
+
+            .role-name {
+              font-size: 13px !important;
+            }
+
+            .role-desc {
+              font-size: 9px !important;
+            }
+          }
+
+          /* ===== TABLET (769px - 1024px) ===== */
           @media (min-width: 769px) and (max-width: 1024px) {
             .left-side {
               padding: 40px 30px !important;
@@ -924,8 +1007,8 @@ const Signup = () => {
 
                 {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
 
-                <div style={roleStyles.roleSelection}>
-                  <div style={roleStyles.roleOptions}>
+                <div style={roleStyles.roleSelection} className="role-options">
+                  <div style={roleStyles.roleOptions} className="role-options">
                     <button
                       type="button"
                       onClick={() => {
