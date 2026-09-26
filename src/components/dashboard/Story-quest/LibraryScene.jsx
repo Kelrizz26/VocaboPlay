@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import FloatingBook from './FloatingBook';
+import FloatingBook from './Floatingbook';
 
 const LibraryScene = React.memo(() => {
   const groupRef = useRef();
