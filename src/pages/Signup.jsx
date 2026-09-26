@@ -370,9 +370,16 @@ const Signup = () => {
             box-sizing: border-box;
           }
           
-          body {
+          html, body {
             font-family: 'Nunito', sans-serif !important;
             background: #ffffff;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+          }
+          
+          .signup-page-root {
+            width: 100%;
             overflow-x: hidden;
           }
           
@@ -535,6 +542,29 @@ const Signup = () => {
             animation: fadeIn 0.8s ease-out forwards;
           }
 
+          /* ===== NAVBAR (default desktop) ===== */
+          .signup-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 248, 240, 0.98);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(45, 42, 94, 0.08);
+            z-index: 1000;
+            padding: 15px 30px;
+            transition: all 0.3s ease;
+          }
+
+          .signup-navbar-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
           /* ===== DEFAULT LAYOUT (Desktop) ===== */
           .split-container {
             display: flex;
@@ -542,6 +572,7 @@ const Signup = () => {
             padding-top: 80px;
             background: #ffffff;
             overflow: hidden;
+            width: 100%;
           }
           
           .left-side {
@@ -574,16 +605,54 @@ const Signup = () => {
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(45, 42, 94, 0.14);
             padding: clamp(24px, 3vw, 36px);
+            box-sizing: border-box;
           }
 
-          /* ===== MOBILE LAYOUT ===== */
+          /* ===== TABLET (769px - 1024px) ===== */
+          @media (min-width: 769px) and (max-width: 1024px) {
+            .left-side {
+              padding: 40px 30px !important;
+            }
+            
+            .card-wrapper {
+              max-width: 380px !important;
+            }
+            
+            .title {
+              font-size: 26px !important;
+            }
+            
+            .right-side {
+              padding: 30px !important;
+            }
+            
+            .illustration-title {
+              font-size: 22px !important;
+            }
+            
+            .illustration-subtitle {
+              font-size: 14px !important;
+            }
+
+            .mascot-svg-wrap {
+              width: 180px !important;
+            }
+          }
+
+          /* ===== MOBILE LAYOUT (<= 768px) ===== */
           @media (max-width: 768px) {
-            body {
-              padding-top: 0;
+            html, body {
+              padding-top: 0 !important;
+              overflow-x: hidden !important;
+              width: 100% !important;
+            }
+
+            .signup-navbar {
+              padding: 12px 16px !important;
             }
 
             .hamburger {
-              display: block;
+              display: block !important;
             }
             
             .nav-desktop {
@@ -608,7 +677,7 @@ const Signup = () => {
             }
             
             .nav-mobile.open {
-              right: 0;
+              right: 0 !important;
             }
             
             .nav-mobile .mobile-nav-link {
@@ -655,15 +724,23 @@ const Signup = () => {
             /* SPLIT CONTAINER — STACK VERTICALLY */
             .split-container {
               flex-direction: column !important;
-              padding-top: 70px !important;
+              padding-top: 65px !important;
               min-height: 100vh !important;
+              height: auto !important;
+              overflow: visible !important;
+              width: 100% !important;
             }
             
             .left-side {
               width: 100% !important;
-              padding: 24px 16px 40px !important;
+              max-width: 100% !important;
+              padding: 16px 14px 40px !important;
               min-height: auto !important;
               flex: none !important;
+              display: flex !important;
+              align-items: flex-start !important;
+              justify-content: center !important;
+              box-sizing: border-box !important;
             }
             
             .right-side {
@@ -672,29 +749,37 @@ const Signup = () => {
             
             .card-wrapper {
               max-width: 100% !important;
-              padding: 24px 20px !important;
+              width: 100% !important;
+              padding: 22px 18px !important;
               border-radius: 20px !important;
+              margin: 0 !important;
+              box-sizing: border-box !important;
             }
             
             /* ===== TYPOGRAPHY ===== */
             .title {
-              font-size: 24px !important;
+              font-size: 22px !important;
+              line-height: 1.25 !important;
             }
             
             .subtitle {
               font-size: 13px !important;
               margin-bottom: 20px !important;
+              line-height: 1.5 !important;
             }
             
             .google-btn, .signup-btn, .cancel-btn {
-              padding: 12px 20px !important;
+              padding: 13px 18px !important;
               font-size: 14px !important;
+              width: 100% !important;
             }
             
             .input, .select {
               padding: 12px 14px !important;
-              font-size: 14px !important;
+              font-size: 15px !important;
               width: 100% !important;
+              box-sizing: border-box !important;
+              max-width: 100% !important;
             }
             
             .label {
@@ -704,6 +789,7 @@ const Signup = () => {
             .error-message {
               font-size: 12px !important;
               padding: 10px 12px !important;
+              word-break: break-word !important;
             }
             
             .signup-text {
@@ -715,13 +801,18 @@ const Signup = () => {
             }
 
             /* ===== ROLE SELECTION ===== */
+            .role-options {
+              gap: 10px !important;
+            }
+
             .role-btn {
-              padding: 16px 12px !important;
+              padding: 16px 10px !important;
               max-width: 140px !important;
+              min-width: 0 !important;
             }
 
             .role-icon {
-              font-size: 30px !important;
+              font-size: 28px !important;
             }
 
             .role-name {
@@ -740,6 +831,7 @@ const Signup = () => {
             .age-row {
               flex-direction: column !important;
               gap: 10px !important;
+              width: 100% !important;
             }
 
             .age-slash {
@@ -749,14 +841,17 @@ const Signup = () => {
             .age-row select {
               width: 100% !important;
               flex: none !important;
+              max-width: 100% !important;
             }
 
             .checkbox-row {
               font-size: 12px !important;
+              line-height: 1.5 !important;
             }
 
             .google-user-info {
               padding: 10px !important;
+              gap: 10px !important;
             }
 
             .email-text {
@@ -767,21 +862,20 @@ const Signup = () => {
             .verified-badge {
               font-size: 11px !important;
             }
-
-            /* ===== ROLE OPTIONS ===== */
-            .role-options {
-              gap: 10px !important;
-            }
           }
 
           /* ===== SMALL PHONE (max 400px) ===== */
           @media (max-width: 400px) {
             .card-wrapper {
-              padding: 20px 16px !important;
+              padding: 18px 14px !important;
             }
             
             .title {
-              font-size: 22px !important;
+              font-size: 20px !important;
+            }
+
+            .subtitle {
+              font-size: 12px !important;
             }
 
             .role-btn {
@@ -790,7 +884,7 @@ const Signup = () => {
             }
 
             .role-icon {
-              font-size: 26px !important;
+              font-size: 24px !important;
             }
 
             .role-name {
@@ -800,36 +894,43 @@ const Signup = () => {
             .role-desc {
               font-size: 9px !important;
             }
+
+            .input, .select {
+              font-size: 14px !important;
+              padding: 11px 12px !important;
+            }
+
+            .signup-btn, .google-btn {
+              font-size: 13px !important;
+              padding: 12px 16px !important;
+            }
           }
 
-          /* ===== TABLET (769px - 1024px) ===== */
-          @media (min-width: 769px) and (max-width: 1024px) {
-            .left-side {
-              padding: 40px 30px !important;
-            }
-            
+          /* ===== EXTRA SMALL (max 360px) ===== */
+          @media (max-width: 360px) {
             .card-wrapper {
-              max-width: 360px !important;
-            }
-            
-            .title {
-              font-size: 26px !important;
-            }
-            
-            .right-side {
-              padding: 30px !important;
-            }
-            
-            .illustration-title {
-              font-size: 22px !important;
-            }
-            
-            .illustration-subtitle {
-              font-size: 14px !important;
+              padding: 16px 12px !important;
             }
 
-            .mascot-svg-wrap {
-              width: 180px !important;
+            .title {
+              font-size: 19px !important;
+            }
+
+            .role-btn {
+              max-width: 105px !important;
+              padding: 10px 6px !important;
+            }
+
+            .role-icon {
+              font-size: 22px !important;
+            }
+
+            .role-name {
+              font-size: 12px !important;
+            }
+
+            .role-desc {
+              font-size: 8px !important;
             }
           }
           
@@ -851,523 +952,508 @@ const Signup = () => {
         `}
       </style>
 
-      <div 
-        className={`overlay ${isMenuOpen ? 'active' : ''}`}
-        onClick={() => setIsMenuOpen(false)}
-      ></div>
+      <div className="signup-page-root">
 
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(255, 248, 240, 0.98)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 20px rgba(45, 42, 94, 0.08)',
-        zIndex: 1000,
-        padding: '15px 30px',
-        transition: 'all 0.3s ease',
-      }}>
-        <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <div 
-            onClick={() => navigate('/')}
-            style={{
-              ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
-              fontSize: '18px',
-              padding: '8px 20px',
-              userSelect: 'none',
-            }}
-          >
-            VocaboPlay
-          </div>
+        <div 
+          className={`overlay ${isMenuOpen ? 'active' : ''}`}
+          onClick={() => setIsMenuOpen(false)}
+        ></div>
 
-          <div className="nav-desktop" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '20px'
-          }}>
-            <button
-              onClick={() => navigate('/login')}
+        <nav className="signup-navbar">
+          <div className="signup-navbar-inner">
+            <div 
+              onClick={() => navigate('/')}
               style={{
-                ...chunkyButton(palette.teal, palette.tealShadow, 'sm'),
-                padding: '10px 28px',
-                fontSize: '14px',
-                fontFamily: "'Fredoka', sans-serif",
-                whiteSpace: 'nowrap',
+                ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
+                fontSize: '16px',
+                padding: '8px 18px',
+                userSelect: 'none',
               }}
-              onMouseDown={e => pressButton(e, palette.tealShadow)}
-              onMouseUp={e => releaseButton(e, palette.tealShadow)}
-              onMouseLeave={e => releaseButton(e, palette.tealShadow)}
             >
-              Log in
+              VocaboPlay
+            </div>
+
+            <div className="nav-desktop" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '20px'
+            }}>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  ...chunkyButton(palette.teal, palette.tealShadow, 'sm'),
+                  padding: '10px 28px',
+                  fontSize: '14px',
+                  fontFamily: "'Fredoka', sans-serif",
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseDown={e => pressButton(e, palette.tealShadow)}
+                onMouseUp={e => releaseButton(e, palette.tealShadow)}
+                onMouseLeave={e => releaseButton(e, palette.tealShadow)}
+              >
+                Log in
+              </button>
+            </div>
+
+            <button 
+              className="hamburger"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? '✕' : '☰'}
             </button>
+
+            <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
+              <button
+                className="mobile-nav-link"
+                onClick={() => {
+                  navigate('/');
+                  setIsMenuOpen(false);
+                }}
+              >
+                🏠 Home
+              </button>
+              <button
+                className="mobile-nav-link"
+                onClick={() => {
+                  navigate('/login');
+                  setIsMenuOpen(false);
+                }}
+              >
+                🔑 Log in
+              </button>
+              <button
+                className="login-btn"
+                onClick={() => {
+                  navigate('/login');
+                  setIsMenuOpen(false);
+                }}
+              >
+                Log in
+              </button>
+            </div>
           </div>
+        </nav>
 
-          <button 
-            className="hamburger"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? '✕' : '☰'}
-          </button>
+        <div style={styles.splitContainer} className="split-container">
+          <div style={styles.leftSide} className="left-side">
+            <div style={styles.cardWrapper} className="card-wrapper animate-slide-up">
 
-          <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
-            <button
-              className="mobile-nav-link"
-              onClick={() => {
-                navigate('/');
-                setIsMenuOpen(false);
-              }}
-            >
-              🏠 Home
-            </button>
-            <button
-              className="mobile-nav-link"
-              onClick={() => {
-                navigate('/login');
-                setIsMenuOpen(false);
-              }}
-            >
-              🔑 Log in
-            </button>
-            <button
-              className="login-btn"
-              onClick={() => {
-                navigate('/login');
-                setIsMenuOpen(false);
-              }}
-            >
-              Log in
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <div style={styles.splitContainer} className="split-container">
-        <div style={styles.leftSide} className="left-side">
-          <div style={styles.cardWrapper} className="card-wrapper animate-slide-up">
-
-            {step === 'welcome' && (
-              <>
-                <div style={styles.badge}>
-                  <span style={styles.badgeText}>🚀 Get Started</span>
-                </div>
-
-                <h1 style={styles.title} className="title">Create your account</h1>
-                <p style={styles.subtitle} className="subtitle">
-                  Join VocaboPlay and start leveling up your vocabulary through fun,
-                  interactive games — it only takes a minute.
-                </p>
-
-                <button
-                  onClick={() => setStep('role')}
-                  style={styles.signupBtn}
-                  className="signup-btn"
-                  onMouseDown={e => pressButton(e, palette.warmOrangeShadow)}
-                  onMouseUp={e => releaseButton(e, palette.warmOrangeShadow)}
-                  onMouseLeave={e => releaseButton(e, palette.warmOrangeShadow)}
-                >
-                  Get Started
-                </button>
-
-                <p style={styles.signupText} className="signup-text">
-                  Already have an account?{' '}
-                  <a
-                    onClick={() => navigate('/login')}
-                    style={styles.loginLink}
-                    onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                    onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
-                  >
-                    Log in
-                  </a>
-                </p>
-              </>
-            )}
-
-            {step === 'role' && (
-              <>
-                <button
-                  onClick={goBackToWelcome}
-                  style={styles.backBtn}
-                  onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
-                  onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
-                >
-                  ← Back
-                </button>
-
-                <h1 style={styles.title} className="title">Who are you?</h1>
-                <p style={styles.subtitle} className="subtitle">Select your role to get started</p>
-
-                {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
-
-                <div style={roleStyles.roleSelection} className="role-options">
-                  <div style={roleStyles.roleOptions} className="role-options">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserRole('student');
-                        setTeacherCode('');
-                        setError('');
-                      }}
-                      className="role-btn"
-                      style={{
-                        ...roleStyles.roleBtn,
-                        borderColor: userRole === 'student' ? palette.warmOrange : palette.border,
-                        background: userRole === 'student' ? palette.cream : 'white',
-                        boxShadow: userRole === 'student' ? `0 0 0 3px rgba(244,162,97,0.2), 0 4px 0 ${palette.warmOrangeShadow}` : `0 3px 0 ${palette.border}`,
-                      }}
-                    >
-                      <span style={roleStyles.roleIcon} className="role-icon">🎓</span>
-                      <span style={roleStyles.roleName} className="role-name">Student</span>
-                      <span style={roleStyles.roleDesc} className="role-desc">Learn and play</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserRole('teacher');
-                        setError('');
-                      }}
-                      className="role-btn"
-                      style={{
-                        ...roleStyles.roleBtn,
-                        borderColor: userRole === 'teacher' ? palette.warmOrange : palette.border,
-                        background: userRole === 'teacher' ? palette.cream : 'white',
-                        boxShadow: userRole === 'teacher' ? `0 0 0 3px rgba(244,162,97,0.2), 0 4px 0 ${palette.warmOrangeShadow}` : `0 3px 0 ${palette.border}`,
-                      }}
-                    >
-                      <span style={roleStyles.roleIcon} className="role-icon">👨‍🏫</span>
-                      <span style={roleStyles.roleName} className="role-name">Teacher</span>
-                      <span style={roleStyles.roleDesc} className="role-desc">Manage and teach</span>
-                    </button>
+              {step === 'welcome' && (
+                <>
+                  <div style={styles.badge}>
+                    <span style={styles.badgeText}>🚀 Get Started</span>
                   </div>
-                </div>
 
-                {userRole === 'teacher' && (
-                  <div style={{ ...styles.fieldGroup, marginBottom: '16px' }}>
-                    <label style={styles.label} className="label">Teacher Access Code</label>
-                    <input
-                      type="password"
-                      placeholder="Enter teacher access code"
-                      value={teacherCode}
-                      onChange={(e) => setTeacherCode(e.target.value)}
-                      style={styles.input}
-                      className="input"
-                      required
-                    />
-                    <p style={roleStyles.codeHint} className="code-hint">
-                      🔑 Ask your administrator for the access code
-                    </p>
-                  </div>
-                )}
+                  <h1 style={styles.title} className="title">Create your account</h1>
+                  <p style={styles.subtitle} className="subtitle">
+                    Join VocaboPlay and start leveling up your vocabulary through fun,
+                    interactive games — it only takes a minute.
+                  </p>
 
-                <button
-                  onClick={handleRoleNext}
-                  style={styles.signupBtn}
-                  className="signup-btn"
-                  onMouseDown={e => pressButton(e, palette.warmOrangeShadow)}
-                  onMouseUp={e => releaseButton(e, palette.warmOrangeShadow)}
-                  onMouseLeave={e => releaseButton(e, palette.warmOrangeShadow)}
-                >
-                  Next
-                </button>
-
-                <p style={styles.signupText} className="signup-text">
-                  Already have an account?{' '}
-                  <a
-                    onClick={() => navigate('/login')}
-                    style={styles.loginLink}
-                    onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                    onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
-                  >
-                    Log in
-                  </a>
-                </p>
-              </>
-            )}
-
-            {step === 'age' && (
-              <>
-                <button
-                  onClick={goBackToRole}
-                  style={styles.backBtn}
-                  onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
-                  onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
-                >
-                  ← Back
-                </button>
-
-                <h1 style={styles.title} className="title">Age verification</h1>
-                <p style={styles.subtitle} className="subtitle">Enter the month and year of your birth</p>
-
-                {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
-
-                <div style={styles.ageRow} className="age-row">
-                  <select
-                    value={birthMonth}
-                    onChange={(e) => setBirthMonth(e.target.value)}
-                    style={styles.select}
-                    className="select"
-                  >
-                    <option value="">Month</option>
-                    {MONTHS.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-
-                  <span style={styles.ageSlash} className="age-slash">/</span>
-
-                  <select
-                    value={birthYear}
-                    onChange={(e) => setBirthYear(e.target.value)}
-                    style={styles.select}
-                    className="select"
-                  >
-                    <option value="">Year</option>
-                    {YEARS.map((y) => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <label style={styles.checkboxRow} className="checkbox-row">
-                  <input
-                    type="checkbox"
-                    checked={outsidePH}
-                    onChange={(e) => setOutsidePH(e.target.checked)}
-                    style={styles.checkbox}
-                  />
-                  <span>I live outside the Philippines.</span>
-                </label>
-
-                <button
-                  onClick={handleAgeNext}
-                  style={styles.signupBtn}
-                  className="signup-btn"
-                  onMouseDown={e => pressButton(e, palette.warmOrangeShadow)}
-                  onMouseUp={e => releaseButton(e, palette.warmOrangeShadow)}
-                  onMouseLeave={e => releaseButton(e, palette.warmOrangeShadow)}
-                >
-                  Next
-                </button>
-
-                <p style={styles.signupText} className="signup-text">
-                  Already have an account?{' '}
-                  <a
-                    onClick={() => navigate('/login')}
-                    style={styles.loginLink}
-                    onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                    onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
-                  >
-                    Log in
-                  </a>
-                </p>
-              </>
-            )}
-
-            {step === 'auth' && (
-              <>
-                <button
-                  onClick={goBackToAge}
-                  style={styles.backBtn}
-                  onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
-                  onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
-                >
-                  ← Back
-                </button>
-
-                <h1 style={styles.title} className="title">Choose an authentication method</h1>
-
-                {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
-
-                <div style={styles.signupContainer}>
                   <button
-                    onClick={handleGoogleSignUp}
-                    className="google-btn"
-                    style={{
-                      ...styles.googleBtn,
-                      opacity: loading ? 0.7 : 1,
-                      cursor: loading ? 'not-allowed' : 'pointer'
-                    }}
-                    disabled={loading}
-                    onMouseOver={(e) => {
-                      if (!loading) {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = `0 5px 0 ${palette.border}`;
-                        e.currentTarget.style.borderColor = palette.warmOrange;
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
-                      e.currentTarget.style.borderColor = palette.border;
-                    }}
+                    onClick={() => setStep('role')}
+                    style={styles.signupBtn}
+                    className="signup-btn"
+                    onMouseDown={e => pressButton(e, palette.warmOrangeShadow)}
+                    onMouseUp={e => releaseButton(e, palette.warmOrangeShadow)}
+                    onMouseLeave={e => releaseButton(e, palette.warmOrangeShadow)}
                   >
-                    <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: '12px' }}>
-                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    </svg>
-                    {loading ? 'Signing up...' : 'Google'}
+                    Get Started
                   </button>
 
-                  <p style={styles.captchaText} className="captcha-text">This site is protected by reCAPTCHA.</p>
-                </div>
-              </>
-            )}
+                  <p style={styles.signupText} className="signup-text">
+                    Already have an account?{' '}
+                    <a
+                      onClick={() => navigate('/login')}
+                      style={styles.loginLink}
+                      onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
+                      Log in
+                    </a>
+                  </p>
+                </>
+              )}
 
-            {step === 'username' && (
-              <>
-                <button
-                  onClick={goBackToAuth}
-                  style={styles.backBtn}
-                  onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
-                  onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
-                >
-                  ← Back
-                </button>
+              {step === 'role' && (
+                <>
+                  <button
+                    onClick={goBackToWelcome}
+                    style={styles.backBtn}
+                    onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
+                    onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
+                  >
+                    ← Back
+                  </button>
 
-                <h1 style={styles.title} className="title">Last step!</h1>
+                  <h1 style={styles.title} className="title">Who are you?</h1>
+                  <p style={styles.subtitle} className="subtitle">Select your role to get started</p>
 
-                {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
+                  {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
 
-                <div style={styles.usernameContainer}>
-                  <div style={styles.googleUserInfo} className="google-user-info">
-                    {tempUserData?.photoURL ? (
-                      <img src={tempUserData.photoURL} alt="Profile" style={styles.profileImg} />
-                    ) : (
-                      <div style={styles.googleAvatar}>👤</div>
-                    )}
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={styles.emailText} className="email-text">{tempUserData?.email}</p>
-                      <p style={styles.verifiedBadge} className="verified-badge">✅ Verified Google Account</p>
+                  <div style={roleStyles.roleSelection}>
+                    <div style={roleStyles.roleOptions} className="role-options">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserRole('student');
+                          setTeacherCode('');
+                          setError('');
+                        }}
+                        className="role-btn"
+                        style={{
+                          ...roleStyles.roleBtn,
+                          borderColor: userRole === 'student' ? palette.warmOrange : palette.border,
+                          background: userRole === 'student' ? palette.cream : 'white',
+                          boxShadow: userRole === 'student' ? `0 0 0 3px rgba(244,162,97,0.2), 0 4px 0 ${palette.warmOrangeShadow}` : `0 3px 0 ${palette.border}`,
+                        }}
+                      >
+                        <span style={roleStyles.roleIcon} className="role-icon">🎓</span>
+                        <span style={roleStyles.roleName} className="role-name">Student</span>
+                        <span style={roleStyles.roleDesc} className="role-desc">Learn and play</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserRole('teacher');
+                          setError('');
+                        }}
+                        className="role-btn"
+                        style={{
+                          ...roleStyles.roleBtn,
+                          borderColor: userRole === 'teacher' ? palette.warmOrange : palette.border,
+                          background: userRole === 'teacher' ? palette.cream : 'white',
+                          boxShadow: userRole === 'teacher' ? `0 0 0 3px rgba(244,162,97,0.2), 0 4px 0 ${palette.warmOrangeShadow}` : `0 3px 0 ${palette.border}`,
+                        }}
+                      >
+                        <span style={roleStyles.roleIcon} className="role-icon">👨‍🏫</span>
+                        <span style={roleStyles.roleName} className="role-name">Teacher</span>
+                        <span style={roleStyles.roleDesc} className="role-desc">Manage and teach</span>
+                      </button>
                     </div>
                   </div>
 
-                  <div style={styles.fieldGroup}>
-                    <label style={styles.label} className="label">Enter a username</label>
-                    <input
-                      type="text"
-                      placeholder="Username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      style={styles.input}
-                      className="input"
-                      required
-                      disabled={loading}
-                    />
+                  {userRole === 'teacher' && (
+                    <div style={{ ...styles.fieldGroup, marginBottom: '16px' }}>
+                      <label style={styles.label} className="label">Teacher Access Code</label>
+                      <input
+                        type="password"
+                        placeholder="Enter teacher access code"
+                        value={teacherCode}
+                        onChange={(e) => setTeacherCode(e.target.value)}
+                        style={styles.input}
+                        className="input"
+                        required
+                      />
+                      <p style={roleStyles.codeHint} className="code-hint">
+                        🔑 Ask your administrator for the access code
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleRoleNext}
+                    style={styles.signupBtn}
+                    className="signup-btn"
+                    onMouseDown={e => pressButton(e, palette.warmOrangeShadow)}
+                    onMouseUp={e => releaseButton(e, palette.warmOrangeShadow)}
+                    onMouseLeave={e => releaseButton(e, palette.warmOrangeShadow)}
+                  >
+                    Next
+                  </button>
+
+                  <p style={styles.signupText} className="signup-text">
+                    Already have an account?{' '}
+                    <a
+                      onClick={() => navigate('/login')}
+                      style={styles.loginLink}
+                      onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
+                      Log in
+                    </a>
+                  </p>
+                </>
+              )}
+
+              {step === 'age' && (
+                <>
+                  <button
+                    onClick={goBackToRole}
+                    style={styles.backBtn}
+                    onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
+                    onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
+                  >
+                    ← Back
+                  </button>
+
+                  <h1 style={styles.title} className="title">Age verification</h1>
+                  <p style={styles.subtitle} className="subtitle">Enter the month and year of your birth</p>
+
+                  {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
+
+                  <div style={styles.ageRow} className="age-row">
+                    <select
+                      value={birthMonth}
+                      onChange={(e) => setBirthMonth(e.target.value)}
+                      style={styles.select}
+                      className="select"
+                    >
+                      <option value="">Month</option>
+                      {MONTHS.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+
+                    <span style={styles.ageSlash} className="age-slash">/</span>
+
+                    <select
+                      value={birthYear}
+                      onChange={(e) => setBirthYear(e.target.value)}
+                      style={styles.select}
+                      className="select"
+                    >
+                      <option value="">Year</option>
+                      {YEARS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <label style={styles.checkboxRow} className="checkbox-row">
                     <input
                       type="checkbox"
-                      checked={agreeTerms}
-                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      checked={outsidePH}
+                      onChange={(e) => setOutsidePH(e.target.checked)}
                       style={styles.checkbox}
                     />
-                    <span>
-                      I agree to VocaboPlay's{' '}
-                      <a style={styles.inlineLink} onClick={() => navigate('/privacy')}>Privacy Policy</a>
-                      {' '}&{' '}
-                      <a style={styles.inlineLink} onClick={() => navigate('/terms')}>Terms of Service</a>.
-                    </span>
+                    <span>I live outside the Philippines.</span>
                   </label>
 
                   <button
-                    onClick={completeSignUp}
+                    onClick={handleAgeNext}
+                    style={styles.signupBtn}
                     className="signup-btn"
-                    style={{
-                      ...styles.signupBtn,
-                      opacity: loading ? 0.7 : 1,
-                      cursor: loading ? 'not-allowed' : 'pointer'
-                    }}
-                    disabled={loading}
-                    onMouseDown={(e) => !loading && pressButton(e, palette.warmOrangeShadow)}
-                    onMouseUp={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
-                    onMouseLeave={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
+                    onMouseDown={e => pressButton(e, palette.warmOrangeShadow)}
+                    onMouseUp={e => releaseButton(e, palette.warmOrangeShadow)}
+                    onMouseLeave={e => releaseButton(e, palette.warmOrangeShadow)}
                   >
-                    {loading ? 'Submitting...' : 'Submit'}
+                    Next
                   </button>
-                </div>
-              </>
-            )}
 
-          </div>
-        </div>
+                  <p style={styles.signupText} className="signup-text">
+                    Already have an account?{' '}
+                    <a
+                      onClick={() => navigate('/login')}
+                      style={styles.loginLink}
+                      onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
+                      Log in
+                    </a>
+                  </p>
+                </>
+              )}
 
-        <div style={styles.rightSide} className="right-side animate-fade-in">
-          <div className="bg-pattern"></div>
+              {step === 'auth' && (
+                <>
+                  <button
+                    onClick={goBackToAge}
+                    style={styles.backBtn}
+                    onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
+                    onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
+                  >
+                    ← Back
+                  </button>
 
-          <span className="bg-sparkle" style={{ width: 6, height: 6, top: '14%', left: '18%', animationDelay: '0s' }}></span>
-          <span className="bg-sparkle" style={{ width: 4, height: 4, top: '22%', right: '20%', animationDelay: '0.6s' }}></span>
-          <span className="bg-sparkle" style={{ width: 5, height: 5, top: '68%', left: '12%', animationDelay: '1.1s' }}></span>
-          <span className="bg-sparkle" style={{ width: 7, height: 7, top: '76%', right: '16%', animationDelay: '1.6s' }}></span>
-          <span className="bg-sparkle" style={{ width: 4, height: 4, top: '40%', left: '8%', animationDelay: '0.3s' }}></span>
-          <span className="bg-sparkle" style={{ width: 5, height: 5, top: '10%', right: '10%', animationDelay: '2s' }}></span>
+                  <h1 style={styles.title} className="title">Choose an authentication method</h1>
 
-          <span className="confetti-dot" style={{ width: 10, height: 10, background: '#ff6b6b', top: '20%', left: '30%', animationDelay: '0s' }}></span>
-          <span className="confetti-dot" style={{ width: 8, height: 8, background: '#4ecdc4', top: '18%', right: '28%', animationDelay: '0.4s' }}></span>
-          <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ffd93d', top: '30%', right: '18%', animationDelay: '0.8s', borderRadius: '50%' }}></span>
-          <span className="confetti-dot" style={{ width: 7, height: 7, background: '#a685e2', top: '26%', left: '20%', animationDelay: '1.2s', borderRadius: '50%' }}></span>
-          <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ff9f43', top: '34%', left: '38%', animationDelay: '0.6s' }}></span>
+                  {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
 
-          <div style={styles.illustrationContainer}>
-            <div style={styles.mascotStageWrap}>
-              <div className="mascot-stage mascot-svg-wrap" style={styles.mascotSvgWrap}>
-                <div className="mascot-squash">
-                  <svg viewBox="0 0 200 200" width="100%" height="100%">
-                    <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
-                    <path d="M125 55 C 132 30, 140 20, 145 25 C 142 40, 135 52, 125 62 Z" fill="#5b4fa8" />
+                  <div style={styles.signupContainer}>
+                    <button
+                      onClick={handleGoogleSignUp}
+                      className="google-btn"
+                      style={{
+                        ...styles.googleBtn,
+                        opacity: loading ? 0.7 : 1,
+                        cursor: loading ? 'not-allowed' : 'pointer'
+                      }}
+                      disabled={loading}
+                      onMouseOver={(e) => {
+                        if (!loading) {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 5px 0 ${palette.border}`;
+                          e.currentTarget.style.borderColor = palette.warmOrange;
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
+                        e.currentTarget.style.borderColor = palette.border;
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: '12px' }}>
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      </svg>
+                      {loading ? 'Signing up...' : 'Google'}
+                    </button>
 
-                    <g className="mascot-ear-left">
-                      <ellipse cx="62" cy="78" rx="14" ry="20" fill="#c9c3ee" />
-                      <ellipse cx="62" cy="78" rx="7" ry="12" fill="#e9d9e6" />
-                    </g>
-                    <g className="mascot-ear-right">
-                      <ellipse cx="138" cy="78" rx="14" ry="20" fill="#c9c3ee" />
-                      <ellipse cx="138" cy="78" rx="7" ry="12" fill="#e9d9e6" />
-                    </g>
+                    <p style={styles.captchaText} className="captcha-text">This site is protected by reCAPTCHA.</p>
+                  </div>
+                </>
+              )}
 
-                    <ellipse cx="100" cy="150" rx="48" ry="34" fill="#c3bdf0" />
-                    <rect x="70" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
-                    <rect x="116" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+              {step === 'username' && (
+                <>
+                  <button
+                    onClick={goBackToAuth}
+                    style={styles.backBtn}
+                    onMouseOver={(e) => e.currentTarget.style.color = palette.warmOrange}
+                    onMouseOut={(e) => e.currentTarget.style.color = palette.bodyText}
+                  >
+                    ← Back
+                  </button>
 
-                    <ellipse cx="100" cy="95" rx="42" ry="38" fill="#d6d1f6" />
-                    <ellipse cx="100" cy="112" rx="18" ry="12" fill="#eae5fb" />
+                  <h1 style={styles.title} className="title">Last step!</h1>
 
-                    <g className="mascot-eyes">
-                      <circle cx="84" cy="92" r="9" fill="#2b2b3d" />
-                      <circle cx="116" cy="92" r="9" fill="#2b2b3d" />
-                      <circle cx="87" cy="89" r="2.5" fill="white" />
-                      <circle cx="119" cy="89" r="2.5" fill="white" />
-                    </g>
+                  {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
 
-                    <ellipse cx="74" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
-                    <ellipse cx="126" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+                  <div style={styles.usernameContainer}>
+                    <div style={styles.googleUserInfo} className="google-user-info">
+                      {tempUserData?.photoURL ? (
+                        <img src={tempUserData.photoURL} alt="Profile" style={styles.profileImg} />
+                      ) : (
+                        <div style={styles.googleAvatar}>👤</div>
+                      )}
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <p style={styles.emailText} className="email-text">{tempUserData?.email}</p>
+                        <p style={styles.verifiedBadge} className="verified-badge">✅ Verified Google Account</p>
+                      </div>
+                    </div>
 
-                    <path d="M92 116 Q100 121 108 116" stroke="#8b7fc7" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                    <div style={styles.fieldGroup}>
+                      <label style={styles.label} className="label">Enter a username</label>
+                      <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        style={styles.input}
+                        className="input"
+                        required
+                        disabled={loading}
+                      />
+                    </div>
 
-                    <circle cx="95" cy="110" r="1.4" fill="#8b7fc7" />
-                    <circle cx="105" cy="110" r="1.4" fill="#8b7fc7" />
-                  </svg>
-                </div>
-              </div>
+                    <label style={styles.checkboxRow} className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        style={styles.checkbox}
+                      />
+                      <span>
+                        I agree to VocaboPlay's{' '}
+                        <a style={styles.inlineLink} onClick={() => navigate('/privacy')}>Privacy Policy</a>
+                        {' '}&{' '}
+                        <a style={styles.inlineLink} onClick={() => navigate('/terms')}>Terms of Service</a>.
+                      </span>
+                    </label>
 
-              <div style={styles.platformWrap}>
-                <div className="platform-glow" style={styles.platformGlow}></div>
-                <div style={styles.platform}></div>
-              </div>
+                    <button
+                      onClick={completeSignUp}
+                      className="signup-btn"
+                      style={{
+                        ...styles.signupBtn,
+                        opacity: loading ? 0.7 : 1,
+                        cursor: loading ? 'not-allowed' : 'pointer'
+                      }}
+                      disabled={loading}
+                      onMouseDown={(e) => !loading && pressButton(e, palette.warmOrangeShadow)}
+                      onMouseUp={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
+                      onMouseLeave={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
+                    >
+                      {loading ? 'Submitting...' : 'Submit'}
+                    </button>
+                  </div>
+                </>
+              )}
+
             </div>
+          </div>
 
-            <h2 style={styles.illustrationTitle} className="illustration-title">Level up your vocabulary,</h2>
-            <p style={styles.illustrationSubtitle} className="illustration-subtitle">one word at a time.</p>
+          <div style={styles.rightSide} className="right-side animate-fade-in">
+            <div className="bg-pattern"></div>
+
+            <span className="bg-sparkle" style={{ width: 6, height: 6, top: '14%', left: '18%', animationDelay: '0s' }}></span>
+            <span className="bg-sparkle" style={{ width: 4, height: 4, top: '22%', right: '20%', animationDelay: '0.6s' }}></span>
+            <span className="bg-sparkle" style={{ width: 5, height: 5, top: '68%', left: '12%', animationDelay: '1.1s' }}></span>
+            <span className="bg-sparkle" style={{ width: 7, height: 7, top: '76%', right: '16%', animationDelay: '1.6s' }}></span>
+            <span className="bg-sparkle" style={{ width: 4, height: 4, top: '40%', left: '8%', animationDelay: '0.3s' }}></span>
+            <span className="bg-sparkle" style={{ width: 5, height: 5, top: '10%', right: '10%', animationDelay: '2s' }}></span>
+
+            <span className="confetti-dot" style={{ width: 10, height: 10, background: '#ff6b6b', top: '20%', left: '30%', animationDelay: '0s' }}></span>
+            <span className="confetti-dot" style={{ width: 8, height: 8, background: '#4ecdc4', top: '18%', right: '28%', animationDelay: '0.4s' }}></span>
+            <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ffd93d', top: '30%', right: '18%', animationDelay: '0.8s', borderRadius: '50%' }}></span>
+            <span className="confetti-dot" style={{ width: 7, height: 7, background: '#a685e2', top: '26%', left: '20%', animationDelay: '1.2s', borderRadius: '50%' }}></span>
+            <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ff9f43', top: '34%', left: '38%', animationDelay: '0.6s' }}></span>
+
+            <div style={styles.illustrationContainer}>
+              <div style={styles.mascotStageWrap}>
+                <div className="mascot-stage mascot-svg-wrap" style={styles.mascotSvgWrap}>
+                  <div className="mascot-squash">
+                    <svg viewBox="0 0 200 200" width="100%" height="100%">
+                      <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
+                      <path d="M125 55 C 132 30, 140 20, 145 25 C 142 40, 135 52, 125 62 Z" fill="#5b4fa8" />
+
+                      <g className="mascot-ear-left">
+                        <ellipse cx="62" cy="78" rx="14" ry="20" fill="#c9c3ee" />
+                        <ellipse cx="62" cy="78" rx="7" ry="12" fill="#e9d9e6" />
+                      </g>
+                      <g className="mascot-ear-right">
+                        <ellipse cx="138" cy="78" rx="14" ry="20" fill="#c9c3ee" />
+                        <ellipse cx="138" cy="78" rx="7" ry="12" fill="#e9d9e6" />
+                      </g>
+
+                      <ellipse cx="100" cy="150" rx="48" ry="34" fill="#c3bdf0" />
+                      <rect x="70" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+                      <rect x="116" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+
+                      <ellipse cx="100" cy="95" rx="42" ry="38" fill="#d6d1f6" />
+                      <ellipse cx="100" cy="112" rx="18" ry="12" fill="#eae5fb" />
+
+                      <g className="mascot-eyes">
+                        <circle cx="84" cy="92" r="9" fill="#2b2b3d" />
+                        <circle cx="116" cy="92" r="9" fill="#2b2b3d" />
+                        <circle cx="87" cy="89" r="2.5" fill="white" />
+                        <circle cx="119" cy="89" r="2.5" fill="white" />
+                      </g>
+
+                      <ellipse cx="74" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+                      <ellipse cx="126" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+
+                      <path d="M92 116 Q100 121 108 116" stroke="#8b7fc7" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+
+                      <circle cx="95" cy="110" r="1.4" fill="#8b7fc7" />
+                      <circle cx="105" cy="110" r="1.4" fill="#8b7fc7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div style={styles.platformWrap}>
+                  <div className="platform-glow" style={styles.platformGlow}></div>
+                  <div style={styles.platform}></div>
+                </div>
+              </div>
+
+              <h2 style={styles.illustrationTitle} className="illustration-title">Level up your vocabulary,</h2>
+              <p style={styles.illustrationSubtitle} className="illustration-subtitle">one word at a time.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1382,6 +1468,7 @@ const styles = {
     paddingTop: '80px',
     background: '#ffffff',
     overflow: 'hidden',
+    width: '100%',
   },
   leftSide: {
     flex: 1,
@@ -1400,6 +1487,7 @@ const styles = {
     borderRadius: '24px',
     boxShadow: '0 10px 30px rgba(45, 42, 94, 0.14)',
     padding: 'clamp(24px, 3vw, 36px)',
+    boxSizing: 'border-box',
   },
   badge: {
     display: 'inline-block',
