@@ -117,33 +117,41 @@ const FavoritesPage = () => {
   };
 
   const WordDetailsModal = ({ word, onClose }) => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(45, 42, 94, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000,
-      backdropFilter: 'blur(4px)',
-      WebkitBackdropFilter: 'blur(4px)',
-      padding: '20px',
-    }} onClick={onClose}>
-      <div style={{
-        background: palette.white,
-        borderRadius: '24px',
-        padding: '40px',
-        maxWidth: '700px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 20px 60px rgba(45, 42, 94, 0.3)',
-        border: `2px solid ${palette.border}`,
-        position: 'relative',
-      }} onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="fav-modal-overlay"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(45, 42, 94, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        padding: '20px',
+      }} 
+      onClick={onClose}
+    >
+      <div 
+        className="fav-modal-content"
+        style={{
+          background: palette.white,
+          borderRadius: '24px',
+          padding: '40px',
+          maxWidth: '700px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxShadow: '0 20px 60px rgba(45, 42, 94, 0.3)',
+          border: `2px solid ${palette.border}`,
+          position: 'relative',
+        }} 
+        onClick={(e) => e.stopPropagation()}
+      >
 
         <button
           onClick={onClose}
@@ -180,9 +188,9 @@ const FavoritesPage = () => {
           ✕
         </button>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', paddingRight: '40px' }}>
+        <div className="fav-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', paddingRight: '40px' }}>
           <div>
-            <h2 style={{ fontSize: '36px', fontWeight: '800', color: palette.deepNavy, margin: '0 0 8px 0', fontFamily: FONT_DISPLAY, letterSpacing: '-0.02em' }}>{word.word}</h2>
+            <h2 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: '800', color: palette.deepNavy, margin: '0 0 8px 0', fontFamily: FONT_DISPLAY, letterSpacing: '-0.02em' }}>{word.word}</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '16px', color: palette.bodyText, fontFamily: FONT_BODY, fontWeight: 600 }}>{word.pronunciation}</span>
               <span style={{ padding: '4px 12px', background: palette.cream, borderRadius: '8px', fontSize: '14px', color: palette.deepNavy, fontFamily: FONT_DISPLAY, fontWeight: 700, border: `1px solid ${palette.border}` }}>{word.partOfSpeech || 'verb'}</span>
@@ -243,22 +251,68 @@ const FavoritesPage = () => {
   }
 
   return (
-    <div style={{ 
-      maxWidth: '1200px', 
-      margin: '0 auto', 
-      padding: '24px', 
-      fontFamily: FONT_BODY,
-      opacity: pageLoaded ? 1 : 0,
-      transform: pageLoaded ? 'translateY(0)' : 'translateY(20px)',
-      transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: `2px solid ${palette.border}`, paddingBottom: '16px' }}>
+    <div 
+      className="fav-container"
+      style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '24px', 
+        fontFamily: FONT_BODY,
+        opacity: pageLoaded ? 1 : 0,
+        transform: pageLoaded ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
+      }}
+    >
+      {/* ===== LOCAL RESPONSIVE STYLES ===== */}
+      <style>{`
+        @media (max-width: 768px) {
+          .fav-container {
+            padding: 16px 12px !important;
+          }
+          .fav-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 16px;
+          }
+          .fav-header-controls {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+        @media (max-width: 640px) {
+          .fav-modal-content {
+            padding: 24px 20px !important;
+            border-radius: 20px !important;
+          }
+          .fav-modal-header {
+            padding-right: 32px !important;
+          }
+        }
+        @media (max-width: 400px) {
+          .fav-modal-overlay {
+            padding: 10px !important;
+          }
+          .fav-modal-content {
+            padding: 20px 16px !important;
+          }
+        }
+        @media (max-width: 380px) {
+          .fav-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+
+      <div 
+        className="fav-header"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: `2px solid ${palette.border}`, paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}
+      >
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '800', color: palette.deepNavy, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>My Favorite Words</h1>
+          <h1 style={{ fontSize: 'clamp(20px, 3vw, 24px)', fontWeight: '800', color: palette.deepNavy, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>My Favorite Words</h1>
           <p style={{ fontSize: '13px', color: palette.bodyText, margin: 0, fontFamily: FONT_BODY, fontWeight: 600 }}>{favoriteWords.length} {favoriteWords.length === 1 ? 'word' : 'words'} saved from Word Library</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="fav-header-controls" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '4px', background: palette.cream, padding: '4px', borderRadius: '8px', border: `2px solid ${palette.border}` }}>
             <button onClick={() => setViewMode('grid')} style={{ padding: '6px 12px', background: viewMode === 'grid' ? palette.white : 'transparent', border: 'none', borderRadius: '6px', fontSize: '13px', color: viewMode === 'grid' ? palette.warmOrange : palette.bodyText, fontWeight: viewMode === 'grid' ? '800' : '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: FONT_DISPLAY }}><span style={{ fontSize: '14px' }}>⊞</span> Grid</button>
             <button onClick={() => setViewMode('list')} style={{ padding: '6px 12px', background: viewMode === 'list' ? palette.white : 'transparent', border: 'none', borderRadius: '6px', fontSize: '13px', color: viewMode === 'list' ? palette.warmOrange : palette.bodyText, fontWeight: viewMode === 'list' ? '800' : '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: FONT_DISPLAY }}><span style={{ fontSize: '14px' }}>☰</span> List</button>
@@ -271,14 +325,58 @@ const FavoritesPage = () => {
         <WordDetailsModal word={selectedWord} onClose={() => { setShowWordDetails(false); setSelectedWord(null); }} />
       )}
 
-      <div style={{ display: viewMode === 'grid' ? 'grid' : 'flex', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(320px, 1fr))' : 'none', flexDirection: viewMode === 'list' ? 'column' : 'none', gap: viewMode === 'grid' ? '20px' : '12px' }}>
+      <div 
+        className="fav-grid"
+        style={{ 
+          display: viewMode === 'grid' ? 'grid' : 'flex', 
+          gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : 'none', 
+          flexDirection: viewMode === 'list' ? 'column' : 'none', 
+          gap: viewMode === 'grid' ? '20px' : '12px' 
+        }}
+      >
         {favoriteWords.map((word) => (
-          <div key={word.id} onClick={() => { setSelectedWord(word); setShowWordDetails(true); }} style={{ background: palette.white, borderRadius: '16px', border: `2px solid ${palette.border}`, padding: viewMode === 'grid' ? '20px' : '16px 20px', position: 'relative', transition: 'all 0.2s ease', cursor: 'pointer', display: viewMode === 'list' ? 'flex' : 'block', alignItems: viewMode === 'list' ? 'flex-start' : 'stretch', gap: viewMode === 'list' ? '16px' : '0', boxShadow: '0 2px 4px rgba(45, 42, 94, 0.04)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = palette.warmOrange; e.currentTarget.style.backgroundColor = `${palette.warmOrange}08`; e.currentTarget.style.boxShadow = `0 4px 12px rgba(244, 162, 97, 0.15)`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = palette.border; e.currentTarget.style.backgroundColor = palette.white; e.currentTarget.style.boxShadow = '0 2px 4px rgba(45, 42, 94, 0.04)'; }}>
-            <button onClick={(e) => { e.stopPropagation(); removeFavorite(word.id); }} style={{ position: viewMode === 'grid' ? 'absolute' : 'relative', top: viewMode === 'grid' ? '16px' : 'auto', right: viewMode === 'grid' ? '16px' : 'auto', order: viewMode === 'list' ? 3 : 'auto', marginLeft: viewMode === 'list' ? 'auto' : '0', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#d4af37', zIndex: 10, padding: '4px' }}>★</button>
+          <div 
+            key={word.id} 
+            onClick={() => { setSelectedWord(word); setShowWordDetails(true); }} 
+            style={{ 
+              background: palette.white, 
+              borderRadius: '16px', 
+              border: `2px solid ${palette.border}`, 
+              padding: viewMode === 'grid' ? '20px' : '16px 20px', 
+              position: 'relative', 
+              transition: 'all 0.2s ease', 
+              cursor: 'pointer', 
+              display: viewMode === 'list' ? 'flex' : 'block', 
+              alignItems: viewMode === 'list' ? 'flex-start' : 'stretch', 
+              gap: viewMode === 'list' ? '16px' : '0', 
+              boxShadow: '0 2px 4px rgba(45, 42, 94, 0.04)' 
+            }} 
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = palette.warmOrange; e.currentTarget.style.backgroundColor = `${palette.warmOrange}08`; e.currentTarget.style.boxShadow = `0 4px 12px rgba(244, 162, 97, 0.15)`; }} 
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = palette.border; e.currentTarget.style.backgroundColor = palette.white; e.currentTarget.style.boxShadow = '0 2px 4px rgba(45, 42, 94, 0.04)'; }}
+          >
+            <button 
+              onClick={(e) => { e.stopPropagation(); removeFavorite(word.id); }} 
+              style={{ 
+                position: viewMode === 'grid' ? 'absolute' : 'relative', 
+                top: viewMode === 'grid' ? '16px' : 'auto', 
+                right: viewMode === 'grid' ? '16px' : 'auto', 
+                order: viewMode === 'list' ? 3 : 'auto', 
+                marginLeft: viewMode === 'list' ? 'auto' : '0', 
+                background: 'none', 
+                border: 'none', 
+                fontSize: '20px', 
+                cursor: 'pointer', 
+                color: '#d4af37', 
+                zIndex: 10, 
+                padding: '4px' 
+              }}
+            >
+              ★
+            </button>
 
             <div style={{ flex: viewMode === 'list' ? '1' : 'none', paddingRight: viewMode === 'grid' ? '24px' : '0', marginBottom: viewMode === 'grid' ? '12px' : '0', width: '100%' }}>
               <div style={{ marginBottom: '8px' }}>
-                <h3 style={{ fontSize: viewMode === 'grid' ? '24px' : '22px', fontWeight: '800', color: palette.deepNavy, margin: '0 0 2px 0', lineHeight: 1.2, fontFamily: FONT_DISPLAY }}>{word.word}</h3>
+                <h3 style={{ fontSize: viewMode === 'grid' ? '22px' : '20px', fontWeight: '800', color: palette.deepNavy, margin: '0 0 2px 0', lineHeight: 1.2, fontFamily: FONT_DISPLAY }}>{word.word}</h3>
                 <div style={{ fontSize: viewMode === 'grid' ? '14px' : '13px', color: palette.bodyText, fontStyle: 'italic', marginBottom: '4px', fontFamily: FONT_BODY, fontWeight: 600 }}>{word.pronunciation}</div>
                 <span style={{ fontSize: '12px', padding: '2px 10px', background: palette.cream, borderRadius: '12px', color: palette.bodyText, display: 'inline-block', fontFamily: FONT_DISPLAY, fontWeight: 700, border: `1px solid ${palette.border}` }}>{word.partOfSpeech || 'verb'}</span>
               </div>

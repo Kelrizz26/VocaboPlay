@@ -318,6 +318,7 @@ const MyProgress = () => {
 
   return (
     <div
+      className="myprogress-container"
       style={{
         maxWidth: '1000px',
         margin: '0 auto',
@@ -330,8 +331,47 @@ const MyProgress = () => {
         transition: 'opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
       }}
     >
+      {/* ===== LOCAL RESPONSIVE STYLES ===== */}
+      <style>{`
+        @media (max-width: 768px) {
+          .myprogress-top-row {
+            grid-template-columns: 1fr !important;
+          }
+          .myprogress-stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .myprogress-container {
+            padding: 16px 16px !important;
+          }
+        }
+        @media (max-width: 400px) {
+          .myprogress-stats-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .game-perf-row {
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+          }
+          .game-perf-label {
+            width: 100% !important;
+            order: -1;
+            font-size: 13px !important;
+          }
+          .game-perf-bar {
+            flex: 1 1 100% !important;
+            order: 1;
+          }
+          .game-perf-pill {
+            order: 2;
+          }
+        }
+      `}</style>
+
       {/* ===== TOP ROW ===== */}
       <div
+        className="myprogress-top-row"
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
@@ -468,6 +508,7 @@ const MyProgress = () => {
 
       {/* ===== 4 STAT CARDS ===== */}
       <div
+        className="myprogress-stats-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
@@ -550,6 +591,7 @@ const MyProgress = () => {
           return (
             <div
               key={game.key}
+              className="game-perf-row"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -575,6 +617,7 @@ const MyProgress = () => {
               />
 
               <span
+                className="game-perf-label"
                 style={{
                   fontSize: '14px',
                   fontWeight: 700,
@@ -588,12 +631,14 @@ const MyProgress = () => {
               </span>
 
               <div
+                className="game-perf-bar"
                 style={{
                   flex: 1,
                   height: '10px',
                   background: palette.cream,
                   borderRadius: '10px',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  minWidth: '80px'
                 }}
               >
                 <div
@@ -607,7 +652,9 @@ const MyProgress = () => {
                 />
               </div>
 
-              <Pill>{gamesPlayedCount} games</Pill>
+              <div className="game-perf-pill">
+                <Pill>{gamesPlayedCount} games</Pill>
+              </div>
             </div>
           );
         })}

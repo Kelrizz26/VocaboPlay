@@ -276,6 +276,40 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       {/* CONTENT WRAPPER */}
       <div style={{ position: 'relative', zIndex: 1 }}>
 
+        {/* LOCAL RESPONSIVE STYLES */}
+        <style>{`
+          @media (max-width: 640px) {
+            .shop-preview-panel {
+              padding: 16px !important;
+            }
+            .shop-preview-image {
+              aspect-ratio: 1 !important;
+            }
+            .shop-modal-content {
+              padding: 24px 20px !important;
+              border-radius: 24px !important;
+            }
+            .shop-modal-image {
+              width: 120px !important;
+              height: 120px !important;
+            }
+          }
+          @media (max-width: 400px) {
+            .shop-modal-content {
+              padding: 20px 16px !important;
+            }
+            .shop-modal-image {
+              width: 100px !important;
+              height: 100px !important;
+            }
+          }
+          @media (max-width: 380px) {
+            .shop-avatar-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+          }
+        `}</style>
+
         {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -504,6 +538,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
 
             <motion.div
               layout
+              className="shop-avatar-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: isMobileView 
@@ -660,6 +695,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
 
           {/* RIGHT: PREVIEW PANEL */}
           <motion.div
+            className="shop-preview-panel"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4 }}
@@ -721,18 +757,21 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               </motion.div>
             </div>
 
-            <div style={{
-              position: 'relative',
-              width: '100%',
-              aspectRatio: '0.85',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '16px',
-              background: 'transparent',
-              borderRadius: '20px',
-              overflow: 'hidden',
-            }}>
+            <div 
+              className="shop-preview-image"
+              style={{
+                position: 'relative',
+                width: '100%',
+                aspectRatio: '0.85',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '16px',
+                background: 'transparent',
+                borderRadius: '20px',
+                overflow: 'hidden',
+              }}
+            >
               <AnimatePresence mode="wait">
                 <motion.img
                   key={previewAvatar}
@@ -966,6 +1005,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             }}
           >
             <motion.div
+              className="shop-modal-content"
               initial={{ scale: 0.8, y: 30, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.8, y: 30, opacity: 0 }}
@@ -994,6 +1034,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               </h2>
 
               <motion.div
+                className="shop-modal-image"
                 initial={{ scale: 0.5, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
