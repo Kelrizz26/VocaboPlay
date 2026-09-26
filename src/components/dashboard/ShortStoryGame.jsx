@@ -3,9 +3,9 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
 // ===== LAZY LOAD 3D COMPONENTS =====
-const Character3D = lazy(() => import('./story-quest/Character3D'));
-const LibraryScene = lazy(() => import('./story-quest/LibraryScene'));
-const SceneErrorBoundary = lazy(() => import('./story-quest/SceneErrorBoundary'));
+const Character3D = lazy(() => import('./Story-quest/Character3D'));
+const LibraryScene = lazy(() => import('./Story-quest/LibraryScene'));
+const SceneErrorBoundary = lazy(() => import('./Story-quest/SceneErrorBoundary'));
 
 import GameUI from './Story-quest/GameUI';
 import { useGameLogic } from './Story-quest/useGameLogic';
