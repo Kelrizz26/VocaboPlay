@@ -219,13 +219,10 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const isPreviewEquipped = equippedAvatar === previewAvatar;
   const canAfford = currentPoints >= (previewData?.price || 0);
 
-  // ===== DYNAMIC GRID COLUMNS (FORCED 5 ON PHONE) =====
+  // ===== DYNAMIC GRID COLUMNS (5 ON MOBILE, AUTO ON DESKTOP) =====
   const getGridColumns = () => {
-    if (screenWidth < 380) return 'repeat(4, 1fr)';   // sobrang liit na phone
-    if (screenWidth < 480) return 'repeat(5, 1fr)';   // small phone (Samsung, iPhone)
-    if (screenWidth < 640) return 'repeat(5, 1fr)';   // regular phone
-    if (screenWidth < 900) return 'repeat(6, 1fr)';   // tablet portrait
-    return 'repeat(auto-fill, minmax(120px, 1fr))';   // desktop
+    if (screenWidth < 900) return 'repeat(5, 1fr)';   // FORCE 5 columns sa mobile/tablet
+    return 'repeat(auto-fill, minmax(120px, 1fr))';   // auto-fill sa desktop
   };
 
   // ===== DYNAMIC CARD SIZES =====
@@ -271,7 +268,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       width: '100%',
       maxWidth: '1400px',
       margin: '0 auto',
-      padding: isMobileView ? '6px' : '20px',
+      padding: isMobileView ? '4px' : '20px',
       fontFamily: BRAND_FONT_BODY,
       borderRadius: isMobileView ? '0px' : '24px',
       position: 'relative',
@@ -294,8 +291,15 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       {/* CONTENT WRAPPER */}
       <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* LOCAL RESPONSIVE STYLES — FORCED 5 COLUMNS ON PHONE */}
+        {/* LOCAL RESPONSIVE STYLES — FORCED 5 COLUMNS */}
         <style>{`
+          /* FORCE 5 COLUMNS on mobile - highest specificity */
+          @media (max-width: 900px) {
+            .shop-avatar-grid {
+              grid-template-columns: repeat(5, 1fr) !important;
+              gap: 4px !important;
+            }
+          }
           @media (max-width: 640px) {
             .shop-preview-panel {
               padding: 12px !important;
@@ -311,13 +315,27 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               width: 100px !important;
               height: 100px !important;
             }
-            /* FORCE 5 COLUMNS ON PHONE */
             .shop-avatar-grid {
               grid-template-columns: repeat(5, 1fr) !important;
               gap: 4px !important;
             }
             .shop-avatar-card {
               padding: 3px !important;
+            }
+            .shop-avatar-img-wrap {
+              margin-top: 6px !important;
+              padding: 1px !important;
+            }
+            .shop-avatar-name {
+              font-size: 6px !important;
+              margin-top: 3px !important;
+            }
+            .shop-avatar-price {
+              font-size: 5px !important;
+            }
+            .shop-rarity-badge {
+              font-size: 5px !important;
+              padding: 1px 2px !important;
             }
           }
           @media (max-width: 480px) {
@@ -356,12 +374,6 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               gap: 3px !important;
             }
           }
-          @media (max-width: 360px) {
-            .shop-avatar-grid {
-              grid-template-columns: repeat(4, 1fr) !important;
-              gap: 3px !important;
-            }
-          }
         `}</style>
 
         {/* HEADER */}
@@ -375,8 +387,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '20px',
-            padding: isMobileView ? '12px' : '20px 24px',
-            marginBottom: '10px',
+            padding: isMobileView ? '10px' : '20px 24px',
+            marginBottom: '8px',
             color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
@@ -458,7 +470,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 color: 'white',
                 padding: '10px 14px',
                 borderRadius: '12px',
-                marginBottom: '10px',
+                marginBottom: '8px',
                 fontSize: '13px',
                 fontWeight: 700,
                 fontFamily: BRAND_FONT_BODY,
@@ -475,7 +487,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobileView ? '1fr' : '80px 1fr 340px',
-          gap: '10px',
+          gap: '8px',
           alignItems: 'stretch'
         }}>
 
@@ -597,7 +609,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               style={{
                 display: 'grid',
                 gridTemplateColumns: getGridColumns(),
-                gap: isCompact ? '4px' : (isPhone ? '5px' : '12px')
+                gap: isMobileView ? '4px' : '12px'
               }}
             >
               <AnimatePresence>
@@ -623,8 +635,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         background: 'rgba(255, 255, 255, 0.18)',
                         backdropFilter: 'blur(20px) saturate(180%)',
                         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                        borderRadius: '12px',
-                        padding: isCompact ? '3px' : (isPhone ? '5px' : '10px'),
+                        borderRadius: '10px',
+                        padding: isCompact ? '2px' : (isPhone ? '4px' : '10px'),
                         border: isSelected 
                           ? '2px solid #FFFFFF'
                           : isEquipped 
@@ -643,13 +655,13 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         className="shop-rarity-badge"
                         style={{
                           position: 'absolute',
-                          top: '3px',
-                          left: '3px',
+                          top: '2px',
+                          left: '2px',
                           background: `${rarityConfig.color}EE`,
                           color: 'white',
-                          padding: isCompact ? '1px 2px' : '2px 5px',
-                          borderRadius: '5px',
-                          fontSize: isCompact ? '5px' : '7px',
+                          padding: isCompact ? '1px 2px' : '2px 4px',
+                          borderRadius: '4px',
+                          fontSize: isCompact ? '5px' : '6px',
                           fontWeight: '800',
                           border: '1px solid rgba(255,255,255,0.4)',
                           textShadow: '0 1px 2px rgba(45, 42, 94, 0.5)',
@@ -668,14 +680,14 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                           animate={{ scale: 1 }}
                           style={{
                             position: 'absolute',
-                            top: '3px',
-                            right: '3px',
-                            width: isCompact ? '10px' : '16px',
-                            height: isCompact ? '10px' : '16px',
+                            top: '2px',
+                            right: '2px',
+                            width: isCompact ? '9px' : '14px',
+                            height: isCompact ? '9px' : '14px',
                             borderRadius: '50%',
                             background: palette.softGreen,
                             color: 'white',
-                            fontSize: isCompact ? '6px' : '9px',
+                            fontSize: isCompact ? '5px' : '8px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -697,10 +709,10 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '2px',
-                          marginTop: isCompact ? '6px' : '10px',
+                          padding: '1px',
+                          marginTop: isCompact ? '5px' : '8px',
                           background: 'transparent',
-                          borderRadius: '10px',
+                          borderRadius: '8px',
                           overflow: 'hidden',
                           position: 'relative'
                         }}
@@ -725,16 +737,16 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                       <div 
                         className="shop-avatar-name"
                         style={{
-                          fontSize: isCompact ? '6px' : '9px',
+                          fontSize: isCompact ? '5px' : '8px',
                           fontWeight: '800',
                           color: 'white',
-                          marginTop: isCompact ? '3px' : '5px',
+                          marginTop: isCompact ? '2px' : '4px',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           textShadow: '0 1px 4px rgba(45, 42, 94, 0.6)',
                           fontFamily: BRAND_FONT_DISPLAY,
-                          padding: '0 2px'
+                          padding: '0 1px'
                         }}
                       >
                         {avatar.name}
@@ -743,16 +755,16 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                       <div 
                         className="shop-avatar-price"
                         style={{
-                          fontSize: isCompact ? '5px' : '8px',
+                          fontSize: isCompact ? '4px' : '7px',
                           fontWeight: '800',
                           color: isOwned ? '#A5FFB0' : '#FFD700',
                           marginTop: '1px',
                           textShadow: '0 1px 4px rgba(45, 42, 94, 0.6)',
                           fontFamily: BRAND_FONT_DISPLAY,
-                          padding: '0 2px'
+                          padding: '0 1px'
                         }}
                       >
-                        {isOwned ? '✓ OWNED' : (avatar.price === 0 ? '🎁 FREE' : `💰 ${avatar.price}`)}
+                        {isOwned ? '✓' : (avatar.price === 0 ? '🎁' : `💰${avatar.price}`)}
                       </div>
                     </motion.div>
                   );
