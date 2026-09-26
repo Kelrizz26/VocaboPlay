@@ -54,6 +54,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const [selectedRarity, setSelectedRarity] = useState('all');
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [isSmallMobile, setIsSmallMobile] = useState(false);
 
   // ===== LOAD USER DATA =====
   useEffect(() => {
@@ -102,12 +103,16 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
     loadUserData();
   }, []);
 
-  // ===== MOBILE =====
+  // ===== RESPONSIVE BREAKPOINTS =====
   useEffect(() => {
-    const checkMobile = () => setIsMobileView(window.innerWidth < 900);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const checkViewport = () => {
+      const w = window.innerWidth;
+      setIsMobileView(w < 900);
+      setIsSmallMobile(w < 480);
+    };
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
   // ===== AUTO-HIDE MESSAGE =====
@@ -214,6 +219,13 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const isPreviewEquipped = equippedAvatar === previewAvatar;
   const canAfford = currentPoints >= (previewData?.price || 0);
 
+  // ===== DYNAMIC GRID COLUMNS =====
+  const getGridColumns = () => {
+    if (isSmallMobile) return 'repeat(4, 1fr)'; // sobrang liit na phone
+    if (isMobileView) return 'repeat(4, 1fr)';   // mobile/tablet
+    return 'repeat(auto-fill, minmax(120px, 1fr))'; // desktop
+  };
+
   // ===== LOADING =====
   if (loading) {
     return (
@@ -280,32 +292,45 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
         <style>{`
           @media (max-width: 640px) {
             .shop-preview-panel {
-              padding: 16px !important;
+              padding: 14px !important;
             }
             .shop-preview-image {
-              aspect-ratio: 1 !important;
+              aspect-ratio: 1.2 !important;
             }
             .shop-modal-content {
-              padding: 24px 20px !important;
+              padding: 22px 18px !important;
               border-radius: 24px !important;
             }
             .shop-modal-image {
-              width: 120px !important;
-              height: 120px !important;
+              width: 110px !important;
+              height: 110px !important;
+            }
+            .shop-avatar-card {
+              padding: 6px !important;
+            }
+            .shop-avatar-img-wrap {
+              margin-top: 10px !important;
+              padding: 4px !important;
+            }
+            .shop-avatar-name {
+              font-size: 9px !important;
+              margin-top: 6px !important;
+            }
+            .shop-avatar-price {
+              font-size: 8px !important;
+            }
+            .shop-rarity-badge {
+              font-size: 7px !important;
+              padding: 2px 4px !important;
             }
           }
           @media (max-width: 400px) {
             .shop-modal-content {
-              padding: 20px 16px !important;
+              padding: 18px 14px !important;
             }
             .shop-modal-image {
-              width: 100px !important;
-              height: 100px !important;
-            }
-          }
-          @media (max-width: 380px) {
-            .shop-avatar-grid {
-              grid-template-columns: repeat(2, 1fr) !important;
+              width: 90px !important;
+              height: 90px !important;
             }
           }
         `}</style>
@@ -321,32 +346,32 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '20px',
-            padding: isMobileView ? '16px' : '20px 24px',
-            marginBottom: '16px',
+            padding: isMobileView ? '14px' : '20px 24px',
+            marginBottom: '12px',
             color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '12px',
+            gap: '10px',
             boxShadow: '0 8px 32px 0 rgba(45, 42, 94, 0.25)'
           }}
         >
           <div>
             <h1 style={{
-              fontSize: isMobileView ? '20px' : '26px',
+              fontSize: isMobileView ? '18px' : '26px',
               fontWeight: '700',
               margin: '0 0 4px 0',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '8px',
               textShadow: '0 2px 8px rgba(45, 42, 94, 0.4)',
               fontFamily: BRAND_FONT_DISPLAY,
             }}>
               🛍️ Avatar Shop
             </h1>
             <p style={{ 
-              fontSize: '13px', 
+              fontSize: isMobileView ? '11px' : '13px', 
               margin: 0,
               textShadow: '0 1px 4px rgba(45, 42, 94, 0.4)',
               opacity: 0.95,
@@ -365,7 +390,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             style={{
               background: 'rgba(255, 255, 255, 0.25)',
               border: '1px solid rgba(255, 255, 255, 0.4)',
-              padding: '10px 18px',
+              padding: isMobileView ? '8px 14px' : '10px 18px',
               borderRadius: '14px',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
@@ -375,10 +400,10 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               boxShadow: '0 4px 16px rgba(45, 42, 94, 0.2)'
             }}
           >
-            <span style={{ fontSize: '20px' }}>💰</span>
+            <span style={{ fontSize: isMobileView ? '16px' : '20px' }}>💰</span>
             <div>
-              <div style={{ fontSize: '10px', opacity: 0.9, fontWeight: 700, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.05em' }}>POINTS</div>
-              <div style={{ fontSize: '20px', fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY }}>
+              <div style={{ fontSize: '9px', opacity: 0.9, fontWeight: 700, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.05em' }}>POINTS</div>
+              <div style={{ fontSize: isMobileView ? '16px' : '20px', fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY }}>
                 {currentPoints.toLocaleString()}
               </div>
             </div>
@@ -421,11 +446,11 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobileView ? '1fr' : '80px 1fr 340px',
-          gap: '16px',
+          gap: '12px',
           alignItems: 'stretch'
         }}>
 
-          {/* LEFT: RARITY SIDEBAR */}
+          {/* LEFT: RARITY SIDEBAR (desktop only) */}
           {!isMobileView && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -501,16 +526,17 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               <div style={{
                 display: 'flex',
                 gap: '6px',
-                marginBottom: '12px',
+                marginBottom: '10px',
                 overflowX: 'auto',
-                paddingBottom: '6px'
+                paddingBottom: '6px',
+                WebkitOverflowScrolling: 'touch'
               }}>
                 {RARITY_SIDEBAR.map((rarity) => (
                   <button
                     key={rarity.id}
                     onClick={() => setSelectedRarity(rarity.id)}
                     style={{
-                      padding: '8px 12px',
+                      padding: '6px 10px',
                       borderRadius: '10px',
                       border: selectedRarity === rarity.id 
                         ? `2px solid ${rarity.color}` 
@@ -521,7 +547,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                       backdropFilter: 'blur(15px)',
                       WebkitBackdropFilter: 'blur(15px)',
                       color: 'white',
-                      fontSize: '12px',
+                      fontSize: '11px',
                       fontWeight: '800',
                       whiteSpace: 'nowrap',
                       cursor: 'pointer',
@@ -541,10 +567,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               className="shop-avatar-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: isMobileView 
-                  ? 'repeat(3, 1fr)' 
-                  : 'repeat(auto-fill, minmax(120px, 1fr))',
-                gap: '12px'
+                gridTemplateColumns: getGridColumns(),
+                gap: isMobileView ? '8px' : '12px'
               }}
             >
               <AnimatePresence>
@@ -565,12 +589,13 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                       whileHover={{ scale: 1.05, y: -4 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setPreviewAvatar(avatar.id)}
+                      className="shop-avatar-card"
                       style={{
                         background: 'rgba(255, 255, 255, 0.18)',
                         backdropFilter: 'blur(20px) saturate(180%)',
                         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                        borderRadius: '16px',
-                        padding: '10px',
+                        borderRadius: '14px',
+                        padding: isMobileView ? '6px' : '10px',
                         border: isSelected 
                           ? '2px solid #FFFFFF'
                           : isEquipped 
@@ -585,23 +610,26 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         overflow: 'hidden'
                       }}
                     >
-                      <div style={{
-                        position: 'absolute',
-                        top: '6px',
-                        left: '6px',
-                        background: `${rarityConfig.color}EE`,
-                        color: 'white',
-                        padding: '2px 6px',
-                        borderRadius: '6px',
-                        fontSize: '8px',
-                        fontWeight: '800',
-                        border: '1px solid rgba(255,255,255,0.4)',
-                        textShadow: '0 1px 2px rgba(45, 42, 94, 0.5)',
-                        boxShadow: '0 2px 6px rgba(45, 42, 94, 0.25)',
-                        zIndex: 2,
-                        fontFamily: BRAND_FONT_DISPLAY,
-                        letterSpacing: '0.05em'
-                      }}>
+                      <div 
+                        className="shop-rarity-badge"
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          left: '4px',
+                          background: `${rarityConfig.color}EE`,
+                          color: 'white',
+                          padding: '2px 5px',
+                          borderRadius: '6px',
+                          fontSize: isMobileView ? '7px' : '8px',
+                          fontWeight: '800',
+                          border: '1px solid rgba(255,255,255,0.4)',
+                          textShadow: '0 1px 2px rgba(45, 42, 94, 0.5)',
+                          boxShadow: '0 2px 6px rgba(45, 42, 94, 0.25)',
+                          zIndex: 2,
+                          fontFamily: BRAND_FONT_DISPLAY,
+                          letterSpacing: '0.05em'
+                        }}
+                      >
                         {avatar.rarity.toUpperCase()}
                       </div>
 
@@ -611,14 +639,14 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                           animate={{ scale: 1 }}
                           style={{
                             position: 'absolute',
-                            top: '6px',
-                            right: '6px',
-                            width: '20px',
-                            height: '20px',
+                            top: '4px',
+                            right: '4px',
+                            width: '16px',
+                            height: '16px',
                             borderRadius: '50%',
                             background: palette.softGreen,
                             color: 'white',
-                            fontSize: '11px',
+                            fontSize: '9px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -632,19 +660,22 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         </motion.div>
                       )}
 
-                      <div style={{
-                        width: '100%',
-                        aspectRatio: '0.75',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '8px',
-                        marginTop: '14px',
-                        background: 'transparent',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        position: 'relative'
-                      }}>
+                      <div 
+                        className="shop-avatar-img-wrap"
+                        style={{
+                          width: '100%',
+                          aspectRatio: '0.75',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: isMobileView ? '4px' : '8px',
+                          marginTop: isMobileView ? '10px' : '14px',
+                          background: 'transparent',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          position: 'relative'
+                        }}
+                      >
                         <img
                           src={avatar.image}
                           alt={avatar.name}
@@ -662,28 +693,34 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         />
                       </div>
 
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: '800',
-                        color: 'white',
-                        marginTop: '8px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        textShadow: '0 1px 4px rgba(45, 42, 94, 0.6)',
-                        fontFamily: BRAND_FONT_DISPLAY,
-                      }}>
+                      <div 
+                        className="shop-avatar-name"
+                        style={{
+                          fontSize: isMobileView ? '9px' : '11px',
+                          fontWeight: '800',
+                          color: 'white',
+                          marginTop: isMobileView ? '6px' : '8px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          textShadow: '0 1px 4px rgba(45, 42, 94, 0.6)',
+                          fontFamily: BRAND_FONT_DISPLAY,
+                        }}
+                      >
                         {avatar.name}
                       </div>
 
-                      <div style={{
-                        fontSize: '10px',
-                        fontWeight: '800',
-                        color: isOwned ? '#A5FFB0' : '#FFD700',
-                        marginTop: '2px',
-                        textShadow: '0 1px 4px rgba(45, 42, 94, 0.6)',
-                        fontFamily: BRAND_FONT_DISPLAY,
-                      }}>
+                      <div 
+                        className="shop-avatar-price"
+                        style={{
+                          fontSize: isMobileView ? '8px' : '10px',
+                          fontWeight: '800',
+                          color: isOwned ? '#A5FFB0' : '#FFD700',
+                          marginTop: '2px',
+                          textShadow: '0 1px 4px rgba(45, 42, 94, 0.6)',
+                          fontFamily: BRAND_FONT_DISPLAY,
+                        }}
+                      >
                         {isOwned ? '✓ OWNED' : (avatar.price === 0 ? '🎁 FREE' : `💰 ${avatar.price}`)}
                       </div>
                     </motion.div>
@@ -704,8 +741,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               backdropFilter: 'blur(25px) saturate(180%)',
               WebkitBackdropFilter: 'blur(25px) saturate(180%)',
               border: `2px solid ${previewConfig.border}AA`,
-              borderRadius: '24px',
-              padding: '20px',
+              borderRadius: '20px',
+              padding: isMobileView ? '14px' : '20px',
               display: 'flex',
               flexDirection: 'column',
               position: isMobileView ? 'static' : 'sticky',
@@ -721,7 +758,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '12px'
+              marginBottom: '10px'
             }}>
               <span style={{
                 fontSize: '11px',
@@ -762,11 +799,11 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               style={{
                 position: 'relative',
                 width: '100%',
-                aspectRatio: '0.85',
+                aspectRatio: isMobileView ? '1.2' : '0.85',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: '16px',
+                marginBottom: '14px',
                 background: 'transparent',
                 borderRadius: '20px',
                 overflow: 'hidden',
@@ -819,10 +856,10 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
               key={previewAvatar + '_info'}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              style={{ textAlign: 'center', marginBottom: '16px' }}
+              style={{ textAlign: 'center', marginBottom: '14px' }}
             >
               <h2 style={{
-                fontSize: '22px',
+                fontSize: isMobileView ? '18px' : '22px',
                 fontWeight: '800',
                 color: 'white',
                 margin: '0 0 4px 0',
@@ -856,8 +893,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
 
             <div style={{
               textAlign: 'center',
-              marginBottom: '14px',
-              padding: '12px',
+              marginBottom: '12px',
+              padding: '10px',
               background: 'rgba(255, 255, 255, 0.18)',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
@@ -876,7 +913,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 </span>
               ) : (
                 <span style={{
-                  fontSize: '18px',
+                  fontSize: '16px',
                   fontWeight: '800',
                   color: previewData?.price === 0 ? '#A5FFB0' : '#FFD700',
                   textShadow: '0 2px 8px rgba(45, 42, 94, 0.5)',
@@ -895,7 +932,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleReset}
                     style={{
-                      padding: '13px',
+                      padding: '12px',
                       background: 'rgba(255, 255, 255, 0.25)',
                       backdropFilter: 'blur(10px)',
                       WebkitBackdropFilter: 'blur(10px)',
@@ -918,7 +955,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleEquip}
                     style={{
-                      padding: '13px',
+                      padding: '12px',
                       background: `linear-gradient(135deg, ${palette.softGreen}, ${palette.teal})`,
                       color: 'white',
                       border: '1px solid rgba(255,255,255,0.3)',
@@ -941,7 +978,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                   onClick={() => setShowBuyModal(true)}
                   disabled={!canAfford}
                   style={{
-                    padding: '13px',
+                    padding: '12px',
                     background: canAfford 
                       ? `linear-gradient(135deg, ${palette.warmOrange} 0%, ${palette.coral} 100%)` 
                       : 'rgba(150,150,150,0.4)',
@@ -967,8 +1004,8 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             </div>
 
             <div style={{
-              marginTop: '14px',
-              paddingTop: '14px',
+              marginTop: '12px',
+              paddingTop: '12px',
               borderTop: '1px solid rgba(255,255,255,0.25)',
               textAlign: 'center',
               fontSize: '12px',
