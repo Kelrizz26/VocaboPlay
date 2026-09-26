@@ -360,6 +360,7 @@ const Login = () => {
       paddingTop: '80px',
       background: '#ffffff',
       overflow: 'hidden',
+      width: '100%',
     },
     leftSide: {
       flex: 1,
@@ -378,6 +379,7 @@ const Login = () => {
       borderRadius: '24px',
       boxShadow: '0 10px 30px rgba(45, 42, 94, 0.14)',
       padding: 'clamp(24px, 3vw, 36px)',
+      boxSizing: 'border-box',
     },
     title: {
       fontSize: '32px',
@@ -601,16 +603,18 @@ const Login = () => {
       justifyContent: 'center',
       zIndex: 2000,
       backdropFilter: 'blur(4px)',
+      padding: '16px',
     },
     modalContent: {
       backgroundColor: 'white',
       borderRadius: '24px',
       padding: '30px',
       maxWidth: '400px',
-      width: '90%',
+      width: '100%',
       boxShadow: '0 20px 60px rgba(45, 42, 94, 0.3)',
       fontFamily: "'Nunito', sans-serif",
       border: `2px solid ${palette.border}`,
+      boxSizing: 'border-box',
     },
     modalTitle: {
       fontSize: '24px',
@@ -740,8 +744,25 @@ const Login = () => {
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
-          * { box-sizing: border-box; }
-          body { font-family: 'Nunito', sans-serif !important; }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          html, body {
+            font-family: 'Nunito', sans-serif !important;
+            background: #ffffff;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+          }
+
+          .login-page-root {
+            width: 100%;
+            overflow-x: hidden;
+          }
           
           .hamburger {
             display: none;
@@ -752,6 +773,11 @@ const Login = () => {
             color: #2D2A5E;
             padding: 8px;
             z-index: 1001;
+            transition: all 0.3s ease;
+          }
+          
+          .hamburger:hover {
+            transform: scale(1.1);
           }
           
           .overlay {
@@ -760,6 +786,7 @@ const Login = () => {
             inset: 0;
             background: rgba(45, 42, 94, 0.5);
             z-index: 999;
+            backdrop-filter: blur(4px);
           }
           
           .overlay.active { display: block; }
@@ -824,11 +851,77 @@ const Login = () => {
           .confetti-dot { position: absolute; border-radius: 3px; animation: confettiDrift 3.6s ease-in-out infinite; }
           .bg-sparkle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.9); animation: twinkle 2.6s ease-in-out infinite; }
           .bg-pattern { position: absolute; inset: 0; opacity: 0.08; background-image: linear-gradient(rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.6) 2px, transparent 2px); background-size: 60px 60px; animation: bgDrift 12s linear infinite; }
-          
-          /* ===== MOBILE-SPECIFIC FIXES ===== */
+
+          /* ===== NAVBAR (default desktop) ===== */
+          .login-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 248, 240, 0.98);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(45, 42, 94, 0.08);
+            z-index: 1000;
+            padding: 15px 40px;
+            transition: all 0.3s ease;
+          }
+
+          .login-navbar-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          /* ===== TABLET (769px - 1024px) ===== */
+          @media (min-width: 769px) and (max-width: 1024px) {
+            .left-side {
+              padding: 40px 30px !important;
+            }
+            
+            .card-wrapper {
+              max-width: 360px !important;
+            }
+            
+            .login-title {
+              font-size: 28px !important;
+            }
+
+            .right-side {
+              padding: 30px !important;
+            }
+
+            .mascot-svg-wrap {
+              width: 150px !important;
+              height: 150px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 22px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 18px !important;
+            }
+          }
+
+          /* ===== MOBILE LAYOUT (<= 768px) ===== */
           @media (max-width: 768px) {
-            .hamburger { display: block; }
+            html, body {
+              padding-top: 0 !important;
+              overflow-x: hidden !important;
+              width: 100% !important;
+            }
+
+            .login-navbar {
+              padding: 12px 16px !important;
+            }
+
+            .hamburger { display: block !important; }
             .nav-desktop { display: none !important; }
+            
             .nav-mobile { 
               display: flex !important; 
               flex-direction: column; 
@@ -836,6 +929,7 @@ const Login = () => {
               top: 0; 
               right: -100%; 
               width: 280px; 
+              max-width: 85vw;
               height: 100vh; 
               background: white; 
               padding: 80px 30px 30px; 
@@ -844,8 +938,8 @@ const Login = () => {
               z-index: 1000; 
               overflow-y: auto; 
             }
-            .nav-mobile.open { right: 0; }
-            .nav-mobile button { 
+            .nav-mobile.open { right: 0 !important; }
+            .nav-mobile .mobile-nav-link { 
               width: 100%; 
               text-align: left; 
               padding: 15px 0; 
@@ -868,41 +962,167 @@ const Login = () => {
               padding: 14px !important; 
               border-radius: 12px !important; 
               font-weight: 800 !important; 
+              width: 100%;
+              font-size: 16px !important;
               font-family: 'Fredoka', sans-serif !important;
               box-shadow: 0 4px 0 #C77E3E !important;
             }
+
+            /* SPLIT CONTAINER — STACK VERTICALLY */
             .split-container { 
               flex-direction: column !important; 
-              padding-top: 70px !important; 
+              padding-top: 65px !important;
+              min-height: 100vh !important;
+              height: auto !important;
+              overflow: visible !important;
+              width: 100% !important;
             }
+            
             .left-side { 
               width: 100% !important; 
-              padding: 24px 16px 40px !important; 
-              min-height: auto !important; 
+              max-width: 100% !important;
+              padding: 16px 14px 24px !important; 
+              min-height: auto !important;
+              flex: none !important;
+              display: flex !important;
+              align-items: flex-start !important;
+              justify-content: center !important;
+              box-sizing: border-box !important;
             }
-            .right-side { display: none !important; }
 
-            .login-title { font-size: 26px !important; }
-            .login-subtitle { font-size: 13px !important; margin-bottom: 24px !important; }
-            .login-input { padding: 10px 14px !important; font-size: 14px !important; }
+            /* ===== SHOW THE MASCOT ON MOBILE (BELOW FORM) ===== */
+            .right-side {
+              display: flex !important;
+              position: relative !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              flex: none !important;
+              min-height: auto !important;
+              padding: 24px 16px 36px !important;
+              border-radius: 0 !important;
+              overflow: hidden !important;
+              box-sizing: border-box !important;
+            }
+
+            .card-wrapper {
+              max-width: 100% !important;
+              width: 100% !important;
+              padding: 22px 18px !important;
+              border-radius: 20px !important;
+              margin: 0 !important;
+              box-sizing: border-box !important;
+            }
+
+            /* ===== TYPOGRAPHY ===== */
+            .login-title { font-size: 24px !important; line-height: 1.25 !important; }
+            .login-subtitle { font-size: 13px !important; margin-bottom: 20px !important; }
+            .login-input { padding: 12px 14px !important; font-size: 15px !important; width: 100% !important; box-sizing: border-box !important; max-width: 100% !important; }
             .login-label { font-size: 12px !important; }
-            .login-btn { padding: 12px 20px !important; font-size: 14px !important; }
-            .google-btn { padding: 12px 20px !important; font-size: 14px !important; }
+            .login-btn { padding: 13px 18px !important; font-size: 14px !important; width: 100% !important; }
+            .google-btn { padding: 13px 18px !important; font-size: 14px !important; width: 100% !important; }
             .forgot-password { font-size: 12px !important; }
             .checkbox-label { font-size: 12px !important; }
             .signup-text { font-size: 13px !important; }
             .admin-link-text { font-size: 12px !important; }
             .divider-text { font-size: 11px !important; }
-            .error-message { font-size: 12px !important; padding: 10px 12px !important; }
+            .error-message { font-size: 12px !important; padding: 10px 12px !important; word-break: break-word !important; }
+
+            /* ===== MASCOT ON MOBILE ===== */
+            .mascot-stage-wrap-mobile {
+              margin-bottom: 12px !important;
+              height: 160px !important;
+            }
+
+            .mascot-svg-wrap-mobile {
+              width: 120px !important;
+              height: 120px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 16px !important;
+              margin-bottom: 2px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 13px !important;
+            }
+
+            .illustration-container-mobile {
+              padding: 8px !important;
+              max-width: 100% !important;
+            }
+
+            /* Reduce confetti and sparkles on mobile */
+            .bg-sparkle, .confetti-dot {
+              opacity: 0.5 !important;
+            }
           }
 
-          @media (min-width: 769px) and (max-width: 1024px) {
-            .mascot-svg-wrap { width: 150px !important; height: 150px !important; }
+          /* ===== SMALL PHONE (max 400px) ===== */
+          @media (max-width: 400px) {
+            .card-wrapper {
+              padding: 18px 14px !important;
+            }
+
+            .login-title { font-size: 22px !important; }
+            .login-subtitle { font-size: 12px !important; }
+            .login-input { font-size: 14px !important; padding: 11px 12px !important; }
+            .login-btn, .google-btn { font-size: 13px !important; padding: 12px 16px !important; }
+
+            .mascot-stage-wrap-mobile {
+              height: 140px !important;
+            }
+
+            .mascot-svg-wrap-mobile {
+              width: 100px !important;
+              height: 100px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 15px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 12px !important;
+            }
+          }
+
+          /* ===== EXTRA SMALL (max 360px) ===== */
+          @media (max-width: 360px) {
+            .card-wrapper {
+              padding: 16px 12px !important;
+            }
+
+            .login-title { font-size: 20px !important; }
           }
           
           @media (min-width: 769px) {
             .nav-mobile { display: none !important; }
             .nav-desktop { display: flex !important; }
+
+            /* Restore mascot to desktop size */
+            .mascot-stage-wrap-mobile {
+              margin-bottom: 28px !important;
+              height: 260px !important;
+            }
+
+            .mascot-svg-wrap-mobile {
+              width: 190px !important;
+              height: 190px !important;
+            }
+
+            .illustration-title-mobile {
+              font-size: 28px !important;
+            }
+
+            .illustration-subtitle-mobile {
+              font-size: 22px !important;
+            }
+
+            .illustration-container-mobile {
+              padding: 20px !important;
+              max-width: 440px !important;
+            }
           }
 
           @media (prefers-reduced-motion: reduce) {
@@ -914,364 +1134,370 @@ const Login = () => {
         `}
       </style>
 
-      <div 
-        className={`overlay ${isMenuOpen ? 'active' : ''}`}
-        onClick={() => setIsMenuOpen(false)}
-      ></div>
+      <div className="login-page-root">
 
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(255, 248, 240, 0.98)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 20px rgba(45, 42, 94, 0.08)',
-        zIndex: 1000,
-        padding: '15px 40px',
-      }}>
-        <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <div 
-            onClick={() => navigate('/')}
-            style={{
-              ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
-              fontSize: '18px',
-              padding: '8px 20px',
-            }}
-          >
-            VocaboPlay
-          </div>
+        <div 
+          className={`overlay ${isMenuOpen ? 'active' : ''}`}
+          onClick={() => setIsMenuOpen(false)}
+        ></div>
 
-          <div className="nav-desktop" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '20px'
-          }}>
-            <button
-              onClick={() => navigate('/signup')}
+        <nav className="login-navbar">
+          <div className="login-navbar-inner">
+            <div 
+              onClick={() => navigate('/')}
               style={{
-                ...chunkyButton(palette.teal, palette.tealShadow, 'sm'),
-                padding: '10px 28px',
-                fontSize: '14px',
-                fontFamily: "'Fredoka', sans-serif",
-                whiteSpace: 'nowrap',
-              }}
-              onMouseDown={e => pressButton(e, palette.tealShadow)}
-              onMouseUp={e => releaseButton(e, palette.tealShadow)}
-              onMouseLeave={e => releaseButton(e, palette.tealShadow)}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          <button 
-            className="hamburger"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? '✕' : '☰'}
-          </button>
-
-          <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
-            <button
-              className="login-btn"
-              onClick={() => {
-                navigate('/signup');
-                setIsMenuOpen(false);
+                ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
+                fontSize: '16px',
+                padding: '8px 18px',
+                userSelect: 'none',
               }}
             >
-              Sign Up
+              VocaboPlay
+            </div>
+
+            <div className="nav-desktop" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '20px'
+            }}>
+              <button
+                onClick={() => navigate('/signup')}
+                style={{
+                  ...chunkyButton(palette.teal, palette.tealShadow, 'sm'),
+                  padding: '10px 28px',
+                  fontSize: '14px',
+                  fontFamily: "'Fredoka', sans-serif",
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseDown={e => pressButton(e, palette.tealShadow)}
+                onMouseUp={e => releaseButton(e, palette.tealShadow)}
+                onMouseLeave={e => releaseButton(e, palette.tealShadow)}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <button 
+              className="hamburger"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? '✕' : '☰'}
             </button>
+
+            <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
+              <button
+                className="mobile-nav-link"
+                onClick={() => {
+                  navigate('/');
+                  setIsMenuOpen(false);
+                }}
+              >
+                🏠 Home
+              </button>
+              <button
+                className="mobile-nav-link"
+                onClick={() => {
+                  navigate('/signup');
+                  setIsMenuOpen(false);
+                }}
+              >
+                ✨ Sign Up
+              </button>
+              <button
+                className="login-btn"
+                onClick={() => {
+                  navigate('/signup');
+                  setIsMenuOpen(false);
+                }}
+              >
+                Sign Up
+              </button>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      <div style={styles.splitContainer} className="split-container">
-        <div style={styles.leftSide} className="left-side">
-          <div style={styles.cardWrapper} className="animate-slide-up">
-            <h1 style={styles.title} className="login-title">Log in</h1>
-            <p style={styles.subtitle} className="login-subtitle">Log in to continue your vocabulary journey</p>
+        <div style={styles.splitContainer} className="split-container">
+          <div style={styles.leftSide} className="left-side">
+            <div style={styles.cardWrapper} className="card-wrapper animate-slide-up">
+              <h1 style={styles.title} className="login-title">Log in</h1>
+              <p style={styles.subtitle} className="login-subtitle">Log in to continue your vocabulary journey</p>
 
-            {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
+              {error && <div style={styles.errorMessage} className="error-message">{error}</div>}
 
-            <form onSubmit={handleSubmit} style={styles.form}>
-              <div style={styles.fieldGroup}>
-                <label style={styles.label} className="login-label">Email Address</label>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={styles.input}
-                  className="login-input"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div style={styles.fieldGroup}>
-                <label style={styles.label} className="login-label">Password</label>
-                <div style={styles.passwordWrapper}>
+              <form onSubmit={handleSubmit} style={styles.form}>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label} className="login-label">Email Address</label>
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={styles.passwordInput}
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={styles.input}
                     className="login-input"
                     required
                     disabled={loading}
                   />
-                  <button
-                    type="button"
-                    style={styles.showPasswordBtn}
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                  >
-                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                  </button>
                 </div>
-              </div>
 
-              <div style={styles.bottomRow}>
-                <label style={styles.checkbox}>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    style={styles.checkboxInput}
-                    disabled={loading}
-                  />
-                  <span style={styles.checkboxLabel} className="checkbox-label">Remember me</span>
-                </label>
-                <a 
-                  href="#"
-                  style={styles.forgotPassword}
-                  className="forgot-password"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowForgotPassword(true);
-                    setResetEmail(email || '');
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label} className="login-label">Password</label>
+                  <div style={styles.passwordWrapper}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={styles.passwordInput}
+                      className="login-input"
+                      required
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      style={styles.showPasswordBtn}
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={loading}
+                    >
+                      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={styles.bottomRow}>
+                  <label style={styles.checkbox}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      style={styles.checkboxInput}
+                      disabled={loading}
+                    />
+                    <span style={styles.checkboxLabel} className="checkbox-label">Remember me</span>
+                  </label>
+                  <a 
+                    href="#"
+                    style={styles.forgotPassword}
+                    className="forgot-password"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowForgotPassword(true);
+                      setResetEmail(email || '');
+                    }}
+                  >
+                    Forgot Password?
+                  </a>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="login-btn"
+                  style={{
+                    ...styles.loginBtn,
+                    opacity: loading ? 0.7 : 1,
+                    cursor: loading ? 'not-allowed' : 'pointer'
                   }}
+                  onMouseDown={(e) => !loading && pressButton(e, palette.warmOrangeShadow)}
+                  onMouseUp={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
+                  onMouseLeave={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
+                  disabled={loading}
                 >
-                  Forgot Password?
-                </a>
+                  {loading ? 'Logging in...' : "Let's go!"}
+                </button>
+              </form>
+
+              <div style={styles.divider}>
+                <span style={styles.dividerLine}></span>
+                <span style={styles.dividerText} className="divider-text">or</span>
+                <span style={styles.dividerLine}></span>
               </div>
 
-              <button 
-                type="submit" 
-                className="login-btn"
+              <button
+                onClick={handleGoogleLogin}
+                className="google-btn"
                 style={{
-                  ...styles.loginBtn,
+                  ...styles.googleBtn,
                   opacity: loading ? 0.7 : 1,
                   cursor: loading ? 'not-allowed' : 'pointer'
                 }}
-                onMouseDown={(e) => !loading && pressButton(e, palette.warmOrangeShadow)}
-                onMouseUp={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
-                onMouseLeave={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
                 disabled={loading}
+                onMouseOver={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `0 5px 0 ${palette.border}`;
+                    e.currentTarget.style.borderColor = palette.warmOrange;
+                  }
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
+                  e.currentTarget.style.borderColor = palette.border;
+                }}
               >
-                {loading ? 'Logging in...' : "Let's go!"}
+                <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: '12px' }}>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                {loading ? 'Signing in...' : 'Google'}
               </button>
-            </form>
 
-            <div style={styles.divider}>
-              <span style={styles.dividerLine}></span>
-              <span style={styles.dividerText} className="divider-text">or</span>
-              <span style={styles.dividerLine}></span>
-            </div>
+              <p style={styles.signupText} className="signup-text">
+                Don't have an account? <a onClick={() => !loading && navigate('/signup')} style={{
+                  ...styles.signupLink,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.5 : 1
+                }}>Sign Up</a>
+              </p>
 
-            <button
-              onClick={handleGoogleLogin}
-              className="google-btn"
-              style={{
-                ...styles.googleBtn,
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
-              }}
-              disabled={loading}
-              onMouseOver={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = `0 5px 0 ${palette.border}`;
-                  e.currentTarget.style.borderColor = palette.warmOrange;
-                }
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
-                e.currentTarget.style.borderColor = palette.border;
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: '12px' }}>
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              {loading ? 'Signing in...' : 'Google'}
-            </button>
-
-            <p style={styles.signupText} className="signup-text">
-              Don't have an account? <a onClick={() => !loading && navigate('/signup')} style={{
-                ...styles.signupLink,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.5 : 1
-              }}>Sign Up</a>
-            </p>
-
-            <div style={styles.adminLinkRow}>
-              <span style={styles.adminLinkText} className="admin-link-text">
-                Admin?{' '}
-                <a
-                  onClick={() => !loading && navigate('/admin')}
-                  style={{
-                    ...styles.adminLink,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.5 : 1
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                  onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
-                >
-                  Log in here
-                </a>
-              </span>
+              <div style={styles.adminLinkRow}>
+                <span style={styles.adminLinkText} className="admin-link-text">
+                  Admin?{' '}
+                  <a
+                    onClick={() => !loading && navigate('/admin')}
+                    style={{
+                      ...styles.adminLink,
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      opacity: loading ? 0.5 : 1
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                    onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                  >
+                    Log in here
+                  </a>
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div style={styles.rightSide} className="animate-fade-in right-side">
-          <div className="bg-pattern"></div>
+          {/* ===== RIGHT SIDE — MASCOT + ANIMATIONS (SHOWS ON MOBILE BELOW FORM) ===== */}
+          <div style={styles.rightSide} className="animate-fade-in right-side">
+            <div className="bg-pattern"></div>
 
-          <span className="bg-sparkle" style={{ width: 6, height: 6, top: '14%', left: '18%', animationDelay: '0s' }}></span>
-          <span className="bg-sparkle" style={{ width: 4, height: 4, top: '22%', right: '20%', animationDelay: '0.6s' }}></span>
-          <span className="bg-sparkle" style={{ width: 5, height: 5, top: '68%', left: '12%', animationDelay: '1.1s' }}></span>
-          <span className="bg-sparkle" style={{ width: 7, height: 7, top: '76%', right: '16%', animationDelay: '1.6s' }}></span>
-          <span className="bg-sparkle" style={{ width: 4, height: 4, top: '40%', left: '8%', animationDelay: '0.3s' }}></span>
-          <span className="bg-sparkle" style={{ width: 5, height: 5, top: '10%', right: '10%', animationDelay: '2s' }}></span>
+            <span className="bg-sparkle" style={{ width: 6, height: 6, top: '14%', left: '18%', animationDelay: '0s' }}></span>
+            <span className="bg-sparkle" style={{ width: 4, height: 4, top: '22%', right: '20%', animationDelay: '0.6s' }}></span>
+            <span className="bg-sparkle" style={{ width: 5, height: 5, top: '68%', left: '12%', animationDelay: '1.1s' }}></span>
+            <span className="bg-sparkle" style={{ width: 7, height: 7, top: '76%', right: '16%', animationDelay: '1.6s' }}></span>
+            <span className="bg-sparkle" style={{ width: 4, height: 4, top: '40%', left: '8%', animationDelay: '0.3s' }}></span>
+            <span className="bg-sparkle" style={{ width: 5, height: 5, top: '10%', right: '10%', animationDelay: '2s' }}></span>
 
-          <span className="confetti-dot" style={{ width: 10, height: 10, background: '#ff6b6b', top: '20%', left: '30%', animationDelay: '0s' }}></span>
-          <span className="confetti-dot" style={{ width: 8, height: 8, background: '#4ecdc4', top: '18%', right: '28%', animationDelay: '0.4s' }}></span>
-          <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ffd93d', top: '30%', right: '18%', animationDelay: '0.8s', borderRadius: '50%' }}></span>
-          <span className="confetti-dot" style={{ width: 7, height: 7, background: '#a685e2', top: '26%', left: '20%', animationDelay: '1.2s', borderRadius: '50%' }}></span>
-          <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ff9f43', top: '34%', left: '38%', animationDelay: '0.6s' }}></span>
+            <span className="confetti-dot" style={{ width: 10, height: 10, background: '#ff6b6b', top: '20%', left: '30%', animationDelay: '0s' }}></span>
+            <span className="confetti-dot" style={{ width: 8, height: 8, background: '#4ecdc4', top: '18%', right: '28%', animationDelay: '0.4s' }}></span>
+            <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ffd93d', top: '30%', right: '18%', animationDelay: '0.8s', borderRadius: '50%' }}></span>
+            <span className="confetti-dot" style={{ width: 7, height: 7, background: '#a685e2', top: '26%', left: '20%', animationDelay: '1.2s', borderRadius: '50%' }}></span>
+            <span className="confetti-dot" style={{ width: 9, height: 9, background: '#ff9f43', top: '34%', left: '38%', animationDelay: '0.6s' }}></span>
 
-          <div style={styles.illustrationContainer}>
-            <div style={styles.mascotStageWrap}>
-              <div className="mascot-stage mascot-svg-wrap" style={styles.mascotSvgWrap}>
-                <div className="mascot-squash">
-                  <svg viewBox="0 0 200 200" width="100%" height="100%">
-                    <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
-                    <path d="M125 55 C 132 30, 140 20, 145 25 C 142 40, 135 52, 125 62 Z" fill="#5b4fa8" />
+            <div style={styles.illustrationContainer} className="illustration-container-mobile">
+              <div style={styles.mascotStageWrap} className="mascot-stage-wrap-mobile">
+                <div className="mascot-stage mascot-svg-wrap mascot-svg-wrap-mobile" style={styles.mascotSvgWrap}>
+                  <div className="mascot-squash">
+                    <svg viewBox="0 0 200 200" width="100%" height="100%">
+                      <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
+                      <path d="M125 55 C 132 30, 140 20, 145 25 C 142 40, 135 52, 125 62 Z" fill="#5b4fa8" />
 
-                    <g className="mascot-ear-left">
-                      <ellipse cx="62" cy="78" rx="14" ry="20" fill="#c9c3ee" />
-                      <ellipse cx="62" cy="78" rx="7" ry="12" fill="#e9d9e6" />
-                    </g>
-                    <g className="mascot-ear-right">
-                      <ellipse cx="138" cy="78" rx="14" ry="20" fill="#c9c3ee" />
-                      <ellipse cx="138" cy="78" rx="7" ry="12" fill="#e9d9e6" />
-                    </g>
+                      <g className="mascot-ear-left">
+                        <ellipse cx="62" cy="78" rx="14" ry="20" fill="#c9c3ee" />
+                        <ellipse cx="62" cy="78" rx="7" ry="12" fill="#e9d9e6" />
+                      </g>
+                      <g className="mascot-ear-right">
+                        <ellipse cx="138" cy="78" rx="14" ry="20" fill="#c9c3ee" />
+                        <ellipse cx="138" cy="78" rx="7" ry="12" fill="#e9d9e6" />
+                      </g>
 
-                    <ellipse cx="100" cy="150" rx="48" ry="34" fill="#c3bdf0" />
-                    <rect x="70" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
-                    <rect x="116" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+                      <ellipse cx="100" cy="150" rx="48" ry="34" fill="#c3bdf0" />
+                      <rect x="70" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+                      <rect x="116" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
 
-                    <ellipse cx="100" cy="95" rx="42" ry="38" fill="#d6d1f6" />
-                    <ellipse cx="100" cy="112" rx="18" ry="12" fill="#eae5fb" />
+                      <ellipse cx="100" cy="95" rx="42" ry="38" fill="#d6d1f6" />
+                      <ellipse cx="100" cy="112" rx="18" ry="12" fill="#eae5fb" />
 
-                    <g className="mascot-eyes">
-                      <circle cx="84" cy="92" r="9" fill="#2b2b3d" />
-                      <circle cx="116" cy="92" r="9" fill="#2b2b3d" />
-                      <circle cx="87" cy="89" r="2.5" fill="white" />
-                      <circle cx="119" cy="89" r="2.5" fill="white" />
-                    </g>
+                      <g className="mascot-eyes">
+                        <circle cx="84" cy="92" r="9" fill="#2b2b3d" />
+                        <circle cx="116" cy="92" r="9" fill="#2b2b3d" />
+                        <circle cx="87" cy="89" r="2.5" fill="white" />
+                        <circle cx="119" cy="89" r="2.5" fill="white" />
+                      </g>
 
-                    <ellipse cx="74" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
-                    <ellipse cx="126" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+                      <ellipse cx="74" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+                      <ellipse cx="126" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
 
-                    <path d="M92 116 Q100 121 108 116" stroke="#8b7fc7" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                      <path d="M92 116 Q100 121 108 116" stroke="#8b7fc7" strokeWidth="2.5" fill="none" strokeLinecap="round" />
 
-                    <circle cx="95" cy="110" r="1.4" fill="#8b7fc7" />
-                    <circle cx="105" cy="110" r="1.4" fill="#8b7fc7" />
-                  </svg>
+                      <circle cx="95" cy="110" r="1.4" fill="#8b7fc7" />
+                      <circle cx="105" cy="110" r="1.4" fill="#8b7fc7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div style={styles.platformWrap}>
+                  <div className="platform-glow" style={styles.platformGlow}></div>
+                  <div style={styles.platform}></div>
                 </div>
               </div>
 
-              <div style={styles.platformWrap}>
-                <div className="platform-glow" style={styles.platformGlow}></div>
-                <div style={styles.platform}></div>
-              </div>
+              <h2 style={styles.illustrationTitle} className="illustration-title-mobile">Welcome back,</h2>
+              <p style={styles.illustrationSubtitle} className="illustration-subtitle-mobile">let's keep learning.</p>
             </div>
-
-            <h2 style={styles.illustrationTitle}>Welcome back,</h2>
-            <p style={styles.illustrationSubtitle}>let's keep learning.</p>
           </div>
         </div>
+
+        {showForgotPassword && (
+          <div style={styles.modalOverlay} onClick={() => setShowForgotPassword(false)}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <h2 style={styles.modalTitle}>Reset Password</h2>
+              <p style={styles.modalSubtitle}>
+                Enter your email address and we'll send you a link to reset your password.
+              </p>
+
+              {resetError && <div style={styles.errorMessage}>{resetError}</div>}
+              {resetMessage && <div style={styles.successMessage}>{resetMessage}</div>}
+
+              <form onSubmit={handleForgotPassword}>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    style={styles.input}
+                    required
+                    disabled={resetLoading}
+                  />
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button
+                    type="button"
+                    style={styles.modalCancelBtn}
+                    onClick={() => setShowForgotPassword(false)}
+                    disabled={resetLoading}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#E5E2E2'}
+                    onMouseOut={(e) => e.currentTarget.style.background = '#F0EFEF'}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      ...styles.modalSendBtn,
+                      opacity: resetLoading ? 0.7 : 1,
+                      cursor: resetLoading ? 'not-allowed' : 'pointer',
+                    }}
+                    disabled={resetLoading}
+                    onMouseDown={(e) => !resetLoading && pressButton(e, palette.warmOrangeShadow)}
+                    onMouseUp={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}
+                    onMouseLeave={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}
+                  >
+                    {resetLoading ? 'Sending...' : 'Reset Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-
-      {showForgotPassword && (
-        <div style={styles.modalOverlay} onClick={() => setShowForgotPassword(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>Reset Password</h2>
-            <p style={styles.modalSubtitle}>
-              Enter your email address and we'll send you a link to reset your password.
-            </p>
-
-            {resetError && <div style={styles.errorMessage}>{resetError}</div>}
-            {resetMessage && <div style={styles.successMessage}>{resetMessage}</div>}
-
-            <form onSubmit={handleForgotPassword}>
-              <div style={styles.fieldGroup}>
-                <label style={styles.label}>Email Address</label>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  style={styles.input}
-                  required
-                  disabled={resetLoading}
-                />
-              </div>
-
-              <div style={styles.modalActions}>
-                <button
-                  type="button"
-                  style={styles.modalCancelBtn}
-                  onClick={() => setShowForgotPassword(false)}
-                  disabled={resetLoading}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#E5E2E2'}
-                  onMouseOut={(e) => e.currentTarget.style.background = '#F0EFEF'}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    ...styles.modalSendBtn,
-                    opacity: resetLoading ? 0.7 : 1,
-                    cursor: resetLoading ? 'not-allowed' : 'pointer',
-                  }}
-                  disabled={resetLoading}
-                  onMouseDown={(e) => !resetLoading && pressButton(e, palette.warmOrangeShadow)}
-                  onMouseUp={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}
-                  onMouseLeave={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}
-                >
-                  {resetLoading ? 'Sending...' : 'Reset Password'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   );
 };
