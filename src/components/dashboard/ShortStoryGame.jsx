@@ -7,9 +7,9 @@ const Character3D = lazy(() => import('./story-quest/Character3D'));
 const LibraryScene = lazy(() => import('./story-quest/LibraryScene'));
 const SceneErrorBoundary = lazy(() => import('./story-quest/SceneErrorBoundary'));
 
-import GameUI from './story-quest/GameUI';
-import { useGameLogic } from './story-quest/useGameLogic';
-import allScenes from './story-quest/storyScenes';
+import GameUI from './Story-quest/GameUI';
+import { useGameLogic } from './Story-quest/useGameLogic';
+import allScenes from './Story-quest/storyScenes';
 
 // ===== LOADING COMPONENT =====
 const ThreeDLoading = () => (
