@@ -98,25 +98,63 @@ const releaseBtn = (e, shadowColor) => {
   e.currentTarget.style.boxShadow = `0 4px 0 ${shadowColor}`;
 };
 
-// ===== 3D-STYLE ICON BADGE (Dashboard profile menu) =====
-const MenuIconBadge = ({ emoji, color, size = 36 }) => (
+// ===== PROFILE MENU SVG ICONS (white, flat, no shading) =====
+const MenuIcon = ({ name, color = '#FFFFFF' }) => {
+  const icons = {
+    profile: (
+      <path
+        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+        fill={color}
+      />
+    ),
+    progress: (
+      <path
+        d="M3 13h2v7H3v-7zm4-4h2v11H7V9zm4-6h2v17h-2V3zm4 4h2v13h-2V7zm4 4h2v9h-2v-9z"
+        fill={color}
+      />
+    ),
+    leaderboard: (
+      <path
+        d="M18 2h-3v3H9V2H6v3H3v4h18V5h-3V2zM5 11h14v9a2 2 0 01-2 2H7a2 2 0 01-2-2v-9zm4 3v5h2v-5H9zm4 0v5h2v-5h-2z"
+        fill={color}
+      />
+    ),
+    logout: (
+      <path
+        d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
+        fill={color}
+      />
+    ),
+  };
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'block' }}
+    >
+      {icons[name] || icons.profile}
+    </svg>
+  );
+};
+
+// ===== 3D-STYLE ICON BADGE (solid color + white SVG icon) =====
+const MenuIconBadge = ({ name, color, size = 36 }) => (
   <div
     style={{
       width: size,
       height: size,
       borderRadius: '10px',
-      background: `${color}18`,
-      border: `2px solid ${color}30`,
+      background: color,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       flexShrink: 0,
-      fontSize: size * 0.5,
-      lineHeight: 1,
-      boxShadow: `0 3px 0 ${color}25`,
+      boxShadow: `0 3px 0 ${color}CC`,
     }}
   >
-    {emoji}
+    <MenuIcon name={name} color="#FFFFFF" />
   </div>
 );
 
@@ -732,7 +770,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* Menu items with 3D icon badges */}
+                  {/* Menu items with 3D icon badges (white SVG icons) */}
                   <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
 
                     {/* My Profile */}
@@ -756,7 +794,7 @@ const Dashboard = () => {
                         fontWeight: 600,
                       }}
                     >
-                      <MenuIconBadge emoji="👤" color={palette.warmOrange} size={36} />
+                      <MenuIconBadge name="profile" color={palette.warmOrange} size={36} />
                       <span>My Profile</span>
                     </button>
 
@@ -781,7 +819,7 @@ const Dashboard = () => {
                         fontWeight: 600,
                       }}
                     >
-                      <MenuIconBadge emoji="📊" color={palette.coral} size={36} />
+                      <MenuIconBadge name="progress" color={palette.coral} size={36} />
                       <span>My Progress</span>
                     </button>
 
@@ -806,7 +844,7 @@ const Dashboard = () => {
                         fontWeight: 600,
                       }}
                     >
-                      <MenuIconBadge emoji="🏆" color={palette.softGreen} size={36} />
+                      <MenuIconBadge name="leaderboard" color={palette.softGreen} size={36} />
                       <span>Leaderboards</span>
                     </button>
 
@@ -833,7 +871,7 @@ const Dashboard = () => {
                         fontWeight: 600,
                       }}
                     >
-                      <MenuIconBadge emoji="🚪" color="#d32f2f" size={36} />
+                      <MenuIconBadge name="logout" color="#d32f2f" size={36} />
                       <span>Sign Out</span>
                     </button>
 
