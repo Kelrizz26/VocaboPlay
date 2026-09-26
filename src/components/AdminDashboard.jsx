@@ -970,6 +970,7 @@ const AdminDashboard = () => {
             loading={loading}
             onHostLive={handleHostLive}
             onShowScores={handleShowScores}
+            onCreateActivity={() => setShowCreateActivity(true)}
           />
         );
       case 'Words':
@@ -1025,7 +1026,7 @@ const AdminDashboard = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .admin-dashboard-wrapper * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Nunito', sans-serif; background: #F3EEFF; }
 
         .admin-hamburger {
@@ -1103,7 +1104,7 @@ const AdminDashboard = () => {
         {isSidebarOpen ? '✕' : '☰'}
       </button>
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: palette.pastelViolet, fontFamily: "'Nunito', sans-serif" }}>
+      <div className="admin-dashboard-wrapper" style={{ display: 'flex', minHeight: '100vh', background: palette.pastelViolet, fontFamily: "'Nunito', sans-serif" }}>
         <div className={`admin-sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <AdminSidebar
             activeMenu={activeMenu}

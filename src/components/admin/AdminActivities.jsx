@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ ADMIN ACTIVITIES - Shows teacher-created quizzes/exams
 // with PIN, Host Live, Scores, Edit, Delete, Search & Filter
+// ✅ UPDATED: Added "Create Activity" button
 // ============================================================
 
 import React, { useState, useMemo } from 'react';
@@ -18,6 +19,7 @@ const AdminActivities = ({
   loading,
   onHostLive,
   onShowScores,
+  onCreateActivity,   // ✅ BAGONG PROP
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -238,19 +240,54 @@ const AdminActivities = ({
             Manage all quizzes and exams created by teachers
           </p>
         </div>
-        <span
-          style={{
-            fontSize: '13px',
-            color: colors.textSecondary,
-            background: colors.bg,
-            padding: '8px 16px',
-            borderRadius: '90px',
-            border: `1px solid ${colors.border}`,
-            fontFamily,
-          }}
-        >
-          Total: {stats.total} {stats.total === 1 ? 'Activity' : 'Activities'}
-        </span>
+
+        {/* ✅ HEADER ACTIONS - Create Button + Total */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={onCreateActivity}
+            style={{
+              padding: '10px 20px',
+              background: 'linear-gradient(135deg, #A78BFA 0%, #7C4DFF 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              fontFamily,
+              boxShadow: '0 4px 0 #5B34B8, 0 6px 14px rgba(124, 77, 255, 0.25)',
+              transition: 'transform 0.12s ease',
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(3px)';
+              e.currentTarget.style.boxShadow = '0 1px 0 #5B34B8';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 0 #5B34B8, 0 6px 14px rgba(124, 77, 255, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 0 #5B34B8, 0 6px 14px rgba(124, 77, 255, 0.25)';
+            }}
+          >
+            ➕ Create Activity
+          </button>
+
+          <span
+            style={{
+              fontSize: '13px',
+              color: colors.textSecondary,
+              background: colors.bg,
+              padding: '8px 16px',
+              borderRadius: '90px',
+              border: `1px solid ${colors.border}`,
+              fontFamily,
+            }}
+          >
+            Total: {stats.total} {stats.total === 1 ? 'Activity' : 'Activities'}
+          </span>
+        </div>
       </div>
 
       {/* ===== STATS CARDS ===== */}
@@ -343,6 +380,7 @@ const AdminActivities = ({
         <EmptyState
           hasActivities={activities.length > 0}
           searchTerm={searchTerm}
+          onCreateActivity={onCreateActivity}
         />
       ) : (
         <div
@@ -848,7 +886,7 @@ const MiniStat = ({ label, value, small }) => (
   </div>
 );
 
-const EmptyState = ({ hasActivities, searchTerm }) => (
+const EmptyState = ({ hasActivities, searchTerm, onCreateActivity }) => (
   <div
     style={{
       textAlign: 'center',
@@ -877,13 +915,34 @@ const EmptyState = ({ hasActivities, searchTerm }) => (
         fontSize: '14px',
         color: colors.textSecondary,
         fontFamily,
-        margin: 0,
+        margin: '0 0 20px 0',
       }}
     >
       {hasActivities
         ? `Try a different search term${searchTerm ? ` than "${searchTerm}"` : ''} or clear the filters.`
         : 'Activities created by teachers will appear here.'}
     </p>
+
+    {/* ✅ Create button sa empty state */}
+    {!hasActivities && onCreateActivity && (
+      <button
+        onClick={onCreateActivity}
+        style={{
+          padding: '12px 24px',
+          background: 'linear-gradient(135deg, #A78BFA 0%, #7C4DFF 100%)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: '700',
+          cursor: 'pointer',
+          fontFamily,
+          boxShadow: '0 4px 0 #5B34B8',
+        }}
+      >
+        ➕ Create Your First Activity
+      </button>
+    )}
   </div>
 );
 
