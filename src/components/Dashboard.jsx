@@ -4,6 +4,7 @@
 // ✅ LevelUpCelebration animation gagana pag nag-level up
 // ✅ GoatCardCollection mula sa MyCards.jsx (hiwalay na file)
 // ✅ FIXED: gamesPlayed at wordsLearned naka-increment na
+// ✅ FIXED: May hamburger menu na sa mobile view
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -116,6 +117,9 @@ const Dashboard = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [contentKey, setContentKey] = useState(0);
 
+  // ✅ BAGO: State para sa mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
   const [equippedAvatar, setEquippedAvatar] = useState(null);
   const [joinPin, setJoinPin] = useState('');
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -134,6 +138,24 @@ const Dashboard = () => {
 
   const userId = localStorage.getItem('userId');
   const { stats, loading, error } = useUserStats(userId);
+
+  // ✅ BAGO: Effect para i-detect kung mobile yung screen
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      // ✅ Sa mobile, automatically isara ang sidebar
+      if (mobile) {
+        setIsSidebarVisible(false);
+      } else {
+        setIsSidebarVisible(true);
+      }
+    };
+    // I-set yung initial state
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [userProfile, setUserProfile] = useState(() => {
     try {
@@ -374,13 +396,20 @@ const Dashboard = () => {
   const startGame = (gameId) => {
     const availableGames = ['wordpics', 'match', 'quiz', 'guesswhat', 'short-story'];
     if (!availableGames.includes(gameId)) return;
-    setCurrentGame(gameId); setActiveMenu(null); setIsSidebarVisible(false); window.scrollTo(0, 0);
+    setCurrentGame(gameId); setActiveMenu(null); 
+    if (isMobile) setIsSidebarVisible(false); // ✅ BAGO
+    window.scrollTo(0, 0);
   };
 
-  const exitGame = () => { setCurrentGame(null); setActiveMenu('Dashboard'); setIsSidebarVisible(true); };
+  const exitGame = () => { 
+    setCurrentGame(null); setActiveMenu('Dashboard'); 
+    if (!isMobile) setIsSidebarVisible(true); // ✅ BAGO
+  };
+
   const changeMenu = (menu) => {
     setActiveMenu(menu); setContentKey(prev => prev + 1); setCurrentGame(null);
-    if (window.innerWidth <= 768) setIsSidebarVisible(false);
+    // ✅ BAGO: Isara ang sidebar sa mobile pag pumili ng menu
+    if (isMobile) setIsSidebarVisible(false);
   };
 
   const handleLiveJoined = (session) => { setLiveSession(session); setLivePlayerId(userId); setLiveView('lobby'); setShowLiveJoinModal(false); };
@@ -449,15 +478,57 @@ const Dashboard = () => {
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
         .stat-card-dash { transition: transform 0.2s ease; }
         .stat-card-dash:hover { transform: translateY(-3px); }
+        
+        /* ✅ BAGO: Hamburger button styles */
+        .hamburger-btn {
+          display: none;
+        }
+        
         @media (max-width: 768px) {
           .sidebar-fixed { transform: translateX(-100%) !important; }
           .sidebar-fixed.open { transform: translateX(0) !important; }
           .main-content { margin-left: 0 !important; padding: 16px !important; }
           .stats-grid { grid-template-columns: 1fr 1fr !important; }
           .dashboard-welcome { flex-direction: column !important; text-align: center !important; padding: 20px !important; }
+          
+          /* ✅ BAGO: Ipakita ang hamburger sa mobile */
+          .hamburger-btn {
+            display: flex !important;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1001;
+            width: 44px;
+            height: 44px;
+            background: ${palette.deepNavy};
+            border: none;
+            border-radius: 12px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(42, 40, 69, 0.2);
+            transition: transform 0.15s ease;
+          }
+          .hamburger-btn:active {
+            transform: scale(0.95);
+          }
+          .hamburger-btn.hidden {
+            display: none !important;
+          }
         }
         @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr !important; } }
       `}</style>
+
+      {/* ✅ BAGO: Hamburger button — lalabas lang sa mobile */}
+      {isMobile && (
+        <button 
+          className={`hamburger-btn ${isSidebarVisible ? 'hidden' : ''}`}
+          onClick={() => setIsSidebarVisible(true)}
+          aria-label="Open menu"
+        >
+          <Icon name="menu" size={24} color={palette.white} />
+        </button>
+      )}
 
       {/* SIDEBAR */}
       <div className={`sidebar-fixed ${isSidebarVisible ? 'open' : ''}`} style={{
@@ -467,9 +538,21 @@ const Dashboard = () => {
         transform: isSidebarVisible ? 'translateX(0)' : 'translateX(-100%)',
         borderRight: `1px solid rgba(255,255,255,0.06)`,
       }}>
-        <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'Fredoka', sans-serif" }}>
-          <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-          <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
+        <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontFamily: "'Fredoka', sans-serif" }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+            <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
+          </div>
+          {/* ✅ BAGO: Close button sa sidebar (mobile lang) */}
+          {isMobile && (
+            <button 
+              onClick={() => setIsSidebarVisible(false)}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="Close menu"
+            >
+              <Icon name="close" size={18} color={palette.white} />
+            </button>
+          )}
         </div>
         <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
           {menuItems.map((item) => {
@@ -489,12 +572,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {isSidebarVisible && window.innerWidth <= 768 && (
+      {isSidebarVisible && isMobile && (
         <div onClick={() => setIsSidebarVisible(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.4)', zIndex: 999 }} />
       )}
 
       <div key={contentKey} className="dashboard-container" style={{ display: 'flex', minHeight: '100vh', background: palette.cream }}>
-        <div className="main-content" style={{ flex: 1, marginLeft: isSidebarVisible ? '260px' : '0', padding: '24px 32px', transition: 'margin-left 0.3s ease' }}>
+        <div className="main-content" style={{ flex: 1, marginLeft: (!isMobile && isSidebarVisible) ? '260px' : '0', padding: '24px 32px', transition: 'margin-left 0.3s ease' }}>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', position: 'relative' }}>
             <div onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ background: palette.white, padding: '6px 14px 6px 8px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', border: `1.5px solid ${palette.border}` }}>
