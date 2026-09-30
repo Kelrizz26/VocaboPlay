@@ -1,12 +1,16 @@
 // src/components/dashboard/GuessWhatGame.jsx
+// ✅ NEW: Has recordGame prop to record in Recent Activities
 
 import React, { useState, useEffect } from 'react';
 import useSound from '../../hooks/useSound';
-import { updateUserStats } from '../../services/firebaseService'; // ✅ ADDED
-import { auth } from '../../pages/firebase'; // ✅ ADDED
-import { onAuthStateChanged } from 'firebase/auth'; // ✅ ADDED
+import { updateUserStats } from '../../services/firebaseService';
+import { auth } from '../../pages/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
-const GuessWhatGame = ({ onBack, updateProgress }) => {
+// ============================================================
+// ✅ UPDATED: Has recordGame prop
+// ============================================================
+const GuessWhatGame = ({ onBack, updateProgress, recordGame }) => {
   const [gameState, setGameState] = useState('intro');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -56,7 +60,7 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
   }, []);
 
   // ============================================================
-  // ===== ✅ NEW: SAVE TO FIREBASE =====
+  // ===== SAVE TO FIREBASE =====
   // ============================================================
   const saveGameToFirebase = async (isWin, isPerfect) => {
     if (!currentUser) {
@@ -66,12 +70,12 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
 
     const userId = currentUser.uid;
     const totalQuestions = filteredQuestions.length;
-    const pointsEarned = score * 15 + bonusPoints; // 15 pts per correct + bonus
+    const pointsEarned = score * 15 + bonusPoints;
 
     const gameData = {
       gameType: 'guessWhat',
       pointsEarned: pointsEarned,
-      newWordsLearned: score, // Each correct = new word learned
+      newWordsLearned: score,
       correctAnswers: score,
       totalQuestions: totalQuestions,
       won: isWin || score >= totalQuestions / 2,
@@ -150,7 +154,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
     setBonusPoints(0);
   }, [selectedCategory]);
 
-  // Start/refresh the per-question timer, scaled by the question's difficulty
   useEffect(() => {
     if (gameState === 'playing' && current && !answered && lives > 0) {
       const t = TIME_BY_DIFFICULTY[current.difficulty] || 15;
@@ -162,7 +165,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion, gameState, lives]);
 
-  // Countdown ticker
   useEffect(() => {
     if (!timerRunning || gameState !== 'playing') return;
     if (timer <= 0) {
@@ -195,8 +197,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
         setStreak(streak + 1);
         setFeedbackMessage('✅ Correct! Great job!');
 
-        // Combo bonus: base 10pts + 2 per combo step, capped, plus a small
-        // speed bonus for answering with time to spare.
         const newCombo = comboCount + 1;
         setComboCount(newCombo);
         if (newCombo > maxCombo) setMaxCombo(newCombo);
@@ -237,7 +237,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // Timeout also counts as a miss, mirroring a wrong answer
   const handleTimeUp = () => {
     if (answered || !current) return;
     setAnswered(true);
@@ -250,8 +249,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
     setTimeout(() => setShowFeedback(false), 2000);
   };
 
-  // Shared "wrong answer" handling: costs a life, ends the run early if
-  // lives hit zero (a real Game Over instead of just continuing forever)
   const registerMiss = (message) => {
     setLives(prev => {
       const newLives = prev - 1;
@@ -266,7 +263,7 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
   };
 
   const handleNextQuestion = () => {
-    if (lives <= 0) return; // already routed to game-over by registerMiss
+    if (lives <= 0) return;
     if (currentQuestion < filteredQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setAnswered(false);
@@ -276,8 +273,9 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
     }
   };
 
-  // Shared ending routine for both a natural finish (all questions
-  // answered) and an early Game Over (lives depleted).
+  // ============================================================
+  // ✅ UPDATED: finishRun — now has recordGame
+  // ============================================================
   const finishRun = (completedAll) => {
     setGameState(completedAll ? 'finished' : 'gameover');
 
@@ -314,7 +312,16 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
         updates.xp = (currentProgress.xp || 0) + 10;
         updates.totalPoints = (currentProgress.totalPoints || 0) + 25;
       }
-      updateProgress(updates);
+
+      updateProgress(updates)
+        .then(() => {
+          console.log(`✅ GuessWhat finished!`);
+          // ✅ NEW: Record to recent activities
+          if (recordGame) {
+            recordGame('guesswhat', score, score, filteredQuestions.length);
+          }
+        })
+        .catch(err => console.error('❌ GuessWhat: Error saving:', err));
     }
   };
 
@@ -348,7 +355,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
     return (
       <div className="guess-container" style={{ fontFamily: "'Poppins', sans-serif", maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
         <style>{`
-          /* ===== MOBILE RESPONSIVE FOR GUESS WHAT GAME ===== */
           @media (max-width: 768px) {
             .guess-container {
               padding: 16px !important;
@@ -511,7 +517,6 @@ const GuessWhatGame = ({ onBack, updateProgress }) => {
           </div>
         </div>
 
-        {/* Timer + combo row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '16px' }}>
           <div style={{
             width: '38px', height: '38px', borderRadius: '50%',

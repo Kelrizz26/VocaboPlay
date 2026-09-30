@@ -1,7 +1,8 @@
 // src/components/admin/LiveHostGame.jsx
 // ============================================================
 // ✅ TEACHER LIVE MONITOR - WAYGROUND STYLE
-// FIXED: Avatar faces now visible in leaderboard
+// ✅ FIXED: Avatar faces visible in leaderboard
+// ✅ FIXED: 1 correct = 1 point (not live game score)
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -40,6 +41,13 @@ const palette = {
 
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+// ============================================================
+// ✅ Helper: Get the correct count (1 correct = 1 point)
+// ============================================================
+const getPoints = (player) => {
+  return player?.correctAnswers || player?.correct || 0;
+};
 
 const LiveHostGame = ({ session: initialSession, onEnd }) => {
   const [session, setSession] = useState(initialSession);
@@ -229,9 +237,9 @@ const LiveHostGame = ({ session: initialSession, onEnd }) => {
                     </div>
                   </div>
 
-                  {/* Score */}
+                  {/* ✅ FIXED: Score — 1 correct = 1 point */}
                   <div style={styles.playerScore}>
-                    <span style={styles.scoreValue}>{player.score}</span>
+                    <span style={styles.scoreValue}>{getPoints(player)}</span>
                     <span style={styles.scoreLabel}>pts</span>
                   </div>
                 </motion.div>

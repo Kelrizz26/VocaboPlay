@@ -1,4 +1,5 @@
 // src/components/dashboard/QuizGame.jsx
+// ✅ NEW: Has recordGame + activityData prop for solo games and teacher PIN
 
 import React, { useState, useEffect, useRef } from 'react';
 import useSound from '../../hooks/useSound';
@@ -6,7 +7,10 @@ import { updateUserStats } from '../../services/firebaseService';
 import { auth } from '../../pages/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const QuizGame = ({ onBack, updateProgress }) => {
+// ============================================================
+// ✅ UPDATED: Has recordGame, completeActivity, and activityData props
+// ============================================================
+const QuizGame = ({ onBack, updateProgress, completeActivity, activityData, recordGame }) => {
   const [gameState, setGameState] = useState('intro');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -22,7 +26,7 @@ const QuizGame = ({ onBack, updateProgress }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
 
-  // ✅ FIXED: Gumamit ng useRef — synchronous, guaranteed once lang
+  // ✅ FIXED: Use useRef — synchronous, guaranteed only once
   const sessionSavedRef = useRef(false);
 
   const { playCorrect, playWrong, playVictory } = useSound();
@@ -166,7 +170,7 @@ const QuizGame = ({ onBack, updateProgress }) => {
     setScore(0);
     setAnswered(false);
     setSelectedAnswer(null);
-    // ✅ Reset session saved flag kada bagong quiz
+    // ✅ Reset session saved flag on every new quiz
     sessionSavedRef.current = false;
   }, [selectedCategory, dailySeed]);
 
@@ -184,7 +188,7 @@ const QuizGame = ({ onBack, updateProgress }) => {
     }
 
     const userId = currentUser.uid;
-    // ✅ 1 correct = 1 point (hindi * 15)
+    // ✅ 1 correct = 1 point (not * 15)
     const pointsEarned = finalScore;
     const won = finalScore >= totalQ / 2;
 
@@ -238,14 +242,14 @@ const QuizGame = ({ onBack, updateProgress }) => {
         if (currentProgress && updateProgress) {
           // ✅ FIXED: 1 correct = 1 point = 1 XP = 1 word (1:1:1)
           const updates = {
-            totalAnswers: 1,          // increment lang
-            correctAnswers: 1,        // increment lang
+            totalAnswers: 1,          // increment only
+            correctAnswers: 1,        // increment only
             totalPoints: 1,           // ✅ 1 point
             xp: 1,                    // ✅ 1 XP (1:1)
             wordsLearned: 1,          // ✅ 1 word
             QuizGame: {
               ...currentProgress.QuizGame,
-              gamesCompleted: 0,      // hindi pa tapos
+              gamesCompleted: 0,      // not yet finished
               correctAnswers: (currentProgress.QuizGame?.correctAnswers || 0) + 1,
               totalQuestions: (currentProgress.QuizGame?.totalQuestions || 0) + 1
             }
@@ -265,7 +269,7 @@ const QuizGame = ({ onBack, updateProgress }) => {
   };
 
   // ============================================================
-  // ===== HANDLE NEXT — ✅ FIXED: End bonus only + sessionSave =====
+  // ✅ UPDATED: HANDLE NEXT — now has recordGame and completeActivity
   // ============================================================
   const handleNext = () => {
     if (currentIndex < filteredQuizzes.length - 1) {
@@ -284,7 +288,7 @@ const QuizGame = ({ onBack, updateProgress }) => {
       // ✅ Save to Firebase when quiz finishes
       saveGameToFirebase(score, filteredQuizzes.length, isPerfect);
 
-      // ✅ Check kung na-save na — gamit useRef (synchronous)
+      // ✅ Check if already saved — using useRef (synchronous)
       if (sessionSavedRef.current) {
         console.log('⚠️ QuizGame: Already saved — skipping duplicate');
         return;
@@ -295,9 +299,8 @@ const QuizGame = ({ onBack, updateProgress }) => {
       const currentProgress = savedProgress ? JSON.parse(savedProgress) : null;
 
       if (currentProgress && updateProgress) {
-        // ✅ FIXED: End-of-game bonus — small fixed amounts
         const updates = {
-          gamesPlayed: 1,           // ✅ +1 game lang
+          gamesPlayed: 1,
           quiz: {
             ...currentProgress.quiz,
             gamesCompleted: (currentProgress.quiz?.gamesCompleted || 0) + 1,
@@ -310,16 +313,35 @@ const QuizGame = ({ onBack, updateProgress }) => {
             ...currentProgress.achievements,
             perfectScore: true
           };
-          updates.xp = 5;             // ✅ +5 XP bonus (perfect)
-          updates.totalPoints = 5;    // ✅ +5 points bonus
-          updates.wordsLearned = 0;   // wala nang extra words
+          updates.xp = 5;
+          updates.totalPoints = 5;
+          updates.wordsLearned = 0;
         } else {
-          updates.xp = 2;             // ✅ +2 XP bonus
-          updates.totalPoints = 2;    // ✅ +2 points bonus
-          updates.wordsLearned = 0;   // wala nang extra words
+          updates.xp = 2;
+          updates.totalPoints = 2;
+          updates.wordsLearned = 0;
         }
-        updateProgress(updates);
-        console.log(`✅ Quiz finished! Bonus: ${isPerfect ? 5 : 2} XP, +1 game`);
+
+        updateProgress(updates)
+          .then(() => {
+            console.log(`✅ Quiz finished! Bonus: ${isPerfect ? 5 : 2} XP, +1 game`);
+
+            // ✅ NEW: If from teacher PIN, use completeActivity
+            if (activityData && completeActivity) {
+              console.log('📌 QuizGame: Teacher PIN mode — calling completeActivity');
+              completeActivity(
+                activityData.id,
+                score,
+                score,
+                filteredQuizzes.length
+              );
+            } else if (recordGame) {
+              // ✅ Solo game — record to recent activities
+              console.log('🎮 QuizGame: Solo mode — calling recordGame');
+              recordGame('quiz', score, score, filteredQuizzes.length);
+            }
+          })
+          .catch(err => console.error('❌ QuizGame: Error saving:', err));
       }
     }
   };

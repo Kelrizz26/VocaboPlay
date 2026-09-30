@@ -1,6 +1,9 @@
 // src/components/dashboard/LivePlayerGame.jsx
 // ============================================================
 // ✅ STUDENT LIVE GAME - FULL SIZE
+// ✅ NEW: Accepts completeActivity prop to save to Recent Activities
+// ✅ FIXED: 1 correct = 1 point (All displays: score bar, waiting screen)
+// ✅ FIXED: Now contributes per-question answers (Q1, Q2, etc.) to completeActivity
 // ============================================================
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -34,7 +37,10 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
-const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
+// ============================================================
+// ✅ UPDATED: Has completeActivity prop
+// ============================================================
+const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, completeActivity }) => {
   const [session, setSession] = useState(initialSession);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -44,6 +50,12 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
   const [isWaiting, setIsWaiting] = useState(false);
   const questionStartRef = useRef(null);
 
+  // ✅ NEW: Ref to ensure it's saved only once
+  const sessionSavedRef = useRef(false);
+
+  // ✅ NEW: Ref to track each answer (Q1: true, Q2: false, etc.)
+  const answersRef = useRef({});
+
   useEffect(() => {
     if (!initialSession?.sessionId) return;
 
@@ -51,12 +63,56 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
       setSession(data);
 
       if (data.status === 'ended') {
+        // ✅ NEW: Save to scores collection before game end
+        if (completeActivity && !sessionSavedRef.current) {
+          sessionSavedRef.current = true;
+
+          // Get the latest player data
+          const myPlayer = data.players?.find(p => p.userId === playerId);
+          const myCorrect = myPlayer?.correctAnswers || myPlayer?.correct || 0;
+          const totalQ = data.totalQuestions || 0;
+
+          // ✅ 1 correct = 1 point (so it's equal to solo games)
+          const pointsForRecent = myCorrect;
+
+          // ✅ Get the activityId and activityTitle from the session
+          const activityId = data.activityId || initialSession?.activityId || null;
+          const gameType = data.gameType || 'quiz';
+
+          console.log('📌 LivePlayerGame: Saving activity to scores...', {
+            activityId,
+            gameType,
+            score: pointsForRecent,
+            correct: myCorrect,
+            total: totalQ,
+            answers: answersRef.current // ✅ Log so we can see it
+          });
+
+          if (activityId) {
+            // ✅ From teacher PIN → completeActivity
+            // ✅ Use pointsForRecent (1 correct = 1 point) NOT the live score
+            // ✅ ALSO PASS answersRef.current (5th argument)
+            completeActivity(
+              activityId,
+              pointsForRecent,
+              myCorrect,
+              totalQ,
+              answersRef.current 
+            );
+          } else {
+            // ✅ Fallback: If there's no activityId, just log it
+            if (typeof window !== 'undefined') {
+              console.warn('⚠️ LivePlayerGame: No activityId in session — using fallback');
+            }
+          }
+        }
+
         onGameEnd(data);
       }
     });
 
     return () => unsubscribe();
-  }, [initialSession?.sessionId, onGameEnd]);
+  }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId]);
 
   useEffect(() => {
     if (session?.status !== 'playing') return;
@@ -93,6 +149,9 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
     setHasAnswered(true);
     setFeedback({ isCorrect: false, points: 0, timeout: true });
 
+    // ✅ NEW: Record timeout as false in answers ref
+    answersRef.current[`Q${currentQuestionIndex + 1}`] = false;
+
     try {
       await updatePlayerProgress(session.sessionId, playerId, currentQuestionIndex);
     } catch (error) {
@@ -126,6 +185,9 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
         correctAnswer: result.correctAnswer
       });
 
+      // ✅ NEW: Record the answer in answers ref
+      answersRef.current[`Q${currentQuestionIndex + 1}`] = result.isCorrect;
+
       setTimeout(() => {
         moveToNextQuestion();
       }, 1500);
@@ -133,6 +195,9 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
     } catch (error) {
       console.error('Error submitting answer:', error);
       setFeedback({ isCorrect: false, points: 0, error: true });
+
+      // ✅ NEW: Record as false if there's an error
+      answersRef.current[`Q${currentQuestionIndex + 1}`] = false;
 
       setTimeout(() => {
         moveToNextQuestion();
@@ -154,9 +219,16 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
 
   const currentQuestion = session?.questions?.[currentQuestionIndex];
   const myPlayer = session?.players?.find(p => p.userId === playerId);
-  const myScore = myPlayer?.score || 0;
 
-  const sortedPlayers = [...(session?.players || [])].sort((a, b) => b.score - a.score);
+  // ✅ FIXED: Use the correct count (1 correct = 1 point) NOT live game score
+  const myCorrectCount = myPlayer?.correctAnswers || myPlayer?.correct || 0;
+  const myScore = myCorrectCount;  // ✅ 1 correct = 1 point
+
+  const sortedPlayers = [...(session?.players || [])].sort((a, b) => {
+    const aScore = a.correctAnswers || a.correct || 0;
+    const bScore = b.correctAnswers || b.correct || 0;
+    return bScore - aScore;
+  });
   const myRank = sortedPlayers.findIndex(p => p.userId === playerId) + 1;
 
   // ============================================================
@@ -339,7 +411,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd }) => {
                 <>
                   <div style={styles.feedbackIcon}>🎉</div>
                   <div style={styles.feedbackTitle}>Correct!</div>
-                  <div style={styles.feedbackPoints}>+{feedback.points} pts</div>
+                  <div style={styles.feedbackPoints}>+1 pt</div>
                 </>
               ) : feedback.timeout ? (
                 <>

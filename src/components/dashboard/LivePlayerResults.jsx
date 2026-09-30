@@ -1,6 +1,7 @@
 // src/components/dashboard/LivePlayerResults.jsx
 // ============================================================
 // ✅ STUDENT RESULTS - FULL SIZE
+// ✅ FIXED: 1 correct = 1 point (not live game score)
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -34,6 +35,13 @@ const palette = {
 
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+// ============================================================
+// ✅ Helper: Get the correct points (1 correct = 1 point)
+// ============================================================
+const getCorrectCount = (player) => {
+  return player?.correctAnswers || player?.correct || 0;
+};
 
 const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
   const [session, setSession] = useState(initialSession);
@@ -97,19 +105,20 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
 
           <div style={styles.myStats}>
             <div style={styles.statBox}>
-              <div style={styles.statValue}>{myPlayer?.score || 0}</div>
+              {/* ✅ FIXED: 1 correct = 1 point */}
+              <div style={styles.statValue}>{getCorrectCount(myPlayer)}</div>
               <div style={styles.statLabel}>Points</div>
             </div>
             <div style={styles.statBox}>
               <div style={styles.statValue}>
-                {myPlayer?.correctAnswers || 0}/{session?.totalQuestions || 0}
+                {getCorrectCount(myPlayer)}/{session?.totalQuestions || 0}
               </div>
               <div style={styles.statLabel}>Correct</div>
             </div>
             <div style={styles.statBox}>
               <div style={styles.statValue}>
                 {session?.totalQuestions > 0
-                  ? Math.round(((myPlayer?.correctAnswers || 0) / session.totalQuestions) * 100)
+                  ? Math.round((getCorrectCount(myPlayer) / session.totalQuestions) * 100)
                   : 0}%
               </div>
               <div style={styles.statLabel}>Accuracy</div>
@@ -124,9 +133,9 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
           transition={{ delay: 0.3 }}
           style={styles.topSection}
         >
-          <h2 style={styles.sectionTitle}>🏆 Top Players</h2>
+          <h2 style={styles.sectionTitle}>🏆 Full Leaderboard</h2>
           <div style={styles.topList}>
-            {rankedPlayers.slice(0, 3).map((player, index) => (
+            {rankedPlayers.map((player, index) => (
               <div
                 key={player.userId}
                 style={{
@@ -150,7 +159,10 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
                   {player.name}
                   {player.userId === playerId && <span style={styles.youTag}> (You)</span>}
                 </div>
-                <div style={styles.topScore}>{player.score} pts</div>
+                <div style={styles.topScore}>
+                  {/* ✅ FIXED: 1 correct = 1 point */}
+                  {getCorrectCount(player)} pts
+                </div>
               </div>
             ))}
           </div>

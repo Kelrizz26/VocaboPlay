@@ -1,10 +1,8 @@
 // src/components/Dashboard.jsx
 // ============================================================
-// ✅ FINAL: 1 Point = 1 XP. Level base sa totalPoints.
-// ✅ LevelUpCelebration animation gagana pag nag-level up
-// ✅ GoatCardCollection mula sa MyCards.jsx (hiwalay na file)
-// ✅ FIXED: gamesPlayed at wordsLearned naka-increment na
-// ✅ FIXED: May hamburger menu na sa mobile view
+// ✅ NEW: Saves learnedWordsList (array of words) to display in MyProgress modal
+// ✅ FIXED: completeActivity function - now accepts and saves the `answers` object
+// ✅ UPDATED: Profile dropdown - removed My Cards, new styled icons
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -117,8 +115,10 @@ const Dashboard = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [contentKey, setContentKey] = useState(0);
 
-  // ✅ BAGO: State para sa mobile detection
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
 
   const [equippedAvatar, setEquippedAvatar] = useState(null);
   const [joinPin, setJoinPin] = useState('');
@@ -139,19 +139,16 @@ const Dashboard = () => {
   const userId = localStorage.getItem('userId');
   const { stats, loading, error } = useUserStats(userId);
 
-  // ✅ BAGO: Effect para i-detect kung mobile yung screen
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      // ✅ Sa mobile, automatically isara ang sidebar
       if (mobile) {
         setIsSidebarVisible(false);
       } else {
         setIsSidebarVisible(true);
       }
     };
-    // I-set yung initial state
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -196,6 +193,52 @@ const Dashboard = () => {
     fetchStudentData();
   }, [userId, navigate]);
 
+  const refreshRecentActivities = async () => {
+    if (!userId) return;
+    try {
+      const scoresQuery = query(collection(db, 'scores'), where('studentId', '==', userId));
+      const scoresSnap = await getDocs(scoresQuery);
+      const activities = scoresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+      setRecentActivities(activities.slice(0, 5));
+    } catch (e) {
+      console.error('Error refreshing activities:', e);
+    }
+  };
+
+  useEffect(() => {
+    const fetchRecentActivities = async () => {
+      if (!userId) return;
+      setLoadingActivities(true);
+      try {
+        const scoresQuery = query(
+          collection(db, 'scores'),
+          where('studentId', '==', userId)
+        );
+        const scoresSnap = await getDocs(scoresQuery);
+
+        const activities = scoresSnap.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+
+        activities.sort((a, b) => {
+          const dateA = new Date(a.completedAt || 0);
+          const dateB = new Date(b.completedAt || 0);
+          return dateB - dateA;
+        });
+
+        setRecentActivities(activities.slice(0, 5));
+      } catch (error) {
+        console.error('Error fetching recent activities:', error);
+      } finally {
+        setLoadingActivities(false);
+      }
+    };
+
+    fetchRecentActivities();
+  }, [userId, contentKey]);
+
   const handleJoinActivity = async () => {
     if (!joinPin.trim() || joinPin.length < 6) { setJoinError('Please enter a valid 6-digit PIN'); return; }
     setJoinLoading(true); setJoinError('');
@@ -227,9 +270,6 @@ const Dashboard = () => {
     localStorage.setItem('currentActivity', JSON.stringify(selectedActivity));
   };
 
-  // ============================================================
-  // ✅ FIXED: updateProgress — Diretso nang tinatanggap ang gamesPlayed
-  // ============================================================
   const updateProgress = async (updates) => {
     if (!userId) return null;
     try {
@@ -244,7 +284,24 @@ const Dashboard = () => {
       const currentGamesPlayed = userData.gamesPlayed || 0;
       const currentAccuracy = userData.accuracy || 0;
 
-      // ✅ Points earned
+      const currentLearnedWords =
+        userData.learnedWordsList ||
+        userData.learnedWords ||
+        [];
+
+      let newLearnedWords = Array.isArray(currentLearnedWords) ? [...currentLearnedWords] : [];
+      if (updates.newWords && Array.isArray(updates.newWords)) {
+        updates.newWords.forEach(word => {
+          const wordStr = typeof word === 'string'
+            ? word
+            : (word?.word || word?.term || '');
+          const normalized = String(wordStr).trim().toUpperCase();
+          if (normalized && !newLearnedWords.includes(normalized)) {
+            newLearnedWords.push(normalized);
+          }
+        });
+      }
+
       let pointsEarned = 0;
       if (updates.totalPoints !== undefined) pointsEarned = updates.totalPoints;
       else if (updates.score !== undefined) pointsEarned = updates.score;
@@ -252,7 +309,6 @@ const Dashboard = () => {
 
       const newTotalPoints = currentTotalPoints + pointsEarned;
 
-      // ✅ Streak
       const today = new Date().toDateString();
       const lastPlayed = userData.lastActive ? new Date(userData.lastActive).toDateString() : null;
       let newStreak = currentStreak;
@@ -265,7 +321,6 @@ const Dashboard = () => {
         } else newStreak = 1;
       }
 
-      // ✅ Game stats update (per game)
       const gameStats = { ...currentGameStats };
       if (updates.QuizGame) {
         gameStats.QuizGame = {
@@ -282,7 +337,6 @@ const Dashboard = () => {
         };
       }
 
-      // ✅ Level & XP
       const oldLevel = computeLevelFromPoints(currentTotalPoints);
       const newLevel = computeLevelFromPoints(newTotalPoints);
       const currentXP = computeCurrentXP(newTotalPoints);
@@ -292,17 +346,10 @@ const Dashboard = () => {
         setShowLevelUpCard(true);
       }
 
-      // ============================================================
-      // ✅✅✅ FIXED: Games Played computation
-      // Diretso nang dadagdagan kung may updates.gamesPlayed
-      // ============================================================
       let newGamesPlayed = currentGamesPlayed;
-      
-      // Option 1: Direct gamesPlayed increment
       if (updates.gamesPlayed !== undefined && updates.gamesPlayed > 0) {
         newGamesPlayed = currentGamesPlayed + updates.gamesPlayed;
       } else {
-        // Option 2: Fallback — compute from gameStats, pero hindi bababa sa current
         let totalGamesPlayed = 0;
         Object.values(gameStats).forEach(g => {
           if (g && typeof g === 'object') {
@@ -314,7 +361,6 @@ const Dashboard = () => {
         }
       }
 
-      // ✅ Accuracy
       let totalQuestionsAll = 0;
       Object.values(gameStats).forEach(g => {
         if (g && typeof g === 'object') {
@@ -327,7 +373,6 @@ const Dashboard = () => {
         newAccuracy = Math.round((totalCorrect / totalQuestionsAll) * 100);
       }
 
-      // ✅ Words Learned
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
       const updateData = {
@@ -338,6 +383,7 @@ const Dashboard = () => {
         currentStreak: newStreak,
         gamesPlayed: newGamesPlayed,
         wordsLearned: newWordsLearned,
+        learnedWordsList: newLearnedWords,
         accuracy: newAccuracy,
         gameStats: gameStats,
         lastActive: new Date().toISOString()
@@ -353,6 +399,7 @@ const Dashboard = () => {
         streak: newStreak,
         gamesPlayed: newGamesPlayed,
         wordsLearned: newWordsLearned,
+        learnedWordsList: newLearnedWords,
         accuracy: newAccuracy,
         gameStats: gameStats
       };
@@ -368,16 +415,27 @@ const Dashboard = () => {
     }
   };
 
-  const completeActivity = async (activityId, score, correctAnswers, totalQuestions) => {
+  const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = []) => {
     try {
-      await addDoc(collection(db, 'scores'), {
-        activityId, studentId: userId,
-        studentName: userProfile.displayName || 'Student',
-        score, correctAnswers, totalQuestions,
-        completedAt: new Date().toISOString()
-      });
       const activityRef = doc(db, 'activities', activityId);
       const activitySnap = await getDoc(activityRef);
+      const activityData = activitySnap.exists() ? activitySnap.data() : {};
+
+      await addDoc(collection(db, 'scores'), {
+        activityId,
+        studentId: userId,
+        studentName: userProfile.displayName || 'Student',
+        score,
+        correctAnswers,
+        totalQuestions,
+        gameType: activityData.gameType || 'quiz',
+        activityTitle: activityData.title || '',
+        source: 'teacher-pin',
+        answers: answers,
+        wordsList: wordsList,
+        completedAt: new Date().toISOString()
+      });
+
       if (activitySnap.exists()) {
         await updateDoc(activityRef, { participants: (activitySnap.data().participants || 0) + 1 });
       }
@@ -385,10 +443,42 @@ const Dashboard = () => {
         await updateProgress({
           totalPoints: score,
           wordsLearned: correctAnswers,
-          gamesPlayed: 1,  // ✅ IDINAGDAG
+          gamesPlayed: 1,
+          newWords: wordsList,
         });
       }
-    } catch (error) { console.error('Error completing activity:', error); }
+      await refreshRecentActivities();
+    } catch (error) {
+      console.error('Error completing activity:', error);
+    }
+  };
+
+  const recordSoloGame = async (gameType, score, correctAnswers, totalQuestions, wordsList = []) => {
+    if (!userId) return;
+    try {
+      await addDoc(collection(db, 'scores'), {
+        studentId: userId,
+        studentName: userProfile.displayName || 'Student',
+        score: score || 0,
+        correctAnswers: correctAnswers || 0,
+        totalQuestions: totalQuestions || 0,
+        gameType: gameType,
+        source: 'solo',
+        wordsList: wordsList,
+        completedAt: new Date().toISOString()
+      });
+
+      if (wordsList && wordsList.length > 0) {
+        await updateProgress({
+          newWords: wordsList,
+        });
+      }
+
+      await refreshRecentActivities();
+      console.log(`✅ Recorded solo game: ${gameType} — ${score} pts, ${wordsList.length} words`);
+    } catch (error) {
+      console.error('Error recording solo game:', error);
+    }
   };
 
   const handleLogout = () => { localStorage.clear(); auth.signOut().catch(console.error); navigate('/'); };
@@ -396,26 +486,26 @@ const Dashboard = () => {
   const startGame = (gameId) => {
     const availableGames = ['wordpics', 'match', 'quiz', 'guesswhat', 'short-story'];
     if (!availableGames.includes(gameId)) return;
-    setCurrentGame(gameId); setActiveMenu(null); 
-    if (isMobile) setIsSidebarVisible(false); // ✅ BAGO
+    setCurrentGame(gameId); setActiveMenu(null);
+    if (isMobile) setIsSidebarVisible(false);
     window.scrollTo(0, 0);
   };
 
-  const exitGame = () => { 
-    setCurrentGame(null); setActiveMenu('Dashboard'); 
-    if (!isMobile) setIsSidebarVisible(true); // ✅ BAGO
+  const exitGame = () => {
+    setCurrentGame(null); setActiveMenu('Dashboard');
+    if (!isMobile) setIsSidebarVisible(true);
+    refreshRecentActivities();
   };
 
   const changeMenu = (menu) => {
     setActiveMenu(menu); setContentKey(prev => prev + 1); setCurrentGame(null);
-    // ✅ BAGO: Isara ang sidebar sa mobile pag pumili ng menu
     if (isMobile) setIsSidebarVisible(false);
   };
 
   const handleLiveJoined = (session) => { setLiveSession(session); setLivePlayerId(userId); setLiveView('lobby'); setShowLiveJoinModal(false); };
   const handleLiveGameStart = (session) => { setLiveSession(session); setLiveView('game'); };
-  const handleLiveGameEnd = (session) => { setLiveSession(session); setLiveView('results'); };
-  const handleLiveExit = () => { setLiveSession(null); setLiveView(null); setLivePlayerId(null); };
+  const handleLiveGameEnd = (session) => { setLiveSession(session); setLiveView('results'); refreshRecentActivities(); };
+  const handleLiveExit = () => { setLiveSession(null); setLiveView(null); setLivePlayerId(null); refreshRecentActivities(); };
 
   const menuItems = [
     { name: 'Dashboard', icon: 'grid' },
@@ -447,7 +537,14 @@ const Dashboard = () => {
   const displayEmail = stats?.email || userProfile?.email || '';
 
   if (liveView === 'lobby' && liveSession) return <LivePlayerLobby session={liveSession} playerId={livePlayerId} onGameStart={handleLiveGameStart} onCancel={handleLiveExit} />;
-  if (liveView === 'game' && liveSession) return <LivePlayerGame session={liveSession} playerId={livePlayerId} onGameEnd={handleLiveGameEnd} />;
+  if (liveView === 'game' && liveSession) return (
+    <LivePlayerGame
+      session={liveSession}
+      playerId={livePlayerId}
+      onGameEnd={handleLiveGameEnd}
+      completeActivity={completeActivity}
+    />
+  );
   if (liveView === 'results' && liveSession) return <LivePlayerResults session={liveSession} playerId={livePlayerId} onExit={handleLiveExit} />;
 
   if (loading) {
@@ -476,22 +573,17 @@ const Dashboard = () => {
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         .profile-menu-item { transition: background 0.15s ease; }
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
-        .stat-card-dash { transition: transform 0.2s ease; }
-        .stat-card-dash:hover { transform: translateY(-3px); }
-        
-        /* ✅ BAGO: Hamburger button styles */
-        .hamburger-btn {
-          display: none;
-        }
-        
+        .recent-activity-item { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .recent-activity-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(42, 40, 69, 0.06); }
+
+        .hamburger-btn { display: none; }
+
         @media (max-width: 768px) {
           .sidebar-fixed { transform: translateX(-100%) !important; }
           .sidebar-fixed.open { transform: translateX(0) !important; }
           .main-content { margin-left: 0 !important; padding: 16px !important; }
-          .stats-grid { grid-template-columns: 1fr 1fr !important; }
           .dashboard-welcome { flex-direction: column !important; text-align: center !important; padding: 20px !important; }
-          
-          /* ✅ BAGO: Ipakita ang hamburger sa mobile */
+
           .hamburger-btn {
             display: flex !important;
             position: fixed;
@@ -509,19 +601,15 @@ const Dashboard = () => {
             box-shadow: 0 4px 12px rgba(42, 40, 69, 0.2);
             transition: transform 0.15s ease;
           }
-          .hamburger-btn:active {
-            transform: scale(0.95);
-          }
-          .hamburger-btn.hidden {
-            display: none !important;
-          }
+          .hamburger-btn:active { transform: scale(0.95); }
+          .hamburger-btn.hidden { display: none !important; }
+
+          .recent-activity-item { flex-wrap: wrap; }
         }
-        @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr !important; } }
       `}</style>
 
-      {/* ✅ BAGO: Hamburger button — lalabas lang sa mobile */}
       {isMobile && (
-        <button 
+        <button
           className={`hamburger-btn ${isSidebarVisible ? 'hidden' : ''}`}
           onClick={() => setIsSidebarVisible(true)}
           aria-label="Open menu"
@@ -543,9 +631,8 @@ const Dashboard = () => {
             <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
             <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
           </div>
-          {/* ✅ BAGO: Close button sa sidebar (mobile lang) */}
           {isMobile && (
-            <button 
+            <button
               onClick={() => setIsSidebarVisible(false)}
               style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Close menu"
@@ -589,23 +676,98 @@ const Dashboard = () => {
                 <div style={{ fontSize: '11px', color: palette.bodyTextSoft }}>Student</div>
               </div>
             </div>
+
+            {/* ✅ UPDATED: Profile dropdown — removed My Cards, new styled icons */}
             {showProfileMenu && (
               <>
                 <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-                <div style={{ position: 'absolute', top: '50px', right: 0, background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '220px', border: `1.5px solid ${palette.border}`, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.12)', padding: '8px' }}>
-                  <button onClick={() => { setShowProfileMenu(false); changeMenu('My Profile'); }} className="profile-menu-item" style={{ width: '100%', padding: '9px 10px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '10px' }}>👤 My Profile</button>
-                  <button onClick={() => { setShowProfileMenu(false); changeMenu('My Cards'); }} className="profile-menu-item" style={{ width: '100%', padding: '9px 10px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '10px' }}>🎴 My Cards</button>
-                  <button onClick={handleLogout} className="profile-menu-item" style={{ width: '100%', padding: '9px 10px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', color: palette.coral }}>🚪 Sign Out</button>
+                <div style={{ position: 'absolute', top: '50px', right: 0, background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '240px', border: `1.5px solid ${palette.border}`, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.12)', padding: '8px' }}>
+
+                  {/* My Profile */}
+                  <button
+                    onClick={() => { setShowProfileMenu(false); changeMenu('My Profile'); }}
+                    className="profile-menu-item"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: 'none',
+                      background: 'none',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: palette.teal,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: `0 3px 0 ${palette.tealShadow}`,
+                    }}>
+                      <Icon name="user" size={16} color={palette.white} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                      <span style={{ fontWeight: 800, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", fontSize: '13px' }}>My Profile</span>
+                      <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>View your account</span>
+                    </div>
+                  </button>
+
+                  {/* Sign Out */}
+                  <button
+                    onClick={handleLogout}
+                    className="profile-menu-item"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: 'none',
+                      background: 'none',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: palette.coral,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: `0 3px 0 ${palette.coralShadow}`,
+                    }}>
+                      <Icon name="logout" size={16} color={palette.white} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                      <span style={{ fontWeight: 800, color: palette.coral, fontFamily: "'Fredoka', sans-serif", fontSize: '13px' }}>Sign Out</span>
+                      <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>Log out of account</span>
+                    </div>
+                  </button>
+
                 </div>
               </>
             )}
           </div>
 
-          {currentGame === 'wordpics' && <WordPicsGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'match' && <MatchGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'quiz' && <QuizGame onBack={exitGame} updateProgress={updateProgress} completeActivity={completeActivity} activityData={selectedActivity} />}
-          {currentGame === 'guesswhat' && <GuessWhatGame onBack={exitGame} updateProgress={updateProgress} />}
-          {currentGame === 'short-story' && <ShortStoryGame onBack={exitGame} updateProgress={updateProgress} />}
+          {/* ✅ Solo games with recordGame */}
+          {currentGame === 'wordpics' && <WordPicsGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
+          {currentGame === 'match' && <MatchGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
+          {currentGame === 'quiz' && <QuizGame onBack={exitGame} updateProgress={updateProgress} completeActivity={completeActivity} activityData={selectedActivity} recordGame={recordSoloGame} />}
+          {currentGame === 'guesswhat' && <GuessWhatGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
+          {currentGame === 'short-story' && <ShortStoryGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
 
           {!currentGame && activeMenu === 'Word Library' && <WordLibrary />}
           {!currentGame && activeMenu === 'Games' && <PlayGames startGame={startGame} />}
@@ -649,24 +811,181 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-                {[
-                  { label: 'Words Learned', value: displayProgress.wordsLearned },
-                  { label: 'Games Played', value: displayProgress.gamesPlayed },
-                  { label: 'Current Streak', value: displayProgress.streak, unit: 'days' },
-                  { label: 'Total Points', value: displayProgress.totalPoints },
-                ].map((stat, i) => (
-                  <div key={i} className="stat-card-dash" style={{ background: palette.white, borderRadius: '14px', padding: '18px 20px', border: `1.5px solid ${palette.border}` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: palette.bodyTextSoft, textTransform: 'uppercase', fontFamily: "'Fredoka', sans-serif" }}>{stat.label}</span>
-                      {stat.label === 'Total Points' && <span style={{ padding: '3px 9px', background: palette.creamSoft, borderRadius: '8px', fontSize: '10px', color: palette.warmOrange, fontWeight: 800 }}>LVL {displayProgress.level}</span>}
-                    </div>
-                    <div>
-                      <span style={{ fontSize: '26px', fontWeight: 800, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif" }}>{stat.value}</span>
-                      {stat.unit && <span style={{ fontSize: '12px', color: palette.bodyTextSoft, marginLeft: '4px' }}>{stat.unit}</span>}
-                    </div>
+              <div style={{ background: palette.white, borderRadius: '16px', padding: '20px 24px', border: `1.5px solid ${palette.border}`, marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", margin: 0 }}>
+                      Recent Activities/Played
+                    </h3>
+                    <p style={{ fontSize: '12px', color: palette.bodyTextSoft, margin: '4px 0 0 0' }}>
+                      Your recently played games and scores
+                    </p>
                   </div>
-                ))}
+                  <button
+                    onClick={() => changeMenu('My Progress')}
+                    style={{
+                      background: 'none', border: 'none', color: palette.warmOrange,
+                      fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                      fontFamily: "'Fredoka', sans-serif", padding: '4px 8px'
+                    }}
+                  >
+                    View All →
+                  </button>
+                </div>
+
+                {loadingActivities ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: palette.bodyTextSoft }}>
+                    <div style={{ width: '28px', height: '28px', border: `3px solid ${palette.border}`, borderTop: `3px solid ${palette.warmOrange}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 10px' }} />
+                    <p style={{ fontSize: '13px' }}>Loading activities...</p>
+                  </div>
+                ) : recentActivities.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: palette.bodyTextSoft }}>
+                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎮</div>
+                    <p style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px', color: palette.deepNavy }}>No activities yet</p>
+                    <p style={{ fontSize: '12px', marginBottom: '16px' }}>Play a game to see your recent activities here!</p>
+                    <button
+                      onClick={() => changeMenu('Games')}
+                      style={{
+                        ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
+                        fontSize: '12px', padding: '9px 20px'
+                      }}
+                    >
+                      Play Now
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {recentActivities.map((activity, idx) => {
+                      const date = activity.completedAt ? new Date(activity.completedAt) : null;
+                      const formattedDate = date ? date.toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric'
+                      }) : 'Unknown date';
+                      const formattedTime = date ? date.toLocaleTimeString('en-US', {
+                        hour: '2-digit', minute: '2-digit'
+                      }) : '';
+
+                      const gameType = activity.gameType || activity.activityType || 'Game';
+                      const gameTypeLower = String(gameType).toLowerCase();
+
+                      const gameImage = {
+                        'synoquest': '/image/wordpics.png',
+                        'wordpics': '/image/wordpics.png',
+                        'match': '/image/matchgame.png',
+                        'matchgame': '/image/matchgame.png',
+                        'quiz': '/image/quizgame.png',
+                        'quizmaster': '/image/quizgame.png',
+                        'guesswhat': '/image/guesswhatgame.png',
+                        'short-story': '/image/shortstory.png',
+                        'shortstory': '/image/shortstory.png',
+                        'story-quest': '/image/shortstory.png',
+                        'sentencebuilder': '/image/sentence.png',
+                      }[gameTypeLower] || null;
+
+                      const gameEmoji = {
+                        'quiz': '🧠',
+                        'match': '🃏',
+                        'wordpics': '🖼️',
+                        'synoquest': '🖼️',
+                        'guesswhat': '❓',
+                        'short-story': '📖',
+                        'story-quest': '📖',
+                      }[gameTypeLower] || '🎮';
+
+                      const gameLabel = {
+                        'quiz': 'Quiz Master',
+                        'match': 'Match Game',
+                        'synoquest': 'SynoQuest',
+                        'wordpics': 'SynoQuest',
+                        'guesswhat': 'GuessWhat',
+                        'short-story': 'Story Quest',
+                        'story-quest': 'Story Quest',
+                      }[gameTypeLower] || 'Game';
+
+                      const displayTitle = activity.activityTitle
+                        ? `${activity.activityTitle} · ${gameLabel}`
+                        : gameLabel;
+
+                      const score = activity.score || 0;
+                      const correct = activity.correctAnswers || 0;
+                      const total = activity.totalQuestions || 0;
+                      const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+                      return (
+                        <div
+                          key={activity.id || idx}
+                          className="recent-activity-item"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '14px',
+                            padding: '12px 16px', background: palette.creamSoft,
+                            borderRadius: '12px', border: `1px solid ${palette.borderSoft}`,
+                          }}
+                        >
+                          <div style={{
+                            width: '44px', height: '44px', borderRadius: '10px',
+                            background: palette.white, display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', fontSize: '20px', flexShrink: 0,
+                            border: `1.5px solid ${palette.border}`,
+                            overflow: 'hidden'
+                          }}>
+                            {gameImage ? (
+                              <img
+                                src={gameImage}
+                                alt={gameType}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  borderRadius: '10px'
+                                }}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentElement.innerHTML = gameEmoji;
+                                }}
+                              />
+                            ) : (
+                              gameEmoji
+                            )}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '14px', fontWeight: 700, color: palette.deepNavy,
+                              fontFamily: "'Fredoka', sans-serif",
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                              display: 'flex', alignItems: 'center', gap: '6px'
+                            }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayTitle}</span>
+                              {activity.source === 'teacher-pin' && (
+                                <span style={{
+                                  fontSize: '9px', padding: '2px 6px', flexShrink: 0,
+                                  background: `${palette.warmOrange}22`, color: palette.warmOrange,
+                                  borderRadius: '4px', fontWeight: 800
+                                }}>PIN</span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>
+                              {formattedDate}{formattedTime ? ` · ${formattedTime}` : ''}
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{
+                              fontSize: '16px', fontWeight: 800, color: palette.warmOrange,
+                              fontFamily: "'Fredoka', sans-serif"
+                            }}>
+                              +{score} pts
+                            </div>
+                            {total > 0 && (
+                              <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>
+                                {correct}/{total} ({percentage}%)
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -703,10 +1022,10 @@ const Dashboard = () => {
           {showLiveJoinModal && <LiveJoinModal onClose={() => setShowLiveJoinModal(false)} onJoined={handleLiveJoined} />}
 
           {showLevelUpCard && (
-            <LevelUpCelebration 
+            <LevelUpCelebration
               key={`levelup-${levelUpCardLevel}`}
-              level={levelUpCardLevel} 
-              onClose={() => setShowLevelUpCard(false)} 
+              level={levelUpCardLevel}
+              onClose={() => setShowLevelUpCard(false)}
             />
           )}
         </div>

@@ -1,4 +1,7 @@
 // src/services/firebaseService.js
+// ✅ FIXED: Removed the hardcoded `gamesPlayed: 2` in synoQuest
+// ✅ Now: `gamesPlayed: 0` for all games
+
 import { db } from '../pages/firebase';
 import {
   collection,
@@ -102,7 +105,7 @@ export const seedVocabulary = async () => {
 };
 
 // ============================================================
-// 2. USER STATS SERVICES - FIXED FOR ALL GAMES
+// 2. USER STATS SERVICES
 // ============================================================
 
 export const getUserStats = async (userId) => {
@@ -127,6 +130,7 @@ export const getUserStats = async (userId) => {
 };
 
 // ✅ CREATE NEW USER WITH ALL GAME TYPES
+// ✅ FIXED: All games have `gamesPlayed: 0` (previously synoQuest had 2)
 export const createNewUser = async (userId, displayName = 'Player') => {
   try {
     const userRef = doc(db, 'users', userId);
@@ -210,8 +214,9 @@ export const createNewUser = async (userId, displayName = 'Player') => {
           correctAnswers: 0,
           totalQuestions: 0
         },
+        // ✅ FIXED: Previously `gamesPlayed: 2` — changed to `0`
         synoQuest: {
-          gamesPlayed: 2,
+          gamesPlayed: 0,
           bestScores: 0,
           correctAnswers: 0,
           totalQuestions: 0,
@@ -334,10 +339,10 @@ export const updateUserStats = async (userId, gameData) => {
     const newLevel = Math.floor(newTotalPoints / 100) + 1;
     const newXpProgress = newTotalPoints % 100;
     
-    // ========== ✅ UPDATE PER-GAME STATS - FIXED ==========
+    // ========== ✅ UPDATE PER-GAME STATS ==========
     const newGameStats = {
       ...currentGame,
-      gamesPlayed: (currentGame.gamesPlayed || 0) + 1,  // ✅ +1 GAMES PLAYED
+      gamesPlayed: (currentGame.gamesPlayed || 0) + 1,
       correctAnswers: (currentGame.correctAnswers || 0) + (gameData.correctAnswers || 0),
       totalQuestions: (currentGame.totalQuestions || 0) + (gameData.totalQuestions || 0),
       level: Math.floor(((currentGame.gamesPlayed || 0) + 1) / 5) + 1

@@ -1,4 +1,6 @@
 // src/components/dashboard/story-quest/useGameLogic.js
+// ✅ BAGO: May recordGame na parameter para i-record sa Recent Activities
+// ✅ BAGO: Pinapasa ang array ng words na nasagot
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -8,7 +10,10 @@ import allScenes from './storyScenes';
 
 const REFILL_TIME = 1800;
 
-export const useGameLogic = ({ onBack, updateProgress }) => {
+// ============================================================
+// ✅ UPDATED: May recordGame na parameter
+// ============================================================
+export const useGameLogic = ({ onBack, updateProgress, recordGame }) => {
   // ===== GAME STATE =====
   const [gameState, setGameState] = useState('intro');
   const [currentScene, setCurrentScene] = useState(0);
@@ -45,6 +50,9 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
   // ============================================================
   const sessionSavedRef = useRef(false);
   const hasSavedProgressRef = useRef(false);
+
+  // ✅ BAGO: Ref para sa words na nasagot (para sa learned words tracking)
+  const answeredWordsRef = useRef([]);
 
   // ===== REFS =====
   const textTimerRef = useRef(null);
@@ -269,7 +277,7 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
   }, [currentUser, correctAnswers, totalAnswers]);
 
   // ============================================================
-  // ✅ FIXED: Update Dashboard Progress — 1 correct = 1 point = 1 XP = 1 word
+  // ✅ UPDATED: Update Dashboard Progress — may recordGame at words na
   // ============================================================
   const updateDashboardProgress = useCallback(() => {
     // ✅ Check kung na-save na — gamit useRef (synchronous)
@@ -288,7 +296,10 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
     const correct = correctAnswers || 0;
     const pointsEarned = correct; // ✅ 1 correct = 1 point
 
-    console.log(`✅ ShortStory: Saving dashboard progress — +${pointsEarned} pts, +${correct} words`);
+    // ✅ BAGO: Kunin yung listahan ng words na nasagot
+    const wordsList = [...answeredWordsRef.current];
+
+    console.log(`✅ ShortStory: Saving dashboard progress — +${pointsEarned} pts, ${wordsList.length} words`);
 
     updateProgress({
       gamesPlayed: 1,               // ✅ +1 game lang
@@ -304,11 +315,15 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
         storiesCompleted: 1
       }
     }).then(() => {
-      console.log(`✅ ShortStory: DASHBOARD SAVED! +${pointsEarned} pts, +${pointsEarned} XP, +1 game`);
+      console.log(`✅ ShortStory: DASHBOARD SAVED! +${pointsEarned} pts`);
+      // ✅ BAGO: I-record sa recent activities at ipasa yung words
+      if (recordGame) {
+        recordGame('short-story', pointsEarned, correct, totalQuestions, wordsList);
+      }
     }).catch(err => {
       console.error('❌ ShortStory: Error saving dashboard progress:', err);
     });
-  }, [updateProgress, correctAnswers, totalAnswers]);
+  }, [updateProgress, correctAnswers, totalAnswers, recordGame]);
 
   // ===== SPEECH =====
   useEffect(() => {
@@ -405,6 +420,8 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
     // ✅ Reset session saved flags
     sessionSavedRef.current = false;
     hasSavedProgressRef.current = false;
+    // ✅ BAGO: Reset answered words ref
+    answeredWordsRef.current = [];
 
     setTimeout(() => {
       if (!isMountedRef.current) return;
@@ -438,6 +455,13 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
     setSelectedChoice(choice.id);
     setTotalAnswers(prev => prev + 1);
     setShowFeedback(true);
+
+    // ✅ BAGO: I-track yung word na na-encounter (para sa learned words)
+    const currentSceneObj = allScenes[currentSceneRef.current];
+    const currentWord = currentSceneObj?.word || currentSceneObj?.targetWord;
+    if (currentWord && !answeredWordsRef.current.includes(currentWord)) {
+      answeredWordsRef.current.push(currentWord);
+    }
 
     if (choice.correct) {
       setFeedbackType('correct');
@@ -530,6 +554,8 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
     // ✅ Reset session saved flags
     sessionSavedRef.current = false;
     hasSavedProgressRef.current = false;
+    // ✅ BAGO: Reset answered words ref
+    answeredWordsRef.current = [];
   }, [stopSpeaking]);
 
   // ===== EXIT =====
@@ -569,6 +595,12 @@ export const useGameLogic = ({ onBack, updateProgress }) => {
             setShowFeedback(true);
             setFeedbackType('wrong');
             setFeedbackMessage('⏰ Time\'s up! -1 life');
+
+            // ✅ BAGO: I-track yung word kahit nag-timeout
+            const currentWord = scene.word || scene.targetWord;
+            if (currentWord && !answeredWordsRef.current.includes(currentWord)) {
+              answeredWordsRef.current.push(currentWord);
+            }
 
             setLives(prev => {
               const newLives = prev - 1;

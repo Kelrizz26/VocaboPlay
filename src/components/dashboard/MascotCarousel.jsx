@@ -1,9 +1,4 @@
 // src/components/dashboard/MascotCarousel.jsx
-// ============================================================
-// 🐐 MASCOT CAROUSEL
-// ✅ WALANG progress bar sa baba (nasa ExpBar na sa taas)
-// ✅ Sa Level 2 → Young Goat (unlocked)
-// ============================================================
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 

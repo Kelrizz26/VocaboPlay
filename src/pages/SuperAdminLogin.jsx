@@ -1,3 +1,8 @@
+// src/pages/SuperAdminLogin.jsx
+// ============================================================
+// ✅ SUPER ADMIN LOGIN - with Back Button
+// ============================================================
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from "./firebase";
@@ -33,16 +38,9 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
         <path d="M3 21h18" stroke={color} strokeWidth="2" strokeLinecap="round"/>
       </>
     ),
-    user: (
+    arrowLeft: (
       <>
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      </>
-    ),
-    lock: (
-      <>
-        <rect x="4" y="11" width="16" height="10" rx="2" stroke={color} strokeWidth="2" fill="none"/>
-        <path d="M8 11V7a4 4 0 118 0v4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </>
     ),
     eye: (
@@ -119,11 +117,63 @@ const SuperAdminLogin = () => {
       padding: 'clamp(12px, 3vw, 40px)',
       boxSizing: 'border-box',
       fontFamily: FONT_BODY,
+      position: 'relative',
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
+
+      {/* ✅ BACK BUTTON — nasa taas-kaliwa ng page */}
+      <button
+        onClick={() => navigate('/admin')}
+        style={{
+          position: 'fixed',
+          top: '24px',
+          left: '24px',
+          padding: '10px 18px',
+          background: palette.white,
+          color: palette.deepNavy,
+          border: `1.5px solid ${palette.border}`,
+          borderRadius: '12px',
+          fontSize: '13px',
+          fontWeight: 800,
+          cursor: 'pointer',
+          fontFamily: FONT_DISPLAY,
+          boxShadow: `0 3px 0 ${palette.border}`,
+          transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          zIndex: 100,
+        }}
+        onMouseDown={(e) => {
+          e.currentTarget.style.transform = 'translateY(3px)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.borderColor = palette.warmOrange;
+          e.currentTarget.style.color = palette.warmOrange;
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.borderColor = palette.border;
+          e.currentTarget.style.color = palette.deepNavy;
+        }}
+      >
+        <Icon name="arrowLeft" size={16} color="currentColor" />
+        Back
+      </button>
 
       <div style={{
         background: palette.white,
@@ -134,6 +184,7 @@ const SuperAdminLogin = () => {
         boxShadow: `0 10px 40px rgba(42, 40, 69, 0.10), 0 2px 0 ${palette.border}`,
         boxSizing: 'border-box',
         border: `1.5px solid ${palette.border}`,
+        animation: 'fadeIn 0.4s ease-out',
       }}>
         <div style={{
           display: 'flex',

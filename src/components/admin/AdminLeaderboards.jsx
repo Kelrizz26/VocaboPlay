@@ -1,7 +1,7 @@
 // src/components/admin/AdminLeaderboards.jsx
 // ============================================================
 // ✅ ADMIN LEADERBOARDS - Shows ONLY teacher's students
-// Filtered by teacherId (from activities na ginawa ng teacher)
+// Filtered by teacherId (from activities created by the teacher)
 // ============================================================
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -18,7 +18,7 @@ import {
 import { colors, fontFamily, fontFamilyDisplay } from '../dashboard/dashboardStyles';
 import { AVATAR_SHOP_ITEMS, DEFAULT_AVATAR_ID, RARITY_CONFIG } from '../../data/avatarShop';
 
-// ✅ HELPER — Kunin yung avatar URL galing sa Avatar Shop
+// ✅ HELPER — Get the avatar URL from the Avatar Shop
 const getStudentAvatar = (student) => {
   if (!student) return AVATAR_SHOP_ITEMS[0]?.image || '';
   const avatarId = student.equippedAvatar || DEFAULT_AVATAR_ID;
@@ -26,7 +26,7 @@ const getStudentAvatar = (student) => {
   return found?.image || AVATAR_SHOP_ITEMS[0]?.image || '';
 };
 
-// ✅ REUSABLE — Avatar na FACE-FOCUSED
+// ✅ REUSABLE — FACE-FOCUSED Avatar
 const StudentAvatar = ({ student, size = 40, borderRadius = '50%' }) => {
   const [imgError, setImgError] = useState(false);
   const avatarSrc = getStudentAvatar(student);
@@ -92,7 +92,7 @@ const AdminLeaderboards = () => {
   }, [selectedLeaderboard]);
 
   // ============================================================
-  // ✅ FETCH: Students lang na nag-join sa activities ng teacher
+  // ✅ FETCH: Only students who joined the teacher's activities
   // ============================================================
   const fetchTeacherLeaderboard = useCallback(async () => {
     setLoading(true);
@@ -117,7 +117,7 @@ const AdminLeaderboards = () => {
         ...teacherData
       });
 
-      // ✅ STEP 2: Get all activities ng teacher
+      // ✅ STEP 2: Get all activities of the teacher
       const activitiesQuery = query(
         collection(db, 'activities'),
         where('teacherId', '==', user.uid)
@@ -132,7 +132,7 @@ const AdminLeaderboards = () => {
         return;
       }
 
-      // ✅ STEP 3: Get scores para sa teacher's activities → student IDs
+      // ✅ STEP 3: Get scores for the teacher's activities → student IDs
       const scoresSnap = await getDocs(collection(db, 'scores'));
       const studentIds = [];
       scoresSnap.forEach(d => {
@@ -192,7 +192,7 @@ const AdminLeaderboards = () => {
   }, [fetchTeacherLeaderboard]);
 
   // ============================================================
-  // ✅ RE-SORT kapag nagbago yung category
+  // ✅ RE-SORT when the category changes
   // ============================================================
   useEffect(() => {
     if (leaderboardData.length > 0) {
@@ -292,7 +292,7 @@ const AdminLeaderboards = () => {
             fontWeight: 600,
             fontFamily
           }}>
-            Rankings ng iyong students — sila lang ang nag-join sa activities mo
+            Rankings of your students — only those who joined your activities
           </p>
         </div>
         <span style={{
@@ -424,7 +424,7 @@ const AdminLeaderboards = () => {
             fontFamily,
             fontWeight: 600,
           }}>
-            Kapag may nag-join nang student sa activities mo, lalabas sila dito.
+            Once a student joins your activities, they will appear here.
           </p>
         </div>
       ) : (

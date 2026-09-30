@@ -1,13 +1,13 @@
 // src/components/dashboard/GoatMascot.jsx
 // ============================================================
 // 🐐 GOAT MASCOT — Animated growth-stage mascot + CARD SYSTEM
-// ✅ NORMAL MODE — live na from level (walang demo force)
-// ✅ MAY LEVEL UP CARD (LevelUpCelebration)
+// ✅ NORMAL MODE — live from level (no demo force)
+// ✅ HAS LEVEL UP CARD (LevelUpCelebration)
 // ✅ CUSTOM MESSAGES PER LEVEL + CEFR PROGRESSION (A1 → C2)
-// ✅ SPECIAL EVOLUTION ANIMATION PARA SA MILESTONE LEVELS
-// ✅ LEVEL OVERLAY — I-cover ang hardcoded "LEVEL X" sa image
-// ✅ ALIGNED SA MascotCarousel.jsx — 1:1 MAPPING SA LEVEL
-// ✅ INALIS: GoatCardCollection (nasa MyCards.jsx na)
+// ✅ SPECIAL EVOLUTION ANIMATION FOR MILESTONE LEVELS
+// ✅ LEVEL OVERLAY — Cover the hardcoded "LEVEL X" in the image
+// ✅ ALIGNED WITH MascotCarousel.jsx — 1:1 MAPPING PER LEVEL
+// ✅ REMOVED: GoatCardCollection (now in MyCards.jsx)
 // ============================================================
 
 import React, { useEffect, useState } from 'react';
@@ -44,7 +44,7 @@ const FONT_BODY = "'Nunito', sans-serif";
 const DEMO_MODE = false;
 
 // ============================================================
-// ✅ GET MASCOT BY LEVEL — ALIGNED SA MascotCarousel.jsx
+// ✅ GET MASCOT BY LEVEL — ALIGNED WITH MascotCarousel.jsx
 // ============================================================
 export const getMascotByLevel = (level) => {
   if (DEMO_MODE) {

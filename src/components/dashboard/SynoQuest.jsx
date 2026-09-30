@@ -1,4 +1,9 @@
 // src/components/dashboard/SynoQuest.jsx
+// ✅ NEW: Has recordGame prop to record in Recent Activities
+// ✅ NEW: Passes the array of answered words (correct + wrong)
+// ✅ FIX: saveGameToFirebase called in gameover useEffect and handleExitGame
+// ✅ FIX: gameType: 'synoQuest' (camelCase consistent)
+// ✅ FIX: gameStateRef so the state is always correct in async calls
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -365,7 +370,7 @@ const getWordsByLevel = (level) => {
 // ============================================================
 // ===== SYNOQUEST COMPONENT =====
 // ============================================================
-const SynoQuest = ({ onBack, updateProgress }) => {
+const SynoQuest = ({ onBack, updateProgress, recordGame }) => {
   const [gameState, setGameState] = useState('intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
@@ -384,6 +389,16 @@ const SynoQuest = ({ onBack, updateProgress }) => {
   const [isUserLoaded, setIsUserLoaded] = useState(false);
 
   const sessionSavedRef = useRef(false);
+  const firebaseSavedRef = useRef(false);
+
+  // ✅ FIX: gameStateRef so the state is always correct in async calls
+  const gameStateRef = useRef('intro');
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  // ✅ NEW: Ref for answered words (for learned words tracking)
+  const answeredWordsRef = useRef([]);
 
   const [timer, setTimer] = useState(15);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -929,6 +944,11 @@ const SynoQuest = ({ onBack, updateProgress }) => {
     const allFilled = blanks.every(pos => userFilledBlanks[pos] !== undefined);
     const isCorrect = filledWord === word && allFilled;
 
+    // ✅ NEW: Track the answered word (for learned words)
+    if (!answeredWordsRef.current.includes(word)) {
+      answeredWordsRef.current.push(word);
+    }
+
     if (isCorrect) {
       if (!answeredQuestions.includes(currentQuestion.id)) {
         console.log('✅ Correct answer:', currentQuestion.word);
@@ -982,7 +1002,7 @@ const SynoQuest = ({ onBack, updateProgress }) => {
             setGameState('gameover');
             setShowFeedback(false);
             playGameOverSound();
-            saveGameToFirebase();
+            // ❌ NO LONGER CALLED HERE — it's in the gameover useEffect now
           }, 2000);
         } else {
           setFeedbackMessage(`❌ Wrong! ${missing.length} blank(s) left. ${newLives} lives left`);
@@ -1000,9 +1020,12 @@ const SynoQuest = ({ onBack, updateProgress }) => {
     }, 1500);
   };
 
-  const saveGameToFirebase = async () => {
+  // ============================================================
+  // ✅ FIXED: saveGameToFirebase — clearer logging and validation
+  // ============================================================
+  const saveGameToFirebase = useCallback(async () => {
     if (!currentUser) {
-      console.log('⚠️ No user logged in, skipping Firebase save');
+      console.log('⚠️ [SynoQuest] No user logged in, skipping Firebase save');
       return;
     }
 
@@ -1024,22 +1047,29 @@ const SynoQuest = ({ onBack, updateProgress }) => {
       levelReached: currentLevel
     };
 
+    console.log('💾 [SynoQuest] Saving game to Firebase...');
+    console.log('   userId:', userId);
+    console.log('   gameData:', gameData);
+
     try {
-      console.log('💾 Saving synoQuest game to Firebase...');
       const result = await updateUserStats(userId, gameData);
 
-      if (result.achievements && result.achievements.length > 0) {
+      console.log('✅ [SynoQuest] game saved successfully!');
+      console.log('   result:', result);
+
+      if (result && result.achievements && result.achievements.length > 0) {
         console.log('🏆 New Achievements Unlocked:', result.achievements);
         setFeedbackMessage(`🏆 New Achievements: ${result.achievements.join(', ')} 🎉`);
         setShowFeedback(true);
         setTimeout(() => setShowFeedback(false), 5000);
       }
-
-      console.log('✅ synoQuest game saved to Firebase successfully!');
     } catch (error) {
-      console.error('❌ Error saving to Firebase:', error);
+      console.error('❌ [SynoQuest] Error saving to Firebase:', error);
+      console.error('   error.message:', error?.message);
+      console.error('   error.code:', error?.code);
+      console.error('   error.stack:', error?.stack);
     }
-  };
+  }, [currentUser, questionNumber, correctCount, score, currentLevel]);
 
   const saveProgressOnLevelUp = async () => {
     if (!currentUser) return;
@@ -1059,11 +1089,13 @@ const SynoQuest = ({ onBack, updateProgress }) => {
       levelReached: currentLevel
     };
 
+    console.log('💾 [SynoQuest] Saving progress on level up...', gameData);
+
     try {
       await updateUserStats(userId, gameData);
-      console.log('✅ Progress saved on level up!');
+      console.log('✅ [SynoQuest] Progress saved on level up!');
     } catch (error) {
-      console.error('❌ Error saving on level up:', error);
+      console.error('❌ [SynoQuest] Error saving on level up:', error);
     }
   };
 
@@ -1179,6 +1211,9 @@ const SynoQuest = ({ onBack, updateProgress }) => {
       setUserFilledBlanks({});
       setUsedLetters([]);
       sessionSavedRef.current = false;
+      firebaseSavedRef.current = false;
+      // ✅ NEW: Reset the answered words ref
+      answeredWordsRef.current = [];
       const newQuestions = generateQuestions(1);
       setQuestions(newQuestions);
       setCurrentQuestionIndex(0);
@@ -1189,6 +1224,7 @@ const SynoQuest = ({ onBack, updateProgress }) => {
       setTimerRunning(true);
       setGameState('playing');
       setShowNoLivesMessage(false);
+      console.log('🎮 [SynoQuest] Game started — sessionSaved & firebaseSaved reset');
     }, 2000);
   };
 
@@ -1316,6 +1352,11 @@ const SynoQuest = ({ onBack, updateProgress }) => {
         return;
       }
 
+      // ✅ NEW: Track the word even if it timed out
+      if (!answeredWordsRef.current.includes(currentQuestion.word)) {
+        answeredWordsRef.current.push(currentQuestion.word);
+      }
+
       if (!answeredQuestions.includes(currentQuestion.id)) {
         if (!wrongQuestions.some(q => q.id === currentQuestion.id)) {
           setWrongQuestions(prev => [...prev, currentQuestion]);
@@ -1339,7 +1380,7 @@ const SynoQuest = ({ onBack, updateProgress }) => {
             setGameState('gameover');
             setShowFeedback(false);
             playGameOverSound();
-            saveGameToFirebase();
+            // ❌ NO LONGER CALLED HERE — it's in the gameover useEffect now
           }, 2000);
         } else {
           setFeedbackMessage(`⏰ Time's up! ${newLives} lives left`);
@@ -1358,74 +1399,99 @@ const SynoQuest = ({ onBack, updateProgress }) => {
   }, [timer, timerRunning, lives, currentLevel, currentQuestion]);
 
   // ============================================================
-  // ✅ FIXED: GAMEOVER SAVE — Pinalitan ang "wordPics" ng "SynoQuest"
+  // ✅ FIXED: GAMEOVER SAVE — now calls saveGameToFirebase()
   // ============================================================
   useEffect(() => {
-    if (gameState === 'gameover' && updateProgress) {
-      if (sessionSavedRef.current) {
-        console.log('⚠️ SynoQuest: Already saved — skipping duplicate');
-        return;
+    if (gameState === 'gameover') {
+      // 1️⃣ SAVE TO FIRESTORE (gameStats.synoQuest)
+      if (!firebaseSavedRef.current && currentUser) {
+        firebaseSavedRef.current = true;
+        console.log('🎮 [SynoQuest] Game over detected — triggering Firebase save');
+        saveGameToFirebase();
       }
-      sessionSavedRef.current = true;
 
-      const totalQuestions = questionNumber || 0;
-      const totalAnswers = totalQuestions;
-      const correctAnswers = correctCount || 0;
+      // 2️⃣ SAVE TO LOCAL PROGRESS (updateProgress)
+      if (updateProgress && !sessionSavedRef.current) {
+        sessionSavedRef.current = true;
 
-      const saved = localStorage.getItem('vocaboplay_progress');
-      const currentProgress = saved ? JSON.parse(saved) : {};
+        const totalQuestions = questionNumber || 0;
+        const totalAnswers = totalQuestions;
+        const correctAnswers = correctCount || 0;
 
-      const today = new Date().toDateString();
-      const lastPlayed = localStorage.getItem('vocaboplay_lastPlayed');
-      let newStreak = currentProgress.streak || 0;
+        // ✅ NEW: Get the list of answered words
+        const wordsList = [...answeredWordsRef.current];
 
-      if (!lastPlayed || lastPlayed !== today) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toDateString();
+        const saved = localStorage.getItem('vocaboplay_progress');
+        const currentProgress = saved ? JSON.parse(saved) : {};
 
-        if (lastPlayed === yesterdayStr) {
-          newStreak = (currentProgress.streak || 0) + 1;
-        } else {
-          newStreak = 1;
+        const today = new Date().toDateString();
+        const lastPlayed = localStorage.getItem('vocaboplay_lastPlayed');
+        let newStreak = currentProgress.streak || 0;
+
+        if (!lastPlayed || lastPlayed !== today) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toDateString();
+
+          if (lastPlayed === yesterdayStr) {
+            newStreak = (currentProgress.streak || 0) + 1;
+          } else {
+            newStreak = 1;
+          }
+          localStorage.setItem('vocaboplay_lastPlayed', today);
         }
-        localStorage.setItem('vocaboplay_lastPlayed', today);
-      }
 
-      console.log(`✅ SynoQuest: Saving progress (1st and ONLY time) — +${score} pts`);
+        console.log(`✅ SynoQuest: Saving progress — +${score} pts, ${wordsList.length} words`);
 
-      updateProgress({
-        gamesPlayed: 1,
-        totalPoints: score,
-        xp: score,
-        wordsLearned: correctCount,
-        totalAnswers: totalAnswers,
-        correctAnswers: correctAnswers,
-        streak: newStreak,
-        SynoQuest: {
-          gamesCompleted: 1,
+        updateProgress({
+          gamesPlayed: 1,
+          totalPoints: score,
+          xp: score,
+          wordsLearned: correctCount,
+          totalAnswers: totalAnswers,
           correctAnswers: correctAnswers,
-          totalQuestions: totalQuestions
-        }
-      }).then(() => {
-        console.log(`✅ SynoQuest: SAVED! +${score} pts, +${score} XP, +1 game`);
-      }).catch(err => {
-        console.error('❌ SynoQuest: Error saving progress:', err);
-      });
+          streak: newStreak,
+          SynoQuest: {
+            gamesCompleted: 1,
+            correctAnswers: correctAnswers,
+            totalQuestions: totalQuestions
+          }
+        }).then(() => {
+          console.log(`✅ SynoQuest: SAVED! +${score} pts`);
+          // ✅ NEW: Record to recent activities and pass the words
+          if (recordGame) {
+            recordGame('synoquest', score, correctCount, totalQuestions, wordsList);
+          }
+        }).catch(err => {
+          console.error('❌ SynoQuest: Error saving progress:', err);
+        });
+      }
     }
-  }, [gameState, score, correctCount, questionNumber, updateProgress]);
+  }, [gameState, score, correctCount, questionNumber, updateProgress, recordGame, currentUser, saveGameToFirebase]);
 
   // ============================================================
-  // ✅ FIXED: EXIT GAME SAVE — Pinalitan ang "wordPics" ng "SynoQuest"
+  // ✅ FIXED: EXIT GAME SAVE — saves regardless of gameState
   // ============================================================
   const handleExitGame = async () => {
-    if (gameState === 'playing') {
-      await saveGameToFirebase();
+    // ✅ FIX: Save regardless of gameState (except intro and loading)
+    if (gameState !== 'intro' && gameState !== 'loading') {
+      console.log('🚪 [SynoQuest] Exit requested — gameState:', gameState);
+      console.log('   score:', score, '| correct:', correctCount, '| questions:', questionNumber);
 
+      // 1️⃣ SAVE TO FIRESTORE
+      if (!firebaseSavedRef.current && currentUser) {
+        firebaseSavedRef.current = true;
+        await saveGameToFirebase();
+      }
+
+      // 2️⃣ SAVE TO LOCAL PROGRESS
       if (updateProgress && !sessionSavedRef.current) {
         sessionSavedRef.current = true;
         const totalQuestions = questionNumber || 0;
         const correctAnswers = correctCount || 0;
+
+        // ✅ NEW: Get the list of answered words
+        const wordsList = [...answeredWordsRef.current];
 
         console.log(`✅ SynoQuest: Saving progress on exit — +${score} pts`);
 
@@ -1443,10 +1509,16 @@ const SynoQuest = ({ onBack, updateProgress }) => {
           }
         }).then(() => {
           console.log('✅ SynoQuest: Progress saved on exit!');
+          // ✅ NEW: Record to recent activities and pass the words
+          if (recordGame) {
+            recordGame('synoquest', score, correctCount, totalQuestions, wordsList);
+          }
         }).catch(err => {
           console.error('❌ SynoQuest: Error saving progress on exit:', err);
         });
       }
+    } else {
+      console.log('⚠️ [SynoQuest] Exit called but gameState is', gameState, '— skipping save');
     }
     setShowExitConfirm(true);
   };

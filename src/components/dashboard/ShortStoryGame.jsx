@@ -1,3 +1,6 @@
+// src/components/dashboard/ShortStoryGame.jsx
+// ✅ NEW: Has recordGame prop and passes it to useGameLogic
+
 import React, { Suspense, lazy } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
@@ -44,8 +47,11 @@ const ThreeDLoading = () => (
   </div>
 );
 
-const ShortStoryGame = ({ onBack, updateProgress }) => {
-  const game = useGameLogic({ onBack, updateProgress });
+// ============================================================
+// ✅ UPDATED: Has recordGame prop, passed to useGameLogic
+// ============================================================
+const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
+  const game = useGameLogic({ onBack, updateProgress, recordGame });
 
   // ===== INTRO SCREEN =====
   if (game.gameState === 'intro') {

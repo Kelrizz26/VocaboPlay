@@ -2,9 +2,9 @@
 // ============================================================
 // 🎴 CARD VIEWER — White detailed card (Fully Responsive)
 // ✅ Mobile-first design
-// ✅ Touch-friendly buttons at spacing
+// ✅ Touch-friendly buttons and spacing
 // ✅ Responsive text sizes
-// ✅ Scrollable kung hindi kasya sa screen
+// ✅ Scrollable if it doesn't fit on screen
 // ============================================================
 
 import React, { useEffect } from 'react';
@@ -19,7 +19,7 @@ const FONT_BODY = "'Nunito', sans-serif";
 export const CardViewer = ({ level, onClose }) => {
   const data = getLevelCardData(level);
 
-  // ✅ Lock body scroll habang bukas ang modal
+  // ✅ Lock body scroll while modal is open
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -188,7 +188,7 @@ export const CardViewer = ({ level, onClose }) => {
           transform: scale(0.98);
         }
         
-        /* ✅ TABLET at DESKTOP — bigger sizes */
+        /* ✅ TABLET and DESKTOP — bigger sizes */
         @media (min-width: 640px) {
           .cv-overlay {
             padding: 20px;
@@ -279,7 +279,7 @@ export const CardViewer = ({ level, onClose }) => {
           }
         }
         
-        /* ✅ Landscape mobile — mas compact */
+        /* ✅ Landscape mobile — more compact */
         @media (max-height: 500px) and (orientation: landscape) {
           .cv-content {
             max-height: 95vh;

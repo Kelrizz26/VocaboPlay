@@ -1,4 +1,12 @@
-import React, { useState } from 'react';
+// src/pages/AdminLogin.jsx
+// ============================================================
+// ✅ TEACHER LOGIN - with HIDDEN Super Admin Access
+// ✅ Trigger: Tap the Crown icon 5 times within 3 seconds
+// ✅ Then enter access code: VOCABO2026
+// ✅ Works on BOTH desktop (click) and mobile (tap)
+// ============================================================
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from "./firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
@@ -37,6 +45,7 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
     check: (<path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
     warning: (<><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M12 9v4M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></>),
     crown: (<><path d="M3 17l2-10 5 5 2-7 2 7 5-5 2 10H3z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M3 21h18" stroke={color} strokeWidth="2" strokeLinecap="round"/></>),
+    lock: (<><rect x="4" y="11" width="16" height="10" rx="2" stroke={color} strokeWidth="2" fill="none"/><path d="M8 11V7a4 4 0 118 0v4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></>),
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
@@ -58,6 +67,71 @@ const AdminLogin = () => {
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+
+  // ============================================================
+  // ✅ HIDDEN SUPER ADMIN ACCESS - Crown tap 5x + Code modal
+  // ============================================================
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [codeVerifying, setCodeVerifying] = useState(false);
+  const SECRET_CODE = 'VOCABO2026'; // 🔐 Secret access code
+
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef(null);
+
+  // Trigger: Crown tap/click 5 times within 3 seconds
+  const handleCrownClick = () => {
+    clickCountRef.current += 1;
+
+    // Reset counter after 3 seconds of inactivity
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 3000);
+
+    // After 5 taps, show the access code modal
+    if (clickCountRef.current >= 5) {
+      clickCountRef.current = 0;
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      setShowCodeModal(true);
+      setAccessCode('');
+      setCodeError('');
+    }
+  };
+
+  // Verify the access code
+  const handleVerifyCode = (e) => {
+    e.preventDefault();
+    setCodeError('');
+
+    if (!accessCode.trim()) {
+      setCodeError('Please enter the access code');
+      return;
+    }
+
+    setCodeVerifying(true);
+
+    // Small delay for UX feel
+    setTimeout(() => {
+      if (accessCode.trim().toUpperCase() === SECRET_CODE.toUpperCase()) {
+        setShowCodeModal(false);
+        setAccessCode('');
+        setCodeVerifying(false);
+        navigate('/super-admin-login');
+      } else {
+        setCodeError('Invalid access code. Please try again.');
+        setCodeVerifying(false);
+      }
+    }, 400);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    };
+  }, []);
 
   const chunkyButton = (bg, shadowColor, size = 'md') => {
     const sizes = {
@@ -164,6 +238,7 @@ const AdminLogin = () => {
         .nav-mobile { display: none !important; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes mascotBounce { 0%, 100% { transform: translateY(0) scaleY(1); } 45% { transform: translateY(-22px) scaleY(1.02); } 50% { transform: translateY(-24px) scaleY(1.04); } 55% { transform: translateY(-22px) scaleY(1.02); } }
         @keyframes mascotSquash { 0%, 40%, 60%, 100% { transform: scale(1, 1); } 48% { transform: scale(1.08, 0.9); } 52% { transform: scale(1.08, 0.9); } }
         @keyframes earWiggle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-6deg); } }
@@ -177,6 +252,7 @@ const AdminLogin = () => {
         .platform-glow { animation: platformGlow 3.2s ease-in-out infinite; }
         .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
         .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.25s ease-out forwards; }
         .split-container { display: flex; min-height: 100vh; padding-top: 80px; background: ${palette.white}; overflow: hidden; }
         .left-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 60px; background: ${palette.cream}; min-height: calc(100vh - 80px); }
         .right-side { flex: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${palette.warmOrange} 0%, ${palette.coral} 100%); padding: 40px; position: relative; overflow: hidden; min-height: calc(100vh - 80px); }
@@ -199,7 +275,16 @@ const AdminLogin = () => {
 
       <nav className="admin-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(253, 249, 243, 0.98)', backdropFilter: 'blur(10px)', borderBottom: `1.5px solid ${palette.border}`, zIndex: 1000, padding: '15px 30px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div onClick={() => navigate('/')} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), fontSize: '16px', padding: '8px 18px' }}>
+          {/* ✅ VocaboPlay Logo — normal home navigation */}
+          <div
+            onClick={() => navigate('/')}
+            style={{
+              ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
+              fontSize: '16px',
+              padding: '8px 18px',
+              userSelect: 'none',
+            }}
+          >
             VocaboPlay
           </div>
 
@@ -235,11 +320,37 @@ const AdminLogin = () => {
       <div className="split-container">
         <div className="left-side">
           <div className="admin-card animate-slide-up" style={{ backgroundColor: palette.white, borderRadius: 20, padding: 'clamp(24px, 3vw, 36px)', width: '100%', maxWidth: 400, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.10)', border: `1.5px solid ${palette.border}` }}>
+            {/* ✅ Crown icon — hidden trigger (tap 5x) */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 14, background: `${palette.warmOrange}15`, border: `1.5px solid ${palette.warmOrange}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div
+                onClick={handleCrownClick}
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 14,
+                  background: `${palette.warmOrange}15`,
+                  border: `1.5px solid ${palette.warmOrange}40`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation',
+                  transition: 'transform 0.1s ease',
+                }}
+                onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+                onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+                onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                title=""
+              >
                 <Icon name="crown" size={26} color={palette.warmOrange} />
               </div>
             </div>
+
             <h1 className="admin-title" style={{ fontSize: 'clamp(22px, 4vw, 26px)', fontWeight: 800, color: palette.deepNavy, margin: '0 0 6px 0', textAlign: 'center', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>Teacher Login</h1>
             <p className="admin-subtitle" style={{ fontSize: 'clamp(12px, 3vw, 13px)', color: palette.bodyTextSoft, margin: '0 0 clamp(20px, 4vw, 28px) 0', textAlign: 'center', lineHeight: 1.5, fontFamily: FONT_BODY, fontWeight: 600 }}>Access your class dashboard</p>
 
@@ -320,10 +431,6 @@ const AdminLogin = () => {
                 Not a teacher? <a onClick={() => !loading && navigate('/login')} style={{ color: palette.warmOrange, textDecoration: 'none', fontWeight: 800, cursor: 'pointer' }}>Student Login</a>
               </p>
             </div>
-
-            <p style={{ fontSize: 13, color: palette.bodyText, margin: '8px 0 0 0', textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 600 }}>
-              <span style={{ color: palette.warmOrange }}>★</span> Super Admin? <a onClick={() => !loading && navigate('/super-admin-login')} style={{ color: palette.coral, textDecoration: 'none', fontWeight: 800, cursor: 'pointer' }}>Log in here</a>
-            </p>
           </div>
         </div>
 
@@ -364,6 +471,206 @@ const AdminLogin = () => {
           </div>
         </div>
       </div>
+
+      {/* ✅ ACCESS CODE MODAL — Lalabas pagka-click ng crown 5x */}
+      {showCodeModal && (
+        <div
+          onClick={() => !codeVerifying && setShowCodeModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(42, 40, 69, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="animate-scale-in"
+            style={{
+              background: palette.white,
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 380,
+              width: '100%',
+              boxShadow: '0 20px 60px rgba(42, 40, 69, 0.35)',
+              border: `1.5px solid ${palette.border}`,
+              boxSizing: 'border-box',
+              position: 'relative',
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => !codeVerifying && setShowCodeModal(false)}
+              disabled={codeVerifying}
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                background: palette.creamSoft,
+                border: `1.5px solid ${palette.border}`,
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                cursor: codeVerifying ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                opacity: codeVerifying ? 0.5 : 1,
+              }}
+            >
+              <Icon name="close" size={14} color={palette.bodyTextSoft} />
+            </button>
+
+            {/* Icon */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 16,
+                background: `${palette.warmOrange}15`,
+                border: `1.5px solid ${palette.warmOrange}40`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon name="lock" size={26} color={palette.warmOrange} />
+              </div>
+            </div>
+
+            <h2 style={{
+              fontSize: 20,
+              fontWeight: 800,
+              color: palette.deepNavy,
+              margin: '0 0 6px 0',
+              textAlign: 'center',
+              fontFamily: FONT_DISPLAY,
+              letterSpacing: '-0.3px',
+            }}>
+              🔐 Restricted Access
+            </h2>
+            <p style={{
+              fontSize: 12,
+              color: palette.bodyTextSoft,
+              margin: '0 0 20px 0',
+              textAlign: 'center',
+              fontFamily: FONT_BODY,
+              fontWeight: 600,
+              lineHeight: 1.5,
+            }}>
+              Enter the access code to continue to Super Admin
+            </p>
+
+            {codeError && (
+              <div style={{
+                padding: '10px 14px',
+                background: `${palette.coral}12`,
+                border: `1.5px solid ${palette.coral}40`,
+                borderRadius: 10,
+                color: palette.coral,
+                fontSize: 12,
+                marginBottom: 14,
+                fontFamily: FONT_BODY,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}>
+                <Icon name="warning" size={13} color={palette.coral} />
+                {codeError}
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyCode}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                <label style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: palette.bodyTextSoft,
+                  fontFamily: FONT_DISPLAY,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}>
+                  Access Code
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter access code"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  autoFocus
+                  required
+                  disabled={codeVerifying}
+                  style={{
+                    padding: '12px 14px',
+                    border: `1.5px solid ${palette.border}`,
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontFamily: FONT_BODY,
+                    fontWeight: 700,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: palette.creamSoft,
+                    color: palette.deepNavy,
+                    outline: 'none',
+                    textAlign: 'center',
+                    letterSpacing: '2px',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCodeModal(false)}
+                  disabled={codeVerifying}
+                  style={{
+                    flex: 1,
+                    padding: 12,
+                    background: palette.creamSoft,
+                    color: palette.deepNavy,
+                    border: `1.5px solid ${palette.border}`,
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: codeVerifying ? 'not-allowed' : 'pointer',
+                    fontFamily: FONT_DISPLAY,
+                    opacity: codeVerifying ? 0.5 : 1,
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={codeVerifying}
+                  style={{
+                    flex: 1.5,
+                    padding: 12,
+                    background: palette.warmOrange,
+                    color: palette.white,
+                    border: 'none',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: codeVerifying ? 'not-allowed' : 'pointer',
+                    fontFamily: FONT_DISPLAY,
+                    boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
+                    opacity: codeVerifying ? 0.7 : 1,
+                    letterSpacing: '0.03em',
+                  }}
+                  onMouseDown={(e) => !codeVerifying && pressButton(e, palette.warmOrangeShadow)}
+                  onMouseUp={(e) => !codeVerifying && releaseButton(e, palette.warmOrangeShadow)}
+                  onMouseLeave={(e) => !codeVerifying && releaseButton(e, palette.warmOrangeShadow)}
+                >
+                  {codeVerifying ? 'Verifying...' : 'Verify Code'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showForgotPassword && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)', padding: 16 }} onClick={() => setShowForgotPassword(false)}>

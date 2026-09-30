@@ -8,7 +8,7 @@ import React from 'react';
 import { colors, fontFamily, fontFamilyDisplay } from "../dashboard/dashboardStyles";
 import { AVATAR_SHOP_ITEMS, DEFAULT_AVATAR_ID } from '../../data/avatarShop';
 
-// ✅ HELPER — Kunin yung avatar image galing sa Avatar Shop
+// ✅ HELPER — Get the avatar image from the Avatar Shop
 const getStudentAvatar = (student) => {
   if (!student) return AVATAR_SHOP_ITEMS[0]?.image || '';
   const avatarId = student.equippedAvatar || DEFAULT_AVATAR_ID;

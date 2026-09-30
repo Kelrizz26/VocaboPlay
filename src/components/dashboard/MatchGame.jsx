@@ -1,4 +1,6 @@
 // src/components/dashboard/MatchGame.jsx
+// ✅ NEW: Has recordGame prop to record in Recent Activities
+// ✅ NEW: Passes the array of matched words
 
 import React, { useState, useEffect, useRef } from 'react';
 import { updateStreak } from '../../utils/streakHelper';
@@ -153,7 +155,10 @@ const theme = {
   surfaceBorder: palette.border,
 };
 
-const MatchGame = ({ onBack, updateProgress }) => {
+// ============================================================
+// ✅ UPDATED: Has recordGame prop
+// ============================================================
+const MatchGame = ({ onBack, updateProgress, recordGame }) => {
   // ===== GAME STATE =====
   const [gameState, setGameState] = useState('intro');
   const [score, setScore] = useState(0);
@@ -188,10 +193,12 @@ const MatchGame = ({ onBack, updateProgress }) => {
   const [totalAnswers, setTotalAnswers] = useState(0);
 
   // ============================================================
-  // ✅ FIXED: Gumamit ng useRef para sa sessionSaved flag
-  // Kasi ang useRef ay SYNCHRONOUS — guaranteed na isang save lang
+  // ✅ FIXED: Use useRef for the sessionSaved flag
   // ============================================================
   const sessionSavedRef = useRef(false);
+
+  // ✅ NEW: Ref for matched words (for learned words tracking)
+  const matchedWordsRef = useRef([]);
 
   // ===== FIREBASE USER =====
   const [currentUser, setCurrentUser] = useState(null);
@@ -606,6 +613,8 @@ const MatchGame = ({ onBack, updateProgress }) => {
     
     // ✅ Reset session saved flag
     sessionSavedRef.current = false;
+    // ✅ NEW: Reset matched words ref
+    matchedWordsRef.current = [];
     console.log('🔄 MatchGame: New game started — sessionSaved reset');
 
     const saved = localStorage.getItem('matchgame_leaderboard');
@@ -617,6 +626,7 @@ const MatchGame = ({ onBack, updateProgress }) => {
 
   const startGame = () => {
     sessionSavedRef.current = false;
+    matchedWordsRef.current = [];
     setGameState('loading');
     setTimeout(() => {
       initializeGame();
@@ -677,21 +687,22 @@ const MatchGame = ({ onBack, updateProgress }) => {
   }, [matches, difficulty]);
 
   // ============================================================
-  // ✅ FIXED: saveGameProgress — gumamit ng useRef (SYNCHRONOUS)
+  // ✅ UPDATED: saveGameProgress — now has recordGame and words array
   // ============================================================
   const saveGameProgress = (isWin) => {
-    // ✅ Check kung na-save na — gamit ang useRef (100% accurate, synchronous)
     if (sessionSavedRef.current) {
       console.log('⚠️ MatchGame: Already saved — skipping duplicate');
       return;
     }
     
-    // ✅ Set AGAD bago mag-async work
     sessionSavedRef.current = true;
     console.log(`✅ MatchGame: Saving progress (1st and ONLY time) — +${matches} pts`);
 
     const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;
     const isPerfect = matches === totalPairs;
+
+    // ✅ NEW: Get the list of matched words
+    const wordsList = [...matchedWordsRef.current];
 
     const saved = localStorage.getItem('vocaboplay_progress');
     const currentProgress = saved ? JSON.parse(saved) : {};
@@ -713,7 +724,6 @@ const MatchGame = ({ onBack, updateProgress }) => {
       localStorage.setItem('vocaboplay_lastPlayed', today);
     }
 
-    // ✅ 1 match = 1 point = 1 XP = 1 word (increment lang)
     const progressData = {
       gamesPlayed: 1,
       totalPoints: matches,
@@ -736,6 +746,10 @@ const MatchGame = ({ onBack, updateProgress }) => {
       updateProgress(progressData)
         .then(() => {
           console.log(`✅ MatchGame: SAVED! +${matches} pts, +${matches} XP, +1 game`);
+          // ✅ NEW: Record to recent activities and pass the words
+          if (recordGame) {
+            recordGame('match', matches, matches, attempts, wordsList);
+          }
         })
         .catch(err => {
           console.error('❌ MatchGame: Error saving:', err);
@@ -779,6 +793,14 @@ const MatchGame = ({ onBack, updateProgress }) => {
           setFlippedCards([]);
           setIsLocked(false);
           playMatchSuccess();
+
+          // ✅ NEW: Track the matched word (for learned words)
+          const matchedWord = card1.type === 'word' ? card1.content
+                            : card2.type === 'word' ? card2.content
+                            : card1.word || card2.word;
+          if (matchedWord && !matchedWordsRef.current.includes(matchedWord)) {
+            matchedWordsRef.current.push(matchedWord);
+          }
 
           const newMatches = matches + 1;
           const totalPairs = difficulty === 'easy' ? 8 : difficulty === 'medium' ? 10 : 12;

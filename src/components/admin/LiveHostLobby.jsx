@@ -1,7 +1,11 @@
 // src/components/admin/LiveHostLobby.jsx
+// ✅ NEW: Saves activityId, gameType, and activityTitle in the session document
+//          so it appears in the student's Recent Activities after the game
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth } from '../../pages/firebase';
+import { auth, db } from '../../pages/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import {
   createLiveSession,
   subscribeToSession,
@@ -43,7 +47,9 @@ const LiveHostLobby = ({ activity, onStart, onCancel }) => {
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
 
-  // Create session on mount
+  // ============================================================
+  // ✅ Create session on mount + save activity info
+  // ============================================================
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -54,11 +60,32 @@ const LiveHostLobby = ({ activity, onStart, onCancel }) => {
           return;
         }
 
+        // ✅ Step 1: Create a new live session
         const newSession = await createLiveSession(
           activity.id,
           user.uid,
           user.displayName || 'Teacher'
         );
+
+        // ✅ Step 2: Also save the activity info to the session document
+        //          So that it definitely has activityId, gameType, activityTitle
+        if (newSession?.sessionId) {
+          try {
+            const sessionRef = doc(db, 'liveSessions', newSession.sessionId);
+            await updateDoc(sessionRef, {
+              activityId: activity.id,
+              gameType: activity.gameType || 'quiz',
+              activityTitle: activity.title || 'Quiz',
+            });
+            console.log('✅ LiveHostLobby: Saved activity info to session', {
+              activityId: activity.id,
+              gameType: activity.gameType,
+              activityTitle: activity.title,
+            });
+          } catch (updateErr) {
+            console.warn('⚠️ LiveHostLobby: Could not save activity info:', updateErr);
+          }
+        }
 
         setSession(newSession);
         setLoading(false);
@@ -76,9 +103,11 @@ const LiveHostLobby = ({ activity, onStart, onCancel }) => {
         deleteSession(session.sessionId).catch(console.error);
       }
     };
-  }, [activity.id]);
+  }, [activity.id, activity.gameType, activity.title]);
 
-  // Subscribe to session updates
+  // ============================================================
+  // ✅ Subscribe to session updates
+  // ============================================================
   useEffect(() => {
     if (!session?.sessionId) return;
 

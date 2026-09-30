@@ -1,10 +1,11 @@
 // src/components/AdminDashboard.jsx
 // ============================================================
 // ✅ ADMIN DASHBOARD - Updated with Teacher-Only Student Filter
-// Shows only students who joined THIS teacher's activities
+// ✅ UPDATED: Matrix Table with Q1-Q20, Summary, and Print Report
+// ✅ PRESERVED: All other existing code (CreateActivityModal, etc.)
 // ============================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../pages/firebase';
 import {
@@ -139,7 +140,7 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = 
 };
 
 // ============================================================
-// ===== CREATE ACTIVITY MODAL =====
+// ===== CREATE ACTIVITY MODAL (UNCHANGED) =====
 // ============================================================
 const CreateActivityModal = ({ onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
@@ -759,11 +760,14 @@ const CreateActivityModal = ({ onClose, onCreated }) => {
 };
 
 // ============================================================
-// ===== LIVE SCOREBOARD =====
+// ===== LIVE SCOREBOARD (UPDATED WITH MATRIX & PRINT) =====
 // ============================================================
-const TeacherLiveScoreboard = ({ activityId }) => {
+const TeacherLiveScoreboard = ({ activity, students = [] }) => {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const activityId = activity?.id;
+  const totalQ = activity?.totalQuestions || 0;
 
   useEffect(() => {
     if (!activityId) return;
@@ -782,46 +786,136 @@ const TeacherLiveScoreboard = ({ activityId }) => {
     return () => unsubscribe();
   }, [activityId]);
 
+  // Summary Stats
+  const summaryStats = useMemo(() => {
+    if (scores.length === 0) return { average: 0, highest: 0, lowest: 0 };
+    const scoreValues = scores.map(s => s.score || 0);
+    const total = scoreValues.reduce((sum, s) => sum + s, 0);
+    return {
+      average: (total / scores.length).toFixed(1),
+      highest: Math.max(...scoreValues),
+      lowest: Math.min(...scoreValues)
+    };
+  }, [scores]);
+
+  // Generate Q numbers (Q1 to Q20)
+  const questionNumbers = Array.from({ length: totalQ }, (_, i) => i + 1);
+
   if (loading) return <div style={{ padding: '16px', textAlign: 'center', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: 600 }}>Loading scores...</div>;
 
   return (
     <div style={{ background: palette.creamSoft, padding: '16px', borderRadius: '14px', border: `1.5px solid ${palette.border}` }}>
-      <h3 style={{ 
-        marginBottom: '14px', 
-        fontSize: '14px', 
-        fontWeight: 800, 
-        color: palette.deepNavy, 
-        fontFamily: FONT_DISPLAY,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
-        <Icon name="chart" size={14} color={palette.teal} />
-        Live Scores
-      </h3>
+      
+      {/* PRINT CSS */}
+      <style>{`
+        @media print {
+          @page { size: landscape; margin: 8mm; }
+          body { background: white !important; }
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
+          .modal-overlay { position: static !important; background: transparent !important; padding: 0 !important; }
+          .modal-content { max-width: 100% !important; max-height: 100% !important; overflow: visible !important; box-shadow: none !important; border: none !important; padding: 0 !important; background: white !important; }
+          .print-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+          .print-table th, .print-table td { border: 1px solid #000 !important; padding: 4px !important; text-align: center; color: #000 !important; }
+          .print-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+          .correct-cell { color: green !important; font-weight: bold; }
+          .incorrect-cell { color: red !important; font-weight: bold; }
+        }
+      `}</style>
+
+      {/* PRINT HEADER (Only visible on paper) */}
+      <div className="print-only" style={{ display: 'none', marginBottom: '15px', textAlign: 'left' }}>
+        <h2 style={{ margin: '0 0 5px 0', fontSize: '18px' }}>Quiz Report: {activity?.title}</h2>
+        <p style={{ margin: '0 0 5px 0', fontSize: '12px' }}><strong>Date:</strong> {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        <p style={{ margin: 0, fontSize: '12px' }}><strong>Average:</strong> {summaryStats.average} | <strong>Highest:</strong> {summaryStats.highest} | <strong>Lowest:</strong> {summaryStats.lowest}</p>
+      </div>
+
+      {/* ON-SCREEN HEADER & SUMMARY */}
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+        <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: palette.deepNavy, fontFamily: FONT_DISPLAY, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Icon name="chart" size={14} color={palette.teal} />
+          Live Scores & Matrix Breakdown
+        </h3>
+        <div style={{ display: 'flex', gap: '15px', fontSize: '12px', fontWeight: 700, color: palette.bodyText, fontFamily: FONT_BODY }}>
+          <span>Avg: <span style={{ color: palette.warmOrange }}>{summaryStats.average}</span></span>
+          <span>High: <span style={{ color: palette.softGreen }}>{summaryStats.highest}</span></span>
+          <span>Low: <span style={{ color: palette.danger }}>{summaryStats.lowest}</span></span>
+        </div>
+      </div>
+
       {scores.length === 0 ? (
         <p style={{ color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: 600, margin: 0 }}>No students have answered yet.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT_BODY }}>
-          <thead>
-            <tr style={{ borderBottom: `1.5px solid ${palette.border}` }}>
-              <th style={{ padding: '8px', textAlign: 'left', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Student</th>
-              <th style={{ padding: '8px', textAlign: 'center', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Score</th>
-              <th style={{ padding: '8px', textAlign: 'right', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Rank</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scores.map((score, index) => (
-              <tr key={score.id} style={{ borderBottom: `1.5px solid ${palette.borderSoft}` }}>
-                <td style={{ padding: '8px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>{score.studentName}</td>
-                <td style={{ padding: '8px', textAlign: 'center', color: palette.warmOrange, fontWeight: 800, fontFamily: FONT_DISPLAY }}>{score.score}</td>
-                <td style={{ padding: '8px', textAlign: 'right', color: palette.bodyText, fontWeight: 700 }}>
-                  {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}`}
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="print-table" style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT_BODY }}>
+            <thead>
+              <tr style={{ borderBottom: `1.5px solid ${palette.border}` }}>
+                <th style={{ padding: '8px', textAlign: 'left', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Rank</th>
+                <th style={{ padding: '8px', textAlign: 'left', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Student</th>
+                <th style={{ padding: '8px', textAlign: 'center', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Score</th>
+                {questionNumbers.map(q => (
+                  <th key={`Q${q}`} style={{ padding: '4px', textAlign: 'center', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '9px', fontWeight: 800 }}>Q{q}</th>
+                ))}
+                <th style={{ padding: '8px', textAlign: 'center', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Correct</th>
+                <th style={{ padding: '8px', textAlign: 'center', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>Wrong</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {scores.map((score, index) => {
+                const correct = score.score || 0;
+                const incorrect = totalQ - correct;
+                
+                // ✅ FIX: Flexible answers parsing (handles arrays, objects, etc.)
+                const answers = score.answers || score.responses || {}; 
+
+                // ✅ FIX: Get real student name from students array
+                const studentProfile = students.find(s => s.id === score.studentId);
+                const studentDisplayName = studentProfile ? studentProfile.displayName : (score.studentName && score.studentName !== 'New User' ? score.studentName : 'Unknown Student');
+
+                return (
+                  <React.Fragment key={score.id}>
+                    <tr style={{ borderBottom: `1.5px solid ${palette.borderSoft}` }}>
+                      <td style={{ padding: '8px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>
+                        {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}`}
+                      </td>
+                      {/* ✅ FIX: Use mapped student name */}
+                      <td style={{ padding: '8px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_DISPLAY, textAlign: 'left' }}>{studentDisplayName}</td>
+                      <td style={{ padding: '8px', textAlign: 'center', color: palette.warmOrange, fontWeight: 800, fontFamily: FONT_DISPLAY }}>{correct}/{totalQ}</td>
+                      {questionNumbers.map(q => {
+                        let isCorrect = false;
+                        
+                        // ✅ FIX: Robust matrix parsing
+                        if (Array.isArray(answers)) {
+                           // If array of booleans [true, false, true...]
+                           isCorrect = answers[q - 1] === true;
+                        } else if (typeof answers === 'object' && answers !== null) {
+                           // If object {Q1: true, Q2: false} or {1: true, 2: false} or {"1": true}
+                           isCorrect = answers[`Q${q}`] === true || answers[`q${q}`] === true || answers[q] === true || answers[`${q}`] === true;
+                        }
+                        
+                        return (
+                          <td key={`Q${q}`} style={{ padding: '4px', textAlign: 'center' }}>
+                            {isCorrect ? <span className="correct-cell">✅</span> : <span className="incorrect-cell">❌</span>}
+                          </td>
+                        );
+                      })}
+                      <td style={{ padding: '8px', textAlign: 'center', color: palette.softGreen, fontWeight: 700 }}>{correct}</td>
+                      <td style={{ padding: '8px', textAlign: 'center', color: palette.danger, fontWeight: 700 }}>{incorrect}</td>
+                    </tr>
+                    {/* ✅ FIX: Warning if answers data is completely missing */}
+                    {(!score.answers && !score.responses) && index === 0 && (
+                      <tr>
+                        <td colSpan={questionNumbers.length + 5} style={{ color: palette.danger, fontSize: '11px', textAlign: 'center', padding: '8px', background: `${palette.danger}10` }}>
+                          ⚠️ Warning: This score record does not contain per-question answers data. The matrix will show all as incorrect. Please check your game saving logic to ensure it saves the `answers` object.
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -1337,23 +1431,36 @@ const AdminDashboard = () => {
       )}
 
       {showScoresModal && selectedActivityForScores && (
-        <div style={styles.modalOverlay} onClick={() => setShowScoresModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button style={styles.modalClose} onClick={() => setShowScoresModal(false)}>
+        <div className="modal-overlay" style={styles.modalOverlay} onClick={() => setShowScoresModal(false)}>
+          <div className="modal-content" style={{...styles.modalContent, maxWidth: '95vw', width: '100%'}} onClick={(e) => e.stopPropagation()}>
+            <button className="no-print" style={styles.modalClose} onClick={() => setShowScoresModal(false)}>
               <Icon name="close" size={20} color={palette.bodyTextSoft} />
             </button>
-            <h2 style={styles.modalTitle}>
+            <h2 className="no-print" style={styles.modalTitle}>
               <Icon name="chart" size={18} color={palette.teal} />
               Scores for: {selectedActivityForScores.title}
             </h2>
 
-            <TeacherLiveScoreboard activityId={selectedActivityForScores.id} />
+            {/* ✅ FIX: Pass students array to the scoreboard */}
+            <TeacherLiveScoreboard 
+              activity={selectedActivityForScores} 
+              students={students} 
+            />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '10px' }}>
+              <button
+                onClick={() => window.print()}
+                style={{...styles.publishBtn, background: palette.teal, boxShadow: `0 3px 0 ${palette.tealShadow}`, flex: '0 0 auto', padding: '12px 24px'}}
+                onMouseDown={e => pressBtn(e)}
+                onMouseUp={e => releaseBtn(e, palette.tealShadow)}
+                onMouseLeave={e => releaseBtn(e, palette.tealShadow)}
+              >
+                🖨️ Print Report
+              </button>
               <button
                 onClick={() => setShowScoresModal(false)}
-                style={styles.publishBtn}
-                onMouseDown={e => pressBtn(e, palette.warmOrangeShadow)}
+                style={{...styles.publishBtn, flex: '0 0 auto', padding: '12px 24px'}}
+                onMouseDown={e => pressBtn(e)}
                 onMouseUp={e => releaseBtn(e, palette.warmOrangeShadow)}
                 onMouseLeave={e => releaseBtn(e, palette.warmOrangeShadow)}
               >

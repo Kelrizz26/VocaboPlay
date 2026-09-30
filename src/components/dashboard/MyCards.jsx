@@ -1,10 +1,10 @@
 // src/components/dashboard/MyCards.jsx
 // ============================================================
 // 🎴 MY CARDS — Fully Responsive Card Collection
-// ✅ MOBILE-FIRST — 2 columns sa mobile, 3-5 columns sa desktop
-// ✅ Touch-friendly — mas malaking tap targets
-// ✅ Responsive text at padding
-// ✅ Card Viewer — gumagamit ng CardViewer
+// ✅ MOBILE-FIRST — 2 columns on mobile, 3-5 columns on desktop
+// ✅ Touch-friendly — larger tap targets
+// ✅ Responsive text and padding
+// ✅ Card Viewer — uses CardViewer
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -302,7 +302,7 @@ const GoatCardCollection = ({ currentLevel = 1 }) => {
           }
         }
         
-        /* ✅ EXTRA SMALL MOBILE (below 380px) — mas compact */
+        /* ✅ EXTRA SMALL MOBILE (below 380px) — more compact */
         @media (max-width: 379px) {
           .collection-container {
             padding: 12px 8px;
@@ -405,7 +405,7 @@ const GoatCardCollection = ({ currentLevel = 1 }) => {
         </div>
       </div>
 
-      {/* ✅ CARD VIEWER — Puting detailed card */}
+      {/* ✅ CARD VIEWER — White detailed card */}
       {selectedCard && (
         <CardViewer 
           key={`card-view-${selectedCard}`}
