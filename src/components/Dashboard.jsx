@@ -815,7 +815,7 @@ const Dashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                   <div>
                     <h3 style={{ fontSize: '18px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", margin: 0 }}>
-                      Recent Activities/Played
+                      Recent Activities and Recent Played
                     </h3>
                     <p style={{ fontSize: '12px', color: palette.bodyTextSoft, margin: '4px 0 0 0' }}>
                       Your recently played games and scores
