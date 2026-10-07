@@ -2,7 +2,7 @@
 // ============================================================
 // ✅ Sidebar hidden on all non-game pages (normal)
 // ✅ Sidebar COMPLETELY removed from DOM when a game is active
-// ✅ Hamburger icon shown only during game
+// ✅ Hamburger icon shown on mobile ALWAYS when sidebar is closed
 // ✅ All other features preserved
 // ============================================================
 import React, { useState, useEffect } from 'react';
@@ -147,9 +147,15 @@ const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentGame, setCurrentGame] = useState(null);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  
+  // ✅ FIXED: Initial sidebar state — closed on mobile, open on desktop
+  const [isSidebarVisible, setIsSidebarVisible] = useState(
+    typeof window !== 'undefined' ? window.innerWidth > 768 : true
+  );
   const [contentKey, setContentKey] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
 
   const [recentActivities, setRecentActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
@@ -174,30 +180,26 @@ const Dashboard = () => {
   const userId = localStorage.getItem('userId');
   const { stats, loading, error } = useUserStats(userId);
 
-  // ✅ KEY VARIABLE — determines sidebar rendering
-  // If in a game: sidebar ONLY shows if user explicitly opened via hamburger
-  // If NOT in a game: sidebar shows normally
   const isInGame = currentGame !== null;
-  const shouldShowSidebar = isInGame ? isSidebarVisible : isSidebarVisible;
 
+  // ✅ FIXED: Resize handler — automatically adjusts sidebar on resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
+      // On desktop, always show sidebar. On mobile, always hide it.
+      setIsSidebarVisible(!mobile);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ✅ CRITICAL: When entering/exiting a game, force sidebar to close
-  // This ALWAYS runs when currentGame changes
+  // ✅ When entering a game, hide sidebar. When exiting, restore on desktop.
   useEffect(() => {
     if (currentGame) {
-      // ✅ Entering a game — hide sidebar (hamburger will show)
       setIsSidebarVisible(false);
     } else {
-      // ✅ Exiting game — restore sidebar (desktop only)
       setIsSidebarVisible(!isMobile);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -470,14 +472,12 @@ const Dashboard = () => {
 
   const handleLogout = () => { localStorage.clear(); auth.signOut().catch(console.error); navigate('/'); };
 
-  // ✅ CRITICAL: startGame — sets currentGame which triggers the useEffect above
   const startGame = (gameId) => {
     const availableGames = ['wordpics', 'match', 'quiz', 'guesswhat', 'short-story'];
     if (!availableGames.includes(gameId)) {
       console.warn('❌ Invalid game ID:', gameId);
       return;
     }
-    console.log('🎮 Starting game:', gameId);
     setCurrentGame(gameId);
     setActiveMenu(null);
     setIsSidebarVisible(false);
@@ -494,6 +494,7 @@ const Dashboard = () => {
     setActiveMenu(menu);
     setContentKey(prev => prev + 1);
     setCurrentGame(null);
+    // ✅ Close sidebar on mobile when menu is selected
     if (isMobile) setIsSidebarVisible(false);
   };
 
@@ -562,7 +563,9 @@ const Dashboard = () => {
         .recent-activity-item { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .recent-activity-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(42, 40, 69, 0.06); }
 
+        /* ✅ HAMBURGER BUTTON — base style (hidden by default) */
         .hamburger-btn {
+          display: none;
           position: fixed;
           top: 16px;
           left: 16px;
@@ -572,7 +575,6 @@ const Dashboard = () => {
           background: ${palette.deepNavy};
           border: 2px solid rgba(255,255,255,0.15);
           border-radius: 12px;
-          display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
@@ -582,15 +584,17 @@ const Dashboard = () => {
         .hamburger-btn:hover { background: ${palette.deepNavyLight}; }
         .hamburger-btn:active { transform: scale(0.94); }
 
+        /* ✅ SHOW HAMBURGER on mobile */
         @media (max-width: 768px) {
+          .hamburger-btn { display: flex !important; }
           .main-content { padding: 16px !important; }
           .dashboard-welcome { flex-direction: column !important; text-align: center !important; padding: 20px !important; }
           .recent-activity-item { flex-wrap: wrap; }
         }
       `}</style>
 
-      {/* ✅ HAMBURGER — shows only when IN GAME and sidebar is hidden */}
-      {isInGame && !isSidebarVisible && (
+      {/* ✅ HAMBURGER — shows on mobile whenever sidebar is closed */}
+      {isMobile && !isSidebarVisible && (
         <button
           className="hamburger-btn"
           onClick={() => setIsSidebarVisible(true)}
@@ -600,7 +604,7 @@ const Dashboard = () => {
         </button>
       )}
 
-      {/* ✅ SIDEBAR — Always rendered unless in-game-with-sidebar-hidden */}
+      {/* ✅ SIDEBAR for non-game state */}
       {!isInGame && (
         <div className="sidebar-fixed open" style={{
           width: '260px',
@@ -645,7 +649,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* ✅ SIDEBAR OVERLAY — only when IN GAME and user opened hamburger */}
+      {/* ✅ IN-GAME overlay sidebar (when hamburger opened during a game) */}
       {isInGame && isSidebarVisible && (
         <div
           onClick={() => setIsSidebarVisible(false)}
@@ -691,7 +695,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* ✅ REGULAR OVERLAY — when NOT in game and sidebar visible (for mobile tap-to-close) */}
+      {/* ✅ Overlay — tap to close sidebar on mobile (non-game) */}
       {!isInGame && isSidebarVisible && isMobile && (
         <div onClick={() => setIsSidebarVisible(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.4)', zIndex: 999 }} />
       )}
@@ -950,4 +954,4 @@ const styles = {
   startBtn: { flex: 2, padding: '12px', ...chunkyButton(palette.softGreen, palette.softGreenShadow), fontSize: '13px' },
 };
 
-export default Dashboard; 
+export default Dashboard;
