@@ -3,9 +3,6 @@
    ============================================================ */
 
 /* ITO YUNG TEST — dapat may RED BORDER sa buong screen mo */
-#root {
-  border: 8px solid red !important;
-}
 
 /* Landscape fix */
 @media (orientation: landscape) and (max-height: 600px) {
@@ -21,15 +18,5 @@
     padding: 0 !important;
   }
 
-  #root {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 200vw !important;
-    height: 200dvh !important;
-    transform: scale(0.5) !important;
-    transform-origin: top left !important;
-    overflow: hidden !important;
-    border: 8px solid red !important;
-  }
+
 }
