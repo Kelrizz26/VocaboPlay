@@ -1,4 +1,5 @@
 // src/components/dashboard/SynoQuest.jsx
+// ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
 // ✅ All existing features preserved
 // ✅ UPDATED: Timer 15s → 12s → 10s (max 10s)
 // ✅ UPDATED: Dev Panel matches MatchGame layout
@@ -55,13 +56,215 @@ const images = {
 };
 
 const fullScreenBg = {
-  position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflowY: 'auto',
+  position: 'fixed', top: 0, left: 0, width: '100vw',
+  height: '100vh', minHeight: '100dvh', overflowY: 'auto',
   backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.65), rgba(58, 55, 87, 0.55)), url(${imageBasePath}bg-synoquest.png)`,
   backgroundSize: '130% 130%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
   animation: 'bgPan 30s ease-in-out infinite alternate', fontFamily: FONT_BODY,
 };
 
-const bgAnimationStyle = (<style>{`@keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } }`}</style>);
+// ✅ COMPREHENSIVE LANDSCAPE CSS
+const bgAnimationStyle = (<style>{`
+  @keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } }
+
+  /* ============================================================
+     LANDSCAPE MOBILE — KEY FIX
+     ============================================================ */
+  @media (max-height: 500px) and (orientation: landscape) {
+
+    /* -------- PLAYING SCREEN -------- */
+    .sq-play-wrapper {
+      padding: 4px 10px !important;
+      height: 100dvh !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+    }
+
+    /* Header */
+    .sq-header {
+      padding: 4px 10px !important;
+      margin-bottom: 4px !important;
+      border-radius: 10px !important;
+      max-width: 100% !important;
+    }
+    .sq-header span { font-size: 9px !important; }
+    .sq-header button { font-size: 12px !important; padding: 0 4px !important; }
+    .sq-header > div { gap: 3px !important; }
+    .sq-header > div > div { padding: 1px 6px !important; font-size: 8px !important; border-radius: 6px !important; }
+    .sq-header > div > div:last-child { padding: 1px 8px !important; font-size: 10px !important; }
+    .sq-header-hearts span { font-size: 11px !important; }
+    .sq-header-timer { width: 20px !important; height: 20px !important; font-size: 9px !important; }
+
+    /* Main card */
+    .sq-main-card {
+      padding: 8px 14px !important;
+      border-radius: 14px !important;
+      max-height: calc(100dvh - 45px) !important;
+      overflow-y: auto !important;
+      width: 100% !important;
+      max-width: 720px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Level indicator row */
+    .sq-level-row { margin-bottom: 6px !important; }
+    .sq-level-row span { font-size: 11px !important; }
+
+    /* Image comparison row */
+    .sq-image-row {
+      padding: 6px 10px !important;
+      margin-bottom: 8px !important;
+      gap: 8px !important;
+      border-radius: 10px !important;
+    }
+    .sq-image-box {
+      width: 80px !important;
+      height: 80px !important;
+      border-radius: 8px !important;
+    }
+    .sq-image-arrow { font-size: 20px !important; }
+    .sq-image-eq {
+      font-size: 18px !important;
+      padding: 0 10px !important;
+      border-radius: 8px !important;
+    }
+
+    /* Category text */
+    .sq-category {
+      font-size: 11px !important;
+      margin-bottom: 6px !important;
+    }
+
+    /* Word blanks */
+    .sq-blanks-row {
+      gap: 4px !important;
+      margin-bottom: 8px !important;
+      padding: 8px 10px !important;
+      border-radius: 10px !important;
+    }
+    .sq-blank-box {
+      width: 30px !important;
+      height: 36px !important;
+      font-size: 16px !important;
+      border-radius: 8px !important;
+    }
+
+    /* Letter options */
+    .sq-letters-row {
+      gap: 4px !important;
+      margin-bottom: 8px !important;
+      padding: 8px 10px !important;
+      border-radius: 10px !important;
+      min-height: 38px !important;
+    }
+    .sq-letter-btn {
+      width: 34px !important;
+      height: 34px !important;
+      font-size: 14px !important;
+      border-radius: 8px !important;
+    }
+
+    /* Clear/Submit buttons */
+    .sq-action-btns {
+      gap: 6px !important;
+      margin-bottom: 6px !important;
+    }
+    .sq-action-btn {
+      padding: 8px !important;
+      font-size: 11px !important;
+      border-radius: 10px !important;
+    }
+
+    /* Hint button */
+    .sq-hint-btn {
+      padding: 8px !important;
+      font-size: 10px !important;
+      border-radius: 10px !important;
+      margin-bottom: 6px !important;
+    }
+
+    /* Feedback */
+    .sq-feedback { font-size: 10px !important; padding: 5px !important; border-radius: 8px !important; }
+
+    /* -------- INTRO SCREEN -------- */
+    .sq-intro-card {
+      max-width: 720px !important;
+      padding: 12px 20px !important;
+      border-radius: 16px !important;
+      max-height: calc(100dvh - 12px) !important;
+      overflow-y: auto !important;
+    }
+    .sq-intro-icon { width: 44px !important; height: 44px !important; margin-bottom: 6px !important; }
+    .sq-intro-icon > div { width: 28px !important; height: 28px !important; font-size: 16px !important; }
+    .sq-intro-chip { padding: 3px 8px !important; font-size: 10px !important; margin-bottom: 4px !important; }
+    .sq-intro-chip span { font-size: 10px !important; }
+    .sq-intro-title { font-size: 20px !important; margin-bottom: 0 !important; }
+    .sq-intro-sub { font-size: 10px !important; margin-bottom: 8px !important; }
+    .sq-intro-stats { gap: 6px !important; margin-bottom: 8px !important; }
+    .sq-intro-stats > div { padding: 4px 10px !important; }
+    .sq-intro-stats span { font-size: 11px !important; }
+    .sq-intro-levels { gap: 2px !important; padding: 4px !important; margin-bottom: 8px !important; }
+    .sq-intro-level-item { padding: 2px !important; font-size: 7px !important; border-radius: 4px !important; }
+    .sq-intro-level-item > div:first-child { font-size: 10px !important; }
+    .sq-intro-hearts { padding: 4px !important; margin-bottom: 8px !important; }
+    .sq-intro-hearts span { font-size: 14px !important; }
+    .sq-intro-hearts + span { font-size: 10px !important; }
+    .sq-intro-btn { padding: 10px !important; font-size: 12px !important; border-radius: 10px !important; }
+    .sq-intro-back-btn { padding: 6px !important; font-size: 10px !important; margin-top: 4px !important; }
+
+    /* -------- FINISHED / GAMEOVER -------- */
+    .sq-end-card {
+      max-width: 720px !important;
+      padding: 14px 20px !important;
+      border-radius: 16px !important;
+      max-height: calc(100dvh - 12px) !important;
+      overflow-y: auto !important;
+    }
+    .sq-end-emoji { font-size: 40px !important; margin-bottom: 2px !important; }
+    .sq-end-title { font-size: 18px !important; margin-bottom: 2px !important; }
+    .sq-end-sub { font-size: 11px !important; margin-bottom: 8px !important; }
+    .sq-end-stats { gap: 6px !important; margin-bottom: 8px !important; }
+    .sq-end-stat-box { padding: 8px !important; border-radius: 8px !important; }
+    .sq-end-stat-box > div:first-child { font-size: 15px !important; }
+    .sq-end-stat-box > div:last-child { font-size: 8px !important; }
+    .sq-end-reward { padding: 8px !important; margin-bottom: 6px !important; border-radius: 10px !important; }
+    .sq-end-reward span { font-size: 12px !important; }
+    .sq-end-btn { padding: 8px !important; font-size: 11px !important; border-radius: 8px !important; }
+
+    /* -------- MODALS -------- */
+    .sq-modal-card {
+      padding: 14px 18px !important;
+      max-width: 640px !important;
+      max-height: calc(100dvh - 12px) !important;
+      overflow-y: auto !important;
+      border-radius: 14px !important;
+    }
+    .sq-modal-card h2 { font-size: 16px !important; margin-bottom: 2px !important; }
+    .sq-modal-card h3 { font-size: 15px !important; margin-bottom: 4px !important; }
+    .sq-modal-card p { font-size: 11px !important; margin-bottom: 6px !important; }
+    .sq-modal-emoji { font-size: 32px !important; margin-bottom: 2px !important; }
+    .sq-modal-price-btn { padding: 8px 12px !important; border-radius: 10px !important; }
+    .sq-modal-price-btn > div:first-child > div:first-child { font-size: 20px !important; }
+    .sq-modal-price-btn > div:first-child > div:last-child > div:first-child { font-size: 12px !important; }
+    .sq-modal-btn { padding: 8px !important; font-size: 11px !important; border-radius: 8px !important; }
+
+    /* -------- LOADING -------- */
+    .sq-loading-card { padding: 20px !important; max-width: 400px !important; }
+    .sq-loading-card h2 { font-size: 22px !important; }
+    .sq-loading-bar { height: 22px !important; margin-top: 16px !important; }
+  }
+
+  @media (max-height: 380px) and (orientation: landscape) {
+    .sq-main-card { padding: 6px 10px !important; }
+    .sq-image-box { width: 65px !important; height: 65px !important; }
+    .sq-blank-box { width: 26px !important; height: 30px !important; font-size: 14px !important; }
+    .sq-letter-btn { width: 28px !important; height: 28px !important; font-size: 12px !important; }
+    .sq-header > div > div { padding: 1px 5px !important; font-size: 7px !important; }
+  }
+`}</style>);
 
 const theme = {
   cardBg: palette.white, cardBorder: `1.5px solid ${palette.border}`,
@@ -107,7 +310,6 @@ const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const QUESTIONS_PER_LEVEL = 10;
 const COMPLETION_BONUS_DIAMONDS = 50;
 
-// ✅ Timer progression: A1=15s, A2=12s, B1/B2/C1/C2=10s (max 10s)
 const LEVEL_CONFIG = {
   'A1': { timer: 15, label: 'A1 - Beginner', emoji: '🟢', questionsPerLevel: 10 },
   'A2': { timer: 12, label: 'A2 - Elementary', emoji: '🟢', questionsPerLevel: 10 },
@@ -416,13 +618,11 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
 
   const checkIfAllAnswered = () => answeredQuestions.length >= questions.length && questions.length === QUESTIONS_PER_LEVEL;
 
-  // ✅ C2 mastery → finished screen + completion bonus
   const performLevelUp = () => {
     const currentIndex = CEFR_LEVELS.indexOf(currentLevel);
     setHintsUsedThisLevel(0);
 
     if (currentIndex === CEFR_LEVELS.length - 1) {
-      // 🏆 ALL LEVELS COMPLETE
       if (!completionBonusSavedRef.current && currentUser) {
         completionBonusSavedRef.current = true;
         setCompletionBonus(COMPLETION_BONUS_DIAMONDS);
@@ -866,7 +1066,6 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer, timerRunning]);
 
-  // ✅ Handle both gameover and finished screens
   useEffect(() => {
     if (gameState !== 'gameover' && gameState !== 'finished') return;
 
@@ -949,9 +1148,6 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
   const confirmExit = () => { setShowExitConfirm(false); setShowSettings(false); backgroundMusic.stop(); if (onBack) onBack(); };
   const cancelExit = () => setShowExitConfirm(false);
 
-  // ============================================================
-  // ===== 🧪 DEV PANEL HANDLERS (matches MatchGame) =====
-  // ============================================================
   const showDevPanel = typeof window !== 'undefined' && window.location.search.includes('dev=1');
 
   const devJumpToLevel = (level) => {
@@ -1002,7 +1198,6 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
     setLastRefillTime(Date.now()); lastRefillTimeRef.current = Date.now();
   };
 
-  // ✅ FIXED: Removed setPreviousLevel / setNextLevelName (not declared) — just jump
   const devForceLevelUp = (from, to) => {
     devJumpToLevel(to);
   };
@@ -1046,13 +1241,13 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
 
   const ExitConfirmModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px' }}>
-      <div style={{ background: palette.white, borderRadius: '18px', padding: '28px', maxWidth: '340px', width: '100%', textAlign: 'center', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }}>
-        <div style={{ fontSize: '40px', marginBottom: '8px' }}>❌</div>
+      <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '28px', maxWidth: '340px', width: '100%', textAlign: 'center', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }}>
+        <div className="sq-modal-emoji" style={{ fontSize: '40px', marginBottom: '8px' }}>❌</div>
         <h3 style={{ fontSize: '18px', fontWeight: '800', color: palette.deepNavy, marginBottom: '6px', fontFamily: FONT_DISPLAY }}>Exit Game?</h3>
         <p style={{ fontSize: '13px', color: palette.bodyTextSoft, marginBottom: '20px', fontFamily: FONT_BODY, fontWeight: 600 }}>Your progress will be saved.</p>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={confirmExit} style={{ flex: 1, padding: '10px', background: palette.danger, color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.dangerShadow}` }}>Yes, End</button>
-          <button onClick={cancelExit} style={{ flex: 1, padding: '10px', background: palette.creamSoft, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Cancel</button>
+          <button onClick={confirmExit} className="sq-modal-btn" style={{ flex: 1, padding: '10px', background: palette.danger, color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.dangerShadow}` }}>Yes, End</button>
+          <button onClick={cancelExit} className="sq-modal-btn" style={{ flex: 1, padding: '10px', background: palette.creamSoft, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -1060,9 +1255,9 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
 
   const HeartShopModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2500, padding: '20px' }}>
-      <div style={{ background: palette.white, borderRadius: '20px', padding: '28px 24px', maxWidth: '460px', width: '100%', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.4)' }}>
+      <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '20px', padding: '28px 24px', maxWidth: '460px', width: '100%', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.4)' }}>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '4px' }}>❤️</div>
+          <div className="sq-modal-emoji" style={{ fontSize: '48px', marginBottom: '4px' }}>❤️</div>
           <h2 style={{ fontSize: '22px', fontWeight: '800', color: palette.deepNavy, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>
             {continueFromGameOver ? 'Continue Playing?' : 'Refill Hearts'}
           </h2>
@@ -1082,6 +1277,7 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
             const canAfford = localDiamonds >= pkg.diamonds;
             return (
               <button key={pkg.id} onClick={() => handleBuyHearts(pkg)} disabled={!canAfford || heartShopProcessing}
+                className="sq-modal-price-btn"
                 style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: '14px', border: `2px solid ${pkg.popular ? palette.warmOrange : canAfford ? palette.border : `${palette.danger}40`}`, background: pkg.popular ? `linear-gradient(135deg, ${palette.warmOrange}10, ${palette.coral}10)` : canAfford ? palette.creamSoft : `${palette.danger}08`, cursor: canAfford && !heartShopProcessing ? 'pointer' : 'not-allowed', opacity: heartShopProcessing ? 0.5 : 1, fontFamily: FONT_DISPLAY }}>
                 {pkg.popular && (<div style={{ position: 'absolute', top: '-8px', right: '12px', background: palette.warmOrange, color: 'white', fontSize: '9px', fontWeight: '800', padding: '2px 8px', borderRadius: '6px' }}>POPULAR</div>)}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1100,9 +1296,9 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
           })}
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => { setShowHeartShop(false); setContinueFromGameOver(false); }} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Cancel</button>
+          <button onClick={() => { setShowHeartShop(false); setContinueFromGameOver(false); }} className="sq-modal-btn" style={{ flex: 1, padding: '12px', borderRadius: '12px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Cancel</button>
           {continueFromGameOver && (
-            <button onClick={() => { setShowHeartShop(false); setContinueFromGameOver(false); giveUpGame(); }} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: palette.danger, color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.dangerShadow}` }}>Give Up</button>
+            <button onClick={() => { setShowHeartShop(false); setContinueFromGameOver(false); giveUpGame(); }} className="sq-modal-btn" style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: palette.danger, color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.dangerShadow}` }}>Give Up</button>
           )}
         </div>
         <p style={{ fontSize: '10px', color: palette.bodyTextSoft, textAlign: 'center', marginTop: '12px', fontFamily: FONT_BODY, fontWeight: 600 }}>💡 Earn diamonds by playing with high accuracy!</p>
@@ -1112,7 +1308,7 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
 
   const SettingsModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={() => setShowSettings(false)}>
-      <div style={{ background: palette.white, borderRadius: '18px', padding: '24px', maxWidth: '360px', width: '100%', maxHeight: '80vh', overflow: 'auto', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }} onClick={e => e.stopPropagation()}>
+      <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '24px', maxWidth: '360px', width: '100%', maxHeight: '90dvh', overflow: 'auto', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '17px', fontWeight: '800', color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>Settings</h3>
           <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: palette.bodyTextSoft }}>✕</button>
@@ -1126,18 +1322,18 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
         </div>
         <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '12px', fontWeight: '700', color: palette.bodyText, fontFamily: FONT_DISPLAY }}>🔊 Sound</span>
-          <button onClick={() => { const newMuted = !isMuted; setIsMuted(newMuted); if (gainNode.current) gainNode.current.gain.value = newMuted ? 0 : 0.4; }} style={{ padding: '3px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{isMuted ? 'OFF' : 'ON'}</button>
+          <button onClick={() => { const newMuted = !isMuted; setIsMuted(newMuted); if (gainNode.current) gainNode.current.gain.value = newMuted ? 0 : 0.4; }} className="sq-modal-btn" style={{ padding: '3px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{isMuted ? 'OFF' : 'ON'}</button>
         </div>
-        <button onClick={() => { setShowLeaderboard(true); setShowSettings(false); }} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginBottom: '6px', fontFamily: FONT_DISPLAY }}>🏆 Leaderboard</button>
-        <button onClick={handleExitGame} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.danger}40`, background: `${palette.danger}10`, color: palette.danger, cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginBottom: '6px', fontFamily: FONT_DISPLAY }}>❌ Exit Game</button>
-        <button onClick={() => { setShowSettings(false); setGameState('intro'); }} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>🔄 New Game</button>
+        <button onClick={() => { setShowLeaderboard(true); setShowSettings(false); }} className="sq-modal-btn" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginBottom: '6px', fontFamily: FONT_DISPLAY }}>🏆 Leaderboard</button>
+        <button onClick={handleExitGame} className="sq-modal-btn" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.danger}40`, background: `${palette.danger}10`, color: palette.danger, cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginBottom: '6px', fontFamily: FONT_DISPLAY }}>❌ Exit Game</button>
+        <button onClick={() => { setShowSettings(false); setGameState('intro'); }} className="sq-modal-btn" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>🔄 New Game</button>
       </div>
     </div>
   );
 
   const LeaderboardModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={() => setShowLeaderboard(false)}>
-      <div style={{ background: palette.white, borderRadius: '18px', padding: '20px', maxWidth: '380px', width: '100%', maxHeight: '70vh', overflow: 'auto', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }} onClick={e => e.stopPropagation()}>
+      <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '20px', maxWidth: '380px', width: '100%', maxHeight: '90dvh', overflow: 'auto', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h3 style={{ fontSize: '17px', fontWeight: '800', color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>🏆 Leaderboard</h3>
           <button onClick={() => setShowLeaderboard(false)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: palette.bodyTextSoft }}>✕</button>
@@ -1151,7 +1347,7 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
             <div style={{ fontWeight: '800', fontSize: '15px', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{entry.score}</div>
           </div>
         ))}
-        <button onClick={() => setShowLeaderboard(false)} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: 'none', background: palette.warmOrange, color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginTop: '10px', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}` }}>Close</button>
+        <button onClick={() => setShowLeaderboard(false)} className="sq-modal-btn" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: 'none', background: palette.warmOrange, color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginTop: '10px', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}` }}>Close</button>
       </div>
     </div>
   );
@@ -1161,13 +1357,13 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
     if (gameState !== 'playing') return null;
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.75)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px' }}>
-        <div style={{ background: palette.white, borderRadius: '20px', padding: '32px', maxWidth: '380px', width: '100%', textAlign: 'center', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }}>
-          <div style={{ fontSize: '56px', marginBottom: '8px' }}>😢</div>
+        <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '20px', padding: '32px', maxWidth: '380px', width: '100%', textAlign: 'center', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }}>
+          <div className="sq-modal-emoji" style={{ fontSize: '56px', marginBottom: '8px' }}>😢</div>
           <h3 style={{ fontSize: '22px', fontWeight: '800', color: palette.deepNavy, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>No Hearts Left!</h3>
           <p style={{ fontSize: '14px', color: palette.bodyTextSoft, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>Wait for refill or buy with diamonds</p>
           <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-            <button onClick={() => { setShowNoLivesMessage(false); setContinueFromGameOver(true); setShowHeartShop(true); }} style={{ width: '100%', padding: '12px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.diamondShadow}` }}>💎 Buy Hearts & Continue</button>
-            <button onClick={() => { setShowNoLivesMessage(false); setGameState('intro'); }} style={{ width: '100%', padding: '12px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Back to Menu</button>
+            <button onClick={() => { setShowNoLivesMessage(false); setContinueFromGameOver(true); setShowHeartShop(true); }} className="sq-modal-btn" style={{ width: '100%', padding: '12px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.diamondShadow}` }}>💎 Buy Hearts & Continue</button>
+            <button onClick={() => { setShowNoLivesMessage(false); setGameState('intro'); }} className="sq-modal-btn" style={{ width: '100%', padding: '12px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Back to Menu</button>
           </div>
         </div>
       </div>
@@ -1176,7 +1372,8 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
 
   if (gameState === 'loading') {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, zIndex: 999999, background: palette.deepNavy }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, zIndex: 999999, background: palette.deepNavy }}>
+        {bgAnimationStyle}
         <DevPanelElement />
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
           <div className="loading-scroll-track">
@@ -1185,9 +1382,9 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
           </div>
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${palette.deepNavy}80, ${palette.deepNavyLight}90)`, pointerEvents: 'none' }} />
         </div>
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '420px', width: '100%', padding: '40px 32px', background: 'rgba(255, 255, 255, 0.06)', backdropFilter: 'blur(16px)', borderRadius: '24px', border: `1.5px solid ${palette.border}30` }}>
+        <div className="sq-loading-card" style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '420px', width: '100%', padding: '40px 32px', background: 'rgba(255, 255, 255, 0.06)', backdropFilter: 'blur(16px)', borderRadius: '24px', border: `1.5px solid ${palette.border}30' }}> 
           <h2 style={{ fontSize: '36px', fontWeight: '900', margin: 0, fontFamily: FONT_DISPLAY, color: palette.white, textShadow: '0 4px 12px rgba(0,0,0,0.3)', animation: 'textBounce 1.4s ease-in-out infinite' }}>Loading<span className="loading-dots">...</span></h2>
-          <div style={{ position: 'relative', width: '100%', height: '30px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: `2px solid ${palette.warmOrange}60`, overflow: 'hidden', marginTop: '28px' }}>
+          <div className="sq-loading-bar" style={{ position: 'relative', width: '100%', height: '30px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: `2px solid ${palette.warmOrange}60`, overflow: 'hidden', marginTop: '28px' }}>
             <div className="progress-fill" style={{ position: 'absolute', top: '3px', left: '3px', bottom: '3px', width: '35%', borderRadius: '16px', background: `linear-gradient(90deg, ${palette.teal} 0%, ${palette.warmOrange} 50%, ${palette.coral} 100%)`, boxShadow: `0 0 12px ${palette.warmOrange}80`, animation: 'progressSlide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite' }} />
             <div className="progress-shimmer" />
           </div>
@@ -1228,18 +1425,18 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
         {showLeaderboard && <LeaderboardModal />}
         {showExitConfirm && <ExitConfirmModal />}
         {showHeartShop && <HeartShopModal />}
-        <div style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center' }}>
-          <div style={{ width: '84px', height: '84px', borderRadius: '50%', background: theme.accentGradient, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: `0 8px 24px ${palette.warmOrange}40` }}>
+        <div className="sq-intro-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
+          <div className="sq-intro-icon" style={{ width: '84px', height: '84px', borderRadius: '50%', background: theme.accentGradient, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: `0 8px 24px ${palette.warmOrange}40` }}>
             <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: palette.white, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>📖</div>
           </div>
           {currentUser && (
-            <div style={{ background: theme.chipBg, padding: '4px 14px', borderRadius: '10px', marginBottom: '10px', display: 'inline-block', border: `1px solid ${palette.border}` }}>
+            <div className="sq-intro-chip" style={{ background: theme.chipBg, padding: '4px 14px', borderRadius: '10px', marginBottom: '10px', display: 'inline-block', border: `1px solid ${palette.border}` }}>
               <span style={{ fontSize: '12px', color: palette.bodyText, fontWeight: '700', fontFamily: FONT_BODY }}>👤 {currentUser.displayName || currentUser.email || 'Player'}</span>
             </div>
           )}
-          <h1 style={{ fontSize: '30px', fontWeight: '800', color: theme.textPrimary, marginBottom: '2px', letterSpacing: '-0.5px', fontFamily: FONT_DISPLAY }}>SynoQuest</h1>
-          <p style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>📚 10 questions per level • CEFR A1 to C2!</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+          <h1 className="sq-intro-title" style={{ fontSize: '30px', fontWeight: '800', color: theme.textPrimary, marginBottom: '2px', letterSpacing: '-0.5px', fontFamily: FONT_DISPLAY }}>SynoQuest</h1>
+          <p className="sq-intro-sub" style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>📚 10 questions per level • CEFR A1 to C2!</p>
+          <div className="sq-intro-stats" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <div style={{ background: `linear-gradient(135deg, ${palette.gold}20, ${palette.warmOrange}20)`, padding: '8px 14px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', border: `1.5px solid ${palette.gold}60` }}>
               <span style={{ fontSize: '14px' }}>💰</span>
               <span style={{ fontSize: '14px', color: palette.gold, fontWeight: '800', fontFamily: FONT_DISPLAY }}>{localPoints}</span>
@@ -1251,18 +1448,18 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
               <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, fontFamily: FONT_BODY }}>gems</span>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
+          <div className="sq-intro-levels" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
             {CEFR_LEVELS.map((level) => {
               const config = LEVEL_CONFIG[level];
               return (
-                <div key={level} style={{ padding: '4px', borderRadius: '6px', background: level === 'A1' || level === 'A2' ? `${palette.softGreen}15` : level === 'B1' || level === 'B2' ? `${palette.warmOrange}15` : `${palette.coral}15`, textAlign: 'center', fontSize: '9px', fontWeight: '800', color: level === 'A1' || level === 'A2' ? palette.softGreen : level === 'B1' || level === 'B2' ? palette.warmOrange : palette.coral, border: `1px solid ${palette.border}`, fontFamily: FONT_DISPLAY }}>
+                <div key={level} className="sq-intro-level-item" style={{ padding: '4px', borderRadius: '6px', background: level === 'A1' || level === 'A2' ? `${palette.softGreen}15` : level === 'B1' || level === 'B2' ? `${palette.warmOrange}15` : `${palette.coral}15`, textAlign: 'center', fontSize: '9px', fontWeight: '800', color: level === 'A1' || level === 'A2' ? palette.softGreen : level === 'B1' || level === 'B2' ? palette.warmOrange : palette.coral, border: `1px solid ${palette.border}`, fontFamily: FONT_DISPLAY }}>
                   <div style={{ fontSize: '12px' }}>{config.emoji}</div>
                   <div>{level}</div>
                 </div>
               );
             })}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px', padding: '10px', background: theme.surfaceBg, borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
+          <div className="sq-intro-hearts" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px', padding: '10px', background: theme.surfaceBg, borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
             <div style={{ display: 'flex', gap: '1px' }}>
               {[...Array(lives)].map((_, i) => (<span key={i} style={{ fontSize: '18px' }}>❤️</span>))}
               {[...Array(maxLives - lives)].map((_, i) => (<span key={i} style={{ fontSize: '18px', opacity: 0.2 }}>❤️</span>))}
@@ -1271,27 +1468,24 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
             {lives < maxLives && timeRemaining && (<span style={{ fontSize: '11px', color: palette.warmOrange, fontWeight: '700', fontFamily: FONT_BODY }}>⏳ {timeRemaining}</span>)}
           </div>
           {lives > 0 ? (
-            <button onClick={startGame} style={{ width: '100%', padding: '14px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase' }}>🚀 Start Game</button>
+            <button onClick={startGame} className="sq-intro-btn" style={{ width: '100%', padding: '14px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase' }}>🚀 Start Game</button>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ width: '100%', padding: '12px', background: theme.surfaceBg, color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY, textAlign: 'center' }}>
                 ⏳ No Hearts — Refill: {timeRemaining || '30m'}
               </div>
-              <button onClick={() => { setContinueFromGameOver(false); setShowHeartShop(true); }} style={{ width: '100%', padding: '14px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '14px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 3px 0 ${palette.diamondShadow}`, fontFamily: FONT_DISPLAY }}>
+              <button onClick={() => { setContinueFromGameOver(false); setShowHeartShop(true); }} className="sq-intro-btn" style={{ width: '100%', padding: '14px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '14px', fontSize: '14px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 3px 0 ${palette.diamondShadow}`, fontFamily: FONT_DISPLAY }}>
                 💎 Buy Hearts ({localDiamonds} 💎)
               </button>
             </div>
           )}
-          {showFeedback && (<div style={{ marginTop: '10px', padding: '8px', borderRadius: '10px', background: `${palette.warmOrange}12`, border: `1.5px solid ${palette.warmOrange}40`, textAlign: 'center', fontSize: '12px', fontWeight: '700', color: palette.warmOrange, fontFamily: FONT_BODY }}>{feedbackMessage}</div>)}
-          {onBack && (<button onClick={onBack} style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
+          {showFeedback && (<div className="sq-feedback" style={{ marginTop: '10px', padding: '8px', borderRadius: '10px', background: `${palette.warmOrange}12`, border: `1.5px solid ${palette.warmOrange}40`, textAlign: 'center', fontSize: '12px', fontWeight: '700', color: palette.warmOrange, fontFamily: FONT_BODY }}>{feedbackMessage}</div>)}
+          {onBack && (<button onClick={onBack} className="sq-intro-back-btn" style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // ===== 🆕 FINISHED SCREEN (All Levels Complete!) =====
-  // ============================================================
   if (gameState === 'finished') {
     const accuracy = questionNumber > 0 ? Math.round((correctCount / questionNumber) * 100) : 0;
 
@@ -1300,34 +1494,34 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
         {bgAnimationStyle}
         <DevPanelElement />
 
-        <div style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', animation: 'finishedPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
-          <div style={{ fontSize: '64px', marginBottom: '6px' }}>👑</div>
+        <div className="sq-end-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto', animation: 'finishedPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+          <div className="sq-end-emoji" style={{ fontSize: '64px', marginBottom: '6px' }}>👑</div>
 
-          <h2 style={{ fontSize: '26px', fontWeight: '800', color: palette.gold, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>
+          <h2 className="sq-end-title" style={{ fontSize: '26px', fontWeight: '800', color: palette.gold, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>
             All Levels Complete!
           </h2>
 
-          <p style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
+          <p className="sq-end-sub" style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
             You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C2</strong>! 🎉
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
+          <div className="sq-end-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+            <div className="sq-end-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
               <div style={{ fontSize: '20px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{score}</div>
               <div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>SCORE</div>
             </div>
-            <div style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
+            <div className="sq-end-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
               <div style={{ fontSize: '20px', fontWeight: '800', color: palette.teal, fontFamily: FONT_DISPLAY }}>{accuracy}%</div>
               <div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>ACCURACY</div>
             </div>
-            <div style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
+            <div className="sq-end-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
               <div style={{ fontSize: '20px', fontWeight: '800', color: palette.gold, fontFamily: FONT_DISPLAY }}>{questionNumber}</div>
               <div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>QUESTIONS</div>
             </div>
           </div>
 
           {completionBonus > 0 && (
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', background: `linear-gradient(135deg, #FEF3C7, #FDE68A)`, borderRadius: '14px', marginBottom: '16px', border: `2px solid ${palette.gold}`, boxShadow: `0 4px 0 #B45309, 0 0 24px ${palette.gold}80`, animation: 'bonusPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+            <div className="sq-end-reward" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', background: `linear-gradient(135deg, #FEF3C7, #FDE68A)`, borderRadius: '14px', marginBottom: '16px', border: `2px solid ${palette.gold}`, boxShadow: `0 4px 0 #B45309, 0 0 24px ${palette.gold}80`, animation: 'bonusPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
               <div style={{ position: 'absolute', top: '-14px', left: '15%', fontSize: '20px', animation: 'sparkle 1.8s ease-in-out infinite' }}>✨</div>
               <div style={{ position: 'absolute', top: '-14px', right: '15%', fontSize: '20px', animation: 'sparkle 1.8s ease-in-out infinite 0.4s' }}>✨</div>
               <span style={{ fontSize: '32px', filter: 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.8))' }}>🏆</span>
@@ -1343,10 +1537,10 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
           )}
 
           <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
-            <button onClick={startGame} disabled={lives <= 0} style={{ padding: '12px', background: lives > 0 ? theme.accentGradient : palette.creamSoft, color: lives > 0 ? 'white' : palette.bodyTextSoft, border: 'none', borderRadius: '12px', cursor: lives > 0 ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: '800', boxShadow: lives > 0 ? `0 3px 0 ${palette.warmOrangeShadow}` : 'none', fontFamily: FONT_DISPLAY }}>
+            <button onClick={startGame} disabled={lives <= 0} className="sq-end-btn" style={{ padding: '12px', background: lives > 0 ? theme.accentGradient : palette.creamSoft, color: lives > 0 ? 'white' : palette.bodyTextSoft, border: 'none', borderRadius: '12px', cursor: lives > 0 ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: '800', boxShadow: lives > 0 ? `0 3px 0 ${palette.warmOrangeShadow}` : 'none', fontFamily: FONT_DISPLAY }}>
               {lives > 0 ? '🔄 Play Again' : `⏳ No Hearts - ${timeRemaining}`}
             </button>
-            <button onClick={() => setGameState('intro')} style={{ padding: '10px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>
+            <button onClick={() => setGameState('intro')} className="sq-end-btn" style={{ padding: '10px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>
               Back to Menu
             </button>
           </div>
@@ -1379,29 +1573,29 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
         {bgAnimationStyle}
         <DevPanelElement />
         {showHeartShop && <HeartShopModal />}
-        <div style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center' }}>
-          <div style={{ fontSize: '60px', marginBottom: '6px' }}>💀</div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: theme.textPrimary, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>Game Over!</h2>
-          <p style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
+        <div className="sq-end-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
+          <div className="sq-end-emoji" style={{ fontSize: '60px', marginBottom: '6px' }}>💀</div>
+          <h2 className="sq-end-title" style={{ fontSize: '24px', fontWeight: '800', color: theme.textPrimary, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>Game Over!</h2>
+          <p className="sq-end-sub" style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
             Reached <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{currentLevel}</strong> with <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{correctCount}</strong> correct!
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}><div style={{ fontSize: '20px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{score}</div><div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>SCORE</div></div>
-            <div style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}><div style={{ fontSize: '20px', fontWeight: '800', color: palette.teal, fontFamily: FONT_DISPLAY }}>{accuracy}%</div><div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>ACCURACY</div></div>
-            <div style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}><div style={{ fontSize: '20px', fontWeight: '800', color: palette.gold, fontFamily: FONT_DISPLAY }}>×{maxCombo}</div><div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>COMBO</div></div>
+          <div className="sq-end-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+            <div className="sq-end-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}><div style={{ fontSize: '20px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{score}</div><div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>SCORE</div></div>
+            <div className="sq-end-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}><div style={{ fontSize: '20px', fontWeight: '800', color: palette.teal, fontFamily: FONT_DISPLAY }}>{accuracy}%</div><div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>ACCURACY</div></div>
+            <div className="sq-end-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}><div style={{ fontSize: '20px', fontWeight: '800', color: palette.gold, fontFamily: FONT_DISPLAY }}>×{maxCombo}</div><div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>COMBO</div></div>
           </div>
           {diamondsEarnedThisGame > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: `linear-gradient(135deg, ${palette.diamond}15, ${palette.diamond}08)`, borderRadius: '12px', marginBottom: '16px', border: `1.5px solid ${palette.diamond}50` }}>
+            <div className="sq-end-reward" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: `linear-gradient(135deg, ${palette.diamond}15, ${palette.diamond}08)`, borderRadius: '12px', marginBottom: '16px', border: `1.5px solid ${palette.diamond}50` }}>
               <span style={{ fontSize: '20px' }}>💎</span>
               <span style={{ fontSize: '16px', fontWeight: '800', color: palette.diamond, fontFamily: FONT_DISPLAY }}>+{diamondsEarnedThisGame} diamonds</span>
             </div>
           )}
           <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
-            <button onClick={openHeartShopFromGameOver} style={{ padding: '13px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '800', boxShadow: `0 3px 0 ${palette.diamondShadow}`, fontFamily: FONT_DISPLAY }}>
+            <button onClick={openHeartShopFromGameOver} className="sq-end-btn" style={{ padding: '13px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '800', boxShadow: `0 3px 0 ${palette.diamondShadow}`, fontFamily: FONT_DISPLAY }}>
               💎 Continue with Hearts ({localDiamonds} 💎)
             </button>
-            <button onClick={startGame} disabled={lives <= 0} style={{ padding: '12px', background: lives > 0 ? theme.accentGradient : palette.creamSoft, color: lives > 0 ? 'white' : palette.bodyTextSoft, border: 'none', borderRadius: '12px', cursor: lives > 0 ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{lives > 0 ? '🔄 Play Again' : `⏳ No Hearts - ${timeRemaining}`}</button>
-            <button onClick={() => setGameState('intro')} style={{ padding: '10px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Back to Menu</button>
+            <button onClick={startGame} disabled={lives <= 0} className="sq-end-btn" style={{ padding: '12px', background: lives > 0 ? theme.accentGradient : palette.creamSoft, color: lives > 0 ? 'white' : palette.bodyTextSoft, border: 'none', borderRadius: '12px', cursor: lives > 0 ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{lives > 0 ? '🔄 Play Again' : `⏳ No Hearts - ${timeRemaining}`}</button>
+            <button onClick={() => setGameState('intro')} className="sq-end-btn" style={{ padding: '10px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Back to Menu</button>
           </div>
         </div>
       </div>
@@ -1429,7 +1623,7 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
     else hintButtonLabel = `💡 Buy Hint: ${currentHintCost} pts (-3 secs)`;
 
     return (
-      <div style={{ ...fullScreenBg, padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="sq-play-wrapper" style={{ ...fullScreenBg, padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100dvh', overflow: 'hidden', boxSizing: 'border-box' }}>
         {bgAnimationStyle}
         <DevPanelElement />
         <NoLivesOverlay />
@@ -1437,67 +1631,67 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
         {showSettings && <SettingsModal />}
         {showLeaderboard && <LeaderboardModal />}
         {showHeartShop && <HeartShopModal />}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: 'rgba(255,255,255,0.9)', borderRadius: '14px', maxWidth: '520px', width: '100%', margin: '0 auto 10px', border: `1.5px solid ${palette.border}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: palette.bodyText }}>⚙️</button>
-            <span style={{ fontWeight: '800', color: palette.deepNavy, fontSize: '12px', fontFamily: FONT_DISPLAY }}>📝 {config.emoji} Lv.{currentLevel}</span>
+        <div className="sq-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: 'rgba(255,255,255,0.9)', borderRadius: '14px', maxWidth: '620px', width: '100%', margin: '0 auto 10px', border: `1.5px solid ${palette.border}`, boxSizing: 'border-box', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: palette.bodyText, padding: 0, lineHeight: 1 }}>⚙️</button>
+            <span style={{ fontWeight: '800', color: palette.deepNavy, fontSize: '12px', fontFamily: FONT_DISPLAY, whiteSpace: 'nowrap' }}>📝 {config.emoji} Lv.{currentLevel}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: '10px', color: palette.bodyText, fontWeight: '800', background: palette.creamSoft, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap', justifyContent: 'flex-end' }}>
+            <div style={{ fontSize: '10px', color: palette.bodyText, fontWeight: '800', background: palette.creamSoft, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.border}`, whiteSpace: 'nowrap' }}>
               {retryPhase ? `Retry: ${wrongQueueRef.current.length}` : `${answeredInLevel}/${QUESTIONS_PER_LEVEL}`}
             </div>
-            <div style={{ fontSize: '10px', color: palette.gold, fontWeight: '800', background: `${palette.gold}15`, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.gold}40` }}>💰 {localPoints}</div>
-            <div style={{ fontSize: '10px', color: palette.diamond, fontWeight: '800', background: `${palette.diamond}15`, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.diamond}40` }}>💎 {localDiamonds}</div>
-            <div style={{ display: 'flex', gap: '1px' }}>
+            <div style={{ fontSize: '10px', color: palette.gold, fontWeight: '800', background: `${palette.gold}15`, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.gold}40`, whiteSpace: 'nowrap' }}>💰 {localPoints}</div>
+            <div style={{ fontSize: '10px', color: palette.diamond, fontWeight: '800', background: `${palette.diamond}15`, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.diamond}40`, whiteSpace: 'nowrap' }}>💎 {localDiamonds}</div>
+            <div className="sq-header-hearts" style={{ display: 'flex', gap: '1px' }}>
               {[...Array(lives)].map((_, i) => (<span key={i} style={{ fontSize: '14px' }}>❤️</span>))}
               {[...Array(maxLives - lives)].map((_, i) => (<span key={i} style={{ fontSize: '14px', opacity: 0.2 }}>❤️</span>))}
             </div>
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: timer <= 3 ? `${palette.danger}20` : timer <= 5 ? `${palette.warmOrange}20` : palette.creamSoft, border: `2px solid ${timer <= 3 ? palette.danger : timer <= 5 ? palette.warmOrange : palette.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: timer <= 3 ? palette.danger : timer <= 5 ? palette.warmOrange : palette.deepNavy, fontSize: '11px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{timer}</div>
-            <div style={{ background: palette.warmOrange, padding: '2px 12px', borderRadius: '8px', color: 'white', fontWeight: '800', fontSize: '13px', fontFamily: FONT_DISPLAY, boxShadow: `0 2px 0 ${palette.warmOrangeShadow}` }}>{score}</div>
-            {comboCount >= 3 && (<div style={{ background: `${palette.gold}20`, padding: '2px 10px', borderRadius: '8px', color: palette.gold, fontWeight: '800', fontSize: '10px', border: `1.5px solid ${palette.gold}40`, fontFamily: FONT_DISPLAY }}>🔥{comboCount}x</div>)}
+            <div className="sq-header-timer" style={{ width: '28px', height: '28px', borderRadius: '50%', background: timer <= 3 ? `${palette.danger}20` : timer <= 5 ? `${palette.warmOrange}20` : palette.creamSoft, border: `2px solid ${timer <= 3 ? palette.danger : timer <= 5 ? palette.warmOrange : palette.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: timer <= 3 ? palette.danger : timer <= 5 ? palette.warmOrange : palette.deepNavy, fontSize: '11px', fontWeight: '800', fontFamily: FONT_DISPLAY, flexShrink: 0 }}>{timer}</div>
+            <div style={{ background: palette.warmOrange, padding: '2px 12px', borderRadius: '8px', color: 'white', fontWeight: '800', fontSize: '13px', fontFamily: FONT_DISPLAY, boxShadow: `0 2px 0 ${palette.warmOrangeShadow}`, whiteSpace: 'nowrap' }}>{score}</div>
+            {comboCount >= 3 && (<div style={{ background: `${palette.gold}20`, padding: '2px 10px', borderRadius: '8px', color: palette.gold, fontWeight: '800', fontSize: '10px', border: `1.5px solid ${palette.gold}40`, fontFamily: FONT_DISPLAY, whiteSpace: 'nowrap' }}>🔥{comboCount}x</div>)}
           </div>
         </div>
-        <div style={{ maxWidth: '620px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '30px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, position: 'relative', overflow: 'hidden' }}>
+        <div className="sq-main-card" style={{ maxWidth: '620px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '30px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, position: 'relative', overflow: 'hidden', boxSizing: 'border-box' }}>
           {showCorrectAnimation && (<div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: `${palette.softGreen}15`, animation: 'correctFlash 0.5s ease' }} />)}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div className="sq-level-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span style={{ fontSize: '14px', fontWeight: '800', color: theme.textSecondary, fontFamily: FONT_DISPLAY }}>{config.emoji} Level {currentLevel}</span>
             <span style={{ fontSize: '13px', color: theme.textMuted, fontWeight: '700', fontFamily: FONT_DISPLAY }}>{retryPhase ? `Retry` : `Q${answeredInLevel + 1}/${QUESTIONS_PER_LEVEL}`}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '18px', padding: '18px', background: theme.surfaceBg, borderRadius: '14px', border: `1.5px solid ${theme.surfaceBorder}`, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="sq-image-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '18px', padding: '18px', background: theme.surfaceBg, borderRadius: '14px', border: `1.5px solid ${theme.surfaceBorder}`, flexWrap: 'wrap' }}>
+            <div className="sq-image-box" style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={currentQuestion.image1} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
             </div>
-            <span style={{ fontSize: '30px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>↔️</span>
-            <div style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="sq-image-arrow" style={{ fontSize: '30px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>↔️</span>
+            <div className="sq-image-box" style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={currentQuestion.image2} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
             </div>
-            <span style={{ fontSize: '28px', fontWeight: '800', color: theme.textPrimary, background: theme.chipBg, padding: '0 14px', borderRadius: '10px', border: `1.5px solid ${palette.border}`, fontFamily: FONT_DISPLAY }}>= ?</span>
+            <span className="sq-image-eq" style={{ fontSize: '28px', fontWeight: '800', color: theme.textPrimary, background: theme.chipBg, padding: '0 14px', borderRadius: '10px', border: `1.5px solid ${palette.border}`, fontFamily: FONT_DISPLAY }}>= ?</span>
           </div>
-          <div style={{ textAlign: 'center', marginBottom: '16px', fontSize: '15px', color: theme.textSecondary, fontWeight: '700', fontFamily: FONT_DISPLAY }}>{currentQuestion.category || 'Vocabulary'}</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '7px', marginBottom: '18px', padding: '16px', background: theme.surfaceBg, borderRadius: '12px', border: `1.5px solid ${theme.surfaceBorder}`, flexWrap: 'wrap' }}>
+          <div className="sq-category" style={{ textAlign: 'center', marginBottom: '16px', fontSize: '15px', color: theme.textSecondary, fontWeight: '700', fontFamily: FONT_DISPLAY }}>{currentQuestion.category || 'Vocabulary'}</div>
+          <div className="sq-blanks-row" style={{ display: 'flex', justifyContent: 'center', gap: '7px', marginBottom: '18px', padding: '16px', background: theme.surfaceBg, borderRadius: '12px', border: `1.5px solid ${theme.surfaceBorder}`, flexWrap: 'wrap' }}>
             {word.split('').map((letter, index) => {
               const isVisible = visiblePositions.includes(index);
               const filledLetter = userFilledBlanks[index];
-              if (isVisible) return (<div key={index} style={{ width: '42px', height: '48px', background: theme.chipBg, border: `1.5px solid ${theme.surfaceBorder}`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '23px', fontWeight: '800', color: theme.textSecondary, fontFamily: FONT_DISPLAY }}>{letter}</div>);
-              return (<div key={index} onClick={() => handleBlankClick(index)} style={{ width: '42px', height: '48px', background: filledLetter ? theme.chipBg : palette.white, border: `2px ${filledLetter ? 'solid' : 'dashed'} ${filledLetter ? theme.accent : theme.surfaceBorder}`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '23px', fontWeight: '800', color: theme.textPrimary, cursor: filledLetter ? 'pointer' : 'default', fontFamily: FONT_DISPLAY }}>{filledLetter || ''}</div>);
+              if (isVisible) return (<div key={index} className="sq-blank-box" style={{ width: '42px', height: '48px', background: theme.chipBg, border: `1.5px solid ${theme.surfaceBorder}`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '23px', fontWeight: '800', color: theme.textSecondary, fontFamily: FONT_DISPLAY }}>{letter}</div>);
+              return (<div key={index} onClick={() => handleBlankClick(index)} className="sq-blank-box" style={{ width: '42px', height: '48px', background: filledLetter ? theme.chipBg : palette.white, border: `2px ${filledLetter ? 'solid' : 'dashed'} ${filledLetter ? theme.accent : theme.surfaceBorder}`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '23px', fontWeight: '800', color: theme.textPrimary, cursor: filledLetter ? 'pointer' : 'default', fontFamily: FONT_DISPLAY }}>{filledLetter || ''}</div>);
             })}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '7px', marginBottom: '18px', padding: '13px', background: theme.surfaceBg, borderRadius: '12px', border: `1.5px solid ${theme.surfaceBorder}`, minHeight: '48px' }}>
+          <div className="sq-letters-row" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '7px', marginBottom: '18px', padding: '13px', background: theme.surfaceBg, borderRadius: '12px', border: `1.5px solid ${theme.surfaceBorder}`, minHeight: '48px' }}>
             {letters.map((letter, index) => {
               const isUsed = usedLetters.includes(index);
-              return (<button key={index} onClick={() => handleLetterClick(letter, index)} disabled={isUsed || answered || lives === 0 || timer === 0} style={{ width: '46px', height: '46px', borderRadius: '12px', background: isUsed ? 'transparent' : theme.chipBg, border: `2px solid ${isUsed ? theme.surfaceBorder : `${palette.warmOrange}50`}`, color: isUsed ? theme.textMuted : theme.textSecondary, fontSize: '19px', fontWeight: '800', cursor: isUsed || answered || lives === 0 || timer === 0 ? 'default' : 'pointer', fontFamily: FONT_DISPLAY }}>{letter}</button>);
+              return (<button key={index} onClick={() => handleLetterClick(letter, index)} disabled={isUsed || answered || lives === 0 || timer === 0} className="sq-letter-btn" style={{ width: '46px', height: '46px', borderRadius: '12px', background: isUsed ? 'transparent' : theme.chipBg, border: `2px solid ${isUsed ? theme.surfaceBorder : `${palette.warmOrange}50`}`, color: isUsed ? theme.textMuted : theme.textSecondary, fontSize: '19px', fontWeight: '800', cursor: isUsed || answered || lives === 0 || timer === 0 ? 'default' : 'pointer', fontFamily: FONT_DISPLAY }}>{letter}</button>);
             })}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-            <button onClick={() => { setUserFilledBlanks({}); setUsedLetters([]); }} disabled={answered || lives === 0 || Object.keys(userFilledBlanks).length === 0} style={{ padding: '13px', borderRadius: '14px', border: `1.5px solid ${theme.surfaceBorder}`, background: Object.keys(userFilledBlanks).length > 0 ? theme.surfaceBg : 'transparent', color: theme.textSecondary, cursor: Object.keys(userFilledBlanks).length > 0 ? 'pointer' : 'default', fontSize: '14px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>🔄 Clear</button>
-            <button onClick={checkWord} disabled={answered || lives === 0 || Object.keys(userFilledBlanks).length < blanks.length} style={{ padding: '13px', borderRadius: '14px', border: 'none', background: Object.keys(userFilledBlanks).length >= blanks.length ? theme.accentGradient : theme.surfaceBg, color: Object.keys(userFilledBlanks).length >= blanks.length ? 'white' : theme.textMuted, cursor: Object.keys(userFilledBlanks).length >= blanks.length ? 'pointer' : 'default', fontSize: '14px', fontWeight: '800', boxShadow: Object.keys(userFilledBlanks).length >= blanks.length ? `0 3px 0 ${palette.warmOrangeShadow}` : 'none', fontFamily: FONT_DISPLAY }}>✅ Submit</button>
+          <div className="sq-action-btns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+            <button onClick={() => { setUserFilledBlanks({}); setUsedLetters([]); }} disabled={answered || lives === 0 || Object.keys(userFilledBlanks).length === 0} className="sq-action-btn" style={{ padding: '13px', borderRadius: '14px', border: `1.5px solid ${theme.surfaceBorder}`, background: Object.keys(userFilledBlanks).length > 0 ? theme.surfaceBg : 'transparent', color: theme.textSecondary, cursor: Object.keys(userFilledBlanks).length > 0 ? 'pointer' : 'default', fontSize: '14px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>🔄 Clear</button>
+            <button onClick={checkWord} disabled={answered || lives === 0 || Object.keys(userFilledBlanks).length < blanks.length} className="sq-action-btn" style={{ padding: '13px', borderRadius: '14px', border: 'none', background: Object.keys(userFilledBlanks).length >= blanks.length ? theme.accentGradient : theme.surfaceBg, color: Object.keys(userFilledBlanks).length >= blanks.length ? 'white' : theme.textMuted, cursor: Object.keys(userFilledBlanks).length >= blanks.length ? 'pointer' : 'default', fontSize: '14px', fontWeight: '800', boxShadow: Object.keys(userFilledBlanks).length >= blanks.length ? `0 3px 0 ${palette.warmOrangeShadow}` : 'none', fontFamily: FONT_DISPLAY }}>✅ Submit</button>
           </div>
           {!answered && lives > 0 && (
-            <button onClick={useHint} disabled={hintUsed || (!isFreeHint && !canAffordHint)} style={{ width: '100%', padding: '12px', borderRadius: '14px', border: `1.5px solid ${hintUsed ? theme.surfaceBorder : isFreeHint ? `${palette.softGreen}50` : canAffordHint ? `${palette.gold}50` : `${palette.danger}50`}`, background: hintUsed ? theme.surfaceBg : isFreeHint ? `${palette.softGreen}12` : canAffordHint ? `${palette.gold}12` : `${palette.danger}10`, color: hintUsed ? theme.textMuted : isFreeHint ? palette.softGreen : canAffordHint ? palette.gold : palette.danger, cursor: hintUsed || (!isFreeHint && !canAffordHint) ? 'default' : 'pointer', fontSize: '13px', fontWeight: '800', marginBottom: '12px', fontFamily: FONT_DISPLAY }}>{hintButtonLabel}</button>
+            <button onClick={useHint} disabled={hintUsed || (!isFreeHint && !canAffordHint)} className="sq-hint-btn" style={{ width: '100%', padding: '12px', borderRadius: '14px', border: `1.5px solid ${hintUsed ? theme.surfaceBorder : isFreeHint ? `${palette.softGreen}50` : canAffordHint ? `${palette.gold}50` : `${palette.danger}50`}`, background: hintUsed ? theme.surfaceBg : isFreeHint ? `${palette.softGreen}12` : canAffordHint ? `${palette.gold}12` : `${palette.danger}10`, color: hintUsed ? theme.textMuted : isFreeHint ? palette.softGreen : canAffordHint ? palette.gold : palette.danger, cursor: hintUsed || (!isFreeHint && !canAffordHint) ? 'default' : 'pointer', fontSize: '13px', fontWeight: '800', marginBottom: '12px', fontFamily: FONT_DISPLAY }}>{hintButtonLabel}</button>
           )}
-          {showFeedback && (<div style={{ padding: '8px', borderRadius: '10px', background: feedbackMessage.includes('✅') || feedbackMessage.includes('⬆️') || feedbackMessage.includes('💡') ? `${palette.softGreen}15` : feedbackMessage.includes('❌') || feedbackMessage.includes('💀') ? `${palette.danger}15` : `${palette.warmOrange}15`, border: `1.5px solid ${feedbackMessage.includes('✅') || feedbackMessage.includes('⬆️') || feedbackMessage.includes('💡') ? `${palette.softGreen}40` : feedbackMessage.includes('❌') || feedbackMessage.includes('💀') ? `${palette.danger}40` : `${palette.warmOrange}40`}`, marginBottom: '8px', textAlign: 'center', fontSize: '12px', fontWeight: '700', color: feedbackMessage.includes('✅') || feedbackMessage.includes('⬆️') || feedbackMessage.includes('💡') ? palette.softGreen : feedbackMessage.includes('❌') || feedbackMessage.includes('💀') ? palette.danger : palette.warmOrange, fontFamily: FONT_BODY }}>{feedbackMessage}</div>)}
+          {showFeedback && (<div className="sq-feedback" style={{ padding: '8px', borderRadius: '10px', background: feedbackMessage.includes('✅') || feedbackMessage.includes('⬆️') || feedbackMessage.includes('💡') ? `${palette.softGreen}15` : feedbackMessage.includes('❌') || feedbackMessage.includes('💀') ? `${palette.danger}15` : `${palette.warmOrange}15`, border: `1.5px solid ${feedbackMessage.includes('✅') || feedbackMessage.includes('⬆️') || feedbackMessage.includes('💡') ? `${palette.softGreen}40` : feedbackMessage.includes('❌') || feedbackMessage.includes('💀') ? `${palette.danger}40` : `${palette.warmOrange}40`}`, marginBottom: '8px', textAlign: 'center', fontSize: '12px', fontWeight: '700', color: feedbackMessage.includes('✅') || feedbackMessage.includes('⬆️') || feedbackMessage.includes('💡') ? palette.softGreen : feedbackMessage.includes('❌') || feedbackMessage.includes('💀') ? palette.danger : palette.warmOrange, fontFamily: FONT_BODY }}>{feedbackMessage}</div>)}
         </div>
-        <style>{`@keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } } @keyframes correctFlash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }`}</style>
+        <style>{`@keyframes correctFlash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }`}</style>
       </div>
     );
   }
