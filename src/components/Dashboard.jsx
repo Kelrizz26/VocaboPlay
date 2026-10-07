@@ -3,7 +3,8 @@
 // ✅ Sidebar hidden on all non-game pages (normal)
 // ✅ Sidebar COMPLETELY removed from DOM when a game is active
 // ✅ Hamburger icon shown on mobile ALWAYS when sidebar is closed
-// ✅ All other features preserved
+// ✅ ADDED: Landscape orientation prompt for games
+// ✅ FIXED: Hamburger moved to right side during games (no overlap)
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -138,6 +139,7 @@ const Icon = ({ name, size = 20, color = palette.white, secondaryColor = 'rgba(2
     key: (<><circle cx="7.5" cy="15.5" r="5.5" stroke={color} strokeWidth="2" fill="none"/><path d="M21 2l-9.6 9.6M15.5 7.5l3 3L22 7l-3-3" stroke={color} strokeWidth="2" strokeLinecap="round" fill="none"/></>),
     play: (<path d="M5 3l14 9-14 9V3z" stroke={color} strokeWidth="2" strokeLinecap="round" fill="none"/>),
     target: (<><circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/><circle cx="12" cy="12" r="6" stroke={secondaryColor} strokeWidth="2" fill="none"/><circle cx="12" cy="12" r="2" stroke={color} strokeWidth="2" fill="none"/></>),
+    rotate: (<><path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></>),
   };
   return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ display: 'block', flexShrink: 0 }}>{icons[name] || icons.grid}</svg>);
 };
@@ -148,13 +150,16 @@ const Dashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentGame, setCurrentGame] = useState(null);
   
-  // ✅ FIXED: Initial sidebar state — closed on mobile, open on desktop
   const [isSidebarVisible, setIsSidebarVisible] = useState(
     typeof window !== 'undefined' ? window.innerWidth > 768 : true
   );
   const [contentKey, setContentKey] = useState(0);
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+  // ✅ BAGO: State para sa portrait mode detection
+  const [isPortrait, setIsPortrait] = useState(
+    typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
   );
 
   const [recentActivities, setRecentActivities] = useState([]);
@@ -182,17 +187,23 @@ const Dashboard = () => {
 
   const isInGame = currentGame !== null;
 
-  // ✅ FIXED: Resize handler — automatically adjusts sidebar on resize
+  // ✅ FIXED: Resize handler — update isMobile, isSidebarVisible, AND isPortrait
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
+      const portrait = window.innerHeight > window.innerWidth;
       setIsMobile(mobile);
-      // On desktop, always show sidebar. On mobile, always hide it.
+      setIsPortrait(portrait);
       setIsSidebarVisible(!mobile);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // For mobile rotation, 'orientationchange' is more reliable
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
 
   // ✅ When entering a game, hide sidebar. When exiting, restore on desktop.
@@ -494,7 +505,6 @@ const Dashboard = () => {
     setActiveMenu(menu);
     setContentKey(prev => prev + 1);
     setCurrentGame(null);
-    // ✅ Close sidebar on mobile when menu is selected
     if (isMobile) setIsSidebarVisible(false);
   };
 
@@ -563,7 +573,6 @@ const Dashboard = () => {
         .recent-activity-item { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .recent-activity-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(42, 40, 69, 0.06); }
 
-        /* ✅ HAMBURGER BUTTON — base style (hidden by default) */
         .hamburger-btn {
           display: none;
           position: fixed;
@@ -584,19 +593,56 @@ const Dashboard = () => {
         .hamburger-btn:hover { background: ${palette.deepNavyLight}; }
         .hamburger-btn:active { transform: scale(0.94); }
 
-        /* ✅ SHOW HAMBURGER on mobile */
+        /* ✅ FIXED: Kapag nasa loob ng game, ilipat sa KANAN ang hamburger para hindi matakpan ang game UI */
+        .hamburger-btn.in-game {
+          left: auto;
+          right: 16px;
+        }
+
         @media (max-width: 768px) {
           .hamburger-btn { display: flex !important; }
           .main-content { padding: 16px !important; }
           .dashboard-welcome { flex-direction: column !important; text-align: center !important; padding: 20px !important; }
           .recent-activity-item { flex-wrap: wrap; }
         }
+
+        /* ✅ BAGO: Landscape mode adjustments para sa games */
+        @media (max-height: 500px) and (orientation: landscape) {
+          .main-content { padding: 8px !important; }
+        }
       `}</style>
 
+      {/* ✅ ROTATE PROMPT — Lalabas lang kapag nasa game at naka-portrait ang phone */}
+      {isInGame && isPortrait && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100000,
+          background: `linear-gradient(135deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
+          color: 'white', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          padding: '30px', textAlign: 'center'
+        }}>
+          <div style={{ marginBottom: '24px', animation: 'rotatePhone 2s ease-in-out infinite' }}>
+            <Icon name="rotate" size={80} color={palette.warmOrange} />
+          </div>
+          <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '24px', marginBottom: '12px' }}>
+            I-rotate ang Phone Mo! 📱↔️
+          </h2>
+          <p style={{ fontSize: '15px', opacity: 0.8, maxWidth: '300px', lineHeight: 1.5 }}>
+            Para sa mas magandang experience, pihitin mo yung phone mo papuntang <strong>landscape mode</strong> para magpatuloy sa game.
+          </p>
+          <style>{`
+            @keyframes rotatePhone {
+              0%, 100% { transform: rotate(0deg); }
+              50% { transform: rotate(90deg); }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* ✅ HAMBURGER — shows on mobile whenever sidebar is closed */}
-      {isMobile && !isSidebarVisible && (
+      {isMobile && !isSidebarVisible && !isPortrait && (
         <button
-          className="hamburger-btn"
+          className={`hamburger-btn ${isInGame ? 'in-game' : ''}`}
           onClick={() => setIsSidebarVisible(true)}
           aria-label="Open menu"
         >
@@ -704,7 +750,7 @@ const Dashboard = () => {
         <div className="main-content" style={{
           flex: 1,
           marginLeft: (!isMobile && !isInGame && isSidebarVisible) ? '260px' : '0',
-          padding: isInGame ? '0' : '24px 32px',
+          padding: isInGame ? (isPortrait ? '0' : '8px') : '24px 32px',
           transition: 'margin-left 0.3s ease',
           width: '100%',
         }}>
