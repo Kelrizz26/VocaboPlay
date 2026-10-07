@@ -1,5 +1,5 @@
 /* ============================================================
-   🎮 LANDSCAPE MOBILE FIX — Viewport Lock + StoryQuest Welcome
+   🎮 LANDSCAPE MOBILE FIX — Viewport Lock + Full Screen Fill
    ============================================================ */
 
 @media (orientation: landscape) and (max-height: 600px) {
@@ -17,11 +17,78 @@
   }
 
   /* ============================================================
-     STORYQUEST WELCOME SCREEN FIX
-     Siguraduhing kasya yung START PLAY button sa landscape
+     🎯 FULL SCREEN FILL — Override maxWidth limits
+     Gawing 100% width lahat ng game containers
      ============================================================ */
-  
-  /* Book select wrapper — full screen, no scroll */
+
+  /* Dashboard + main content kapag naka-game mode */
+  .dashboard-container.game-mode,
+  .main-content.game-mode {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  /* ---- SYNOQUEST: header at main card ---- */
+  .sq-header,
+  .sq-main-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* SynoQuest wrapper — alisin ang centering, gawing full stretch */
+  .sq-play-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Palakihin ang images para puno yung space */
+  .sq-image-box {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  /* Word blanks — palakihin nang kaunti */
+  .sq-blank-box {
+    width: 40px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+  }
+
+  /* Letter buttons — palakihin nang kaunti */
+  .sq-letter-btn {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+  }
+
+  /* ---- MATCH GAME: cards grid at header ---- */
+  .mg-cards,
+  .mg-header,
+  .mg-footer,
+  .mg-progress-wrap {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ---- STORYQUEST: welcome screen container ---- */
   .sq-book-select-wrapper {
     width: 100vw !important;
     height: 100dvh !important;
@@ -31,6 +98,7 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    box-sizing: border-box !important;
   }
 
   /* Welcome modal container — compress lahat */
@@ -43,6 +111,7 @@
     align-items: center !important;
     justify-content: center !important;
     gap: 4px !important;
+    box-sizing: border-box !important;
   }
 
   /* Paliitin ang welcome image para umakyat yung START PLAY */
