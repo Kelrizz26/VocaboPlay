@@ -2,9 +2,9 @@
 // ============================================================
 // ✅ Sidebar hidden on all non-game pages (normal)
 // ✅ Sidebar COMPLETELY removed from DOM when a game is active
-// ✅ Hamburger icon shown on mobile ALWAYS when sidebar is closed
+// ✅ Hamburger icon shown on mobile OUTSIDE of games (even in portrait)
+// ✅ NO hamburger icon INSIDE games (uses game's own back/exit button)
 // ✅ ADDED: Landscape orientation prompt for games
-// ✅ FIXED: Hamburger moved to right side during games (no overlap)
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -157,7 +157,6 @@ const Dashboard = () => {
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
   );
-  // ✅ BAGO: State para sa portrait mode detection
   const [isPortrait, setIsPortrait] = useState(
     typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
   );
@@ -198,7 +197,6 @@ const Dashboard = () => {
     };
     handleResize();
     window.addEventListener('resize', handleResize);
-    // For mobile rotation, 'orientationchange' is more reliable
     window.addEventListener('orientationchange', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -593,12 +591,6 @@ const Dashboard = () => {
         .hamburger-btn:hover { background: ${palette.deepNavyLight}; }
         .hamburger-btn:active { transform: scale(0.94); }
 
-        /* ✅ FIXED: Kapag nasa loob ng game, ilipat sa KANAN ang hamburger para hindi matakpan ang game UI */
-        .hamburger-btn.in-game {
-          left: auto;
-          right: 16px;
-        }
-
         @media (max-width: 768px) {
           .hamburger-btn { display: flex !important; }
           .main-content { padding: 16px !important; }
@@ -606,7 +598,7 @@ const Dashboard = () => {
           .recent-activity-item { flex-wrap: wrap; }
         }
 
-        /* ✅ BAGO: Landscape mode adjustments para sa games */
+        /* ✅ Landscape mode adjustments para sa games */
         @media (max-height: 500px) and (orientation: landscape) {
           .main-content { padding: 8px !important; }
         }
@@ -639,10 +631,10 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* ✅ HAMBURGER — shows on mobile whenever sidebar is closed */}
-      {isMobile && !isSidebarVisible && !isPortrait && (
+      {/* ✅ HAMBURGER — LALABAS LANG SA MOBILE KAPAG HINDI NAKA-GAME AT NAKA-CLOSE ANG SIDEBAR */}
+      {isMobile && !isInGame && !isSidebarVisible && (
         <button
-          className={`hamburger-btn ${isInGame ? 'in-game' : ''}`}
+          className="hamburger-btn"
           onClick={() => setIsSidebarVisible(true)}
           aria-label="Open menu"
         >
@@ -691,52 +683,6 @@ const Dashboard = () => {
             <div className="theme-toggle-wrap" style={{ padding: '4px 22px' }}>
               <ThemeToggle colors={colors} fontFamily={fontFamily} />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ IN-GAME overlay sidebar (when hamburger opened during a game) */}
-      {isInGame && isSidebarVisible && (
-        <div
-          onClick={() => setIsSidebarVisible(false)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(42, 40, 69, 0.6)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 9999,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '260px',
-              height: '100vh',
-              background: `linear-gradient(180deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
-              color: '#fff',
-              display: 'flex', flexDirection: 'column',
-              animation: 'slideInLeft 0.25s ease-out',
-            }}
-          >
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontFamily: "'Fredoka', sans-serif" }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
-              </div>
-              <button
-                onClick={() => setIsSidebarVisible(false)}
-                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Icon name="close" size={18} color={palette.white} />
-              </button>
-            </div>
-            <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
-              {menuItems.map((item) => (
-                <div key={item.name} className="menu-item" onClick={() => { setCurrentGame(null); setActiveMenu(item.name); setContentKey(prev => prev + 1); setIsSidebarVisible(false); }} style={{ padding: '13px 22px', margin: '3px 10px', display: 'flex', alignItems: 'center', gap: '13px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, color: 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px' }}>
-                  <Icon name={item.icon} size={20} color="rgba(255,255,255,0.72)" />
-                  <span>{item.name}</span>
-                </div>
-              ))}
-            </nav>
           </div>
         </div>
       )}
