@@ -1,15 +1,60 @@
 // src/hooks/useUserStats.js
-// ✅ NEW: Now exposes learnedWords array (list of words)
-//          and wordCount (for the count)
+// ✅ FIXED: Maximum update depth error — added data change detection to prevent redundant setState
+// ✅ NEW: Now exposes learnedWords array (list of words) and wordCount
+// ✅ NEW: Progressive XP formula (100 + 30 per level) — matches Dashboard.jsx
+// ✅ NEW: Grandfathering — keeps higher stored level (won't downgrade existing users)
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../pages/firebase';
+
+// ============================================================
+// 🎯 PROGRESSIVE XP FORMULA — matches Dashboard.jsx
+// Formula: XP to next = 100 + (level - 1) × 30
+// ============================================================
+const XP_BASE = 100;
+const XP_INCREMENT = 30;
+
+const computeLevelFromPoints = (points) => {
+  const total = points || 0;
+  let level = 1;
+  let accumulated = 0;
+  while (level < 999) {
+    const need = XP_BASE + (level - 1) * XP_INCREMENT;
+    if (total >= accumulated + need) {
+      accumulated += need;
+      level++;
+    } else break;
+  }
+  return level;
+};
+
+const computeCurrentXP = (points) => {
+  const total = points || 0;
+  let level = 1;
+  let accumulated = 0;
+  while (level < 999) {
+    const need = XP_BASE + (level - 1) * XP_INCREMENT;
+    if (total >= accumulated + need) {
+      accumulated += need;
+      level++;
+    } else break;
+  }
+  return total - accumulated;
+};
+
+const computeXpToNext = (points) => {
+  const level = computeLevelFromPoints(points);
+  return XP_BASE + (level - 1) * XP_INCREMENT;
+};
 
 export const useUserStats = (userId) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // ✅ FIX: Track last data to prevent redundant setState calls
+  const lastDataKeyRef = useRef('');
 
   useEffect(() => {
     if (!userId) {
@@ -18,27 +63,53 @@ export const useUserStats = (userId) => {
     }
 
     const userRef = doc(db, "users", userId);
+    lastDataKeyRef.current = '';
 
-    // Real-time listener
     const unsubscribe = onSnapshot(userRef,
       (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
 
-          // ✅ Dynamic level computation (every 100 XP = 1 level)
-          // If there's a saved level, use it. If not, compute from XP.
-          const computedLevel = data.level || Math.floor((data.xp || 0) / 100) + 1;
-          const computedXpToNext = computedLevel * 100;
-
-          // ✅ NEW: Get the learned words array
-          // Support various possible field names
-          const learnedWordsArray =
-            data.learnedWordsList ||    // ✅ New field name
-            data.learnedWords ||         // ✅ Alternative
-            data.wordsList ||            // ✅ Alternative
+          // ✅ FIX: Create a key from relevant fields — skip update if nothing changed
+          const learnedWordsArrayRaw =
+            data.learnedWordsList ||
+            data.learnedWords ||
+            data.wordsList ||
             [];
 
-          // ✅ NEW: Normalize — can be an array of strings or array of objects
+          const dataKey = JSON.stringify({
+            tp: data.totalPoints || 0,
+            xp: data.xp || 0,
+            lvl: data.level || 0,
+            wl: data.wordsLearned || 0,
+            gp: data.gamesPlayed || 0,
+            acc: data.accuracy || 0,
+            str: data.currentStreak || 0,
+            la: data.lastActive || '',
+            av: data.equippedAvatar || '',
+            dw: Array.isArray(learnedWordsArrayRaw) ? learnedWordsArrayRaw.length : 0,
+            dia: data.totalDiamonds || 0,
+          });
+
+          if (dataKey === lastDataKeyRef.current) {
+            // Nothing relevant changed — skip setState to avoid infinite loop
+            if (loading) setLoading(false);
+            return;
+          }
+          lastDataKeyRef.current = dataKey;
+
+          // ✅ NEW: Progressive level computation
+          // Grandfathering: keep higher of (computed from points, stored level)
+          const computedFromPoints = computeLevelFromPoints(data.totalPoints || 0);
+          const storedLevel = data.level || 1;
+          const computedLevel = Math.max(computedFromPoints, storedLevel);
+
+          const computedXpToNext = computeXpToNext(data.totalPoints || 0);
+          const computedCurrentXP = computeCurrentXP(data.totalPoints || 0);
+
+          const learnedWordsArray = learnedWordsArrayRaw;
+
+          // Normalize — can be an array of strings or array of objects
           const normalizedWords = Array.isArray(learnedWordsArray)
             ? learnedWordsArray.map(w => {
                 if (typeof w === 'string') return w;
@@ -49,10 +120,8 @@ export const useUserStats = (userId) => {
               })
             : [];
 
-          // Transform Firebase data to match dashboard format
           setStats({
             ...data,
-            // Map Firebase fields to what dashboard expects
             uid: userId,
             displayName: data.displayName || 'User',
             email: data.email || '',
@@ -60,17 +129,15 @@ export const useUserStats = (userId) => {
             role: data.role || 'student',
             progress: {
               wordsLearned: data.wordsLearned || 0,
-              // ✅ NEW: Array of words (for modal display)
               learnedWords: normalizedWords,
-              // ✅ NEW: Ring count (just the count) — based on array length if available
               wordsLearnedCount: normalizedWords.length || data.wordsLearned || 0,
               gamesPlayed: data.gamesPlayed || 0,
               totalPoints: data.totalPoints || 0,
-              level: computedLevel,                 // ✅ Dynamic level
-              xp: data.xp || 0,
+              level: computedLevel,
+              xp: computedCurrentXP,
               streak: data.currentStreak || 0,
               accuracy: data.accuracy || 0,
-              xpToNext: computedXpToNext,           // ✅ Dynamic xpToNext
+              xpToNext: computedXpToNext,
               lastPlayed: data.lastActive || null,
               gameStats: data.gameStats || {}
             }

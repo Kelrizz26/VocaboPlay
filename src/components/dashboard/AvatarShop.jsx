@@ -1,4 +1,8 @@
 // src/components/dashboard/AvatarShop.jsx
+// ✅ NEW: Diamond purchasing option for avatars
+// ✅ Dual currency: Points (grindable) + Diamonds (premium)
+// ✅ Diamond price auto-computed based on rarity
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, db } from '../../pages/firebase';
@@ -31,10 +35,39 @@ const palette = {
   softGreenShadow: '#5E7F55',
   shadow: 'rgba(42, 40, 69, 0.06)',
   shadowMd: 'rgba(42, 40, 69, 0.10)',
+  // 💎 Diamond colors
+  diamond: '#5DADE2',
+  diamondShadow: '#3D8BBF',
+  diamondSoft: '#DBEAFE',
+  diamondSoftText: '#1E40AF',
+  gold: '#d4af37',
+  goldShadow: '#B8860B',
 };
 
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+// ============================================================
+// 💎 DIAMOND PRICE COMPUTATION
+// Base sa rarity — mas premium (mas mahal) habang rare
+// Formula: points × multiplier, min 5 💎
+// ============================================================
+const DIAMOND_MULTIPLIERS = {
+  free: 0,
+  common: 0.15,      // 100 pts → 15 💎
+  rare: 0.12,        // 500 pts → 60 💎
+  epic: 0.10,        // 1000 pts → 100 💎
+  legendary: 0.09,   // 5000 pts → 450 💎
+  mythic: 0.08,      // 10000 pts → 800 💎
+};
+
+const getDiamondPrice = (item) => {
+  if (!item) return 0;
+  if (item.price === 0) return 0;
+  if (item.diamondPrice && item.diamondPrice > 0) return item.diamondPrice;
+  const multiplier = DIAMOND_MULTIPLIERS[item.rarity] || 0.10;
+  return Math.max(5, Math.round(item.price * multiplier));
+};
 
 // ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = `${palette.bodyTextSoft}55` }) => {
@@ -50,6 +83,12 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = 
       <>
         <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
         <path d="M12 7v10M9.5 9.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5-2.5 1.12-2.5 2.5 1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    diamond: (
+      <>
+        <path d="M6 3h12l4 6-10 12L2 9l4-6z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M2 9h20M12 3l-4 6 4 12M12 3l4 6-4 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </>
     ),
     check: (
@@ -79,7 +118,7 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = 
 };
 
 // ============================================================
-// ✅ RARITY SIDEBAR CONFIG (muted colors)
+// ✅ RARITY SIDEBAR CONFIG
 // ============================================================
 const RARITY_SIDEBAR = [
   { id: 'all', label: 'All', icon: 'sparkle', color: palette.warmOrange },
@@ -93,7 +132,13 @@ const RARITY_SIDEBAR = [
 // ============================================================
 // ✅ AVATAR SHOP
 // ============================================================
-const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
+const AvatarShop = ({ 
+  currentPoints, 
+  onPointsChange, 
+  currentDiamonds = 0,        // 👈 BAGO
+  onDiamondsChange,           // 👈 BAGO
+  onEquipChange 
+}) => {
   const [ownedAvatars, setOwnedAvatars] = useState([]);
   const [equippedAvatar, setEquippedAvatar] = useState(DEFAULT_AVATAR_ID);
   const [previewAvatar, setPreviewAvatar] = useState(DEFAULT_AVATAR_ID);
@@ -101,8 +146,15 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedRarity, setSelectedRarity] = useState('all');
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [buyCurrency, setBuyCurrency] = useState('points'); // 👈 BAGO: 'points' | 'diamonds'
   const [isMobileView, setIsMobileView] = useState(false);
   const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [localDiamonds, setLocalDiamonds] = useState(currentDiamonds);
+
+  // Sync diamonds prop
+  useEffect(() => {
+    setLocalDiamonds(currentDiamonds);
+  }, [currentDiamonds]);
 
   // ===== LOAD USER DATA =====
   useEffect(() => {
@@ -135,6 +187,12 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
           const equipped = data.equippedAvatar || DEFAULT_AVATAR_ID;
           setEquippedAvatar(equipped);
           setPreviewAvatar(equipped);
+          
+          // 👈 Sync diamonds from Firebase
+          if (typeof data.totalDiamonds === 'number') {
+            setLocalDiamonds(data.totalDiamonds);
+            if (onDiamondsChange) onDiamondsChange(data.totalDiamonds);
+          }
         } else {
           const freeAvatarIds = AVATAR_SHOP_ITEMS
             .filter(a => a.price === 0)
@@ -149,6 +207,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
     };
 
     loadUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ===== RESPONSIVE BREAKPOINTS =====
@@ -171,7 +230,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
     }
   }, [message.text]);
 
-  // ===== BUY =====
+  // ===== BUY (supports both points and diamonds) =====
   const handleBuy = async () => {
     const avatarToBuy = previewAvatar;
     const avatarData = AVATAR_SHOP_ITEMS.find(a => a.id === avatarToBuy);
@@ -186,6 +245,42 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       return;
     }
 
+    const diamondPrice = getDiamondPrice(avatarData);
+
+    // ===== PURCHASE WITH DIAMONDS =====
+    if (buyCurrency === 'diamonds') {
+      if (localDiamonds < diamondPrice) {
+        setMessage({ 
+          type: 'error', 
+          text: `Not enough diamonds! Need ${diamondPrice - localDiamonds} more.` 
+        });
+        setShowBuyModal(false);
+        return;
+      }
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const newDiamonds = localDiamonds - diamondPrice;
+        const newOwned = [...ownedAvatars, avatarToBuy];
+
+        await updateDoc(userRef, {
+          totalDiamonds: newDiamonds,
+          ownedAvatars: newOwned
+        });
+
+        setOwnedAvatars(newOwned);
+        setLocalDiamonds(newDiamonds);
+        if (onDiamondsChange) onDiamondsChange(newDiamonds);
+        setMessage({ type: 'success', text: `Purchased ${avatarData.name} with 💎!` });
+        setShowBuyModal(false);
+      } catch (err) {
+        console.error('Error buying avatar with diamonds:', err);
+        setMessage({ type: 'error', text: 'Purchase failed. Try again.' });
+      }
+      return;
+    }
+
+    // ===== PURCHASE WITH POINTS =====
     if (currentPoints < avatarData.price) {
       setMessage({ 
         type: 'error', 
@@ -254,6 +349,21 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
     }
   };
 
+  // ===== OPEN BUY MODAL (auto-select affordable currency) =====
+  const openBuyModal = () => {
+    const avatarData = AVATAR_SHOP_ITEMS.find(a => a.id === previewAvatar);
+    const diamondPrice = getDiamondPrice(avatarData);
+    const canAffordPoints = currentPoints >= (avatarData?.price || 0);
+    const canAffordDiamonds = localDiamonds >= diamondPrice;
+
+    // Auto-select currency: prefer points, fallback diamonds
+    if (canAffordPoints) setBuyCurrency('points');
+    else if (canAffordDiamonds) setBuyCurrency('diamonds');
+    else setBuyCurrency('points');
+
+    setShowBuyModal(true);
+  };
+
   // ===== FILTERED =====
   const filteredAvatars = selectedRarity === 'all'
     ? AVATAR_SHOP_ITEMS
@@ -265,7 +375,10 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
   const previewConfig = RARITY_CONFIG[previewRarity];
   const isPreviewOwned = ownedAvatars.includes(previewAvatar);
   const isPreviewEquipped = equippedAvatar === previewAvatar;
-  const canAfford = currentPoints >= (previewData?.price || 0);
+  const canAffordPoints = currentPoints >= (previewData?.price || 0);
+  const previewDiamondPrice = getDiamondPrice(previewData);
+  const canAffordDiamonds = localDiamonds >= previewDiamondPrice;
+  const canAffordEither = canAffordPoints || canAffordDiamonds;
 
   // ===== DYNAMIC CARD SIZES =====
   const isCompact = screenWidth < 480;
@@ -318,7 +431,6 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
       boxSizing: 'border-box'
     }}>
 
-      {/* LOCAL RESPONSIVE STYLES */}
       <style>{`
         @media (max-width: 900px) {
           .shop-preview-panel { padding: 14px !important; }
@@ -383,32 +495,63 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
           </p>
         </div>
         
-        <motion.div
-          key={currentPoints}
-          initial={{ scale: 1.15 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 300 }}
-          style={{
-            background: palette.creamSoft,
-            border: `1.5px solid ${palette.border}`,
-            padding: isCompact ? '6px 12px' : (isMobileView ? '8px 14px' : '10px 18px'),
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            boxShadow: `0 2px 0 ${palette.border}`
-          }}
-        >
-          <span style={{ display: 'flex', background: palette.white, width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', border: `1px solid ${palette.border}` }}>
-            <Icon name="coin" size={14} color="#d4af37" />
-          </span>
-          <div>
-            <div style={{ fontSize: '9px', color: palette.bodyTextSoft, fontWeight: 800, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.08em', textTransform: 'uppercase' }}>POINTS</div>
-            <div style={{ fontSize: isCompact ? '14px' : (isMobileView ? '16px' : '18px'), fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy, lineHeight: 1 }}>
-              {currentPoints.toLocaleString()}
+        {/* BALANCE PILLS: Points + Diamonds */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <motion.div
+            key={currentPoints}
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            style={{
+              background: palette.creamSoft,
+              border: `1.5px solid ${palette.border}`,
+              padding: isCompact ? '6px 12px' : (isMobileView ? '8px 14px' : '10px 18px'),
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              boxShadow: `0 2px 0 ${palette.border}`
+            }}
+          >
+            <span style={{ display: 'flex', background: palette.white, width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', border: `1px solid ${palette.border}` }}>
+              <Icon name="coin" size={14} color="#d4af37" />
+            </span>
+            <div>
+              <div style={{ fontSize: '9px', color: palette.bodyTextSoft, fontWeight: 800, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.08em', textTransform: 'uppercase' }}>POINTS</div>
+              <div style={{ fontSize: isCompact ? '14px' : (isMobileView ? '16px' : '18px'), fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy, lineHeight: 1 }}>
+                {currentPoints.toLocaleString()}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+
+          {/* 💎 DIAMONDS BALANCE */}
+          <motion.div
+            key={localDiamonds}
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            style={{
+              background: palette.diamondSoft,
+              border: `1.5px solid ${palette.diamond}60`,
+              padding: isCompact ? '6px 12px' : (isMobileView ? '8px 14px' : '10px 18px'),
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              boxShadow: `0 2px 0 ${palette.diamond}40`
+            }}
+          >
+            <span style={{ display: 'flex', background: palette.white, width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', border: `1px solid ${palette.diamond}40` }}>
+              <Icon name="diamond" size={14} color={palette.diamond} />
+            </span>
+            <div>
+              <div style={{ fontSize: '9px', color: palette.diamondSoftText, fontWeight: 800, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.08em', textTransform: 'uppercase' }}>DIAMONDS</div>
+              <div style={{ fontSize: isCompact ? '14px' : (isMobileView ? '16px' : '18px'), fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY, color: palette.diamondSoftText, lineHeight: 1 }}>
+                {localDiamonds.toLocaleString()}
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </motion.div>
 
       {/* MESSAGE */}
@@ -758,6 +901,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '3px',
+                        flexWrap: 'wrap',
                       }}
                     >
                       {isOwned ? (
@@ -937,7 +1081,7 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
             </p>
           </motion.div>
 
-          {/* Ownership Status */}
+          {/* Ownership / Price Display */}
           <div style={{
             textAlign: 'center',
             marginBottom: '14px',
@@ -960,20 +1104,82 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 <Icon name="check" size={14} color={palette.softGreen} />
                 {isPreviewEquipped ? 'Currently Equipped' : 'Owned'}
               </span>
-            ) : (
+            ) : previewData?.price === 0 ? (
               <span style={{
                 fontSize: '15px',
                 fontWeight: '800',
-                color: previewData?.price === 0 ? palette.softGreen : '#d4af37',
+                color: palette.softGreen,
                 fontFamily: BRAND_FONT_DISPLAY,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
               }}>
-                <Icon name="coin" size={16} color={previewData?.price === 0 ? palette.softGreen : '#d4af37'} />
-                {previewData?.price === 0 ? 'FREE' : `${previewData?.price?.toLocaleString()} pts`}
+                <Icon name="check" size={16} color={palette.softGreen} />
+                FREE
               </span>
+            ) : (
+              // 👈 BAGO: Dual price display
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+              }}>
+                {/* Points price */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  background: canAffordPoints ? `${palette.gold}15` : `${palette.coral}10`,
+                  borderRadius: '8px',
+                  border: `1.5px solid ${canAffordPoints ? palette.gold + '60' : palette.coral + '40'}`,
+                }}>
+                  <Icon name="coin" size={14} color={palette.gold} />
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: '800',
+                    color: canAffordPoints ? palette.goldShadow : palette.coral,
+                    fontFamily: BRAND_FONT_DISPLAY,
+                  }}>
+                    {previewData?.price?.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Divider */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: palette.bodyTextSoft,
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  fontFamily: BRAND_FONT_BODY,
+                }}>
+                  or
+                </div>
+
+                {/* Diamonds price */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  background: canAffordDiamonds ? `${palette.diamond}15` : `${palette.coral}10`,
+                  borderRadius: '8px',
+                  border: `1.5px solid ${canAffordDiamonds ? palette.diamond + '60' : palette.coral + '40'}`,
+                }}>
+                  <Icon name="diamond" size={14} color={palette.diamond} />
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: '800',
+                    color: canAffordDiamonds ? palette.diamondShadow : palette.coral,
+                    fontFamily: BRAND_FONT_DISPLAY,
+                  }}>
+                    {previewDiamondPrice}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
@@ -1033,33 +1239,94 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 </motion.button>
               )
             ) : (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowBuyModal(true)}
-                disabled={!canAfford}
-                style={{
-                  padding: '12px',
-                  background: canAfford ? palette.warmOrange : palette.creamSoft,
-                  color: canAfford ? 'white' : palette.bodyTextSoft,
-                  border: canAfford ? 'none' : `1.5px solid ${palette.border}`,
-                  borderRadius: '12px',
-                  fontSize: '13px',
-                  fontWeight: '800',
-                  cursor: canAfford ? 'pointer' : 'not-allowed',
-                  boxShadow: canAfford ? `0 3px 0 ${palette.warmOrangeShadow}` : `0 2px 0 ${palette.border}`,
-                  fontFamily: BRAND_FONT_DISPLAY,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
-                <Icon name="coin" size={14} color={canAfford ? palette.white : palette.bodyTextSoft} />
-                {canAfford 
-                  ? `Buy for ${previewData?.price?.toLocaleString()} pts` 
-                  : `Need ${(previewData?.price || 0) - currentPoints} more pts`}
-              </motion.button>
+              <>
+                {/* 👈 BAGO: Two buy buttons when affordable with either currency */}
+                {canAffordPoints && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setBuyCurrency('points');
+                      setShowBuyModal(true);
+                    }}
+                    style={{
+                      padding: '12px',
+                      background: palette.warmOrange,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
+                      fontFamily: BRAND_FONT_DISPLAY,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <Icon name="coin" size={14} color={palette.white} />
+                    Buy for {previewData?.price?.toLocaleString()} pts
+                  </motion.button>
+                )}
+
+                {canAffordDiamonds && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setBuyCurrency('diamonds');
+                      setShowBuyModal(true);
+                    }}
+                    style={{
+                      padding: '12px',
+                      background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      boxShadow: `0 3px 0 ${palette.diamondShadow}`,
+                      fontFamily: BRAND_FONT_DISPLAY,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <Icon name="diamond" size={14} color={palette.white} />
+                    Buy for {previewDiamondPrice} 💎
+                  </motion.button>
+                )}
+
+                {/* Kung hindi afford kahit alin */}
+                {!canAffordEither && (
+                  <motion.button
+                    disabled
+                    style={{
+                      padding: '12px',
+                      background: palette.creamSoft,
+                      color: palette.bodyTextSoft,
+                      border: `1.5px solid ${palette.border}`,
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      cursor: 'not-allowed',
+                      fontFamily: BRAND_FONT_DISPLAY,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      lineHeight: 1.4,
+                      textAlign: 'center',
+                    }}
+                  >
+                    Need {previewData?.price?.toLocaleString()} pts or {previewDiamondPrice} 💎
+                  </motion.button>
+                )}
+              </>
             )}
           </div>
 
@@ -1184,43 +1451,131 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                 {previewData.anime}
               </p>
 
+              {/* 👈 BAGO: Currency toggle */}
+              {previewData.price > 0 && (
+                <div style={{
+                  display: 'flex',
+                  gap: '6px',
+                  padding: '4px',
+                  background: palette.creamSoft,
+                  borderRadius: '12px',
+                  marginBottom: '14px',
+                  border: `1.5px solid ${palette.border}`,
+                }}>
+                  <button
+                    onClick={() => setBuyCurrency('points')}
+                    disabled={!canAffordPoints}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '9px',
+                      border: 'none',
+                      background: buyCurrency === 'points' ? palette.white : 'transparent',
+                      color: !canAffordPoints 
+                        ? palette.bodyTextSoft 
+                        : (buyCurrency === 'points' ? palette.goldShadow : palette.bodyText),
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      cursor: canAffordPoints ? 'pointer' : 'not-allowed',
+                      fontFamily: BRAND_FONT_DISPLAY,
+                      boxShadow: buyCurrency === 'points' ? `0 1px 4px rgba(0,0,0,0.08)` : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      opacity: canAffordPoints ? 1 : 0.5,
+                    }}
+                  >
+                    <Icon name="coin" size={14} color={canAffordPoints ? palette.gold : palette.bodyTextSoft} />
+                    Points
+                  </button>
+                  <button
+                    onClick={() => setBuyCurrency('diamonds')}
+                    disabled={!canAffordDiamonds}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '9px',
+                      border: 'none',
+                      background: buyCurrency === 'diamonds' ? palette.white : 'transparent',
+                      color: !canAffordDiamonds 
+                        ? palette.bodyTextSoft 
+                        : (buyCurrency === 'diamonds' ? palette.diamondShadow : palette.bodyText),
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      cursor: canAffordDiamonds ? 'pointer' : 'not-allowed',
+                      fontFamily: BRAND_FONT_DISPLAY,
+                      boxShadow: buyCurrency === 'diamonds' ? `0 1px 4px rgba(0,0,0,0.08)` : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      opacity: canAffordDiamonds ? 1 : 0.5,
+                    }}
+                  >
+                    <Icon name="diamond" size={14} color={canAffordDiamonds ? palette.diamond : palette.bodyTextSoft} />
+                    Diamonds
+                  </button>
+                </div>
+              )}
+
+              {/* Price display */}
               <motion.div
+                key={buyCurrency}
                 initial={{ scale: 0.85 }}
                 animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                transition={{ type: 'spring', stiffness: 300 }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
                   padding: '10px 20px',
-                  background: `${palette.warmOrange}12`,
+                  background: buyCurrency === 'points' ? `${palette.gold}12` : `${palette.diamond}12`,
                   borderRadius: '12px',
-                  border: `1.5px solid ${palette.warmOrange}40`,
+                  border: `1.5px solid ${buyCurrency === 'points' ? palette.gold + '40' : palette.diamond + '40'}`,
                   marginBottom: '12px',
                 }}
               >
-                <Icon name="coin" size={20} color="#d4af37" />
+                <Icon 
+                  name={buyCurrency === 'points' ? 'coin' : 'diamond'} 
+                  size={20} 
+                  color={buyCurrency === 'points' ? palette.gold : palette.diamond} 
+                />
                 <span style={{
                   fontSize: '22px',
                   fontWeight: '800',
                   color: palette.deepNavy,
                   fontFamily: BRAND_FONT_DISPLAY,
                 }}>
-                  {previewData.price.toLocaleString()}
+                  {buyCurrency === 'points' 
+                    ? previewData.price.toLocaleString() 
+                    : previewDiamondPrice.toLocaleString()}
                 </span>
-                <span style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 700, fontFamily: BRAND_FONT_DISPLAY }}>pts</span>
+                <span style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 700, fontFamily: BRAND_FONT_DISPLAY }}>
+                  {buyCurrency === 'points' ? 'pts' : '💎'}
+                </span>
               </motion.div>
 
               <p style={{
                 fontSize: '12px',
-                color: currentPoints >= previewData.price ? palette.softGreen : palette.coral,
+                color: (buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds) 
+                  ? palette.softGreen 
+                  : palette.coral,
                 margin: '0 0 18px 0',
                 fontWeight: 700,
                 fontFamily: BRAND_FONT_BODY,
               }}>
-                {currentPoints >= previewData.price 
-                  ? `After purchase: ${(currentPoints - previewData.price).toLocaleString()} pts remaining`
-                  : `Need ${(previewData.price - currentPoints).toLocaleString()} more pts`}
+                {(buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds)
+                  ? `After purchase: ${
+                      buyCurrency === 'points' 
+                        ? (currentPoints - previewData.price).toLocaleString() + ' pts'
+                        : (localDiamonds - previewDiamondPrice).toLocaleString() + ' 💎'
+                    } remaining`
+                  : `Need ${
+                      buyCurrency === 'points'
+                        ? (previewData.price - currentPoints).toLocaleString() + ' more pts'
+                        : (previewDiamondPrice - localDiamonds).toLocaleString() + ' more 💎'
+                    }`}
               </p>
 
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -1248,22 +1603,22 @@ const AvatarShop = ({ currentPoints, onPointsChange, onEquipChange }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleBuy}
-                  disabled={currentPoints < previewData.price}
+                  disabled={buyCurrency === 'points' ? !canAffordPoints : !canAffordDiamonds}
                   style={{
                     flex: 1,
                     padding: '12px',
-                    background: currentPoints >= previewData.price 
-                      ? palette.softGreen
+                    background: (buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds)
+                      ? (buyCurrency === 'points' ? palette.softGreen : `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`)
                       : palette.creamSoft,
-                    color: currentPoints >= previewData.price ? 'white' : palette.bodyTextSoft,
-                    border: currentPoints >= previewData.price ? 'none' : `1.5px solid ${palette.border}`,
+                    color: (buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds) ? 'white' : palette.bodyTextSoft,
+                    border: (buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds) ? 'none' : `1.5px solid ${palette.border}`,
                     borderRadius: '12px',
                     fontSize: '13px',
                     fontWeight: '800',
-                    cursor: currentPoints >= previewData.price ? 'pointer' : 'not-allowed',
+                    cursor: (buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds) ? 'pointer' : 'not-allowed',
                     fontFamily: BRAND_FONT_DISPLAY,
-                    boxShadow: currentPoints >= previewData.price 
-                      ? `0 3px 0 ${palette.softGreenShadow}`
+                    boxShadow: (buyCurrency === 'points' ? canAffordPoints : canAffordDiamonds)
+                      ? `0 3px 0 ${buyCurrency === 'points' ? palette.softGreenShadow : palette.diamondShadow}`
                       : `0 2px 0 ${palette.border}`,
                   }}
                 >

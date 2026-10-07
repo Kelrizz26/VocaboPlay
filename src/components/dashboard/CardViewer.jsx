@@ -5,6 +5,7 @@
 // ✅ Touch-friendly buttons and spacing
 // ✅ Responsive text sizes
 // ✅ Scrollable if it doesn't fit on screen
+// ✅ NEW: onContinueLearning prop — navigates to Games page
 // ============================================================
 
 import React, { useEffect } from 'react';
@@ -16,7 +17,7 @@ const FONT_BODY = "'Nunito', sans-serif";
 // ============================================================
 // 🎴 CARD VIEWER COMPONENT
 // ============================================================
-export const CardViewer = ({ level, onClose }) => {
+export const CardViewer = ({ level, onClose, onContinueLearning }) => {
   const data = getLevelCardData(level);
 
   // ✅ Lock body scroll while modal is open
@@ -27,6 +28,15 @@ export const CardViewer = ({ level, onClose }) => {
       document.body.style.overflow = originalOverflow;
     };
   }, []);
+
+  // ✅ Handle Continue Learning click
+  const handleContinue = () => {
+    if (typeof onContinueLearning === 'function') {
+      onContinueLearning();
+    } else if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -345,8 +355,8 @@ export const CardViewer = ({ level, onClose }) => {
           </p>
 
           {/* Continue Button */}
-          <button className="cv-btn" onClick={onClose}>
-            Continue learning
+          <button className="cv-btn" onClick={handleContinue}>
+            🎮 Continue learning
           </button>
         </div>
       </div>

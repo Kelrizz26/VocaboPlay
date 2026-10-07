@@ -1,8 +1,9 @@
 // src/components/Dashboard.jsx
 // ============================================================
-// ✅ NEW: Saves learnedWordsList (array of words) to display in MyProgress modal
-// ✅ FIXED: completeActivity function - now accepts and saves the `answers` object
-// ✅ UPDATED: Profile dropdown - removed My Cards, new styled icons
+// ✅ Sidebar hidden on all non-game pages (normal)
+// ✅ Sidebar COMPLETELY removed from DOM when a game is active
+// ✅ Hamburger icon shown only during game
+// ✅ All other features preserved
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -34,6 +35,7 @@ import LivePlayerResults from './dashboard/LivePlayerResults';
 
 import MascotCarousel from './dashboard/MascotCarousel';
 import ExpBar from './dashboard/ExpBar';
+import DevPanel from './dashboard/DevPanel';
 
 import { LevelUpCelebration } from './dashboard/GoatMascot';
 import GoatCardCollection from './dashboard/MyCards';
@@ -62,12 +64,46 @@ const palette = {
   softGreen: '#7FA574',
   softGreenShadow: '#5E7F55',
   gold: '#C9A227',
-  shadow: 'rgba(42, 40, 69, 0.06)',
-  shadowMd: 'rgba(42, 40, 69, 0.10)',
 };
 
-export const computeLevelFromPoints = (points) => Math.floor((points || 0) / 100) + 1;
-export const computeCurrentXP = (points) => (points || 0) % 100;
+const XP_BASE = 100;
+const XP_INCREMENT = 30;
+const MAX_LEVEL = 50;
+
+const MILESTONE_DIAMOND_REWARDS = {
+  6: 2, 11: 3, 16: 5, 21: 8, 26: 12,
+  31: 18, 36: 25, 41: 35, 46: 50, 50: 75,
+};
+
+const getMilestoneDiamonds = (level) => MILESTONE_DIAMOND_REWARDS[level] || 0;
+
+export const computeLevelFromPoints = (points) => {
+  const total = points || 0;
+  let level = 1, accumulated = 0;
+  while (level < MAX_LEVEL) {
+    const need = XP_BASE + (level - 1) * XP_INCREMENT;
+    if (total >= accumulated + need) { accumulated += need; level++; } else break;
+  }
+  return level;
+};
+
+export const computeCurrentXP = (points) => {
+  const total = points || 0;
+  const level = computeLevelFromPoints(points);
+  if (level >= MAX_LEVEL) return 0;
+  let accumulated = 0, currentLvl = 1;
+  while (currentLvl < MAX_LEVEL) {
+    const need = XP_BASE + (currentLvl - 1) * XP_INCREMENT;
+    if (total >= accumulated + need) { accumulated += need; currentLvl++; } else break;
+  }
+  return total - accumulated;
+};
+
+export const computeXpToNext = (points) => {
+  const level = computeLevelFromPoints(points);
+  if (level >= MAX_LEVEL) return 0;
+  return XP_BASE + (level - 1) * XP_INCREMENT;
+};
 
 const chunkyButton = (bg, shadowColor, size = 'md') => {
   const sizes = {
@@ -80,7 +116,6 @@ const chunkyButton = (bg, shadowColor, size = 'md') => {
     background: bg, color: palette.white, border: 'none', borderRadius: s.radius,
     fontWeight: '800', cursor: 'pointer', fontFamily: "'Fredoka', sans-serif",
     fontSize: s.fontSize, padding: s.padding, boxShadow: `0 3px 0 ${shadowColor}`,
-    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     textTransform: 'uppercase', letterSpacing: '0.5px',
   };
@@ -114,13 +149,12 @@ const Dashboard = () => {
   const [currentGame, setCurrentGame] = useState(null);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [contentKey, setContentKey] = useState(0);
-
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const [recentActivities, setRecentActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
-
   const [equippedAvatar, setEquippedAvatar] = useState(null);
+
   const [joinPin, setJoinPin] = useState('');
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinError, setJoinError] = useState('');
@@ -135,24 +169,39 @@ const Dashboard = () => {
 
   const [showLevelUpCard, setShowLevelUpCard] = useState(false);
   const [levelUpCardLevel, setLevelUpCardLevel] = useState(1);
+  const [levelUpDiamonds, setLevelUpDiamonds] = useState(0);
 
   const userId = localStorage.getItem('userId');
   const { stats, loading, error } = useUserStats(userId);
+
+  // ✅ KEY VARIABLE — determines sidebar rendering
+  // If in a game: sidebar ONLY shows if user explicitly opened via hamburger
+  // If NOT in a game: sidebar shows normally
+  const isInGame = currentGame !== null;
+  const shouldShowSidebar = isInGame ? isSidebarVisible : isSidebarVisible;
 
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarVisible(false);
-      } else {
-        setIsSidebarVisible(true);
-      }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // ✅ CRITICAL: When entering/exiting a game, force sidebar to close
+  // This ALWAYS runs when currentGame changes
+  useEffect(() => {
+    if (currentGame) {
+      // ✅ Entering a game — hide sidebar (hamburger will show)
+      setIsSidebarVisible(false);
+    } else {
+      // ✅ Exiting game — restore sidebar (desktop only)
+      setIsSidebarVisible(!isMobile);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentGame]);
 
   const [userProfile, setUserProfile] = useState(() => {
     try {
@@ -201,9 +250,7 @@ const Dashboard = () => {
       const activities = scoresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
       setRecentActivities(activities.slice(0, 5));
-    } catch (e) {
-      console.error('Error refreshing activities:', e);
-    }
+    } catch (e) { console.error('Error refreshing activities:', e); }
   };
 
   useEffect(() => {
@@ -211,31 +258,14 @@ const Dashboard = () => {
       if (!userId) return;
       setLoadingActivities(true);
       try {
-        const scoresQuery = query(
-          collection(db, 'scores'),
-          where('studentId', '==', userId)
-        );
+        const scoresQuery = query(collection(db, 'scores'), where('studentId', '==', userId));
         const scoresSnap = await getDocs(scoresQuery);
-
-        const activities = scoresSnap.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-
-        activities.sort((a, b) => {
-          const dateA = new Date(a.completedAt || 0);
-          const dateB = new Date(b.completedAt || 0);
-          return dateB - dateA;
-        });
-
+        const activities = scoresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
         setRecentActivities(activities.slice(0, 5));
-      } catch (error) {
-        console.error('Error fetching recent activities:', error);
-      } finally {
-        setLoadingActivities(false);
-      }
+      } catch (error) { console.error('Error fetching recent activities:', error); }
+      finally { setLoadingActivities(false); }
     };
-
     fetchRecentActivities();
   }, [userId, contentKey]);
 
@@ -266,7 +296,8 @@ const Dashboard = () => {
     if (!selectedActivity) return;
     const gameMap = { 'quiz': 'quiz', 'match': 'match', 'wordpics': 'wordpics', 'guesswhat': 'guesswhat' };
     const gameId = gameMap[selectedActivity.gameType] || 'quiz';
-    setCurrentGame(gameId); setShowActivityModal(false);
+    setCurrentGame(gameId);
+    setShowActivityModal(false);
     localStorage.setItem('currentActivity', JSON.stringify(selectedActivity));
   };
 
@@ -283,22 +314,15 @@ const Dashboard = () => {
       const currentWordsLearned = userData.wordsLearned || 0;
       const currentGamesPlayed = userData.gamesPlayed || 0;
       const currentAccuracy = userData.accuracy || 0;
-
-      const currentLearnedWords =
-        userData.learnedWordsList ||
-        userData.learnedWords ||
-        [];
+      const currentDiamonds = userData.totalDiamonds || 0;
+      const currentLearnedWords = userData.learnedWordsList || userData.learnedWords || [];
 
       let newLearnedWords = Array.isArray(currentLearnedWords) ? [...currentLearnedWords] : [];
       if (updates.newWords && Array.isArray(updates.newWords)) {
         updates.newWords.forEach(word => {
-          const wordStr = typeof word === 'string'
-            ? word
-            : (word?.word || word?.term || '');
+          const wordStr = typeof word === 'string' ? word : (word?.word || word?.term || '');
           const normalized = String(wordStr).trim().toUpperCase();
-          if (normalized && !newLearnedWords.includes(normalized)) {
-            newLearnedWords.push(normalized);
-          }
+          if (normalized && !newLearnedWords.includes(normalized)) newLearnedWords.push(normalized);
         });
       }
 
@@ -308,7 +332,6 @@ const Dashboard = () => {
       else if (updates.xp !== undefined) pointsEarned = updates.xp;
 
       const newTotalPoints = currentTotalPoints + pointsEarned;
-
       const today = new Date().toDateString();
       const lastPlayed = userData.lastActive ? new Date(userData.lastActive).toDateString() : null;
       let newStreak = currentStreak;
@@ -340,33 +363,28 @@ const Dashboard = () => {
       const oldLevel = computeLevelFromPoints(currentTotalPoints);
       const newLevel = computeLevelFromPoints(newTotalPoints);
       const currentXP = computeCurrentXP(newTotalPoints);
+      const xpToNext = computeXpToNext(newTotalPoints);
 
+      let milestoneDiamonds = 0;
       if (newLevel > oldLevel) {
+        for (let lvl = oldLevel + 1; lvl <= newLevel; lvl++) milestoneDiamonds += getMilestoneDiamonds(lvl);
         setLevelUpCardLevel(newLevel);
+        setLevelUpDiamonds(milestoneDiamonds);
         setShowLevelUpCard(true);
       }
 
+      const newDiamonds = currentDiamonds + milestoneDiamonds;
+
       let newGamesPlayed = currentGamesPlayed;
-      if (updates.gamesPlayed !== undefined && updates.gamesPlayed > 0) {
-        newGamesPlayed = currentGamesPlayed + updates.gamesPlayed;
-      } else {
+      if (updates.gamesPlayed !== undefined && updates.gamesPlayed > 0) newGamesPlayed = currentGamesPlayed + updates.gamesPlayed;
+      else {
         let totalGamesPlayed = 0;
-        Object.values(gameStats).forEach(g => {
-          if (g && typeof g === 'object') {
-            totalGamesPlayed += g.played || 0;
-          }
-        });
-        if (totalGamesPlayed > 0) {
-          newGamesPlayed = Math.max(totalGamesPlayed, currentGamesPlayed);
-        }
+        Object.values(gameStats).forEach(g => { if (g && typeof g === 'object') totalGamesPlayed += g.played || 0; });
+        if (totalGamesPlayed > 0) newGamesPlayed = Math.max(totalGamesPlayed, currentGamesPlayed);
       }
 
       let totalQuestionsAll = 0;
-      Object.values(gameStats).forEach(g => {
-        if (g && typeof g === 'object') {
-          totalQuestionsAll += g.total || 0;
-        }
-      });
+      Object.values(gameStats).forEach(g => { if (g && typeof g === 'object') totalQuestionsAll += g.total || 0; });
       let newAccuracy = currentAccuracy;
       if (totalQuestionsAll > 0) {
         const totalCorrect = Object.values(gameStats).reduce((sum, g) => sum + (g.correct || 0), 0);
@@ -376,38 +394,30 @@ const Dashboard = () => {
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
       const updateData = {
-        totalPoints: newTotalPoints,
-        level: newLevel,
-        xp: currentXP,
-        xpToNext: 100,
-        currentStreak: newStreak,
-        gamesPlayed: newGamesPlayed,
-        wordsLearned: newWordsLearned,
-        learnedWordsList: newLearnedWords,
-        accuracy: newAccuracy,
-        gameStats: gameStats,
-        lastActive: new Date().toISOString()
+        totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
+        currentStreak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
+        learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats,
+        totalDiamonds: newDiamonds, lastActive: new Date().toISOString()
       };
 
       await updateDoc(userRef, updateData);
 
       const newProgress = {
-        totalPoints: newTotalPoints,
-        level: newLevel,
-        xp: currentXP,
-        xpToNext: 100,
-        streak: newStreak,
-        gamesPlayed: newGamesPlayed,
-        wordsLearned: newWordsLearned,
-        learnedWordsList: newLearnedWords,
-        accuracy: newAccuracy,
-        gameStats: gameStats
+        totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
+        streak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
+        learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats, totalDiamonds: newDiamonds
       };
       localStorage.setItem('vocaboplay_progress', JSON.stringify(newProgress));
 
-      const event = new CustomEvent('progressUpdate', { detail: newProgress });
-      window.dispatchEvent(event);
+      try {
+        const cached = JSON.parse(localStorage.getItem('firebaseUserData') || '{}');
+        cached.totalPoints = newTotalPoints;
+        cached.totalDiamonds = newDiamonds;
+        cached.level = newLevel;
+        localStorage.setItem('firebaseUserData', JSON.stringify(cached));
+      } catch (e) {}
 
+      window.dispatchEvent(new CustomEvent('progressUpdate', { detail: newProgress }));
       return newProgress;
     } catch (error) {
       console.error('❌ Firebase error:', error);
@@ -422,17 +432,12 @@ const Dashboard = () => {
       const activityData = activitySnap.exists() ? activitySnap.data() : {};
 
       await addDoc(collection(db, 'scores'), {
-        activityId,
-        studentId: userId,
+        activityId, studentId: userId,
         studentName: userProfile.displayName || 'Student',
-        score,
-        correctAnswers,
-        totalQuestions,
+        score, correctAnswers, totalQuestions,
         gameType: activityData.gameType || 'quiz',
         activityTitle: activityData.title || '',
-        source: 'teacher-pin',
-        answers: answers,
-        wordsList: wordsList,
+        source: 'teacher-pin', answers, wordsList,
         completedAt: new Date().toISOString()
       });
 
@@ -440,17 +445,10 @@ const Dashboard = () => {
         await updateDoc(activityRef, { participants: (activitySnap.data().participants || 0) + 1 });
       }
       if (updateProgress) {
-        await updateProgress({
-          totalPoints: score,
-          wordsLearned: correctAnswers,
-          gamesPlayed: 1,
-          newWords: wordsList,
-        });
+        await updateProgress({ totalPoints: score, wordsLearned: correctAnswers, gamesPlayed: 1, newWords: wordsList });
       }
       await refreshRecentActivities();
-    } catch (error) {
-      console.error('Error completing activity:', error);
-    }
+    } catch (error) { console.error('Error completing activity:', error); }
   };
 
   const recordSoloGame = async (gameType, score, correctAnswers, totalQuestions, wordsList = []) => {
@@ -459,46 +457,43 @@ const Dashboard = () => {
       await addDoc(collection(db, 'scores'), {
         studentId: userId,
         studentName: userProfile.displayName || 'Student',
-        score: score || 0,
-        correctAnswers: correctAnswers || 0,
-        totalQuestions: totalQuestions || 0,
-        gameType: gameType,
-        source: 'solo',
-        wordsList: wordsList,
+        score: score || 0, correctAnswers: correctAnswers || 0, totalQuestions: totalQuestions || 0,
+        gameType, source: 'solo', wordsList,
         completedAt: new Date().toISOString()
       });
-
       if (wordsList && wordsList.length > 0) {
-        await updateProgress({
-          newWords: wordsList,
-        });
+        await updateProgress({ newWords: wordsList });
       }
-
       await refreshRecentActivities();
-      console.log(`✅ Recorded solo game: ${gameType} — ${score} pts, ${wordsList.length} words`);
-    } catch (error) {
-      console.error('Error recording solo game:', error);
-    }
+    } catch (error) { console.error('Error recording solo game:', error); }
   };
 
   const handleLogout = () => { localStorage.clear(); auth.signOut().catch(console.error); navigate('/'); };
 
+  // ✅ CRITICAL: startGame — sets currentGame which triggers the useEffect above
   const startGame = (gameId) => {
     const availableGames = ['wordpics', 'match', 'quiz', 'guesswhat', 'short-story'];
-    if (!availableGames.includes(gameId)) return;
-    setCurrentGame(gameId); setActiveMenu(null);
-    if (isMobile) setIsSidebarVisible(false);
+    if (!availableGames.includes(gameId)) {
+      console.warn('❌ Invalid game ID:', gameId);
+      return;
+    }
+    console.log('🎮 Starting game:', gameId);
+    setCurrentGame(gameId);
+    setActiveMenu(null);
+    setIsSidebarVisible(false);
     window.scrollTo(0, 0);
   };
 
   const exitGame = () => {
-    setCurrentGame(null); setActiveMenu('Dashboard');
-    if (!isMobile) setIsSidebarVisible(true);
+    setCurrentGame(null);
+    setActiveMenu('Dashboard');
     refreshRecentActivities();
   };
 
   const changeMenu = (menu) => {
-    setActiveMenu(menu); setContentKey(prev => prev + 1); setCurrentGame(null);
+    setActiveMenu(menu);
+    setContentKey(prev => prev + 1);
+    setCurrentGame(null);
     if (isMobile) setIsSidebarVisible(false);
   };
 
@@ -518,9 +513,7 @@ const Dashboard = () => {
     { name: 'Avatar Shop', icon: 'shop' },
   ];
 
-  const rawTotalPoints = DEMO_FORCE_LEVEL ? 250 : (
-    stats?.progress?.totalPoints ?? progress.totalPoints ?? 0
-  );
+  const rawTotalPoints = DEMO_FORCE_LEVEL ? 250 : (stats?.progress?.totalPoints ?? progress.totalPoints ?? 0);
 
   const displayProgress = {
     wordsLearned: stats?.progress?.wordsLearned ?? progress.wordsLearned ?? 0,
@@ -528,23 +521,16 @@ const Dashboard = () => {
     totalPoints: rawTotalPoints,
     level: computeLevelFromPoints(rawTotalPoints),
     xp: computeCurrentXP(rawTotalPoints),
-    xpToNext: 100,
+    xpToNext: computeXpToNext(rawTotalPoints),
+    isMaxLevel: computeLevelFromPoints(rawTotalPoints) >= MAX_LEVEL,
     streak: stats?.progress?.streak ?? progress.streak ?? 0,
     accuracy: stats?.progress?.accuracy ?? progress.accuracy ?? 0,
   };
 
   const displayName = stats?.displayName || userProfile?.displayName || 'User';
-  const displayEmail = stats?.email || userProfile?.email || '';
 
   if (liveView === 'lobby' && liveSession) return <LivePlayerLobby session={liveSession} playerId={livePlayerId} onGameStart={handleLiveGameStart} onCancel={handleLiveExit} />;
-  if (liveView === 'game' && liveSession) return (
-    <LivePlayerGame
-      session={liveSession}
-      playerId={livePlayerId}
-      onGameEnd={handleLiveGameEnd}
-      completeActivity={completeActivity}
-    />
-  );
+  if (liveView === 'game' && liveSession) return <LivePlayerGame session={liveSession} playerId={livePlayerId} onGameEnd={handleLiveGameEnd} completeActivity={completeActivity} />;
   if (liveView === 'results' && liveSession) return <LivePlayerResults session={liveSession} playerId={livePlayerId} onExit={handleLiveExit} />;
 
   if (loading) {
@@ -576,62 +562,62 @@ const Dashboard = () => {
         .recent-activity-item { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .recent-activity-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(42, 40, 69, 0.06); }
 
-        .hamburger-btn { display: none; }
+        .hamburger-btn {
+          position: fixed;
+          top: 16px;
+          left: 16px;
+          z-index: 10001;
+          width: 46px;
+          height: 46px;
+          background: ${palette.deepNavy};
+          border: 2px solid rgba(255,255,255,0.15);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(42, 40, 69, 0.4);
+          transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .hamburger-btn:hover { background: ${palette.deepNavyLight}; }
+        .hamburger-btn:active { transform: scale(0.94); }
 
         @media (max-width: 768px) {
-          .sidebar-fixed { transform: translateX(-100%) !important; }
-          .sidebar-fixed.open { transform: translateX(0) !important; }
-          .main-content { margin-left: 0 !important; padding: 16px !important; }
+          .main-content { padding: 16px !important; }
           .dashboard-welcome { flex-direction: column !important; text-align: center !important; padding: 20px !important; }
-
-          .hamburger-btn {
-            display: flex !important;
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 1001;
-            width: 44px;
-            height: 44px;
-            background: ${palette.deepNavy};
-            border: none;
-            border-radius: 12px;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(42, 40, 69, 0.2);
-            transition: transform 0.15s ease;
-          }
-          .hamburger-btn:active { transform: scale(0.95); }
-          .hamburger-btn.hidden { display: none !important; }
-
           .recent-activity-item { flex-wrap: wrap; }
         }
       `}</style>
 
-      {isMobile && (
+      {/* ✅ HAMBURGER — shows only when IN GAME and sidebar is hidden */}
+      {isInGame && !isSidebarVisible && (
         <button
-          className={`hamburger-btn ${isSidebarVisible ? 'hidden' : ''}`}
+          className="hamburger-btn"
           onClick={() => setIsSidebarVisible(true)}
           aria-label="Open menu"
         >
-          <Icon name="menu" size={24} color={palette.white} />
+          <Icon name="menu" size={26} color={palette.white} />
         </button>
       )}
 
-      {/* SIDEBAR */}
-      <div className={`sidebar-fixed ${isSidebarVisible ? 'open' : ''}`} style={{
-        width: '260px', background: `linear-gradient(180deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
-        color: '#fff', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh',
-        left: 0, top: 0, zIndex: 1000, transition: 'transform 0.3s ease',
-        transform: isSidebarVisible ? 'translateX(0)' : 'translateX(-100%)',
-        borderRight: `1px solid rgba(255,255,255,0.06)`,
-      }}>
-        <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontFamily: "'Fredoka', sans-serif" }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-            <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
-          </div>
-          {isMobile && (
+      {/* ✅ SIDEBAR — Always rendered unless in-game-with-sidebar-hidden */}
+      {!isInGame && (
+        <div className="sidebar-fixed open" style={{
+          width: '260px',
+          background: `linear-gradient(180deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
+          color: '#fff',
+          display: 'flex', flexDirection: 'column',
+          position: 'fixed', height: '100vh', left: 0, top: 0,
+          zIndex: 1000,
+          borderRight: `1px solid rgba(255,255,255,0.06)`,
+          transform: isSidebarVisible ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s ease',
+        }}>
+          <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontFamily: "'Fredoka', sans-serif" }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+              <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
+            </div>
             <button
               onClick={() => setIsSidebarVisible(false)}
               style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -639,131 +625,136 @@ const Dashboard = () => {
             >
               <Icon name="close" size={18} color={palette.white} />
             </button>
-          )}
-        </div>
-        <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
-          {menuItems.map((item) => {
-            const isActive = activeMenu === item.name;
-            return (
-              <div key={item.name} className={`menu-item ${isActive ? 'active' : ''}`} onClick={() => changeMenu(item.name)} style={{ padding: '13px 22px', margin: '3px 10px', display: 'flex', alignItems: 'center', gap: '13px', cursor: 'pointer', fontSize: '15px', fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px', borderLeft: '3px solid transparent' }}>
-                <Icon name={item.icon} size={20} color={isActive ? palette.warmOrange : 'rgba(255,255,255,0.72)'} secondaryColor={isActive ? `${palette.warmOrange}66` : 'rgba(255,255,255,0.4)'} />
-                <span>{item.name}</span>
-              </div>
-            );
-          })}
-        </nav>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '10px 0' }}>
-          <div className="theme-toggle-wrap" style={{ padding: '4px 22px' }}>
-            <ThemeToggle colors={colors} fontFamily={fontFamily} />
+          </div>
+          <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
+            {menuItems.map((item) => {
+              const isActive = activeMenu === item.name;
+              return (
+                <div key={item.name} className={`menu-item ${isActive ? 'active' : ''}`} onClick={() => changeMenu(item.name)} style={{ padding: '13px 22px', margin: '3px 10px', display: 'flex', alignItems: 'center', gap: '13px', cursor: 'pointer', fontSize: '15px', fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px', borderLeft: '3px solid transparent' }}>
+                  <Icon name={item.icon} size={20} color={isActive ? palette.warmOrange : 'rgba(255,255,255,0.72)'} secondaryColor={isActive ? `${palette.warmOrange}66` : 'rgba(255,255,255,0.4)'} />
+                  <span>{item.name}</span>
+                </div>
+              );
+            })}
+          </nav>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '10px 0' }}>
+            <div className="theme-toggle-wrap" style={{ padding: '4px 22px' }}>
+              <ThemeToggle colors={colors} fontFamily={fontFamily} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {isSidebarVisible && isMobile && (
+      {/* ✅ SIDEBAR OVERLAY — only when IN GAME and user opened hamburger */}
+      {isInGame && isSidebarVisible && (
+        <div
+          onClick={() => setIsSidebarVisible(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(42, 40, 69, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '260px',
+              height: '100vh',
+              background: `linear-gradient(180deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
+              color: '#fff',
+              display: 'flex', flexDirection: 'column',
+              animation: 'slideInLeft 0.25s ease-out',
+            }}
+          >
+            <div style={{ padding: '20px 22px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontFamily: "'Fredoka', sans-serif" }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
+              </div>
+              <button
+                onClick={() => setIsSidebarVisible(false)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Icon name="close" size={18} color={palette.white} />
+              </button>
+            </div>
+            <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
+              {menuItems.map((item) => (
+                <div key={item.name} className="menu-item" onClick={() => { setCurrentGame(null); setActiveMenu(item.name); setContentKey(prev => prev + 1); setIsSidebarVisible(false); }} style={{ padding: '13px 22px', margin: '3px 10px', display: 'flex', alignItems: 'center', gap: '13px', cursor: 'pointer', fontSize: '15px', fontWeight: 500, color: 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px' }}>
+                  <Icon name={item.icon} size={20} color="rgba(255,255,255,0.72)" />
+                  <span>{item.name}</span>
+                </div>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ REGULAR OVERLAY — when NOT in game and sidebar visible (for mobile tap-to-close) */}
+      {!isInGame && isSidebarVisible && isMobile && (
         <div onClick={() => setIsSidebarVisible(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.4)', zIndex: 999 }} />
       )}
 
       <div key={contentKey} className="dashboard-container" style={{ display: 'flex', minHeight: '100vh', background: palette.cream }}>
-        <div className="main-content" style={{ flex: 1, marginLeft: (!isMobile && isSidebarVisible) ? '260px' : '0', padding: '24px 32px', transition: 'margin-left 0.3s ease' }}>
+        <div className="main-content" style={{
+          flex: 1,
+          marginLeft: (!isMobile && !isInGame && isSidebarVisible) ? '260px' : '0',
+          padding: isInGame ? '0' : '24px 32px',
+          transition: 'margin-left 0.3s ease',
+          width: '100%',
+        }}>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', position: 'relative' }}>
-            <div onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ background: palette.white, padding: '6px 14px 6px 8px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', border: `1.5px solid ${palette.border}` }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden' }}>
-                {equippedAvatar ? <CharacterAvatar avatarId={equippedAvatar} size="small" showBorder={false} /> : <div style={{ width: '32px', height: '32px', background: palette.creamSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>}
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy }}>{displayName}</div>
-                <div style={{ fontSize: '11px', color: palette.bodyTextSoft }}>Student</div>
-              </div>
-            </div>
-
-            {/* ✅ UPDATED: Profile dropdown — removed My Cards, new styled icons */}
-            {showProfileMenu && (
-              <>
-                <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-                <div style={{ position: 'absolute', top: '50px', right: 0, background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '240px', border: `1.5px solid ${palette.border}`, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.12)', padding: '8px' }}>
-
-                  {/* My Profile */}
-                  <button
-                    onClick={() => { setShowProfileMenu(false); changeMenu('My Profile'); }}
-                    className="profile-menu-item"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: 'none',
-                      background: 'none',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                  >
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: palette.teal,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      boxShadow: `0 3px 0 ${palette.tealShadow}`,
-                    }}>
-                      <Icon name="user" size={16} color={palette.white} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-                      <span style={{ fontWeight: 800, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", fontSize: '13px' }}>My Profile</span>
-                      <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>View your account</span>
-                    </div>
-                  </button>
-
-                  {/* Sign Out */}
-                  <button
-                    onClick={handleLogout}
-                    className="profile-menu-item"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: 'none',
-                      background: 'none',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                  >
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: palette.coral,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      boxShadow: `0 3px 0 ${palette.coralShadow}`,
-                    }}>
-                      <Icon name="logout" size={16} color={palette.white} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-                      <span style={{ fontWeight: 800, color: palette.coral, fontFamily: "'Fredoka', sans-serif", fontSize: '13px' }}>Sign Out</span>
-                      <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>Log out of account</span>
-                    </div>
-                  </button>
-
+          {!isInGame && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', position: 'relative' }}>
+              <div onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ background: palette.white, padding: '6px 14px 6px 8px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', border: `1.5px solid ${palette.border}` }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden' }}>
+                  {equippedAvatar ? <CharacterAvatar avatarId={equippedAvatar} size="small" showBorder={false} /> : <div style={{ width: '32px', height: '32px', background: palette.creamSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>}
                 </div>
-              </>
-            )}
-          </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy }}>{displayName}</div>
+                  <div style={{ fontSize: '11px', color: palette.bodyTextSoft }}>Student</div>
+                </div>
+              </div>
 
-          {/* ✅ Solo games with recordGame */}
-          {currentGame === 'wordpics' && <WordPicsGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
+              {showProfileMenu && (
+                <>
+                  <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+                  <div style={{ position: 'absolute', top: '50px', right: 0, background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '240px', border: `1.5px solid ${palette.border}`, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.12)', padding: '8px' }}>
+                    <button onClick={() => { setShowProfileMenu(false); changeMenu('My Profile'); }} className="profile-menu-item" style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: palette.teal, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 3px 0 ${palette.tealShadow}` }}>
+                        <Icon name="user" size={16} color={palette.white} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                        <span style={{ fontWeight: 800, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", fontSize: '13px' }}>My Profile</span>
+                        <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>View your account</span>
+                      </div>
+                    </button>
+
+                    <button onClick={handleLogout} className="profile-menu-item" style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: palette.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 3px 0 ${palette.coralShadow}` }}>
+                        <Icon name="logout" size={16} color={palette.white} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                        <span style={{ fontWeight: 800, color: palette.coral, fontFamily: "'Fredoka', sans-serif", fontSize: '13px' }}>Sign Out</span>
+                        <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>Log out of account</span>
+                      </div>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {currentGame === 'wordpics' && (
+            <WordPicsGame
+              onBack={exitGame}
+              updateProgress={updateProgress}
+              recordGame={recordSoloGame}
+              currentPoints={displayProgress.totalPoints}
+              onPointsChange={(newPoints) => setProgress({ ...progress, totalPoints: newPoints })}
+            />
+          )}
           {currentGame === 'match' && <MatchGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
           {currentGame === 'quiz' && <QuizGame onBack={exitGame} updateProgress={updateProgress} completeActivity={completeActivity} activityData={selectedActivity} recordGame={recordSoloGame} />}
           {currentGame === 'guesswhat' && <GuessWhatGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
@@ -772,7 +763,12 @@ const Dashboard = () => {
           {!currentGame && activeMenu === 'Word Library' && <WordLibrary />}
           {!currentGame && activeMenu === 'Games' && <PlayGames startGame={startGame} />}
           {!currentGame && activeMenu === 'My Progress' && <MyProgress />}
-          {!currentGame && activeMenu === 'My Cards' && <GoatCardCollection currentLevel={displayProgress.level} />}
+          {!currentGame && activeMenu === 'My Cards' && (
+            <GoatCardCollection
+              currentLevel={displayProgress.level}
+              onContinueLearning={() => changeMenu('Games')}
+            />
+          )}
           {!currentGame && activeMenu === 'My Profile' && <Profile onBack={() => changeMenu('Dashboard')} userProfile={userProfile} onUpdate={(p) => setUserProfile(p)} />}
           {!currentGame && activeMenu === 'Leaderboards' && <Leaderboards onBack={() => changeMenu('Dashboard')} isAdmin={false} currentUserId={userId} />}
           {!currentGame && activeMenu === 'Favorites' && <FavoritesPage />}
@@ -790,12 +786,7 @@ const Dashboard = () => {
                   <h2 style={{ fontSize: '30px', fontWeight: 700, color: 'white', margin: '0 0 8px 0', fontFamily: "'Fredoka', sans-serif" }}>Welcome back, {displayName}!</h2>
                   <p style={{ fontSize: '15px', opacity: '0.82', marginBottom: '20px' }}>Continue your vocabulary journey and complete your activities.</p>
                   <div style={{ marginBottom: '20px', maxWidth: '520px' }}>
-                    <ExpBar
-                      xp={displayProgress.xp}
-                      xpToNext={displayProgress.xpToNext}
-                      level={displayProgress.level}
-                      color={palette.warmOrange}
-                    />
+                    <ExpBar xp={displayProgress.xp} xpToNext={displayProgress.xpToNext} level={displayProgress.level} isMaxLevel={displayProgress.isMaxLevel} color={palette.warmOrange} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     <button onClick={() => setShowJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -814,23 +805,10 @@ const Dashboard = () => {
               <div style={{ background: palette.white, borderRadius: '16px', padding: '20px 24px', border: `1.5px solid ${palette.border}`, marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                   <div>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", margin: 0 }}>
-                      Recent Activities and Recent Played
-                    </h3>
-                    <p style={{ fontSize: '12px', color: palette.bodyTextSoft, margin: '4px 0 0 0' }}>
-                      Your recently played games and scores
-                    </p>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", margin: 0 }}>Recent Activities and Recent Played</h3>
+                    <p style={{ fontSize: '12px', color: palette.bodyTextSoft, margin: '4px 0 0 0' }}>Your recently played games and scores</p>
                   </div>
-                  <button
-                    onClick={() => changeMenu('My Progress')}
-                    style={{
-                      background: 'none', border: 'none', color: palette.warmOrange,
-                      fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-                      fontFamily: "'Fredoka', sans-serif", padding: '4px 8px'
-                    }}
-                  >
-                    View All →
-                  </button>
+                  <button onClick={() => changeMenu('My Progress')} style={{ background: 'none', border: 'none', color: palette.warmOrange, fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Fredoka', sans-serif", padding: '4px 8px' }}>View All →</button>
                 </div>
 
                 {loadingActivities ? (
@@ -843,143 +821,53 @@ const Dashboard = () => {
                     <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎮</div>
                     <p style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px', color: palette.deepNavy }}>No activities yet</p>
                     <p style={{ fontSize: '12px', marginBottom: '16px' }}>Play a game to see your recent activities here!</p>
-                    <button
-                      onClick={() => changeMenu('Games')}
-                      style={{
-                        ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
-                        fontSize: '12px', padding: '9px 20px'
-                      }}
-                    >
-                      Play Now
-                    </button>
+                    <button onClick={() => changeMenu('Games')} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), fontSize: '12px', padding: '9px 20px' }}>Play Now</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {recentActivities.map((activity, idx) => {
                       const date = activity.completedAt ? new Date(activity.completedAt) : null;
-                      const formattedDate = date ? date.toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric'
-                      }) : 'Unknown date';
-                      const formattedTime = date ? date.toLocaleTimeString('en-US', {
-                        hour: '2-digit', minute: '2-digit'
-                      }) : '';
-
+                      const formattedDate = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown date';
+                      const formattedTime = date ? date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
                       const gameType = activity.gameType || activity.activityType || 'Game';
                       const gameTypeLower = String(gameType).toLowerCase();
 
                       const gameImage = {
-                        'synoquest': '/image/wordpics.png',
-                        'wordpics': '/image/wordpics.png',
-                        'match': '/image/matchgame.png',
-                        'matchgame': '/image/matchgame.png',
-                        'quiz': '/image/quizgame.png',
-                        'quizmaster': '/image/quizgame.png',
+                        'synoquest': '/image/wordpics.png', 'wordpics': '/image/wordpics.png',
+                        'match': '/image/matchgame.png', 'matchgame': '/image/matchgame.png',
+                        'quiz': '/image/quizgame.png', 'quizmaster': '/image/quizgame.png',
                         'guesswhat': '/image/guesswhatgame.png',
-                        'short-story': '/image/shortstory.png',
-                        'shortstory': '/image/shortstory.png',
-                        'story-quest': '/image/shortstory.png',
-                        'sentencebuilder': '/image/sentence.png',
+                        'short-story': '/image/shortstory.png', 'shortstory': '/image/shortstory.png',
+                        'story-quest': '/image/shortstory.png', 'sentencebuilder': '/image/sentence.png',
                       }[gameTypeLower] || null;
 
-                      const gameEmoji = {
-                        'quiz': '🧠',
-                        'match': '🃏',
-                        'wordpics': '🖼️',
-                        'synoquest': '🖼️',
-                        'guesswhat': '❓',
-                        'short-story': '📖',
-                        'story-quest': '📖',
-                      }[gameTypeLower] || '🎮';
-
-                      const gameLabel = {
-                        'quiz': 'Quiz Master',
-                        'match': 'Match Game',
-                        'synoquest': 'SynoQuest',
-                        'wordpics': 'SynoQuest',
-                        'guesswhat': 'GuessWhat',
-                        'short-story': 'Story Quest',
-                        'story-quest': 'Story Quest',
-                      }[gameTypeLower] || 'Game';
-
-                      const displayTitle = activity.activityTitle
-                        ? `${activity.activityTitle} · ${gameLabel}`
-                        : gameLabel;
-
+                      const gameEmoji = { 'quiz': '🧠', 'match': '🃏', 'wordpics': '🖼️', 'synoquest': '🖼️', 'guesswhat': '❓', 'short-story': '📖', 'story-quest': '📖' }[gameTypeLower] || '🎮';
+                      const gameLabel = { 'quiz': 'Quiz Master', 'match': 'Match Game', 'synoquest': 'SynoQuest', 'wordpics': 'SynoQuest', 'guesswhat': 'GuessWhat', 'short-story': 'Story Quest', 'story-quest': 'Story Quest' }[gameTypeLower] || 'Game';
+                      const displayTitle = activity.activityTitle ? `${activity.activityTitle} · ${gameLabel}` : gameLabel;
                       const score = activity.score || 0;
                       const correct = activity.correctAnswers || 0;
                       const total = activity.totalQuestions || 0;
                       const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 
                       return (
-                        <div
-                          key={activity.id || idx}
-                          className="recent-activity-item"
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '14px',
-                            padding: '12px 16px', background: palette.creamSoft,
-                            borderRadius: '12px', border: `1px solid ${palette.borderSoft}`,
-                          }}
-                        >
-                          <div style={{
-                            width: '44px', height: '44px', borderRadius: '10px',
-                            background: palette.white, display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', fontSize: '20px', flexShrink: 0,
-                            border: `1.5px solid ${palette.border}`,
-                            overflow: 'hidden'
-                          }}>
+                        <div key={activity.id || idx} className="recent-activity-item" style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: palette.creamSoft, borderRadius: '12px', border: `1px solid ${palette.borderSoft}` }}>
+                          <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: palette.white, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, border: `1.5px solid ${palette.border}`, overflow: 'hidden' }}>
                             {gameImage ? (
-                              <img
-                                src={gameImage}
-                                alt={gameType}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  borderRadius: '10px'
-                                }}
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.parentElement.innerHTML = gameEmoji;
-                                }}
-                              />
-                            ) : (
-                              gameEmoji
-                            )}
+                              <img src={gameImage} alt={gameType} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = gameEmoji; }} />
+                            ) : gameEmoji}
                           </div>
-
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: '14px', fontWeight: 700, color: palette.deepNavy,
-                              fontFamily: "'Fredoka', sans-serif",
-                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                              display: 'flex', alignItems: 'center', gap: '6px'
-                            }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayTitle}</span>
                               {activity.source === 'teacher-pin' && (
-                                <span style={{
-                                  fontSize: '9px', padding: '2px 6px', flexShrink: 0,
-                                  background: `${palette.warmOrange}22`, color: palette.warmOrange,
-                                  borderRadius: '4px', fontWeight: 800
-                                }}>PIN</span>
+                                <span style={{ fontSize: '9px', padding: '2px 6px', flexShrink: 0, background: `${palette.warmOrange}22`, color: palette.warmOrange, borderRadius: '4px', fontWeight: 800 }}>PIN</span>
                               )}
                             </div>
-                            <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>
-                              {formattedDate}{formattedTime ? ` · ${formattedTime}` : ''}
-                            </div>
+                            <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>{formattedDate}{formattedTime ? ` · ${formattedTime}` : ''}</div>
                           </div>
-
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div style={{
-                              fontSize: '16px', fontWeight: 800, color: palette.warmOrange,
-                              fontFamily: "'Fredoka', sans-serif"
-                            }}>
-                              +{score} pts
-                            </div>
-                            {total > 0 && (
-                              <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>
-                                {correct}/{total} ({percentage}%)
-                              </div>
-                            )}
+                            <div style={{ fontSize: '16px', fontWeight: 800, color: palette.warmOrange, fontFamily: "'Fredoka', sans-serif" }}>+{score} pts</div>
+                            {total > 0 && <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>{correct}/{total} ({percentage}%)</div>}
                           </div>
                         </div>
                       );
@@ -1025,11 +913,25 @@ const Dashboard = () => {
             <LevelUpCelebration
               key={`levelup-${levelUpCardLevel}`}
               level={levelUpCardLevel}
-              onClose={() => setShowLevelUpCard(false)}
+              diamondsEarned={levelUpDiamonds}
+              onClose={() => { setShowLevelUpCard(false); setLevelUpDiamonds(0); }}
+            />
+          )}
+
+          {typeof window !== 'undefined' && window.location.search.includes('dev=1') && !currentGame && (
+            <DevPanel
+              userId={userId}
+              currentLevel={displayProgress.level}
+              currentPoints={displayProgress.totalPoints}
+              currentDiamonds={(() => { try { const cached = JSON.parse(localStorage.getItem('firebaseUserData') || '{}'); return cached.totalDiamonds || 0; } catch { return 0; } })()}
+              onRefresh={() => { window.location.reload(); }}
+              onTriggerLevelUp={(lvl, diamonds) => { setLevelUpCardLevel(lvl); setLevelUpDiamonds(diamonds); setShowLevelUpCard(true); }}
             />
           )}
         </div>
       </div>
+
+      <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
     </>
   );
 };
@@ -1048,4 +950,4 @@ const styles = {
   startBtn: { flex: 2, padding: '12px', ...chunkyButton(palette.softGreen, palette.softGreenShadow), fontSize: '13px' },
 };
 
-export default Dashboard;
+export default Dashboard; 

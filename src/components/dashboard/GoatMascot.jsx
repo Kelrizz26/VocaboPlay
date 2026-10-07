@@ -8,9 +8,15 @@
 // ✅ LEVEL OVERLAY — Cover the hardcoded "LEVEL X" in the image
 // ✅ ALIGNED WITH MascotCarousel.jsx — 1:1 MAPPING PER LEVEL
 // ✅ REMOVED: GoatCardCollection (now in MyCards.jsx)
+// 🎵 NEW: LevelUpCelebration has built-in SOUND EFFECT (fanfare)
+// 🆕 NEW: 10 goats × 5 levels each = 50 levels total (progressive)
+// 🆕 NEW: CEFR aligned: A1(1-5), A2(6-10), B1(11-20), B2(21-30), C1(31-40), C2(41+)
+// 🆕 NEW: Milestone every 5 levels (goat evolution)
+// 💎 NEW: diamondsEarned prop — shows "+X Diamonds!" sa celebration card
+// 🎨 UPDATED: Removed stars row for cleaner look, diamond reward centered
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 // ===== MUTED DASHBOARD PALETTE =====
 const palette = {
@@ -44,27 +50,38 @@ const FONT_BODY = "'Nunito', sans-serif";
 const DEMO_MODE = false;
 
 // ============================================================
-// ✅ GET MASCOT BY LEVEL — ALIGNED WITH MascotCarousel.jsx
+// 🐐 GET MASCOT BY LEVEL — 10 goats × 5 levels each
+// Aligned with MascotCarousel.jsx
 // ============================================================
 export const getMascotByLevel = (level) => {
   if (DEMO_MODE) {
     return { image: '/image/goat3.png', stage: 'Teen Goat', emoji: '🐐', color: palette.teal };
   }
 
-  if (level >= 10) return { image: '/image/goat10.png', stage: 'Divine Goat',    emoji: '💎', color: palette.gold };
-  if (level >= 9)  return { image: '/image/goat9.png',  stage: 'Mythic Goat',    emoji: '🔥', color: palette.deepNavy };
-  if (level >= 8)  return { image: '/image/goat8.png',  stage: 'Legendary Goat', emoji: '🌟', color: palette.gold };
-  if (level >= 7)  return { image: '/image/goat7.png',  stage: 'Hero Goat',      emoji: '⚔️', color: palette.coral };
-  if (level >= 6)  return { image: '/image/goat6.png',  stage: 'Champion Goat',  emoji: '🏆', color: palette.warmOrange };
-  if (level >= 5)  return { image: '/image/goat5.png',  stage: 'Master Goat',    emoji: '👑', color: palette.gold };
-  if (level >= 4)  return { image: '/image/goat4.png',  stage: 'Adult Goat',     emoji: '🐐', color: palette.coral };
-  if (level >= 3)  return { image: '/image/goat3.png',  stage: 'Teen Goat',      emoji: '🐐', color: palette.teal };
-  if (level >= 2)  return { image: '/image/goat2.png',  stage: 'Young Goat',     emoji: '🐐', color: palette.softGreen };
+  // Levels 46-50+ → Divine Goat (goat10)
+  if (level >= 46) return { image: '/image/goat10.png', stage: 'Divine Goat',    emoji: '💎', color: palette.gold };
+  // Levels 41-45 → Mythic Goat (goat9)
+  if (level >= 41) return { image: '/image/goat9.png',  stage: 'Mythic Goat',    emoji: '🔥', color: palette.deepNavy };
+  // Levels 36-40 → Legendary Goat (goat8)
+  if (level >= 36) return { image: '/image/goat8.png',  stage: 'Legendary Goat', emoji: '🌟', color: palette.gold };
+  // Levels 31-35 → Hero Goat (goat7)
+  if (level >= 31) return { image: '/image/goat7.png',  stage: 'Hero Goat',      emoji: '⚔️', color: palette.coral };
+  // Levels 26-30 → Champion Goat (goat6)
+  if (level >= 26) return { image: '/image/goat6.png',  stage: 'Champion Goat',  emoji: '🏆', color: palette.warmOrange };
+  // Levels 21-25 → Master Goat (goat5)
+  if (level >= 21) return { image: '/image/goat5.png',  stage: 'Master Goat',    emoji: '👑', color: palette.gold };
+  // Levels 16-20 → Adult Goat (goat4)
+  if (level >= 16) return { image: '/image/goat4.png',  stage: 'Adult Goat',     emoji: '🐐', color: palette.coral };
+  // Levels 11-15 → Teen Goat (goat3)
+  if (level >= 11) return { image: '/image/goat3.png',  stage: 'Teen Goat',      emoji: '🐐', color: palette.teal };
+  // Levels 6-10 → Young Goat (goat2)
+  if (level >= 6)  return { image: '/image/goat2.png',  stage: 'Young Goat',     emoji: '🐐', color: palette.softGreen };
+  // Levels 1-5 → Baby Goat (goat1)
   return                  { image: '/image/goat1.png',  stage: 'Baby Goat',      emoji: '🐐', color: palette.warmOrange };
 };
 
 // ============================================================
-// ✅ GET CEFR BY LEVEL
+// ✅ GET CEFR BY LEVEL — Aligned with new 50-level system
 // ============================================================
 const getCEFRByLevel = (level) => {
   if (level >= 41) return { cefr: 'C2', cefrLabel: 'Proficient',        cefrColor: '#B71C1C', cefrBg: '#FFEBEE' };
@@ -76,7 +93,7 @@ const getCEFRByLevel = (level) => {
 };
 
 // ============================================================
-// ✅ GET CARD DATA BY LEVEL
+// ✅ GET CARD DATA BY LEVEL — Milestones every 5 levels
 // ============================================================
 export const getLevelCardData = (level) => {
   const mascot = getMascotByLevel(level);
@@ -98,128 +115,190 @@ export const getLevelCardData = (level) => {
     mascot: mascot,
   };
 
+  // ============================================================
+  // MILESTONE LEVELS (every 5 levels — goat evolution)
+  // ============================================================
   if (level === 1) {
     data.emoji = '🌟'; data.title = "Welcome to VocaboPlay!";
     data.description = "Start your journey to becoming a confident English learner. Every word you learn brings you closer to fluency.";
     data.goatMessage = "Your Baby Goat is ready to learn with you!"; data.goatEmoji = '🐐';
-  } 
-  else if (level === 2) {
-    data.emoji = '🎉'; data.title = "Great Start!";
-    data.description = "Your vocabulary journey is growing stronger. You're making progress toward becoming a more confident English learner!";
-    data.goatMessage = "Your goat has grown! Keep learning to reach the next level!"; data.goatEmoji = '🌱';
-  } 
-  else if (level === 3) {
-    data.emoji = '🌱'; data.title = "You're Making Progress!";
-    data.description = "You're becoming more comfortable with English vocabulary. Keep practicing and building your word knowledge!";
-    data.goatMessage = "Your goat is growing with you!"; data.goatEmoji = '🌱';
-  } 
-  else if (level === 4) {
-    data.emoji = '⭐'; data.title = "Keep Building Your Vocabulary!";
-    data.description = "You're developing a strong foundation in English. Your daily practice is paying off!";
-    data.goatMessage = "Your goat is getting stronger!"; data.goatEmoji = '💪';
-  } 
-  else if (level === 5) {
-    data.isMilestone = true; data.isEvolution = true; data.emoji = '🐐';
-    data.title = "Goat Growth Milestone!";
-    data.description = "You've reached a major milestone in your vocabulary journey. Your dedication is inspiring!";
-    data.goatMessage = "Your goat evolved! Meet your Master Goat!"; data.goatEmoji = '🎊';
-  } 
-  else if (level === 6) {
-    data.emoji = '🎉'; data.title = "You've Entered a New Stage!";
-    data.description = "You can now understand sentences and frequently used expressions related to areas of most immediate relevance.";
-    data.goatMessage = "Your goat is getting stronger!"; data.goatEmoji = '🚀';
-  } 
-  else if (level === 7) {
-    data.emoji = '📚'; data.title = "Your Vocabulary is Expanding!";
-    data.description = "You're expanding your vocabulary and can handle simple communication in familiar situations.";
-    data.goatMessage = "Your goat is growing with you!"; data.goatEmoji = '📖';
-  } 
-  else if (level === 8) {
-    data.emoji = '⭐'; data.title = "Keep Going!";
-    data.description = "You're getting better at understanding English. Consistency is key to mastery!";
-    data.goatMessage = "Your goat is growing with you!"; data.goatEmoji = '🌟';
-  } 
-  else if (level === 9) {
-    data.emoji = '💪'; data.title = "You're Getting Stronger!";
-    data.description = "Your hard work is paying off. You're building a solid foundation for more advanced English!";
-    data.goatMessage = "Your goat is growing with you!"; data.goatEmoji = '🔥';
-  } 
-  else if (level === 10) {
-    data.isMilestone = true; data.isEvolution = true; data.emoji = '🐐';
-    data.title = "Another Goat Growth Milestone!";
-    data.description = "You've mastered the basics and are ready for more! Your journey to fluency continues.";
-    data.goatMessage = "Your goat evolved! Meet your Divine Goat!"; data.goatEmoji = '🎊';
   }
-  else if (level >= 11 && level < 20) {
+  else if (level === 5) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '🌱';
+    data.title = "First Evolution!";
+    data.description = "You've reached A1 completion! Your goat is ready to grow — meet your Young Goat!";
+    data.goatMessage = "Your goat evolved! A new journey begins."; data.goatEmoji = '🎊';
+  }
+  else if (level === 10) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '🎓';
+    data.title = "A2 Complete!";
+    data.description = "You've mastered Elementary English! Your Teen Goat is growing stronger.";
+    data.goatMessage = "Your goat evolved! Welcome to the Intermediate stage."; data.goatEmoji = '🎊';
+  }
+  else if (level === 15) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '📚';
+    data.title = "Teen Goat Evolution!";
+    data.description = "Your goat is becoming an Adult! You're building real fluency.";
+    data.goatMessage = "Your goat evolved! Adult Goat has arrived."; data.goatEmoji = '🎊';
+  }
+  else if (level === 20) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '🐐';
+    data.title = "B1 Complete!";
+    data.description = "You've mastered Intermediate English! Master Goat is here.";
+    data.goatMessage = "Your goat evolved! You're now an Upper Intermediate learner."; data.goatEmoji = '🎊';
+  }
+  else if (level === 25) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '🏆';
+    data.title = "Champion Goat!";
+    data.description = "You're becoming a Champion! Your hard work is paying off.";
+    data.goatMessage = "Your goat evolved! Champion status unlocked."; data.goatEmoji = '🎊';
+  }
+  else if (level === 30) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '⚔️';
+    data.title = "B2 Complete!";
+    data.description = "Upper Intermediate mastered! You're now a Hero.";
+    data.goatMessage = "Your goat evolved! Hero Goat has arrived."; data.goatEmoji = '🎊';
+  }
+  else if (level === 35) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '🌟';
+    data.title = "Legendary Status!";
+    data.description = "You're a Legend! Very few reach this far.";
+    data.goatMessage = "Your goat evolved! Legendary Goat is here."; data.goatEmoji = '🎊';
+  }
+  else if (level === 40) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '🔥';
+    data.title = "C1 Complete!";
+    data.description = "Advanced English mastered! You're approaching mastery.";
+    data.goatMessage = "Your goat evolved! Mythic Goat unlocked."; data.goatEmoji = '🎊';
+  }
+  else if (level === 45) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '💎';
+    data.title = "Divine Evolution!";
+    data.description = "Final evolution! Your goat has reached Divine status.";
+    data.goatMessage = "Your goat has reached its final form!"; data.goatEmoji = '🎊';
+  }
+  else if (level === 50) {
+    data.isMilestone = true; data.isEvolution = true; data.emoji = '👑';
+    data.title = "C2 Complete!";
+    data.description = "You've mastered English at the highest level. You're a true master!";
+    data.goatMessage = "You've reached the pinnacle of proficiency!"; data.goatEmoji = '🎊';
+  }
+  // ============================================================
+  // NON-MILESTONE LEVELS — varied messages per tier
+  // ============================================================
+  else if (level >= 2 && level <= 4) {
     const messages = [
-      { emoji: '🚀', title: "Breaking New Ground!", desc: "You can deal with most situations likely to arise while traveling. You're becoming an independent learner!", goat: 'Your goat is growing with you!' },
-      { emoji: '📖', title: "Reading Between the Lines!", desc: "You can understand the main points of clear standard input on familiar matters. Keep it up!", goat: 'Your goat is getting wiser!' },
-      { emoji: '💬', title: "Conversations are Getting Easier!", desc: "You can produce simple connected text on topics that are familiar or of personal interest.", goat: 'Your goat is growing with you!' },
-      { emoji: '🎯', title: "Precision is Growing!", desc: "You're developing the ability to describe experiences and events, dreams, hopes, and ambitions.", goat: 'Your goat is getting stronger!' },
-      { emoji: '🌟', title: "You're Shining!", desc: "You can briefly give reasons and explanations for opinions and plans. Well done!", goat: 'Your goat is glowing with you!' },
-      { emoji: '📝', title: "Writing with Confidence!", desc: "Your written English is developing. You can write simple connected text on familiar topics.", goat: 'Your goat is growing with you!' },
-      { emoji: '🎨', title: "Creativity is Blooming!", desc: "You're expressing yourself more freely in English. Your voice is being heard!", goat: 'Your goat is growing with you!' },
-      { emoji: '🔍', title: "Detail-Oriented!", desc: "You're picking up on nuances and details in English. Your comprehension is improving!", goat: 'Your goat is getting sharper!' },
-      { emoji: '⚡', title: "Fast Thinker!", desc: "Your response time is improving. You're processing English faster and more naturally!", goat: 'Your goat is quick on its feet!' },
+      { emoji: '🎉', title: "Great Start!", desc: "Your vocabulary journey is growing stronger. Keep it up!", goat: 'Your goat is growing with you!' },
+      { emoji: '🌱', title: "You're Making Progress!", desc: "You're becoming more comfortable with English vocabulary.", goat: 'Your goat is growing with you!' },
+      { emoji: '⭐', title: "Keep Building Your Vocabulary!", desc: "Your daily practice is paying off!", goat: 'Your goat is getting stronger!' },
+    ];
+    const m = messages[(level - 2) % messages.length];
+    data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
+    data.goatMessage = m.goat; data.goatEmoji = '🌱';
+  }
+  else if (level >= 6 && level <= 9) {
+    const messages = [
+      { emoji: '🚀', title: "You've Entered a New Stage!", desc: "You now understand sentences and common expressions.", goat: 'Your goat is getting stronger!' },
+      { emoji: '📚', title: "Your Vocabulary is Expanding!", desc: "You're handling simple communication in familiar situations.", goat: 'Your goat is growing with you!' },
+      { emoji: '⭐', title: "Keep Going!", desc: "Consistency is key to mastery!", goat: 'Your goat is growing with you!' },
+      { emoji: '💪', title: "You're Getting Stronger!", desc: "You're building a solid foundation for advanced English!", goat: 'Your goat is growing with you!' },
+    ];
+    const m = messages[(level - 6) % messages.length];
+    data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
+    data.goatMessage = m.goat; data.goatEmoji = '📖';
+  }
+  else if (level >= 11 && level <= 14) {
+    const messages = [
+      { emoji: '🚀', title: "Breaking New Ground!", desc: "You can deal with most travel situations. Independent learner ka na!", goat: 'Your goat is growing with you!' },
+      { emoji: '📖', title: "Reading Between the Lines!", desc: "You understand standard input on familiar matters.", goat: 'Your goat is getting wiser!' },
+      { emoji: '💬', title: "Conversations are Getting Easier!", desc: "You can produce connected text on familiar topics.", goat: 'Your goat is growing with you!' },
+      { emoji: '🎯', title: "Precision is Growing!", desc: "You can describe experiences, dreams, and ambitions.", goat: 'Your goat is getting stronger!' },
     ];
     const m = messages[(level - 11) % messages.length];
     data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
     data.goatMessage = m.goat; data.goatEmoji = '🌟';
   }
-  else if (level === 20) {
-    data.isMilestone = true; data.isEvolution = true; data.emoji = '🐐';
-    data.title = "Major Goat Milestone!";
-    data.description = "You've reached an intermediate level. You can now handle more complex conversations with confidence!";
-    data.goatMessage = "Your goat evolved! Meet your Divine Goat!"; data.goatEmoji = '👑';
-  }
-  else if (level >= 21 && level < 30) {
+  else if (level >= 16 && level <= 19) {
     const messages = [
-      { emoji: '💎', title: "Polished and Refined!", desc: "You can understand complex texts on both concrete and abstract topics. Your English is maturing!" },
-      { emoji: '🌍', title: "Global Citizen!", desc: "You can interact with a degree of fluency and spontaneity with native speakers." },
-      { emoji: '🎓', title: "Academic Excellence!", desc: "You can produce clear, detailed text on a wide range of subjects. Impressive!" },
-      { emoji: '🎭', title: "Expressive and Nuanced!", desc: "You can explain a viewpoint on a topical issue giving the advantages and disadvantages." },
-      { emoji: '🏛️', title: "Deep Understanding!", desc: "You can understand the main ideas of complex texts on both concrete and abstract topics." },
-      { emoji: '✍️', title: "Eloquent Writer!", desc: "You can write detailed text on many subjects. Your writing is becoming professional!" },
-      { emoji: '🎤', title: "Confident Speaker!", desc: "You can present clear, detailed descriptions on a wide range of subjects. Well done!" },
-      { emoji: '🧠', title: "Critical Thinker!", desc: "You can analyze arguments and express your own opinion in sophisticated English." },
-      { emoji: '🌈', title: "Colorful Vocabulary!", desc: "Your vocabulary range has expanded significantly. Your English is vibrant!" },
+      { emoji: '🌟', title: "You're Shining!", desc: "You can give reasons and explanations for opinions.", goat: 'Your goat is glowing with you!' },
+      { emoji: '📝', title: "Writing with Confidence!", desc: "Your written English is developing well.", goat: 'Your goat is growing with you!' },
+      { emoji: '🎨', title: "Creativity is Blooming!", desc: "You're expressing yourself more freely in English.", goat: 'Your goat is growing with you!' },
+      { emoji: '🔍', title: "Detail-Oriented!", desc: "You're picking up on nuances in English.", goat: 'Your goat is getting sharper!' },
+    ];
+    const m = messages[(level - 16) % messages.length];
+    data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
+    data.goatMessage = m.goat; data.goatEmoji = '🌟';
+  }
+  else if (level >= 21 && level <= 24) {
+    const messages = [
+      { emoji: '⚡', title: "Fast Thinker!", desc: "You're processing English faster and more naturally!", goat: 'Your goat is quick on its feet!' },
+      { emoji: '💎', title: "Polished and Refined!", desc: "You understand complex texts on concrete and abstract topics.", goat: 'Your English is maturing!' },
+      { emoji: '🌍', title: "Global Citizen!", desc: "You interact with fluency and spontaneity.", goat: 'Your goat is growing with you!' },
+      { emoji: '🎓', title: "Academic Excellence!", desc: "You produce clear, detailed text on a wide range of subjects.", goat: 'Impressive progress!' },
     ];
     const m = messages[(level - 21) % messages.length];
     data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
-    data.goatMessage = "Your goat is growing with you!"; data.goatEmoji = '💎';
+    data.goatMessage = m.goat || 'Your goat is growing with you!'; data.goatEmoji = '💎';
   }
-  else if (level >= 31 && level < 40) {
+  else if (level >= 26 && level <= 29) {
     const messages = [
-      { emoji: '🏆', title: "Advanced Mastery!", desc: "You can express ideas fluently and use language flexibly for social, academic, and professional purposes." },
-      { emoji: '👑', title: "Approaching Mastery!", desc: "You can produce clear, well-structured, detailed text on complex subjects." },
-      { emoji: '💫', title: "Fluent and Natural!", desc: "You can use language flexibly and effectively. You're sounding more and more like a native!" },
-      { emoji: '🎯', title: "Precise and Powerful!", desc: "You can express yourself with precision and nuance. Your English is exceptional!" },
-      { emoji: '🔮', title: "Visionary Communicator!", desc: "You can understand a wide range of demanding, longer texts and recognize implicit meaning." },
-      { emoji: '🌟', title: "Star Learner!", desc: "You're among the most advanced English learners. Your dedication is truly remarkable!" },
-      { emoji: '📜', title: "Eloquent and Articulate!", desc: "You can use language effectively for social, academic, and professional purposes." },
-      { emoji: '🎨', title: "Artistic with Words!", desc: "You craft sentences with beauty and precision. Your English has become an art form!" },
-      { emoji: '🔬', title: "Analytical Excellence!", desc: "You can understand and produce complex, detailed, and analytical English text." },
+      { emoji: '🎭', title: "Expressive and Nuanced!", desc: "You can explain viewpoints with advantages and disadvantages.", goat: 'Your goat is growing with you!' },
+      { emoji: '🏛️', title: "Deep Understanding!", desc: "You grasp main ideas of complex texts.", goat: 'Your goat is growing with you!' },
+      { emoji: '✍️', title: "Eloquent Writer!", desc: "Your writing is becoming professional!", goat: 'Your goat is growing with you!' },
+      { emoji: '🎤', title: "Confident Speaker!", desc: "You present clear descriptions on wide subjects.", goat: 'Well done!' },
+    ];
+    const m = messages[(level - 26) % messages.length];
+    data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
+    data.goatMessage = m.goat || 'Your goat is growing with you!'; data.goatEmoji = '💎';
+  }
+  else if (level >= 31 && level <= 34) {
+    const messages = [
+      { emoji: '🧠', title: "Critical Thinker!", desc: "You analyze arguments in sophisticated English.", goat: 'Your goat is growing with you!' },
+      { emoji: '🌈', title: "Colorful Vocabulary!", desc: "Your vocabulary range has expanded significantly.", goat: 'Your English is vibrant!' },
+      { emoji: '🏆', title: "Advanced Mastery!", desc: "You express ideas fluently for social & academic purposes.", goat: 'Your goat is growing with you!' },
+      { emoji: '👑', title: "Approaching Mastery!", desc: "You produce well-structured, detailed text.", goat: 'Your goat is growing with you!' },
     ];
     const m = messages[(level - 31) % messages.length];
     data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
-    data.goatMessage = "Your goat is growing with you!"; data.goatEmoji = '👑';
+    data.goatMessage = m.goat || 'Your goat is growing with you!'; data.goatEmoji = '👑';
   }
-  else if (level === 40) {
-    data.isMilestone = true; data.isEvolution = true; data.emoji = '🐐';
-    data.title = "Legendary Goat Milestone!";
-    data.description = "You've achieved advanced proficiency in English. You're an inspiration to other learners!";
-    data.goatMessage = "Your goat evolved to its final form!"; data.goatEmoji = '👑';
-  }
-  else if (level >= 41) {
+  else if (level >= 36 && level <= 39) {
     const messages = [
-      { emoji: '🌟', title: "Mastery Achieved!", desc: "You have mastered English at the highest level. You can understand virtually everything you read or hear!" },
-      { emoji: '🏅', title: "Native-Like Fluency!", desc: "You can summarize information from different spoken and written sources with ease." },
-      { emoji: '👑', title: "Crown of Mastery!", desc: "Your English is impeccable. You express yourself with the precision and elegance of a native speaker." },
-      { emoji: '🎓', title: "English Scholar!", desc: "You've reached the pinnacle of English proficiency. You're a true master of the language!" },
+      { emoji: '💫', title: "Fluent and Natural!", desc: "You're sounding more and more like a native!", goat: 'Your goat is growing with you!' },
+      { emoji: '🎯', title: "Precise and Powerful!", desc: "You express yourself with precision and nuance.", goat: 'Exceptional English!' },
+      { emoji: '🔮', title: "Visionary Communicator!", desc: "You recognize implicit meaning in demanding texts.", goat: 'Your goat is growing with you!' },
+      { emoji: '🌟', title: "Star Learner!", desc: "You're among the most advanced English learners.", goat: 'Your dedication is remarkable!' },
+    ];
+    const m = messages[(level - 36) % messages.length];
+    data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
+    data.goatMessage = m.goat || 'Your goat is growing with you!'; data.goatEmoji = '👑';
+  }
+  else if (level >= 41 && level <= 44) {
+    const messages = [
+      { emoji: '📜', title: "Eloquent and Articulate!", desc: "You use language effectively in every context.", goat: 'Your goat is growing with you!' },
+      { emoji: '🎨', title: "Artistic with Words!", desc: "You craft sentences with beauty and precision.", goat: 'Your English is art form!' },
+      { emoji: '🔬', title: "Analytical Excellence!", desc: "You produce complex, detailed, and analytical English.", goat: 'Your goat is growing with you!' },
+      { emoji: '🌟', title: "Mastery Achieved!", desc: "You understand virtually everything you read or hear!", goat: 'Your goat is growing with you!' },
     ];
     const m = messages[(level - 41) % messages.length];
     data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
-    data.goatMessage = "Your goat has reached its final form!"; data.goatEmoji = '👑';
+    data.goatMessage = m.goat || 'Your goat is growing with you!'; data.goatEmoji = '💎';
+  }
+  else if (level >= 46 && level <= 49) {
+    const messages = [
+      { emoji: '🏅', title: "Native-Like Fluency!", desc: "You summarize information with ease.", goat: 'Your goat is growing with you!' },
+      { emoji: '👑', title: "Crown of Mastery!", desc: "Your English is impeccable.", goat: 'You express yourself with elegance!' },
+      { emoji: '🎓', title: "English Scholar!", desc: "You've reached the pinnacle of proficiency!", goat: 'You are a true master!' },
+      { emoji: '🌟', title: "You're Shining!", desc: "You continue to grow beyond expectations.", goat: 'Truly remarkable!' },
+    ];
+    const m = messages[(level - 46) % messages.length];
+    data.emoji = m.emoji; data.title = m.title; data.description = m.desc;
+    data.goatMessage = m.goat || 'Your goat is growing with you!'; data.goatEmoji = '👑';
+  }
+  else if (level > 50) {
+    data.emoji = '🌟'; data.title = `Level ${level} Mastery!`;
+    data.description = "You continue to grow beyond expectations. Truly remarkable!";
+    data.goatMessage = "Your goat continues to shine!"; data.goatEmoji = '👑';
   }
   else {
     data.title = `Level ${level} reached`;
@@ -407,15 +486,106 @@ const GoatMascot = ({
 };
 
 // ============================================================
-// 🎉 LEVEL UP CELEBRATION COMPONENT
+// 🎵 SOUND HELPER — plays a fanfare using Web Audio API
+// Self-contained, no external files needed
 // ============================================================
-export const LevelUpCelebration = ({ level, onClose }) => {
+const playLevelUpFanfare = (isMilestone = false) => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+
+    const ctx = new AudioContext();
+
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    const notes = isMilestone
+      ? [
+          { freq: 523.25, time: 0.00, dur: 0.18, vol: 0.30 },
+          { freq: 659.25, time: 0.18, dur: 0.18, vol: 0.30 },
+          { freq: 783.99, time: 0.36, dur: 0.18, vol: 0.30 },
+          { freq: 1046.50, time: 0.54, dur: 0.20, vol: 0.35 },
+          { freq: 1318.51, time: 0.74, dur: 0.20, vol: 0.35 },
+          { freq: 1567.98, time: 0.94, dur: 0.25, vol: 0.40 },
+          { freq: 2093.00, time: 1.20, dur: 0.50, vol: 0.45 },
+        ]
+      : [
+          { freq: 523.25, time: 0.00, dur: 0.14, vol: 0.28 },
+          { freq: 659.25, time: 0.14, dur: 0.14, vol: 0.28 },
+          { freq: 783.99, time: 0.28, dur: 0.14, vol: 0.30 },
+          { freq: 1046.50, time: 0.42, dur: 0.35, vol: 0.38 },
+        ];
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = 0.5;
+    masterGain.connect(ctx.destination);
+
+    notes.forEach((note) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(note.freq, ctx.currentTime + note.time);
+
+      const startTime = ctx.currentTime + note.time;
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(note.vol, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + note.dur);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(startTime);
+      osc.stop(startTime + note.dur + 0.05);
+    });
+
+    const sparkleTimes = isMilestone ? [0.54, 0.74, 0.94, 1.20] : [0.42];
+    sparkleTimes.forEach((t, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(2637.02 + (i * 200), ctx.currentTime + t);
+      gain.gain.setValueAtTime(0, ctx.currentTime + t);
+      gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.5);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.6);
+    });
+
+    const totalDuration = isMilestone ? 2.0 : 1.0;
+    setTimeout(() => {
+      try { ctx.close(); } catch (e) {}
+    }, totalDuration * 1000);
+  } catch (err) {
+    console.warn('Level up sound failed (likely browser autoplay policy):', err);
+  }
+};
+
+// ============================================================
+// 🎉 LEVEL UP CELEBRATION COMPONENT
+// 💎 diamondsEarned prop — shows "+X Diamonds!" sa card
+// 🎨 UPDATED: Removed stars row, centered diamond reward
+// ============================================================
+export const LevelUpCelebration = ({ level, onClose, muted = false, diamondsEarned = 0 }) => {
   const data = getLevelCardData(level);
   const mascot = getMascotByLevel(level);
-  
-  const starCount = Math.min(level, 10);
-  const showPlus = level > 10;
-  const extraStars = level - 10;
+
+  // 🎵 Play sound on mount (unless muted)
+  const soundPlayedRef = useRef(false);
+  useEffect(() => {
+    if (muted) return;
+    if (soundPlayedRef.current) return;
+    soundPlayedRef.current = true;
+
+    const timer = setTimeout(() => {
+      playLevelUpFanfare(data.isMilestone);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [data.isMilestone, muted]);
 
   return (
     <>
@@ -462,11 +632,6 @@ export const LevelUpCelebration = ({ level, onClose }) => {
           50% { transform: translateY(-6px); }
         }
         
-        @keyframes starAppear {
-          0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        
         @keyframes shimmer {
           0%, 100% { filter: brightness(1); }
           50% { filter: brightness(1.25); }
@@ -475,6 +640,26 @@ export const LevelUpCelebration = ({ level, onClose }) => {
         @keyframes raysPulse {
           0%, 100% { transform: scale(1); opacity: 0.5; }
           50% { transform: scale(1.15); opacity: 0.9; }
+        }
+
+        @keyframes diamondPop {
+          0% { transform: scale(0) translateY(10px); opacity: 0; }
+          60% { transform: scale(1.15) translateY(-3px); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        @keyframes diamondShine {
+          0%, 100% { 
+            filter: brightness(1) drop-shadow(0 0 6px rgba(125, 211, 252, 0.6));
+            transform: rotate(0deg) scale(1);
+          }
+          50% { 
+            filter: brightness(1.3) drop-shadow(0 0 12px rgba(125, 211, 252, 1));
+            transform: rotate(15deg) scale(1.15);
+          }
+        }
+        @keyframes diamondGlow {
+          0%, 100% { box-shadow: 0 0 15px rgba(125, 211, 252, 0.4), 0 4px 12px rgba(0,0,0,0.4); }
+          50% { box-shadow: 0 0 25px rgba(125, 211, 252, 0.9), 0 4px 12px rgba(0,0,0,0.4); }
         }
         
         .celebration-content {
@@ -598,7 +783,7 @@ export const LevelUpCelebration = ({ level, onClose }) => {
           flex-direction: column;
           align-items: center;
           gap: 6px;
-          margin: 0 0 14px 0;
+          margin: 0 0 18px 0;
           animation: goatBounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s backwards;
           position: relative;
           z-index: 2;
@@ -635,42 +820,65 @@ export const LevelUpCelebration = ({ level, onClose }) => {
           text-shadow: 0 2px 4px rgba(0,0,0,0.6);
           letter-spacing: 0.5px;
         }
-        
-        .stars-row {
-          display: flex;
+
+        /* 💎 Diamond reward — clean & centered */
+        .diamond-reward {
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 3px;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-          padding: 0 10px;
+          gap: 10px;
+          background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 60%, #7DD3FC 100%);
+          border: 3px solid #7DD3FC;
+          border-radius: 16px;
+          padding: 12px 24px;
+          margin: 0 auto 14px;
+          min-width: 180px;
+          box-shadow: 
+            0 4px 0 #38BDF8,
+            0 6px 16px rgba(56, 189, 248, 0.35),
+            inset 0 1px 0 rgba(255,255,255,0.7);
+          animation: diamondPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.6s backwards, 
+                     diamondGlow 2s ease-in-out infinite 1.2s;
           position: relative;
           z-index: 2;
         }
         
-        .bottom-star {
-          font-size: 18px;
-          animation: starAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
-          filter: drop-shadow(0 0 4px rgba(255, 193, 7, 0.8));
+        .diamond-icon {
+          font-size: 28px;
+          animation: diamondShine 1.8s ease-in-out infinite;
+          display: inline-block;
           line-height: 1;
         }
         
-        .plus-more {
+        .diamond-text {
           font-family: ${FONT_DISPLAY};
-          font-size: 13px;
+          font-weight: 900;
+          font-size: 22px;
+          color: #0369A1;
+          letter-spacing: 0.5px;
+          text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+          line-height: 1;
+        }
+        
+        .diamond-subtext {
+          font-family: ${FONT_BODY};
+          font-size: 10px;
           font-weight: 800;
-          color: #FFC107;
-          margin-left: 4px;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+          color: #075985;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          opacity: 0.85;
+          display: block;
+          margin-top: 3px;
         }
         
         .celebration-cefr {
           display: inline-block;
-          padding: 5px 14px;
+          padding: 6px 16px;
           border-radius: 20px;
           font-size: 11px;
           font-weight: 900;
-          margin-bottom: 16px;
+          margin-bottom: 18px;
           font-family: ${FONT_BODY};
           background: ${data.cefrBg};
           color: ${data.cefrColor};
@@ -750,19 +958,17 @@ export const LevelUpCelebration = ({ level, onClose }) => {
               {mascot.emoji} {mascot.stage}
             </div>
           </div>
-          
-          <div className="stars-row">
-            {Array.from({ length: starCount }).map((_, i) => (
-              <span 
-                key={i} 
-                className="bottom-star"
-                style={{ animationDelay: `${0.6 + (i * 0.08)}s` }}
-              >
-                ⭐
-              </span>
-            ))}
-            {showPlus && <span className="plus-more">+{extraStars}</span>}
-          </div>
+
+          {/* 💎 Diamond reward — clean, centered, no stars */}
+          {diamondsEarned > 0 && (
+            <div className="diamond-reward">
+              <span className="diamond-icon">💎</span>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, textAlign: 'left' }}>
+                <span className="diamond-text">+{diamondsEarned}</span>
+                <span className="diamond-subtext">Diamonds Earned</span>
+              </div>
+            </div>
+          )}
           
           <div className="celebration-cefr">
             CEFR {data.cefr} · {data.cefrLabel}

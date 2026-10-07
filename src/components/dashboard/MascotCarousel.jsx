@@ -1,4 +1,8 @@
 // src/components/dashboard/MascotCarousel.jsx
+// ✅ UPDATED: 5 levels per goat (10 goats × 5 = 50 levels)
+// ✅ UPDATED: getCurrentMascotIndex thresholds aligned with new system
+// ✅ UPDATED: MASCOT_STAGES minLevel values (1, 6, 11, 16, 21, 26, 31, 36, 41, 46)
+// ✅ ALIGNED WITH: GoatMascot.jsx, Dashboard.jsx, useUserStats.js
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
@@ -30,32 +34,38 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
+// ============================================================
+// 🆕 UPDATED: 5 levels per goat (10 goats × 5 = 50 levels)
+// ============================================================
 const MASCOT_STAGES = [
   { id: 1,  image: '/image/goat1.png',  stage: 'Baby Goat',      emoji: '🐐', color: palette.warmOrange, minLevel: 1  },
-  { id: 2,  image: '/image/goat2.png',  stage: 'Young Goat',     emoji: '🐐', color: palette.softGreen,  minLevel: 2  },
-  { id: 3,  image: '/image/goat3.png',  stage: 'Teen Goat',      emoji: '🐐', color: palette.teal,       minLevel: 3  },
-  { id: 4,  image: '/image/goat4.png',  stage: 'Adult Goat',     emoji: '🐐', color: palette.coral,      minLevel: 4  },
-  { id: 5,  image: '/image/goat5.png',  stage: 'Master Goat',    emoji: '👑', color: palette.gold,       minLevel: 5  },
-  { id: 6,  image: '/image/goat6.png',  stage: 'Champion Goat',  emoji: '🏆', color: palette.warmOrange, minLevel: 6  },
-  { id: 7,  image: '/image/goat7.png',  stage: 'Hero Goat',      emoji: '⚔️', color: palette.coral,      minLevel: 7  },
-  { id: 8,  image: '/image/goat8.png',  stage: 'Legendary Goat', emoji: '🌟', color: palette.gold,       minLevel: 8  },
-  { id: 9,  image: '/image/goat9.png',  stage: 'Mythic Goat',    emoji: '🔥', color: palette.deepNavy,   minLevel: 9  },
-  { id: 10, image: '/image/goat10.png', stage: 'Divine Goat',    emoji: '💎', color: palette.gold,       minLevel: 10 },
+  { id: 2,  image: '/image/goat2.png',  stage: 'Young Goat',     emoji: '🐐', color: palette.softGreen,  minLevel: 6  },
+  { id: 3,  image: '/image/goat3.png',  stage: 'Teen Goat',      emoji: '🐐', color: palette.teal,       minLevel: 11 },
+  { id: 4,  image: '/image/goat4.png',  stage: 'Adult Goat',     emoji: '🐐', color: palette.coral,      minLevel: 16 },
+  { id: 5,  image: '/image/goat5.png',  stage: 'Master Goat',    emoji: '👑', color: palette.gold,       minLevel: 21 },
+  { id: 6,  image: '/image/goat6.png',  stage: 'Champion Goat',  emoji: '🏆', color: palette.warmOrange, minLevel: 26 },
+  { id: 7,  image: '/image/goat7.png',  stage: 'Hero Goat',      emoji: '⚔️', color: palette.coral,      minLevel: 31 },
+  { id: 8,  image: '/image/goat8.png',  stage: 'Legendary Goat', emoji: '🌟', color: palette.gold,       minLevel: 36 },
+  { id: 9,  image: '/image/goat9.png',  stage: 'Mythic Goat',    emoji: '🔥', color: palette.deepNavy,   minLevel: 41 },
+  { id: 10, image: '/image/goat10.png', stage: 'Divine Goat',    emoji: '💎', color: palette.gold,       minLevel: 46 },
 ];
 
 const AUTO_PLAY_INTERVAL = 5000;
 
+// ============================================================
+// 🆕 UPDATED: getCurrentMascotIndex — 5 levels per goat
+// ============================================================
 const getCurrentMascotIndex = (level) => {
-  if (level >= 10) return 9;
-  if (level >= 9)  return 8;
-  if (level >= 8)  return 7;
-  if (level >= 7)  return 6;
-  if (level >= 6)  return 5;
-  if (level >= 5)  return 4;
-  if (level >= 4)  return 3;
-  if (level >= 3)  return 2;
-  if (level >= 2)  return 1;
-  return 0;
+  if (level >= 46) return 9; // Divine Goat
+  if (level >= 41) return 8; // Mythic Goat
+  if (level >= 36) return 7; // Legendary Goat
+  if (level >= 31) return 6; // Hero Goat
+  if (level >= 26) return 5; // Champion Goat
+  if (level >= 21) return 4; // Master Goat
+  if (level >= 16) return 3; // Adult Goat
+  if (level >= 11) return 2; // Teen Goat
+  if (level >= 6)  return 1; // Young Goat
+  return 0;                  // Baby Goat (Level 1-5)
 };
 
 const playClickSound = () => {

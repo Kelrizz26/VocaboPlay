@@ -5,6 +5,7 @@
 // ✅ Touch-friendly — larger tap targets
 // ✅ Responsive text and padding
 // ✅ Card Viewer — uses CardViewer
+// ✅ NEW: onContinueLearning prop — passes to CardViewer for Games navigation
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -33,8 +34,9 @@ const FONT_BODY = "'Nunito', sans-serif";
 
 // ============================================================
 // 🎴 CARD COLLECTION COMPONENT
+// ✅ NEW: onContinueLearning prop (from Dashboard → for Games navigation)
 // ============================================================
-const GoatCardCollection = ({ currentLevel = 1 }) => {
+const GoatCardCollection = ({ currentLevel = 1, onContinueLearning }) => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   
@@ -48,6 +50,14 @@ const GoatCardCollection = ({ currentLevel = 1 }) => {
 
   const maxDisplayLevel = Math.max(currentLevel + 5, 10);
   const levels = Array.from({ length: maxDisplayLevel }, (_, i) => i + 1);
+
+  // ✅ Handle Continue Learning from CardViewer
+  const handleContinueLearning = () => {
+    setSelectedCard(null); // Close the modal first
+    if (typeof onContinueLearning === 'function') {
+      onContinueLearning();
+    }
+  };
 
   return (
     <>
@@ -411,6 +421,7 @@ const GoatCardCollection = ({ currentLevel = 1 }) => {
           key={`card-view-${selectedCard}`}
           level={selectedCard} 
           onClose={() => setSelectedCard(null)} 
+          onContinueLearning={handleContinueLearning}
         />
       )}
     </>

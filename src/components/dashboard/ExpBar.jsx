@@ -1,6 +1,7 @@
 // src/components/dashboard/ExpBar.jsx
 // ============================================================
 // 📊 EXP BAR — Shows progress to next level
+// ✅ NEW: isMaxLevel prop — shows "MAX LEVEL · 100%" + gold bar
 // ============================================================
 
 import React, { useEffect, useState } from 'react';
@@ -20,6 +21,8 @@ const palette = {
   border: '#E2E8F0',
   softGreen: '#8AB17D',
   softGreenShadow: '#6A8A5E',
+  gold: '#FFD700',
+  goldDeep: '#E6B800',
 };
 
 const FONT_DISPLAY = "'Fredoka', sans-serif";
@@ -31,15 +34,27 @@ const ExpBar = ({
   level = 1,
   color = '#FFD700',
   showLabel = true,
-  compact = false
+  compact = false,
+  isMaxLevel = false, // ✅ NEW
 }) => {
   const [displayWidth, setDisplayWidth] = useState(0);
-  const percentage = Math.min(100, Math.round((xp / xpToNext) * 100));
+
+  // ✅ Pag max level, force 100%. Kung hindi, normal computation.
+  const percentage = isMaxLevel
+    ? 100
+    : Math.min(100, Math.round((xp / xpToNext) * 100));
+
+  // ✅ Pag max level, gamitin ang gold color gradient
+  const barColor = isMaxLevel ? palette.gold : color;
 
   useEffect(() => {
-    const timer = setTimeout(() => setDisplayWidth(percentage), 100);
+    // Pag max level, deretso 100% na agad (no delay animation from 0)
+    const timer = setTimeout(
+      () => setDisplayWidth(percentage),
+      isMaxLevel ? 0 : 100
+    );
     return () => clearTimeout(timer);
-  }, [percentage]);
+  }, [percentage, isMaxLevel]);
 
   return (
     <>
@@ -47,6 +62,22 @@ const ExpBar = ({
         @keyframes expShimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
+        }
+        @keyframes maxLevelPulse {
+          0%, 100% { 
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+          }
+          50% { 
+            box-shadow: 0 0 18px rgba(255, 215, 0, 0.9);
+          }
+        }
+        @keyframes maxLevelTextPulse {
+          0%, 100% { 
+            text-shadow: 0 1px 4px rgba(45, 42, 94, 0.5), 0 0 8px rgba(255, 215, 0, 0.6);
+          }
+          50% { 
+            text-shadow: 0 1px 4px rgba(45, 42, 94, 0.5), 0 0 16px rgba(255, 215, 0, 1);
+          }
         }
         .exp-bar-track {
           position: relative;
@@ -62,7 +93,7 @@ const ExpBar = ({
         .exp-bar-fill {
           height: 100%;
           border-radius: 999px;
-          background: linear-gradient(90deg, ${color}, #FFF8B0, ${color});
+          background: linear-gradient(90deg, ${barColor}, #FFF8B0, ${barColor});
           background-size: 200% 100%;
           transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
           animation: expShimmer 2s linear infinite;
@@ -77,6 +108,20 @@ const ExpBar = ({
           width: 20px;
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7));
           border-radius: 999px;
+        }
+        /* ✅ Max level gold glow */
+        .exp-bar-track.max-level {
+          border-color: rgba(255, 215, 0, 0.6);
+          animation: maxLevelPulse 2s ease-in-out infinite;
+        }
+        .exp-bar-track.max-level .exp-bar-fill {
+          background: linear-gradient(90deg, ${palette.goldDeep}, ${palette.gold}, #FFF8B0, ${palette.gold}, ${palette.goldDeep});
+          background-size: 300% 100%;
+        }
+        /* ✅ Max level text glow */
+        .max-level-text {
+          color: ${palette.gold} !important;
+          animation: maxLevelTextPulse 2s ease-in-out infinite;
         }
       `}</style>
 
@@ -96,12 +141,22 @@ const ExpBar = ({
               letterSpacing: '0.02em',
             }}
           >
-            <span>Level {level}</span>
-            <span>{xp} / {xpToNext} XP · {percentage}%</span>
+            {/* ✅ Level label — may trophy pag max level */}
+            <span className={isMaxLevel ? 'max-level-text' : ''}>
+              {isMaxLevel ? `Level ${level} 🏆` : `Level ${level}`}
+            </span>
+
+            {/* ✅ XP text — "MAX LEVEL · 100%" pag naabot na */}
+            <span className={isMaxLevel ? 'max-level-text' : ''}>
+              {isMaxLevel
+                ? 'MAX LEVEL · 100%'
+                : `${xp} / ${xpToNext} XP · ${percentage}%`
+              }
+            </span>
           </div>
         )}
 
-        <div className="exp-bar-track">
+        <div className={`exp-bar-track ${isMaxLevel ? 'max-level' : ''}`}>
           <div
             className="exp-bar-fill"
             style={{ width: `${displayWidth}%` }}
@@ -114,13 +169,13 @@ const ExpBar = ({
               marginTop: '4px',
               fontSize: '11px',
               fontWeight: '700',
-              color: palette.white,
+              color: isMaxLevel ? palette.gold : palette.white,
               textAlign: 'center',
               fontFamily: FONT_BODY,
               textShadow: '0 1px 4px rgba(45, 42, 94, 0.5)',
             }}
           >
-            {xp} / {xpToNext} XP
+            {isMaxLevel ? 'MAX LEVEL 🏆' : `${xp} / ${xpToNext} XP`}
           </div>
         )}
       </div>
