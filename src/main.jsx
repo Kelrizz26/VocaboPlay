@@ -4,14 +4,11 @@ import App from './App.jsx'
 import './index.css'
 
 // ============================================================
-// 🎮 LANDSCAPE MOBILE FIX — Game-Only Zoom
+// 🎮 LANDSCAPE MOBILE FIX — Game-Only Zoom (FINAL)
 // ============================================================
-// Ang zoom ay nag-a-apply LANG kapag:
-//   1. Naka-landscape ang phone (width > height)
-//   2. Maliit ang height (<= 600px)
-//   3. Nasa loob ng GAME (may game element sa DOM)
-//
-// Hindi ito nag-a-apply sa Dashboard, Word Library, at iba pa.
+// Ang zoom ay nag-a-apply LANG kapag nasa loob ng GAME.
+// Ginamit ang mas gentle na scale (0.88-0.95) para puno
+// yung screen pero hindi naman sobrang laki.
 // ============================================================
 
 function applyLandscapeFix() {
@@ -21,27 +18,29 @@ function applyLandscapeFix() {
   const isLandscape = window.innerWidth > window.innerHeight;
   const isSmallHeight = window.innerHeight <= 600;
 
-  // ✅ I-detect kung nasa loob ng GAME (base sa game-specific DOM elements)
+  // ✅ I-detect kung nasa loob ng GAME
   const isInGame = !!(
-    document.querySelector('.sq-play-wrapper') ||    // SynoQuest playing
-    document.querySelector('.sq-main-card') ||        // SynoQuest (fallback)
-    document.querySelector('.mg-cards') ||            // MatchGame playing
-    document.querySelector('.mg-play-wrapper') ||     // MatchGame (fallback)
-    document.querySelector('.sq-book-select-wrapper') // StoryQuest book select
+    document.querySelector('.sq-play-wrapper') ||
+    document.querySelector('.sq-main-card') ||
+    document.querySelector('.mg-cards') ||
+    document.querySelector('.mg-play-wrapper') ||
+    document.querySelector('.sq-book-select-wrapper')
   );
 
   // ✅ Mag-zoom LANG kapag nasa GAME at landscape mobile
   if (isLandscape && isSmallHeight && isInGame) {
-    // ✅ Sakto lang na scale (0.80 base, hindi 0.55)
-    let scale = 0.80;
+    // ✅ Sakto lang na scale — medyo malaki na para puno ang screen
+    let scale = 0.95;
     if (window.innerHeight <= 360) {
-      scale = 0.65;
-    } else if (window.innerHeight <= 420) {
-      scale = 0.72;
-    } else if (window.innerHeight <= 500) {
-      scale = 0.80;
-    } else {
+      scale = 0.78;
+    } else if (window.innerHeight <= 400) {
+      scale = 0.85;
+    } else if (window.innerHeight <= 440) {
       scale = 0.90;
+    } else if (window.innerHeight <= 500) {
+      scale = 0.94;
+    } else {
+      scale = 0.98;
     }
 
     root.style.zoom = String(scale);
@@ -72,12 +71,12 @@ applyLandscapeFix();
 // Apply on resize
 window.addEventListener('resize', applyLandscapeFix);
 
-// Apply on orientation change (with small delay)
+// Apply on orientation change
 window.addEventListener('orientationchange', () => {
   setTimeout(applyLandscapeFix, 200);
 });
 
-// Periodic check — para sure na laging naka-apply
+// Periodic check
 setInterval(applyLandscapeFix, 1000);
 
 // ============================================================
