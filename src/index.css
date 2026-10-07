@@ -143,251 +143,113 @@ textarea:focus-visible,
 
 /* ============================================================
    ============================================================
-   🎮 FINAL NUCLEAR LANDSCAPE FIX FOR GAMES 🎮
+   🎮🎮🎮 ULTIMATE LANDSCAPE MOBILE FIX 🎮🎮🎮
    ============================================================
-   Ito ang mag-fo-force sa lahat ng laro na kasya sa landscape
-   mobile screen. Gumagamit ito ng transform: scale() para
-   pisilin yung buong laro kahit na may malalaking inline styles.
+   Ito ang PINAKA-AGGRESSIVE na fix. Hindi umaasa sa class names
+   o inline styles. I-zoom lang natin yung BUONG #root element
+   pababa kapag landscape phone.
+   
+   Bakit ito gagana: Ang CSS `zoom` property ay pisikal na
+   pinapaliit ang lahat ng bagay sa loob ng element — kasama
+   na ang layout space, images, buttons, at inline styles.
+   Ito lang ang tanging paraan para ma-override ang inline
+   styles nang hindi nag-e-edit ng JSX.
    ============================================================
    ============================================================ */
 
-@media (max-height: 500px) and (orientation: landscape) {
+/* ===== Landscape phones (common size: 640-950px wide, 350-500px tall) ===== */
+@media (orientation: landscape) and (max-width: 1024px) and (max-height: 600px) {
 
-  /* --------------------------------------------------------
-     1. LOCK THE VIEWPORT
-     Pigilan ang scrolling at i-lock sa 100dvh/100vw
-     -------------------------------------------------------- */
-  html, body, #root {
+  /* Lock the viewport — pigilan ang scroll ng buong page */
+  html, body {
     height: 100dvh !important;
     width: 100vw !important;
     overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
   }
 
-  /* --------------------------------------------------------
-     2. DASHBOARD CONTAINERS — full screen, no padding
-     -------------------------------------------------------- */
-  .dashboard-container,
-  .main-content,
-  .game-mode {
-    height: 100dvh !important;
-    width: 100vw !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-  }
-
-  /* --------------------------------------------------------
-     3. MATCH GAME — scale down entire game
-     -------------------------------------------------------- */
-  .mg-cards {
-    transform: scale(0.72) !important;
-    transform-origin: center center !important;
-    max-height: 92dvh !important;
-    max-width: 96vw !important;
-    margin: 0 auto !important;
-    padding: 4px !important;
-    gap: 2px !important;
+  /* 
+   * I-zoom pababa ang buong app sa 55% size.
+   * Ang `zoom` ay sumasabay sa layout — hindi tulad ng transform: scale()
+   * na nag-iiwan ng space.
+   */
+  #root {
+    zoom: 0.55 !important;
+    width: 181.82vw !important;   /* 100 / 0.55 = 181.82 */
+    height: 181.82dvh !important;
     overflow: hidden !important;
   }
 
-  .mg-header {
-    padding: 3px 8px !important;
-    margin-bottom: 2px !important;
-    width: 95vw !important;
-    max-width: 95vw !important;
-    transform: scale(0.85) !important;
-    transform-origin: top center !important;
-  }
-
-  .mg-header span {
-    font-size: 9px !important;
-  }
-
-  .mg-header button {
-    font-size: 11px !important;
-    padding: 0 3px !important;
-  }
-
-  .mg-footer {
-    padding: 3px 8px !important;
-    margin-top: 2px !important;
-    font-size: 9px !important;
-    transform: scale(0.85) !important;
-    transform-origin: bottom center !important;
-  }
-
-  .mg-progress-wrap {
-    margin-bottom: 2px !important;
-    transform: scale(0.85) !important;
-  }
-
-  /* MatchGame Intro, Gameover, LevelUp, Loading */
-  .mg-intro-card,
-  .mg-gameover-card,
-  .mg-levelup-card,
-  .mg-loading-card,
-  .mg-modal-card {
-    transform: scale(0.78) !important;
-    transform-origin: center center !important;
-    max-height: 95dvh !important;
-    max-width: 95vw !important;
-    margin: 0 auto !important;
-    overflow: auto !important;
-  }
-
-  /* --------------------------------------------------------
-     4. SYNOQUEST — scale down entire game
-     -------------------------------------------------------- */
-  .sq-play-wrapper {
-    height: 100dvh !important;
-    width: 100vw !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-  }
-
-  .sq-main-card {
-    transform: scale(0.72) !important;
-    transform-origin: center center !important;
-    max-height: 92dvh !important;
-    max-width: 96vw !important;
-    margin: 0 auto !important;
-    overflow: hidden !important;
-    padding: 10px 14px !important;
-  }
-
-  .sq-header {
-    padding: 3px 8px !important;
-    margin-bottom: 2px !important;
-    width: 95vw !important;
-    max-width: 95vw !important;
-    transform: scale(0.85) !important;
-    transform-origin: top center !important;
-  }
-
-  .sq-header span {
-    font-size: 9px !important;
-  }
-
-  .sq-header button {
-    font-size: 11px !important;
-    padding: 0 3px !important;
-  }
-
-  /* SynoQuest images */
-  .sq-image-box {
-    width: 70px !important;
-    height: 70px !important;
-    border-radius: 8px !important;
-  }
-
-  .sq-image-arrow {
-    font-size: 18px !important;
-  }
-
-  .sq-image-eq {
-    font-size: 16px !important;
-    padding: 0 8px !important;
-  }
-
-  /* SynoQuest word blanks */
-  .sq-blank-box {
-    width: 26px !important;
-    height: 30px !important;
-    font-size: 14px !important;
-    border-radius: 6px !important;
-  }
-
-  /* SynoQuest letter buttons */
-  .sq-letter-btn {
-    width: 30px !important;
-    height: 30px !important;
-    font-size: 14px !important;
-    border-radius: 8px !important;
-  }
-
-  /* SynoQuest intro, finished, gameover, modals */
-  .sq-intro-card,
-  .sq-end-card,
-  .sq-modal-card,
-  .sq-loading-card {
-    transform: scale(0.78) !important;
-    transform-origin: center center !important;
-    max-height: 95dvh !important;
-    max-width: 95vw !important;
-    margin: 0 auto !important;
-    overflow: auto !important;
-  }
-
-  /* --------------------------------------------------------
-     5. STORY QUEST — scale down entire game
-     -------------------------------------------------------- */
-  .sq-book-select-wrapper {
-    width: 100vw !important;
-    height: 100dvh !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .sq-book-select-wrapper > div,
-  .sq-book-select-wrapper > * {
-    transform: scale(0.75) !important;
-    transform-origin: center center !important;
-    max-height: 95dvh !important;
-    max-width: 95vw !important;
-    margin: 0 auto !important;
-  }
-
-  /* Generic fallback para sa lahat ng game wrappers */
-  [class*="game-wrapper"],
-  [class*="playing-wrapper"] {
-    transform: scale(0.75) !important;
-    transform-origin: center center !important;
-    max-height: 95dvh !important;
-    max-width: 95vw !important;
-    margin: 0 auto !important;
-    overflow: hidden !important;
+  /* Fallback para sa Firefox (walang zoom support) */
+  @supports not (zoom: 1) {
+    #root {
+      zoom: normal !important;
+      transform: scale(0.55) !important;
+      transform-origin: top left !important;
+      width: 181.82vw !important;
+      height: 181.82dvh !important;
+    }
   }
 }
 
-/* --------------------------------------------------------
-   EXTRA SMALL LANDSCAPE (very old phones ~320px height)
-   -------------------------------------------------------- */
-@media (max-height: 380px) and (orientation: landscape) {
-  .mg-cards,
-  .sq-main-card {
-    transform: scale(0.62) !important;
+/* ===== Mas maliit na landscape (~400px height) ===== */
+@media (orientation: landscape) and (max-width: 1024px) and (max-height: 420px) {
+  #root {
+    zoom: 0.45 !important;
+    width: 222.22vw !important;   /* 100 / 0.45 */
+    height: 222.22dvh !important;
   }
 
-  .mg-intro-card,
-  .mg-gameover-card,
-  .mg-levelup-card,
-  .mg-loading-card,
-  .mg-modal-card,
-  .sq-intro-card,
-  .sq-end-card,
-  .sq-modal-card,
-  .sq-loading-card {
-    transform: scale(0.68) !important;
+  @supports not (zoom: 1) {
+    #root {
+      zoom: normal !important;
+      transform: scale(0.45) !important;
+      width: 222.22vw !important;
+      height: 222.22dvh !important;
+    }
+  }
+}
+
+/* ===== Pinakamaliit na landscape (~340px height) ===== */
+@media (orientation: landscape) and (max-width: 1024px) and (max-height: 360px) {
+  #root {
+    zoom: 0.38 !important;
+    width: 263.16vw !important;   /* 100 / 0.38 */
+    height: 263.16dvh !important;
   }
 
-  .sq-book-select-wrapper > div,
-  .sq-book-select-wrapper > * {
-    transform: scale(0.65) !important;
+  @supports not (zoom: 1) {
+    #root {
+      zoom: normal !important;
+      transform: scale(0.38) !important;
+      width: 263.16vw !important;
+      height: 263.16dvh !important;
+    }
+  }
+}
+
+/* ============================================================
+   TABLET LANDSCAPE (iPad, larger tablets)
+   Hindi gaano kailangan i-zoom pababa, konti lang.
+   ============================================================ */
+@media (orientation: landscape) and (min-width: 1024px) and (max-height: 800px) {
+  #root {
+    zoom: 0.85 !important;
+    width: 117.65vw !important;
+    height: 117.65dvh !important;
+  }
+
+  @supports not (zoom: 1) {
+    #root {
+      zoom: normal !important;
+      transform: scale(0.85) !important;
+      transform-origin: top left !important;
+      width: 117.65vw !important;
+      height: 117.65dvh !important;
+    }
   }
 }
