@@ -1,9 +1,7 @@
 // src/components/Dashboard.jsx
 // ============================================================
+// ✅ FULLSCREEN API: Auto-fullscreen kapag nasa game
 // ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
-// ✅ Sidebar hides automatically on landscape phones
-// ✅ Game takes 100% viewport (no black bars)
-// ✅ Dashboard adapts to landscape layout
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -149,10 +147,8 @@ const Dashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentGame, setCurrentGame] = useState(null);
   
-  // ✅ FIXED: Initial state detection para sa mobile at landscape
   const getInitialMobileState = () => {
     if (typeof window === 'undefined') return true;
-    // Mobile kung maliit ang width OR maliit ang height (landscape phone)
     return window.innerWidth <= 768 || window.innerHeight <= 500;
   };
 
@@ -189,22 +185,18 @@ const Dashboard = () => {
   const { stats, loading, error } = useUserStats(userId);
 
   const isInGame = currentGame !== null;
-  // ✅ Check kung landscape mobile (maliit ang height pero malawak ang width)
-  const isLandscapeMobile = isMobile && !isPortrait;
 
-  // ✅ FIXED: Resize handler — detects landscape phones properly
+  // ✅ FIXED: Resize handler
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      // Mobile kapag maliit ang width o maliit ang height (landscape phone)
       const mobile = width <= 768 || height <= 500;
       const portrait = height > width;
       
       setIsMobile(mobile);
       setIsPortrait(portrait);
       
-      // Auto-hide sidebar sa mobile (portrait o landscape)
       if (mobile) {
         setIsSidebarVisible(false);
       } else {
@@ -221,12 +213,31 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ When entering/exiting a game, adjust sidebar
+  // ✅ FULLSCREEN API: Auto-fullscreen kapag pumasok sa game
   useEffect(() => {
     if (currentGame) {
       setIsSidebarVisible(false);
+      // Try to enter fullscreen
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
+      } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) { /* IE11 */
+        elem.msRequestFullscreen();
+      }
     } else {
       setIsSidebarVisible(!isMobile);
+      // Exit fullscreen kapag labas na sa game
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => console.log('Exit fullscreen error:', err));
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGame]);
@@ -608,7 +619,6 @@ const Dashboard = () => {
         .hamburger-btn:hover { background: ${palette.deepNavyLight}; }
         .hamburger-btn:active { transform: scale(0.94); }
 
-        /* ✅ BASE MOBILE STYLES (Portrait) */
         @media (max-width: 768px), (max-height: 500px) and (orientation: landscape) {
           .hamburger-btn { display: flex !important; }
           .main-content { padding: 16px !important; }
@@ -616,7 +626,6 @@ const Dashboard = () => {
           .recent-activity-item { flex-wrap: wrap; }
         }
 
-        /* ✅ FIXED: LANDSCAPE MOBILE SPECIFIC STYLES */
         @media (orientation: landscape) and (max-height: 500px) {
           .main-content { padding: 12px 20px !important; }
           .dashboard-welcome { 
@@ -635,21 +644,22 @@ const Dashboard = () => {
             gap: 8px !important;
           }
           .stat-card-dash { padding: 12px 14px !important; }
-          .stat-card-dash span:first-child { font-size: 10px !important; } /* Label */
-          .stat-card-dash div span:first-child { font-size: 20px !important; } /* Value */
+          .stat-card-dash span:first-child { font-size: 10px !important; } 
+          .stat-card-dash div span:first-child { font-size: 20px !important; } 
           
-          /* Kapag nasa game, gawing full screen */
           .game-mode {
             padding: 0 !important;
             margin: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
+            width: 100dvw !important;
+            height: 100dvh !important;
             overflow: hidden !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
           }
         }
       `}</style>
 
-      {/* ✅ ROTATE PROMPT — Lalabas lang kapag nasa game at naka-portrait ang phone */}
       {isInGame && isPortrait && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 100000,
@@ -676,7 +686,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* ✅ HAMBURGER — LALABAS LANG SA MOBILE KAPAG HINDI NAKA-GAME AT NAKA-CLOSE ANG SIDEBAR */}
       {isMobile && !isInGame && !isSidebarVisible && (
         <button
           className="hamburger-btn"
@@ -687,7 +696,6 @@ const Dashboard = () => {
         </button>
       )}
 
-      {/* ✅ SIDEBAR for non-game state */}
       {!isInGame && (
         <div className="sidebar-fixed open" style={{
           width: '260px',
@@ -732,7 +740,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* ✅ Overlay — tap to close sidebar on mobile (non-game) */}
       {!isInGame && isSidebarVisible && isMobile && (
         <div onClick={() => setIsSidebarVisible(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.4)', zIndex: 999 }} />
       )}
