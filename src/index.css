@@ -1,11 +1,9 @@
 /* ============================================================
-   🚨 DEBUG TEST — RED BORDER + LANDSCAPE FIX 🚨
+   🎮 LANDSCAPE MOBILE FIX — Viewport Lock + StoryQuest Welcome
    ============================================================ */
 
-/* ITO YUNG TEST — dapat may RED BORDER sa buong screen mo */
-
-/* Landscape fix */
 @media (orientation: landscape) and (max-height: 600px) {
+  /* Lock the viewport — pigilan ang scroll ng buong page */
   html, body {
     width: 100vw !important;
     height: 100dvh !important;
@@ -18,5 +16,59 @@
     padding: 0 !important;
   }
 
+  /* ============================================================
+     STORYQUEST WELCOME SCREEN FIX
+     Siguraduhing kasya yung START PLAY button sa landscape
+     ============================================================ */
+  
+  /* Book select wrapper — full screen, no scroll */
+  .sq-book-select-wrapper {
+    width: 100vw !important;
+    height: 100dvh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
 
+  /* Welcome modal container — compress lahat */
+  .sq-book-select-wrapper > div {
+    max-height: 100dvh !important;
+    padding: 8px 12px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  /* Paliitin ang welcome image para umakyat yung START PLAY */
+  .sq-book-select-wrapper img {
+    max-height: 45dvh !important;
+    width: auto !important;
+    object-fit: contain !important;
+  }
+
+  /* Paliitin ang text */
+  .sq-book-select-wrapper h1,
+  .sq-book-select-wrapper h2 {
+    font-size: 18px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .sq-book-select-wrapper p {
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* START PLAY button — siguraduhing nakikita */
+  .sq-book-select-wrapper button {
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+  }
 }
