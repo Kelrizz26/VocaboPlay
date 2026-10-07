@@ -1,10 +1,9 @@
 // src/components/Dashboard.jsx
 // ============================================================
-// ✅ Sidebar hidden on all non-game pages (normal)
-// ✅ Sidebar COMPLETELY removed from DOM when a game is active
-// ✅ Hamburger icon shown on mobile OUTSIDE of games (even in portrait)
-// ✅ NO hamburger icon INSIDE games (uses game's own back/exit button)
-// ✅ ADDED: Landscape orientation prompt for games
+// ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
+// ✅ Sidebar hides automatically on landscape phones
+// ✅ Game takes 100% viewport (no black bars)
+// ✅ Dashboard adapts to landscape layout
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -150,16 +149,21 @@ const Dashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentGame, setCurrentGame] = useState(null);
   
+  // ✅ FIXED: Initial state detection para sa mobile at landscape
+  const getInitialMobileState = () => {
+    if (typeof window === 'undefined') return true;
+    // Mobile kung maliit ang width OR maliit ang height (landscape phone)
+    return window.innerWidth <= 768 || window.innerHeight <= 500;
+  };
+
+  const [isMobile, setIsMobile] = useState(getInitialMobileState);
+  const [isPortrait, setIsPortrait] = useState(
+    typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : true
+  );
   const [isSidebarVisible, setIsSidebarVisible] = useState(
-    typeof window !== 'undefined' ? window.innerWidth > 768 : true
+    typeof window !== 'undefined' ? !getInitialMobileState() : false
   );
   const [contentKey, setContentKey] = useState(0);
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
-  );
-  const [isPortrait, setIsPortrait] = useState(
-    typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
-  );
 
   const [recentActivities, setRecentActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
@@ -185,16 +189,29 @@ const Dashboard = () => {
   const { stats, loading, error } = useUserStats(userId);
 
   const isInGame = currentGame !== null;
+  // ✅ Check kung landscape mobile (maliit ang height pero malawak ang width)
+  const isLandscapeMobile = isMobile && !isPortrait;
 
-  // ✅ FIXED: Resize handler — update isMobile, isSidebarVisible, AND isPortrait
+  // ✅ FIXED: Resize handler — detects landscape phones properly
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth <= 768;
-      const portrait = window.innerHeight > window.innerWidth;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      // Mobile kapag maliit ang width o maliit ang height (landscape phone)
+      const mobile = width <= 768 || height <= 500;
+      const portrait = height > width;
+      
       setIsMobile(mobile);
       setIsPortrait(portrait);
-      setIsSidebarVisible(!mobile);
+      
+      // Auto-hide sidebar sa mobile (portrait o landscape)
+      if (mobile) {
+        setIsSidebarVisible(false);
+      } else {
+        setIsSidebarVisible(true);
+      }
     };
+
     handleResize();
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
@@ -204,7 +221,7 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ When entering a game, hide sidebar. When exiting, restore on desktop.
+  // ✅ When entering/exiting a game, adjust sidebar
   useEffect(() => {
     if (currentGame) {
       setIsSidebarVisible(false);
@@ -559,7 +576,7 @@ const Dashboard = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Nunito', system-ui, sans-serif; background: ${palette.cream}; }
+        body { font-family: 'Nunito', system-ui, sans-serif; background: ${palette.cream}; overflow-x: hidden; }
         .menu-item { transition: background 0.18s ease; }
         .menu-item:hover { background: rgba(233, 160, 117, 0.12) !important; }
         .menu-item.active { background: rgba(233, 160, 117, 0.18) !important; border-left: 3px solid ${palette.warmOrange} !important; padding-left: 21px !important; }
@@ -591,16 +608,44 @@ const Dashboard = () => {
         .hamburger-btn:hover { background: ${palette.deepNavyLight}; }
         .hamburger-btn:active { transform: scale(0.94); }
 
-        @media (max-width: 768px) {
+        /* ✅ BASE MOBILE STYLES (Portrait) */
+        @media (max-width: 768px), (max-height: 500px) and (orientation: landscape) {
           .hamburger-btn { display: flex !important; }
           .main-content { padding: 16px !important; }
           .dashboard-welcome { flex-direction: column !important; text-align: center !important; padding: 20px !important; }
           .recent-activity-item { flex-wrap: wrap; }
         }
 
-        /* ✅ Landscape mode adjustments para sa games */
-        @media (max-height: 500px) and (orientation: landscape) {
-          .main-content { padding: 8px !important; }
+        /* ✅ FIXED: LANDSCAPE MOBILE SPECIFIC STYLES */
+        @media (orientation: landscape) and (max-height: 500px) {
+          .main-content { padding: 12px 20px !important; }
+          .dashboard-welcome { 
+            flex-direction: row !important; 
+            padding: 16px 24px !important; 
+            min-height: auto !important; 
+            gap: 16px !important; 
+            text-align: left !important;
+          }
+          .dashboard-welcome h2 { font-size: 22px !important; margin-bottom: 4px !important; }
+          .dashboard-welcome p { font-size: 13px !important; margin-bottom: 12px !important; }
+          .dashboard-welcome > div:first-child { flex-shrink: 0; transform: scale(0.8); transform-origin: center left; }
+          
+          .stats-grid { 
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; 
+            gap: 8px !important;
+          }
+          .stat-card-dash { padding: 12px 14px !important; }
+          .stat-card-dash span:first-child { font-size: 10px !important; } /* Label */
+          .stat-card-dash div span:first-child { font-size: 20px !important; } /* Value */
+          
+          /* Kapag nasa game, gawing full screen */
+          .game-mode {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+          }
         }
       `}</style>
 
@@ -692,11 +737,11 @@ const Dashboard = () => {
         <div onClick={() => setIsSidebarVisible(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.4)', zIndex: 999 }} />
       )}
 
-      <div key={contentKey} className="dashboard-container" style={{ display: 'flex', minHeight: '100vh', background: palette.cream }}>
-        <div className="main-content" style={{
+      <div key={contentKey} className={`dashboard-container ${isInGame ? 'game-mode' : ''}`} style={{ display: 'flex', minHeight: '100vh', background: palette.cream }}>
+        <div className={`main-content ${isInGame ? 'game-mode' : ''}`} style={{
           flex: 1,
           marginLeft: (!isMobile && !isInGame && isSidebarVisible) ? '260px' : '0',
-          padding: isInGame ? (isPortrait ? '0' : '8px') : '24px 32px',
+          padding: isInGame ? '0' : '24px 32px',
           transition: 'margin-left 0.3s ease',
           width: '100%',
         }}>
