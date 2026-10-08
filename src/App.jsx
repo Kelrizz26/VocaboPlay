@@ -4,103 +4,100 @@ import App from './App.jsx'
 import './index.css'
 
 // ============================================================
-// 🎮 LANDSCAPE MOBILE FIX — Fill Entire Screen (No Black Bars)
+// 🎮 LANDSCAPE MOBILE FIX — Minimal & Stable (No Flicker)
 // ============================================================
 
-function applyLandscapeFix() {
-  const root = document.getElementById('root');
-  if (!root) return;
+let isInGame = false;
+let isFullscreenActive = false;
 
-  const isLandscape = window.innerWidth > window.innerHeight;
-  const isSmallHeight = window.innerHeight <= 600;
+async function enterFullscreen() {
+  try {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen && !document.fullscreenElement) {
+      await elem.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    } else if (elem.webkitRequestFullscreen && !document.webkitFullscreenElement) {
+      await elem.webkitRequestFullscreen().catch(() => {});
+    }
+    if (screen.orientation && screen.orientation.lock) {
+      try { await screen.orientation.lock('landscape'); } catch (e) {}
+    }
+  } catch (err) {}
+}
 
-  const isInGame = !!(
+async function exitFullscreen() {
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      await document.exitFullscreen().catch(() => {});
+    } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+      await document.webkitExitFullscreen().catch(() => {});
+    }
+    if (screen.orientation && screen.orientation.unlock) {
+      try { screen.orientation.unlock(); } catch (e) {}
+    }
+  } catch (err) {}
+}
+
+function checkGameState() {
+  const nowInGame = !!(
     document.querySelector('.sq-play-wrapper') ||
-    document.querySelector('.sq-main-card') ||
     document.querySelector('.mg-cards') ||
-    document.querySelector('.mg-play-wrapper') ||
     document.querySelector('.sq-book-select-wrapper')
   );
 
-  // Reset lahat
-  root.style.zoom = '';
-  root.style.transform = '';
-  root.style.transformOrigin = '';
-  root.style.width = '';
-  root.style.height = '';
-  root.style.position = '';
-  root.style.top = '';
-  root.style.left = '';
-  root.style.right = '';
-  root.style.bottom = '';
-  root.style.overflow = '';
-  root.style.margin = '';
-  root.style.padding = '';
-
-  if (isLandscape && isSmallHeight && isInGame) {
-    // ✅ Compute scale based on viewport height
-    let scale = 1.0;
-    if (window.innerHeight <= 360) scale = 0.88;
-    else if (window.innerHeight <= 400) scale = 0.94;
-    else if (window.innerHeight <= 440) scale = 0.97;
-    else if (window.innerHeight <= 500) scale = 0.99;
-    else scale = 1.0;
-
-    // ✅ Zoom #root — puno yung screen
-    root.style.zoom = String(scale);
-    root.style.width = `${100 / scale}vw`;
-    root.style.height = `${100 / scale}dvh`;
-    root.style.position = 'fixed';
-    root.style.top = '0';
-    root.style.left = '0';
-    root.style.right = '0';
-    root.style.bottom = '0';
-    root.style.margin = '0';
-    root.style.padding = '0';
-    root.style.overflow = 'hidden';
-
-    // ✅ Force body at html
-    document.body.style.zoom = String(scale);
-    document.body.style.width = `${100 / scale}vw`;
-    document.body.style.height = `${100 / scale}dvh`;
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = '0';
-    document.body.style.left = '0';
-
-    document.documentElement.style.width = '100vw';
-    document.documentElement.style.height = '100dvh';
-    document.documentElement.style.margin = '0';
-    document.documentElement.style.padding = '0';
-    document.documentElement.style.overflow = 'hidden';
-    document.documentElement.style.background = '#2A2845';
-  } else {
-    document.body.style.zoom = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
-    document.body.style.margin = '';
-    document.body.style.padding = '';
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.documentElement.style.width = '';
-    document.documentElement.style.height = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.background = '';
+  if (nowInGame && !isInGame) {
+    isInGame = true;
+    // Add class para ma-CSS-target
+    document.documentElement.classList.add('in-game');
+    document.body.classList.add('in-game');
+    enterFullscreen();
+  } else if (!nowInGame && isInGame) {
+    isInGame = false;
+    document.documentElement.classList.remove('in-game');
+    document.body.classList.remove('in-game');
+    exitFullscreen();
   }
 }
 
-applyLandscapeFix();
-window.addEventListener('resize', applyLandscapeFix);
-window.addEventListener('orientationchange', () => {
-  setTimeout(applyLandscapeFix, 100);
-  setTimeout(applyLandscapeFix, 300);
-  setTimeout(applyLandscapeFix, 600);
+// ✅ Single listener lang — hindi nag-popol ng events
+document.addEventListener('fullscreenchange', () => {
+  isFullscreenActive = !!document.fullscreenElement;
+  if (isFullscreenActive) {
+    document.documentElement.classList.add('fullscreen-active');
+    document.body.classList.add('fullscreen-active');
+  } else {
+    document.documentElement.classList.remove('fullscreen-active');
+    document.body.classList.remove('fullscreen-active');
+  }
 });
-setInterval(applyLandscapeFix, 500);
+
+// ✅ Debounced check — para hindi mag-flicker
+let checkTimeout = null;
+function debouncedCheck() {
+  if (checkTimeout) clearTimeout(checkTimeout);
+  checkTimeout = setTimeout(checkGameState, 300);
+}
+
+// ✅ Gentle observer — hindi mag-popol
+const observer = new MutationObserver(debouncedCheck);
+
+window.addEventListener('load', () => {
+  checkGameState();
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: false });
+  }
+});
+
+// ✅ Fallback resize listener (rare) — hindi na setInterval
+window.addEventListener('orientationchange', () => {
+  setTimeout(checkGameState, 500);
+});
+
+// ✅ Fullscreen retry on user interaction (browser policy)
+document.addEventListener('click', () => {
+  if (isInGame && !document.fullscreenElement) {
+    enterFullscreen();
+  }
+});
 
 // ============================================================
 
