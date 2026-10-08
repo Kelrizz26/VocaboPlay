@@ -1,106 +1,51 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import { ThemeProvider } from './context/ThemeContext';
 
-// ============================================================
-// 🎮 LANDSCAPE MOBILE FIX — Minimal & Stable (No Flicker)
-// ============================================================
+const LandingPage = lazy(() => import("./components/LandingPage"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
+const Profile = lazy(() => import('./components/Profile'));
+const SuperAdminLogin = lazy(() => import("./pages/SuperAdminLogin"));
+const SuperAdminDashboard = lazy(() => import("./components/SuperAdminDashboard"));
+const AdminMigrate = lazy(() => import("./pages/AdminMigrate"));
 
-let isInGame = false;
-let isFullscreenActive = false;
+const PageLoader = () => (
+  <div style={{
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    minHeight: '100vh', background: 'var(--color-bg)',
+    color: 'var(--color-text-secondary)', fontFamily: "'Poppins', sans-serif",
+    fontSize: '14px',
+  }}>
+    Loading...
+  </div>
+);
 
-async function enterFullscreen() {
-  try {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen && !document.fullscreenElement) {
-      await elem.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
-    } else if (elem.webkitRequestFullscreen && !document.webkitFullscreenElement) {
-      await elem.webkitRequestFullscreen().catch(() => {});
-    }
-    if (screen.orientation && screen.orientation.lock) {
-      try { await screen.orientation.lock('landscape'); } catch (e) {}
-    }
-  } catch (err) {}
-}
-
-async function exitFullscreen() {
-  try {
-    if (document.fullscreenElement && document.exitFullscreen) {
-      await document.exitFullscreen().catch(() => {});
-    } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
-      await document.webkitExitFullscreen().catch(() => {});
-    }
-    if (screen.orientation && screen.orientation.unlock) {
-      try { screen.orientation.unlock(); } catch (e) {}
-    }
-  } catch (err) {}
-}
-
-function checkGameState() {
-  const nowInGame = !!(
-    document.querySelector('.sq-play-wrapper') ||
-    document.querySelector('.mg-cards') ||
-    document.querySelector('.sq-book-select-wrapper')
+function App() {
+  return (
+    <ThemeProvider>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/super-admin-login" element={<SuperAdminLogin />} />
+            <Route path="/super-admin-dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/admin-migrate" element={<AdminMigrate />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ThemeProvider>
   );
-
-  if (nowInGame && !isInGame) {
-    isInGame = true;
-    // Add class para ma-CSS-target
-    document.documentElement.classList.add('in-game');
-    document.body.classList.add('in-game');
-    enterFullscreen();
-  } else if (!nowInGame && isInGame) {
-    isInGame = false;
-    document.documentElement.classList.remove('in-game');
-    document.body.classList.remove('in-game');
-    exitFullscreen();
-  }
 }
 
-// ✅ Single listener lang — hindi nag-popol ng events
-document.addEventListener('fullscreenchange', () => {
-  isFullscreenActive = !!document.fullscreenElement;
-  if (isFullscreenActive) {
-    document.documentElement.classList.add('fullscreen-active');
-    document.body.classList.add('fullscreen-active');
-  } else {
-    document.documentElement.classList.remove('fullscreen-active');
-    document.body.classList.remove('fullscreen-active');
-  }
-});
-
-// ✅ Debounced check — para hindi mag-flicker
-let checkTimeout = null;
-function debouncedCheck() {
-  if (checkTimeout) clearTimeout(checkTimeout);
-  checkTimeout = setTimeout(checkGameState, 300);
-}
-
-// ✅ Gentle observer — hindi mag-popol
-const observer = new MutationObserver(debouncedCheck);
-
-window.addEventListener('load', () => {
-  checkGameState();
-  if (document.body) {
-    observer.observe(document.body, { childList: true, subtree: false });
-  }
-});
-
-// ✅ Fallback resize listener (rare) — hindi na setInterval
-window.addEventListener('orientationchange', () => {
-  setTimeout(checkGameState, 500);
-});
-
-// ✅ Fullscreen retry on user interaction (browser policy)
-document.addEventListener('click', () => {
-  if (isInGame && !document.fullscreenElement) {
-    enterFullscreen();
-  }
-});
-
-// ============================================================
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
-)
+export default App;  // ✅ ITO YUNG IMPORTANTE — siguraduhing nandiyan
