@@ -1,11 +1,10 @@
 /* ============================================================
-   🎮 LANDSCAPE MOBILE FIX — TRUE FULL SCREEN (No Black Bars)
-   Override safe-area insets + fill physical screen edges
+   🎮 LANDSCAPE MOBILE FIX — FINAL (No Black Bars)
    ============================================================ */
 
 @media (orientation: landscape) and (max-height: 600px) {
   
-  /* ✅ Reset safe-area insets to 0 — force content into notch area */
+  /* ✅ Reset safe-area insets */
   :root {
     --sat: 0px !important;
     --sar: 0px !important;
@@ -13,7 +12,7 @@
     --sal: 0px !important;
   }
 
-  /* ✅ Hide lahat ng scrollbars */
+  /* ✅ Hide scrollbars */
   * {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
@@ -24,14 +23,12 @@
     height: 0 !important;
   }
 
-  /* ✅ FORCE full physical screen — ignore safe-area reservations */
+  /* ✅ FORCE full screen */
   html, body {
     width: 100dvw !important;
     height: 100dvh !important;
     max-width: 100dvw !important;
     max-height: 100dvh !important;
-    min-width: 100dvw !important;
-    min-height: 100dvh !important;
     overflow: hidden !important;
     position: fixed !important;
     top: 0 !important;
@@ -40,16 +37,7 @@
     bottom: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    padding-top: 0 !important;
-    padding-right: 0 !important;
-    padding-bottom: 0 !important;
-    padding-left: 0 !important;
     background: #2A2845 !important;
-    /* ✅ Override safe area paddings */
-    padding-top: env(safe-area-inset-top, 0) !important;
-    padding-right: env(safe-area-inset-right, 0) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0) !important;
-    padding-left: env(safe-area-inset-left, 0) !important;
   }
 
   #root {
@@ -57,9 +45,6 @@
     height: 100dvh !important;
     max-width: 100dvw !important;
     max-height: 100dvh !important;
-    min-width: 100dvw !important;
-    min-height: 100dvh !important;
-    background: #2A2845 !important;
     overflow: hidden !important;
     position: fixed !important;
     top: 0 !important;
@@ -68,9 +53,11 @@
     bottom: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #2A2845 !important;
   }
 
-  /* ✅ Override fixed → absolute para puno yung scaled parent */
+  /* ✅ Convert lahat ng fixed na malaki → absolute */
+  #root div[data-fixed-converted="true"],
   #root div[style*="position: fixed"][style*="100vw"],
   #root div[style*="position:fixed"][style*="100vw"],
   #root div[style*="inset: 0"],
@@ -92,7 +79,7 @@
   }
 
   /* ============================================================
-     SYNOQUEST — Full width
+     SYNOQUEST
      ============================================================ */
   .sq-play-wrapper {
     padding: 4px 8px !important;
@@ -160,7 +147,7 @@
   }
 
   /* ============================================================
-     MATCH GAME — Square cards
+     MATCH GAME
      ============================================================ */
   .mg-header,
   .mg-footer,
@@ -215,7 +202,7 @@
   }
 
   /* ============================================================
-     STORYQUEST — Full fit
+     STORYQUEST — WELCOME + MAP
      ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
@@ -229,9 +216,12 @@
     box-sizing: border-box !important;
   }
 
-  .sq-book-select-wrapper > div {
+  /* ✅ Force full width lahat ng direct children */
+  .sq-book-select-wrapper > div,
+  .sq-book-select-wrapper > div > div {
     max-height: 100% !important;
     max-width: 100% !important;
+    width: 100% !important;
     padding: 6px 12px !important;
     overflow: hidden !important;
     display: flex !important;
@@ -240,42 +230,40 @@
     justify-content: center !important;
     gap: 3px !important;
     box-sizing: border-box !important;
+    margin: 0 !important;
   }
 
+  /* ✅ Welcome image at text */
   .sq-book-select-wrapper img {
-    max-height: 42dvh !important;
+    max-height: 40dvh !important;
+    max-width: 90% !important;
     width: auto !important;
     object-fit: contain !important;
   }
 
   .sq-book-select-wrapper h1,
   .sq-book-select-wrapper h2 {
-    font-size: 16px !important;
-    margin: 2px 0 !important;
+    font-size: 18px !important;
+    margin: 4px 0 !important;
+    text-align: center !important;
   }
 
   .sq-book-select-wrapper p {
-    font-size: 10px !important;
+    font-size: 11px !important;
     margin: 2px 0 !important;
+    text-align: center !important;
   }
 
   .sq-book-select-wrapper button {
-    padding: 8px 20px !important;
-    font-size: 12px !important;
+    padding: 10px 24px !important;
+    font-size: 13px !important;
     margin: 4px 0 !important;
-    min-height: 36px !important;
+    min-height: 40px !important;
+    max-width: 90% !important;
   }
-}
 
-/* ============================================================
-   ✅ FULLSCREEN API MODE — kapag naka-fullscreen na
-   Ito yung mag-a-apply kapag na-trigger na yung screen.orientation.lock
-   ============================================================ */
-@media (orientation: landscape) and (max-height: 600px) and (display-mode: fullscreen) {
-  html, body, #root {
-    width: 100dvw !important;
-    height: 100dvh !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  /* ✅ Override lahat ng maxWidth sa StoryQuest */
+  .sq-book-select-wrapper [style*="maxWidth"] {
+    max-width: 100% !important;
   }
 }

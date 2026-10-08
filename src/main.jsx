@@ -4,61 +4,44 @@ import App from './App.jsx'
 import './index.css'
 
 // ============================================================
-// 🎮 LANDSCAPE MOBILE FIX — Fullscreen + Orientation Lock
-// Walang zoom. CSS na ang bahala sa full-width via 100dvw.
+// 🎮 LANDSCAPE MOBILE FIX — Clean + Debounced
 // ============================================================
 
-// ✅ Request true fullscreen + lock orientation kapag pumasok sa game
+let fixTimeout = null;
+let isCurrentlyInGame = false;
+
+// ✅ Request true fullscreen + lock orientation
 async function enterGameFullscreen() {
   try {
     const elem = document.documentElement;
-    
-    // Request fullscreen
     if (elem.requestFullscreen) {
-      await elem.requestFullscreen({ navigationUI: 'hide' });
+      await elem.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
     } else if (elem.webkitRequestFullscreen) {
-      await elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      await elem.msRequestFullscreen();
+      await elem.webkitRequestFullscreen().catch(() => {});
     }
-
-    // ✅ Lock orientation to landscape (KEY para mawala black bars)
     if (screen.orientation && screen.orientation.lock) {
       try {
         await screen.orientation.lock('landscape');
-      } catch (orientErr) {
-        console.log('Orientation lock failed (normal sa iOS):', orientErr.message);
-      }
+      } catch (e) {}
     }
-  } catch (err) {
-    console.log('Fullscreen failed:', err.message);
-  }
+  } catch (err) {}
 }
 
-// ✅ Exit fullscreen kapag labas ng game
 async function exitGameFullscreen() {
   try {
     if (document.fullscreenElement) {
       if (document.exitFullscreen) {
-        await document.exitFullscreen();
+        await document.exitFullscreen().catch(() => {});
       } else if (document.webkitExitFullscreen) {
-        await document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        await document.msExitFullscreen();
+        await document.webkitExitFullscreen().catch(() => {});
       }
     }
-    
     if (screen.orientation && screen.orientation.unlock) {
-      try {
-        screen.orientation.unlock();
-      } catch (e) {}
+      try { screen.orientation.unlock(); } catch (e) {}
     }
-  } catch (err) {
-    console.log('Exit fullscreen failed:', err.message);
-  }
+  } catch (err) {}
 }
 
-// ✅ Check kung nasa loob ng game
 function isInGame() {
   return !!(
     document.querySelector('.sq-play-wrapper') ||
@@ -69,50 +52,18 @@ function isInGame() {
   );
 }
 
-// ✅ Convert fixed-position backgrounds sa absolute (para puno yung screen)
+// ✅ Convert fixed-position backgrounds sa absolute
 function fixFullScreenBackgrounds() {
   const root = document.getElementById('root');
   if (!root) return;
 
   const divs = root.querySelectorAll('div');
   divs.forEach(el => {
-    const style = el.getAttribute('style') || '';
-    
-    // Reset kung na-convert na dati
-    if (el.dataset.wasConverted === 'true') {
-      el.style.position = el.dataset.origPosition || '';
-      el.style.width = el.dataset.origWidth || '';
-      el.style.height = el.dataset.origHeight || '';
-      el.style.top = el.dataset.origTop || '';
-      el.style.left = el.dataset.origLeft || '';
-      el.style.right = el.dataset.origRight || '';
-      el.style.bottom = el.dataset.origBottom || '';
-      delete el.dataset.wasConverted;
-      delete el.dataset.origPosition;
-      delete el.dataset.origWidth;
-      delete el.dataset.origHeight;
-      delete el.dataset.origTop;
-      delete el.dataset.origLeft;
-      delete el.dataset.origRight;
-      delete el.dataset.origBottom;
-    }
-
-    // ✅ Convert fixed → absolute kapag malaki yung element
     const computed = window.getComputedStyle(el);
     if (computed.position === 'fixed') {
       const rect = el.getBoundingClientRect();
+      // Kung malaki yung element (>60% ng viewport), i-convert
       if (rect.width >= window.innerWidth * 0.6 && rect.height >= window.innerHeight * 0.6) {
-        // Save original values
-        el.dataset.wasConverted = 'true';
-        el.dataset.origPosition = el.style.position || 'fixed';
-        el.dataset.origWidth = el.style.width || '';
-        el.dataset.origHeight = el.style.height || '';
-        el.dataset.origTop = el.style.top || '';
-        el.dataset.origLeft = el.style.left || '';
-        el.dataset.origRight = el.style.right || '';
-        el.dataset.origBottom = el.style.bottom || '';
-
-        // Convert to absolute para naka-anchor sa parent
         el.style.position = 'absolute';
         el.style.top = '0';
         el.style.left = '0';
@@ -120,55 +71,58 @@ function fixFullScreenBackgrounds() {
         el.style.bottom = '0';
         el.style.width = '100%';
         el.style.height = '100%';
+        el.style.maxWidth = '100%';
+        el.style.maxHeight = '100%';
+        el.style.minWidth = '100%';
+        el.style.minHeight = '100%';
+        el.setAttribute('data-fixed-converted', 'true');
       }
     }
   });
 }
 
-// ✅ Main function
+// ✅ Main function — DEBOUNCED para hindi mag-flicker
 function applyLandscapeFix() {
-  const root = document.getElementById('root');
-  if (!root) return;
+  // Clear previous timeout
+  if (fixTimeout) clearTimeout(fixTimeout);
+  
+  fixTimeout = setTimeout(() => {
+    const nowInGame = isInGame();
 
-  const wasInGame = root.dataset.wasInGame === 'true';
-  const nowInGame = isInGame();
-
-  // Track state
-  root.dataset.wasInGame = nowInGame ? 'true' : 'false';
-
-  // ✅ Enter fullscreen kapag pumasok sa game
-  if (nowInGame && !wasInGame) {
-    enterGameFullscreen();
-  } 
-  // ✅ Exit fullscreen kapag labas ng game
-  else if (!nowInGame && wasInGame) {
-    exitGameFullscreen();
-  }
-
-  // ✅ Fix yung fixed positioning sa mga game backgrounds
-  if (nowInGame) {
-    setTimeout(fixFullScreenBackgrounds, 50);
-    setTimeout(fixFullScreenBackgrounds, 200);
-    setTimeout(fixFullScreenBackgrounds, 500);
-  }
+    // ✅ Enter fullscreen kapag pumasok sa game
+    if (nowInGame && !isCurrentlyInGame) {
+      isCurrentlyInGame = true;
+      enterGameFullscreen();
+      // Apply fix pagkatapos ng fullscreen
+      setTimeout(fixFullScreenBackgrounds, 100);
+      setTimeout(fixFullScreenBackgrounds, 300);
+      setTimeout(fixFullScreenBackgrounds, 600);
+    } 
+    // ✅ Exit fullscreen kapag labas ng game
+    else if (!nowInGame && isCurrentlyInGame) {
+      isCurrentlyInGame = false;
+      exitGameFullscreen();
+    }
+    // ✅ Kapag nasa game pa, re-apply lang ng fix (walang fullscreen re-trigger)
+    else if (nowInGame) {
+      fixFullScreenBackgrounds();
+    }
+  }, 150);
 }
 
 // ============================================================
 // INITIALIZATION
 // ============================================================
 
-// Run on load
 applyLandscapeFix();
 
-// Listeners
 window.addEventListener('resize', applyLandscapeFix);
 window.addEventListener('orientationchange', () => {
   setTimeout(applyLandscapeFix, 100);
   setTimeout(applyLandscapeFix, 300);
-  setTimeout(applyLandscapeFix, 600);
 });
 
-// MutationObserver para sa dynamic na changes (game mount/unmount)
+// MutationObserver — debounced na, hindi mag-flicker
 const observer = new MutationObserver(() => {
   applyLandscapeFix();
 });
@@ -181,16 +135,12 @@ if (document.body) {
   });
 }
 
-// ✅ I-trigger ang fullscreen sa unang user interaction (browser policy)
+// ✅ Fullscreen sa unang user interaction
 document.addEventListener('click', () => {
-  const root = document.getElementById('root');
-  if (root && root.dataset.wasInGame === 'true' && !document.fullscreenElement) {
+  if (isCurrentlyInGame && !document.fullscreenElement) {
     enterGameFullscreen();
   }
-}, { once: false });
-
-// Periodic check (safety net)
-setInterval(applyLandscapeFix, 1000);
+});
 
 // ============================================================
 
