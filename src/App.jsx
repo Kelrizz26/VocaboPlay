@@ -1,64 +1,109 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Suspense, lazy } from "react";
-import { ThemeProvider } from './context/ThemeContext';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
 
-const LandingPage = lazy(() => import("./components/LandingPage"));
-const Login = lazy(() => import("./pages/Login"));
-const Signup = lazy(() => import("./pages/Signup"));
-const Dashboard = lazy(() => import("./components/Dashboard"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
-const Profile = lazy(() => import('./components/Profile'));
+// ============================================================
+// 🎮 LANDSCAPE MOBILE FIX — Fill Entire Screen (No Black Bars)
+// ============================================================
 
-// ✅ ITO YUNG MGA BAGONG IMPORTS!
-const SuperAdminLogin = lazy(() => import("./pages/SuperAdminLogin"));
-const SuperAdminDashboard = lazy(() => import("./components/SuperAdminDashboard"));
+function applyLandscapeFix() {
+  const root = document.getElementById('root');
+  if (!root) return;
 
-// 🔧 TEMPORARY — CEFR Migration Tool (DELETE AFTER USE)
-const AdminMigrate = lazy(() => import("./pages/AdminMigrate"));
+  const isLandscape = window.innerWidth > window.innerHeight;
+  const isSmallHeight = window.innerHeight <= 600;
 
-const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    background: 'var(--color-bg)',
-    color: 'var(--color-text-secondary)',
-    fontFamily: "'Poppins', sans-serif",
-    fontSize: '14px',
-  }}>
-    Loading...
-  </div>
-);
-
-function App() {
-  return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            
-            {/* ✅ MGA ROUTES PARA SA SUPER ADMIN! */}
-            <Route path="/super-admin-login" element={<SuperAdminLogin />} />
-            <Route path="/super-admin-dashboard" element={<SuperAdminDashboard />} />
-            
-            {/* 🔧 TEMPORARY — DELETE THIS ROUTE AFTER MIGRATION */}
-            <Route path="/admin-migrate" element={<AdminMigrate />} />
-            
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </ThemeProvider>
+  const isInGame = !!(
+    document.querySelector('.sq-play-wrapper') ||
+    document.querySelector('.sq-main-card') ||
+    document.querySelector('.mg-cards') ||
+    document.querySelector('.mg-play-wrapper') ||
+    document.querySelector('.sq-book-select-wrapper')
   );
+
+  // Reset lahat
+  root.style.zoom = '';
+  root.style.transform = '';
+  root.style.transformOrigin = '';
+  root.style.width = '';
+  root.style.height = '';
+  root.style.position = '';
+  root.style.top = '';
+  root.style.left = '';
+  root.style.right = '';
+  root.style.bottom = '';
+  root.style.overflow = '';
+  root.style.margin = '';
+  root.style.padding = '';
+
+  if (isLandscape && isSmallHeight && isInGame) {
+    // ✅ Compute scale based on viewport height
+    let scale = 1.0;
+    if (window.innerHeight <= 360) scale = 0.88;
+    else if (window.innerHeight <= 400) scale = 0.94;
+    else if (window.innerHeight <= 440) scale = 0.97;
+    else if (window.innerHeight <= 500) scale = 0.99;
+    else scale = 1.0;
+
+    // ✅ Zoom #root — puno yung screen
+    root.style.zoom = String(scale);
+    root.style.width = `${100 / scale}vw`;
+    root.style.height = `${100 / scale}dvh`;
+    root.style.position = 'fixed';
+    root.style.top = '0';
+    root.style.left = '0';
+    root.style.right = '0';
+    root.style.bottom = '0';
+    root.style.margin = '0';
+    root.style.padding = '0';
+    root.style.overflow = 'hidden';
+
+    // ✅ Force body at html
+    document.body.style.zoom = String(scale);
+    document.body.style.width = `${100 / scale}vw`;
+    document.body.style.height = `${100 / scale}dvh`;
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
+
+    document.documentElement.style.width = '100vw';
+    document.documentElement.style.height = '100dvh';
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.background = '#2A2845';
+  } else {
+    document.body.style.zoom = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    document.body.style.margin = '';
+    document.body.style.padding = '';
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.documentElement.style.width = '';
+    document.documentElement.style.height = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.background = '';
+  }
 }
 
-export default App; 
+applyLandscapeFix();
+window.addEventListener('resize', applyLandscapeFix);
+window.addEventListener('orientationchange', () => {
+  setTimeout(applyLandscapeFix, 100);
+  setTimeout(applyLandscapeFix, 300);
+  setTimeout(applyLandscapeFix, 600);
+});
+setInterval(applyLandscapeFix, 500);
+
+// ============================================================
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App />
+)

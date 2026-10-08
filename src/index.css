@@ -1,36 +1,53 @@
 /* ============================================================
-   🎮 LANDSCAPE MOBILE FIX — FINAL (No White Bars)
+   🎮 LANDSCAPE MOBILE FIX — FULL SCREEN (No Black Bars)
    ============================================================ */
 
 @media (orientation: landscape) and (max-height: 600px) {
   
-  /* Viewport lock */
+  /* ✅ Hide lahat ng scrollbars */
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* ✅ Viewport lock + fill everything */
   html, body {
     width: 100vw !important;
     height: 100dvh !important;
+    max-width: 100vw !important;
     max-height: 100dvh !important;
+    min-width: 100vw !important;
+    min-height: 100dvh !important;
     overflow: hidden !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #2A2845 !important;
   }
 
-  /* ============================================================
-     ✅ KEY FIX: Fill scaled parent completely
-     Override position:fixed → absolute para puno yung screen
-     kapag naka-scale na yung #root
-     ============================================================ */
-  
-  /* Match lahat ng full-screen game backgrounds (may 100vw at 100vh/dvh) */
-  #root > div[style*="100vw"],
-  #root > div > div[style*="100vw"],
+  #root {
+    background: #2A2845 !important;
+    overflow: hidden !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+  }
+
+  /* ✅ Override fixed → absolute para puno yung scaled parent */
   #root div[style*="position: fixed"][style*="100vw"],
   #root div[style*="position:fixed"][style*="100vw"],
   #root div[style*="inset: 0"],
-  #root div[style*="inset:0"] {
+  #root div[style*="inset:0"],
+  #root div[style*="100vw"][style*="100vh"],
+  #root div[style*="100vw"][style*="100dvh"] {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
@@ -51,9 +68,6 @@
   .sq-play-wrapper {
     padding: 4px 8px !important;
     margin: 0 !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: 100dvh !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -115,10 +129,8 @@
   }
 
   /* ============================================================
-     MATCH GAME — Square cards, sized to fit 4 rows in landscape
+     MATCH GAME — Square cards, sized to fit 4 rows
      ============================================================ */
-  
-  /* Header at footer — full width */
   .mg-header,
   .mg-footer,
   .mg-progress-wrap {
@@ -136,7 +148,6 @@
     margin-bottom: 2px !important;
   }
 
-  /* ✅ Cards grid — size controlled by CARD SIZE, not container */
   .mg-cards {
     display: grid !important;
     grid-template-columns: none !important;
@@ -155,7 +166,6 @@
     overflow: hidden !important;
   }
 
-  /* ✅ Force exactly N columns per level */
   .mg-cards[style*="repeat(5,"]  { grid-template-columns: repeat(5,  calc((100dvh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(6,"]  { grid-template-columns: repeat(6,  calc((100dvh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(7,"]  { grid-template-columns: repeat(7,  calc((100dvh - 110px) / 4 - 4px)) !important; }
@@ -163,7 +173,6 @@
   .mg-cards[style*="repeat(9,"]  { grid-template-columns: repeat(9,  calc((100dvh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(10,"] { grid-template-columns: repeat(10, calc((100dvh - 110px) / 4 - 4px)) !important; }
 
-  /* ✅ Individual cards — square */
   .mg-card {
     width: 100% !important;
     height: auto !important;
@@ -175,11 +184,9 @@
   }
 
   /* ============================================================
-     STORYQUEST — Full width for welcome
+     STORYQUEST — Full fit
      ============================================================ */
   .sq-book-select-wrapper {
-    width: 100vw !important;
-    height: 100dvh !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
@@ -190,8 +197,8 @@
   }
 
   .sq-book-select-wrapper > div {
-    max-height: 100dvh !important;
-    max-width: 100vw !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
     padding: 6px 12px !important;
     overflow: hidden !important;
     display: flex !important;
