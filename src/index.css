@@ -387,13 +387,14 @@ textarea:focus-visible,
     font-size: 10px !important;
   }
 
-  .squiz-image-box {
+   .squiz-image-box {
     width: auto !important;
-    height: 22vh !important;
-    max-height: 22vh !important;
-    max-width: 45vw !important;
-    border-width: 2px !important;
-    border-radius: 10px !important;
+    height: 30vh !important;
+    max-height: 30vh !important;
+    max-width: 60vw !important;
+    min-width: 40vw !important;
+    border-width: 3px !important;
+    border-radius: 12px !important;
     flex-shrink: 0 !important;
   }
 
