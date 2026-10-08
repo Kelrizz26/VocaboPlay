@@ -1,5 +1,5 @@
 /* ============================================================
-   🎮 LANDSCAPE MOBILE FIX — FINAL
+   🎮 LANDSCAPE MOBILE FIX — FINAL (MatchGame Fixed)
    ============================================================ */
 
 @media (orientation: landscape) and (max-height: 600px) {
@@ -18,7 +18,7 @@
   }
 
   /* ============================================================
-     SYNOQUEST — Full width (single column layout, okay lang)
+     SYNOQUEST — Full width (single column layout)
      ============================================================ */
   .sq-play-wrapper {
     padding: 4px 8px !important;
@@ -54,7 +54,6 @@
     box-sizing: border-box !important;
   }
 
-  /* Images para sa SynoQuest */
   .sq-image-row {
     display: flex !important;
     justify-content: center !important;
@@ -88,7 +87,7 @@
   }
 
   /* ============================================================
-     MATCH GAME — Center at proper card size (HINDI full width)
+     MATCH GAME — Square cards, sized to fit 4 rows in landscape
      ============================================================ */
   
   /* Header at footer — full width */
@@ -97,37 +96,56 @@
   .mg-progress-wrap {
     max-width: 100vw !important;
     width: 100vw !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    margin: 0 !important;
     border-radius: 0 !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
     padding: 4px 10px !important;
   }
 
-  /* ✅ Cards grid — centered, sized based on available height */
+  .mg-progress-wrap {
+    padding: 0 !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* ✅ Cards grid — size controlled by CARD SIZE, not container */
   .mg-cards {
-    /* Alisin ang forced full width */
-    width: auto !important;
-    min-width: 0 !important;
-    /* I-limit ang height base sa viewport */
-    max-height: calc(100dvh - 80px) !important;
-    height: calc(100dvh - 80px) !important;
-    /* Center sa screen */
-    margin: 4px auto !important;
-    /* Grid gap mas maliit */
+    /* Remove inline gridTemplateColumns */
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: row !important;
+    /* Size each column based on card size */
+    grid-auto-columns: calc((100dvh - 110px) / 4 - 4px) !important;
+    /* Center the grid */
+    justify-content: center !important;
+    align-content: center !important;
+    /* Gap between cards */
     gap: 3px !important;
     padding: 6px !important;
+    /* Limit height to viewport */
+    height: auto !important;
+    max-height: calc(100dvh - 80px) !important;
+    /* Width auto based on content */
+    width: auto !important;
+    max-width: 100vw !important;
+    /* Centering */
+    margin: 4px auto !important;
     box-sizing: border-box !important;
-    /* ✅ Force rows to fit equally */
-    grid-auto-rows: 1fr !important;
-    /* ✅ Let columns shrink to fit width */
-    justify-content: center !important;
     overflow: hidden !important;
   }
 
-  /* ✅ Individual cards — square, size based on row height */
+  /* ✅ Force exactly N columns per level (via attribute selector matching React's inline style) */
+  .mg-cards[style*="repeat(5,"]  { grid-template-columns: repeat(5,  calc((100dvh - 110px) / 4 - 4px)) !important; }
+  .mg-cards[style*="repeat(6,"]  { grid-template-columns: repeat(6,  calc((100dvh - 110px) / 4 - 4px)) !important; }
+  .mg-cards[style*="repeat(7,"]  { grid-template-columns: repeat(7,  calc((100dvh - 110px) / 4 - 4px)) !important; }
+  .mg-cards[style*="repeat(8,"]  { grid-template-columns: repeat(8,  calc((100dvh - 110px) / 4 - 4px)) !important; }
+  .mg-cards[style*="repeat(9,"]  { grid-template-columns: repeat(9,  calc((100dvh - 110px) / 4 - 4px)) !important; }
+  .mg-cards[style*="repeat(10,"] { grid-template-columns: repeat(10, calc((100dvh - 110px) / 4 - 4px)) !important; }
+
+  /* ✅ Individual cards — square */
   .mg-card {
+    width: 100% !important;
+    height: auto !important;
     aspect-ratio: 1 / 1 !important;
     max-width: 100% !important;
     max-height: 100% !important;
