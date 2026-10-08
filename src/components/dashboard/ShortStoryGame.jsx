@@ -2,7 +2,7 @@
 // ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
 // ✅ Auto-adjust padding, font sizes, at image sizes kapag landscape
 // ✅ Uses 100dvh (dynamic viewport height) for mobile browsers
-// ✅ FIXED: Exit button returns to MAP instead of exiting game
+// ✅ FIXED: Exit button now shows confirmation modal, returns to MAP on confirm
 // ============================================================
 
 import React from 'react';
@@ -204,6 +204,105 @@ const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
     onResetAll: game.devResetAll,
     onReturnToMap: game.devReturnToMap,
   });
+
+  // ✅ Confirm exit → back to MAP (not Games menu)
+  const handleConfirmExit = () => {
+    game.cancelExit(); // Close the modal
+    if (game.handleReturnToMap) {
+      game.handleReturnToMap();
+    } else if (onBack) {
+      onBack();
+    }
+  };
+
+  // ===== EXIT CONFIRMATION MODAL =====
+  const ExitConfirmModal = () => (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(42, 40, 69, 0.75)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 4000,
+      padding: '20px',
+    }}>
+      <div
+        className="sq-card"
+        style={{
+          background: palette.white,
+          borderRadius: '20px',
+          padding: '28px 24px',
+          maxWidth: '380px',
+          width: '100%',
+          textAlign: 'center',
+          border: `2px solid ${palette.border}`,
+          boxShadow: '0 20px 50px rgba(42, 40, 69, 0.4)',
+        }}
+      >
+        <div className="sq-big-emoji" style={{ fontSize: '48px', marginBottom: '8px' }}>🚪</div>
+        <h2 style={{
+          fontSize: '20px',
+          fontWeight: '900',
+          color: palette.deepNavy,
+          marginBottom: '6px',
+          fontFamily: FONT_DISPLAY,
+        }}>
+          Exit StoryQuest?
+        </h2>
+        <p style={{
+          fontSize: '13px',
+          color: palette.bodyTextSoft,
+          marginBottom: '20px',
+          fontWeight: 600,
+          fontFamily: FONT_BODY,
+          lineHeight: 1.4,
+        }}>
+          Are you sure you want to exit?<br />
+          Your progress will be saved and you'll return to the map.
+        </p>
+
+        <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+          <button
+            onClick={handleConfirmExit}
+            className="sq-btn"
+            style={{
+              padding: '12px 16px',
+              background: palette.danger,
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '800',
+              fontFamily: FONT_DISPLAY,
+              boxShadow: `0 3px 0 ${palette.dangerShadow}`,
+            }}
+          >
+            ✕ Yes, Exit
+          </button>
+          <button
+            onClick={game.cancelExit}
+            className="sq-btn"
+            style={{
+              padding: '12px 16px',
+              background: palette.creamSoft,
+              color: palette.deepNavy,
+              border: `1.5px solid ${palette.border}`,
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '800',
+              fontFamily: FONT_DISPLAY,
+            }}
+          >
+            ↩ Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   // ===== HEART SHOP =====
   const HeartShopModal = () => (
@@ -592,18 +691,13 @@ const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
             feedbackMessage={game.feedbackMessage}
             showFeedback={game.showFeedback}
             handleChoice={game.handleChoice}
-            handleExit={() => {
-              // ✅ FIX: Bumalik sa MAP, hindi sa Games menu
-              if (game.handleReturnToMap) {
-                game.handleReturnToMap();
-              } else if (game.handleExit) {
-                game.handleExit();
-              }
-            }}
+            handleExit={game.handleExit}
             points={game.localPoints || 0}
             diamonds={game.localDiamonds || 0}
           />
         </div>
+        {/* ✅ Exit Confirmation Modal */}
+        {game.showExitConfirm && <ExitConfirmModal />}
         {showDevPanel && <StoryQuestDevPanel {...getDevPanelProps()} />}
       </>
     );
