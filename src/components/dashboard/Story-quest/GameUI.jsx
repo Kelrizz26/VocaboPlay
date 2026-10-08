@@ -1,9 +1,10 @@
-  // src/components/dashboard/Story-quest/GameUI.jsx
+// src/components/dashboard/Story-quest/GameUI.jsx
   // ✅ Dynamic vocabulary image in yellow box
   // ✅ VERTICAL STACK LAYOUT: image top center, story, question, choices
   // ✅ UPDATED: Larger image (400x300) + extended card layout
   // ✅ UPDATED: Supports level-specific images (e.g., garden-b1.png)
   // ✅ UPDATED: Supports scenario-based questions (scene.question)
+  // ✅ ADDED: classNames para ma-target ng landscape CSS
 
   import React, { useState, useEffect } from 'react';
 
@@ -48,6 +49,7 @@
         key={candidates[srcIndex]}
         src={candidates[srcIndex]}
         alt={vocab}
+        className="squiz-vocab-img"
         style={{
           width: '100%',
           height: '100%',
@@ -127,18 +129,21 @@
     ];
 
     return (
-      <div style={{
-        position: 'absolute', inset: 0,
-        pointerEvents: 'none',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '12px 16px',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-      }}>
+      <div
+        className="squiz-wrapper"
+        style={{
+          position: 'absolute', inset: 0,
+          pointerEvents: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+        }}
+      >
         <style>{`
           @keyframes imagePop {
             0% { transform: scale(0.88); opacity: 0; }
@@ -155,17 +160,20 @@
         `}</style>
 
         {/* TOP BAR */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '8px 16px', background: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(12px)', borderRadius: '14px',
-          border: '2px solid #E5E7EB',
-          pointerEvents: 'auto',
-          maxWidth: '1000px',
-          width: '100%',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          flexShrink: 0,
-        }}>
+        <div
+          className="squiz-topbar"
+          style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '8px 16px', background: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(12px)', borderRadius: '14px',
+            border: '2px solid #E5E7EB',
+            pointerEvents: 'auto',
+            maxWidth: '1000px',
+            width: '100%',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            flexShrink: 0,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontWeight: '800', color: '#7C3AED', fontSize: '14px', fontFamily: "'Fredoka', sans-serif" }}>📖 StoryQuest</span>
             <span style={{ padding: '3px 10px', borderRadius: '8px', background: '#EDE9FE', color: '#7C3AED', fontSize: '11px', fontWeight: '700' }}>{currentLevel}</span>
@@ -196,24 +204,30 @@
         </div>
 
         {/* QUIZ CARD — VERTICAL STACK LAYOUT (Extended) */}
-        <div style={{
-          background: '#FFFFFF', borderRadius: '18px', padding: '20px 28px 24px',
-          border: '2px solid #E5E7EB', pointerEvents: 'auto',
-          maxWidth: '1000px', width: '100%',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px',
-          marginBottom: '20px',
-        }}>
+        <div
+          className="squiz-card"
+          style={{
+            background: '#FFFFFF', borderRadius: '18px', padding: '20px 28px 24px',
+            border: '2px solid #E5E7EB', pointerEvents: 'auto',
+            maxWidth: '1000px', width: '100%',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            marginBottom: '20px',
+          }}
+        >
           {/* Quiz header */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '8px 14px',
-            background: 'linear-gradient(90deg, #EDE9FE 0%, #FCE7F3 100%)',
-            borderRadius: '10px'
-          }}>
+          <div
+            className="squiz-header"
+            style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '8px 14px',
+              background: 'linear-gradient(90deg, #EDE9FE 0%, #FCE7F3 100%)',
+              borderRadius: '10px'
+            }}
+          >
             <span style={{ fontSize: '15px', fontWeight: '800', color: '#7C3AED', fontFamily: "'Fredoka', sans-serif" }}>
               🎯 Story Quiz
             </span>
@@ -224,22 +238,25 @@
           </div>
 
           {/* ✅ 1. IMAGE — TOP, CENTERED, BIGGER */}
-          <div style={{
-            width: '420px',
-            height: '320px',
-            maxWidth: '100%',
-            margin: '0 auto',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            border: '4px solid #FCD34D',
-            background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
-            boxShadow: '0 6px 18px rgba(252, 211, 77, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            flexShrink: 0,
-          }}>
+          <div
+            className="squiz-image-box"
+            style={{
+              width: '420px',
+              height: '320px',
+              maxWidth: '100%',
+              margin: '0 auto',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              border: '4px solid #FCD34D',
+              background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
+              boxShadow: '0 6px 18px rgba(252, 211, 77, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              flexShrink: 0,
+            }}
+          >
             <CenterVocabImage 
               vocabulary={scene.vocabulary} 
               customImage={scene.image} 
@@ -263,12 +280,15 @@
           </div>
 
           {/* ✅ 2. STORY TEXT — BELOW IMAGE, CENTERED */}
-          <div style={{
-            padding: '14px 20px',
-            background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
-            borderLeft: '4px solid #7C3AED', borderRadius: '10px',
-            textAlign: 'center',
-          }}>
+          <div
+            className="squiz-story"
+            style={{
+              padding: '14px 20px',
+              background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+              borderLeft: '4px solid #7C3AED', borderRadius: '10px',
+              textAlign: 'center',
+            }}
+          >
             <p style={{
               color: '#1F2937', fontSize: '17px', lineHeight: '1.7',
               margin: 0, fontFamily: "'Nunito', sans-serif", fontWeight: '500'
@@ -278,11 +298,14 @@
           </div>
 
           {/* ✅ 3. QUESTION PROMPT — BELOW STORY */}
-          <div style={{
-            textAlign: 'center',
-            padding: '12px 16px', background: '#FEF3C7',
-            borderRadius: '10px', border: '1.5px solid #FCD34D'
-          }}>
+          <div
+            className="squiz-question"
+            style={{
+              textAlign: 'center',
+              padding: '12px 16px', background: '#FEF3C7',
+              borderRadius: '10px', border: '1.5px solid #FCD34D'
+            }}
+          >
             <span style={{ fontSize: '15px', color: '#92400E', fontWeight: '800' }}>
               Question {currentScene + 1}: {questionPrompt}
             </span>
@@ -290,7 +313,10 @@
 
           {/* ✅ 4. CHOICES — 2x2 GRID */}
           {scene.choices && scene.choices.length > 0 && lives > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            <div
+              className="squiz-choices"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}
+            >
               {scene.choices.map((choice, i) => {
                 const colorSet = choiceColors[i % 4];
                 let bg = colorSet.bg, border = colorSet.border, text = colorSet.text;
@@ -307,6 +333,7 @@
                 return (
                   <button
                     key={choice.id}
+                    className="squiz-choice"
                     onClick={() => handleChoice(choice)}
                     disabled={selectedChoice !== null || lives <= 0}
                     style={{
@@ -336,7 +363,10 @@
           )}
 
           {/* ✅ 5. FEEDBACK + PROGRESS */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+          <div
+            className="squiz-footer"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}
+          >
             <span style={{ fontSize: '12px', color: '#6B7280', fontWeight: '600' }}>
               Chapter {currentScene + 1} of {allScenes.length}
             </span>
@@ -361,14 +391,17 @@
         </div>
 
         {isSpeaking && (
-          <div style={{
-            position: 'absolute', top: '70px', right: '24px',
-            padding: '5px 12px', background: 'rgba(124, 58, 237, 0.15)',
-            backdropFilter: 'blur(10px)', borderRadius: '18px',
-            border: '1px solid rgba(124, 58, 237, 0.3)', color: '#7C3AED',
-            fontSize: '11px', fontWeight: '700',
-            display: 'flex', alignItems: 'center', gap: '6px', pointerEvents: 'none'
-          }}>
+          <div
+            className="squiz-speaking"
+            style={{
+              position: 'absolute', top: '70px', right: '24px',
+              padding: '5px 12px', background: 'rgba(124, 58, 237, 0.15)',
+              backdropFilter: 'blur(10px)', borderRadius: '18px',
+              border: '1px solid rgba(124, 58, 237, 0.3)', color: '#7C3AED',
+              fontSize: '11px', fontWeight: '700',
+              display: 'flex', alignItems: 'center', gap: '6px', pointerEvents: 'none'
+            }}
+          >
             <span style={{
               display: 'inline-block', width: '7px', height: '7px',
               background: '#7C3AED', borderRadius: '50%',
