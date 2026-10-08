@@ -1,7 +1,7 @@
 // src/components/dashboard/MatchGame.jsx
 // ✅ Same heart/diamond flow as SynoQuest
-// ✅ 5 wrong matches = -1 ❤️
-// ✅ Timeout = instant -1 ❤️
+// ✅ 5 CONSECUTIVE wrong matches = -1 ❤️ (resets on correct match)
+// ✅ Timeout = -1 ❤️ + GAME OVER AGAD (no restart)
 // ✅ Diamond reward per level completion
 // ✅ +50 💎 completion bonus (A1 → C2)
 // ✅ FIXED: Dev panel state preserved (call as function, not component)
@@ -597,6 +597,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
 
   const restartGame = () => { startGame(); };
 
+  // ✅ TIMEOUT = -1 ❤️ + GAME OVER AGAD (walang restart)
   useEffect(() => {
     if (livesRef.current <= 0) { setTimerRunning(false); return; }
     if (timerRunning && timer > 0) {
@@ -609,14 +610,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       setLives(newLives);
       playMatchFail();
 
-      if (newLives === 0) {
-        setShowNoLivesMessage(true);
-        setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
-      } else {
-        setTimeout(() => {
-          if (gameStateRef.current === 'playing') startLevel(currentLevel);
-        }, 1200);
-      }
+      // ✅ ALWAYS game over on timeout (regardless of remaining hearts)
+      setShowNoLivesMessage(true);
+      setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer, timerRunning]);
@@ -656,6 +652,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setIsLocked(false);
           playMatchSuccess();
 
+          // ✅ RESET wrong counter on correct match
+          wrongAttemptsRef.current = 0;
+
           const matchedWord = card1.type === 'word' ? card1.content : card2.word;
           if (matchedWord && !matchedWordsRef.current.includes(matchedWord)) {
             matchedWordsRef.current.push(matchedWord);
@@ -673,11 +672,14 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setTotalAnswers(prev => prev + 1);
           playMatchFail();
 
+          // ✅ 5 CONSECUTIVE wrong matches = -1 ❤️
           wrongAttemptsRef.current += 1;
-          if (wrongAttemptsRef.current % 5 === 0) {
+          if (wrongAttemptsRef.current >= 5) {
             const newLives = livesRef.current - 1;
             livesRef.current = newLives;
             setLives(newLives);
+            // ✅ RESET counter after -1 heart
+            wrongAttemptsRef.current = 0;
 
             if (newLives === 0) {
               setShowNoLivesMessage(true);
