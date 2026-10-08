@@ -4,38 +4,81 @@ import App from './App.jsx'
 import './index.css'
 
 // ============================================================
-// 🎮 LANDSCAPE MOBILE FIX — With Fixed → Absolute Conversion
+// 🎮 LANDSCAPE MOBILE FIX — Fullscreen + Orientation Lock
+// Walang zoom. CSS na ang bahala sa full-width via 100dvw.
 // ============================================================
 
-function applyLandscapeFix() {
-  const root = document.getElementById('root');
-  if (!root) return;
+// ✅ Request true fullscreen + lock orientation kapag pumasok sa game
+async function enterGameFullscreen() {
+  try {
+    const elem = document.documentElement;
+    
+    // Request fullscreen
+    if (elem.requestFullscreen) {
+      await elem.requestFullscreen({ navigationUI: 'hide' });
+    } else if (elem.webkitRequestFullscreen) {
+      await elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      await elem.msRequestFullscreen();
+    }
 
-  const isLandscape = window.innerWidth > window.innerHeight;
-  const isSmallHeight = window.innerHeight <= 600;
+    // ✅ Lock orientation to landscape (KEY para mawala black bars)
+    if (screen.orientation && screen.orientation.lock) {
+      try {
+        await screen.orientation.lock('landscape');
+      } catch (orientErr) {
+        console.log('Orientation lock failed (normal sa iOS):', orientErr.message);
+      }
+    }
+  } catch (err) {
+    console.log('Fullscreen failed:', err.message);
+  }
+}
 
-  const isInGame = !!(
+// ✅ Exit fullscreen kapag labas ng game
+async function exitGameFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        await document.msExitFullscreen();
+      }
+    }
+    
+    if (screen.orientation && screen.orientation.unlock) {
+      try {
+        screen.orientation.unlock();
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.log('Exit fullscreen failed:', err.message);
+  }
+}
+
+// ✅ Check kung nasa loob ng game
+function isInGame() {
+  return !!(
     document.querySelector('.sq-play-wrapper') ||
     document.querySelector('.sq-main-card') ||
     document.querySelector('.mg-cards') ||
     document.querySelector('.mg-play-wrapper') ||
     document.querySelector('.sq-book-select-wrapper')
   );
+}
 
-  // Reset lahat
-  root.style.zoom = '';
-  root.style.width = '';
-  root.style.height = '';
-  root.style.position = '';
-  root.style.top = '';
-  root.style.left = '';
-  root.style.overflow = '';
-  root.style.margin = '';
-  root.style.padding = '';
+// ✅ Convert fixed-position backgrounds sa absolute (para puno yung screen)
+function fixFullScreenBackgrounds() {
+  const root = document.getElementById('root');
+  if (!root) return;
 
-  // Reset fixed → absolute conversion
-  const allDivs = root.querySelectorAll('div');
-  allDivs.forEach(el => {
+  const divs = root.querySelectorAll('div');
+  divs.forEach(el => {
+    const style = el.getAttribute('style') || '';
+    
+    // Reset kung na-convert na dati
     if (el.dataset.wasConverted === 'true') {
       el.style.position = el.dataset.origPosition || '';
       el.style.width = el.dataset.origWidth || '';
@@ -53,100 +96,101 @@ function applyLandscapeFix() {
       delete el.dataset.origRight;
       delete el.dataset.origBottom;
     }
+
+    // ✅ Convert fixed → absolute kapag malaki yung element
+    const computed = window.getComputedStyle(el);
+    if (computed.position === 'fixed') {
+      const rect = el.getBoundingClientRect();
+      if (rect.width >= window.innerWidth * 0.6 && rect.height >= window.innerHeight * 0.6) {
+        // Save original values
+        el.dataset.wasConverted = 'true';
+        el.dataset.origPosition = el.style.position || 'fixed';
+        el.dataset.origWidth = el.style.width || '';
+        el.dataset.origHeight = el.style.height || '';
+        el.dataset.origTop = el.style.top || '';
+        el.dataset.origLeft = el.style.left || '';
+        el.dataset.origRight = el.style.right || '';
+        el.dataset.origBottom = el.style.bottom || '';
+
+        // Convert to absolute para naka-anchor sa parent
+        el.style.position = 'absolute';
+        el.style.top = '0';
+        el.style.left = '0';
+        el.style.right = '0';
+        el.style.bottom = '0';
+        el.style.width = '100%';
+        el.style.height = '100%';
+      }
+    }
   });
+}
 
-  if (isLandscape && isSmallHeight && isInGame) {
-    let scale = 1.0;
-    if (window.innerHeight <= 360) scale = 0.88;
-    else if (window.innerHeight <= 400) scale = 0.94;
-    else if (window.innerHeight <= 440) scale = 0.97;
-    else if (window.innerHeight <= 500) scale = 0.99;
+// ✅ Main function
+function applyLandscapeFix() {
+  const root = document.getElementById('root');
+  if (!root) return;
 
-    // ✅ Zoom #root
-    root.style.zoom = String(scale);
-    root.style.width = `${100 / scale}vw`;
-    root.style.height = `${100 / scale}dvh`;
-    root.style.position = 'fixed';
-    root.style.top = '0';
-    root.style.left = '0';
-    root.style.overflow = 'hidden';
-    root.style.margin = '0';
-    root.style.padding = '0';
+  const wasInGame = root.dataset.wasInGame === 'true';
+  const nowInGame = isInGame();
 
-    // ✅ Force body at html
-    document.body.style.zoom = String(scale);
-    document.body.style.width = `${100 / scale}vw`;
-    document.body.style.height = `${100 / scale}dvh`;
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = '0';
-    document.body.style.left = '0';
+  // Track state
+  root.dataset.wasInGame = nowInGame ? 'true' : 'false';
 
-    document.documentElement.style.width = '100vw';
-    document.documentElement.style.height = '100dvh';
-    document.documentElement.style.margin = '0';
-    document.documentElement.style.padding = '0';
-    document.documentElement.style.overflow = 'hidden';
-    document.documentElement.style.background = '#2A2845';
+  // ✅ Enter fullscreen kapag pumasok sa game
+  if (nowInGame && !wasInGame) {
+    enterGameFullscreen();
+  } 
+  // ✅ Exit fullscreen kapag labas ng game
+  else if (!nowInGame && wasInGame) {
+    exitGameFullscreen();
+  }
 
-    // ✅ CRITICAL FIX: Convert all fixed-position elements to absolute
-    setTimeout(() => {
-      const divsToFix = root.querySelectorAll('div');
-      divsToFix.forEach(el => {
-        const computed = window.getComputedStyle(el);
-        if (computed.position === 'fixed') {
-          const rect = el.getBoundingClientRect();
-          // Kung malaking elemento (nag-fill sa viewport), i-convert
-          if (rect.width >= window.innerWidth * 0.7 && rect.height >= window.innerHeight * 0.7) {
-            // Save original values
-            el.dataset.wasConverted = 'true';
-            el.dataset.origPosition = el.style.position || 'fixed';
-            el.dataset.origWidth = el.style.width || '';
-            el.dataset.origHeight = el.style.height || '';
-            el.dataset.origTop = el.style.top || '';
-            el.dataset.origLeft = el.style.left || '';
-            el.dataset.origRight = el.style.right || '';
-            el.dataset.origBottom = el.style.bottom || '';
-
-            // Convert
-            el.style.position = 'absolute';
-            el.style.top = '0';
-            el.style.left = '0';
-            el.style.right = '0';
-            el.style.bottom = '0';
-            el.style.width = '100%';
-            el.style.height = '100%';
-          }
-        }
-      });
-    }, 150);
-  } else {
-    document.body.style.zoom = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
-    document.body.style.margin = '';
-    document.body.style.padding = '';
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.documentElement.style.width = '';
-    document.documentElement.style.height = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.background = '';
+  // ✅ Fix yung fixed positioning sa mga game backgrounds
+  if (nowInGame) {
+    setTimeout(fixFullScreenBackgrounds, 50);
+    setTimeout(fixFullScreenBackgrounds, 200);
+    setTimeout(fixFullScreenBackgrounds, 500);
   }
 }
 
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+// Run on load
 applyLandscapeFix();
+
+// Listeners
 window.addEventListener('resize', applyLandscapeFix);
 window.addEventListener('orientationchange', () => {
   setTimeout(applyLandscapeFix, 100);
   setTimeout(applyLandscapeFix, 300);
   setTimeout(applyLandscapeFix, 600);
 });
-setInterval(applyLandscapeFix, 800);
+
+// MutationObserver para sa dynamic na changes (game mount/unmount)
+const observer = new MutationObserver(() => {
+  applyLandscapeFix();
+});
+
+if (document.body) {
+  observer.observe(document.body, { childList: true, subtree: true });
+} else {
+  window.addEventListener('DOMContentLoaded', () => {
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+// ✅ I-trigger ang fullscreen sa unang user interaction (browser policy)
+document.addEventListener('click', () => {
+  const root = document.getElementById('root');
+  if (root && root.dataset.wasInGame === 'true' && !document.fullscreenElement) {
+    enterGameFullscreen();
+  }
+}, { once: false });
+
+// Periodic check (safety net)
+setInterval(applyLandscapeFix, 1000);
 
 // ============================================================
 
