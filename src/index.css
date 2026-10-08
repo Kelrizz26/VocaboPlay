@@ -257,7 +257,7 @@ textarea:focus-visible,
 
   /* ============================================================
      ✅ STORYQUEST — Welcome modal
-     Pinaliit pa yung inner content para kitang-kita lahat.
+     NAKA-CENTER VERTICAL + maliit para kitang-kita lahat.
      Hindi ginalaw yung parent (full screen pa rin yung MAP).
      ============================================================ */
   .sq-book-select-wrapper {
@@ -272,36 +272,36 @@ textarea:focus-visible,
     box-sizing: border-box !important;
   }
 
-  /* ✅ Parent container — FULL SCREEN PA RIN (para intact yung MAP) */
+  /* ✅ Parent container — naka-center na vertical */
   .sq-book-select-wrapper > div {
     max-height: 100% !important;
     max-width: 100% !important;
     width: 100% !important;
-    padding: 0 !important;
+    height: 100% !important;
+    padding: 4px 10px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 0 !important;
+    justify-content: center !important;  /* ✅ NAKA-CENTER VERTICAL */
+    gap: 2px !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-    padding-top: 6px !important;
   }
 
-  /* ✅ IMAGE — mas maliit pa para kasya lahat */
+  /* ✅ IMAGE — maliit na para kitang-kita yung button sa baba */
   .sq-book-select-wrapper img {
-    max-height: 16vh !important;
-    max-width: 100px !important;
+    max-height: 13vh !important;
+    max-width: 85px !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
-    margin: 1px 0 2px 0 !important;
+    margin: 0 0 2px 0 !important;
   }
 
   /* ✅ TITLE */
   .sq-book-select-wrapper h1,
   .sq-book-select-wrapper h2 {
-    font-size: 12px !important;
+    font-size: 11px !important;
     margin: 1px 0 !important;
     text-align: center !important;
     line-height: 1.15 !important;
@@ -309,19 +309,19 @@ textarea:focus-visible,
 
   /* ✅ BODY TEXT */
   .sq-book-select-wrapper p {
-    font-size: 9px !important;
+    font-size: 8px !important;
     margin: 1px 0 !important;
     text-align: center !important;
     line-height: 1.2 !important;
   }
 
-  /* ✅ BUTTONS — mas maliit pa */
+  /* ✅ BUTTONS — maliit para kasya lahat */
   .sq-book-select-wrapper button {
-    padding: 5px 16px !important;
+    padding: 4px 14px !important;
     font-size: 10px !important;
     margin: 1px 0 !important;
-    min-height: 24px !important;
-    max-width: 220px !important;
+    min-height: 20px !important;
+    max-width: 200px !important;
     width: auto !important;
   }
 
