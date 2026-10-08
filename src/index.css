@@ -1,6 +1,9 @@
 /* src/index.css
    Global reset + base typography for the "Clean-Minimalist" design system. */
 
+/* ============================================================
+   Theme tokens (Clean-Minimalist design system)
+   ============================================================ */
 :root {
   --color-bg: #F8FAFC;
   --color-surface: #FFFFFF;
@@ -80,6 +83,9 @@ a {
   text-decoration: none;
 }
 
+/* ============================================================
+   Global interaction feedback
+   ============================================================ */
 button:not(:disabled),
 [style*="cursor: pointer"],
 [style*="cursor:pointer"] {
@@ -158,7 +164,9 @@ textarea:focus-visible,
     background: #2A2845 !important;
   }
 
-  /* SYNOQUEST */
+  /* ============================================================
+     SYNOQUEST
+     ============================================================ */
   .sq-play-wrapper {
     padding: 4px 8px !important;
     margin: 0 !important;
@@ -210,7 +218,9 @@ textarea:focus-visible,
     font-size: 18px !important;
   }
 
-  /* MATCH GAME */
+  /* ============================================================
+     MATCH GAME
+     ============================================================ */
   .mg-header, .mg-footer, .mg-progress-wrap {
     max-width: 100% !important;
     width: 100% !important;
@@ -251,10 +261,13 @@ textarea:focus-visible,
     aspect-ratio: 1 / 1 !important;
   }
 
-  /* STORYQUEST */
+  /* ============================================================
+     ✅ STORYQUEST WELCOME SCREEN
+     ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
-    height: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
@@ -262,33 +275,131 @@ textarea:focus-visible,
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
+    position: relative !important;
   }
 
   .sq-book-select-wrapper > div {
-    max-height: 100% !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 6px 12px !important;
+    max-height: 94vh !important;
+    height: auto !important;
+    max-width: 96% !important;
+    width: auto !important;
+    padding: 8px 16px !important;
+    margin: 0 auto !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 3px !important;
+    gap: 4px !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   .sq-book-select-wrapper img {
-    max-height: 40vh !important;
-    max-width: 90% !important;
+    max-height: 32vh !important;
+    max-width: 55% !important;
     width: auto !important;
+    height: auto !important;
     object-fit: contain !important;
+    margin: 2px 0 !important;
+  }
+
+  .sq-book-select-wrapper h1,
+  .sq-book-select-wrapper h2 {
+    font-size: 16px !important;
+    margin: 2px 0 !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+  }
+
+  .sq-book-select-wrapper p {
+    font-size: 11px !important;
+    margin: 2px 0 !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
   }
 
   .sq-book-select-wrapper button {
-    padding: 10px 24px !important;
+    padding: 8px 22px !important;
     font-size: 13px !important;
+    margin: 3px 0 !important;
+    min-height: 38px !important;
+    max-width: 65% !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sq-book-select-wrapper [style*="maxWidth"] {
+    max-width: 100% !important;
+  }
+
+  .sq-book-select-wrapper > div > div {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* ============================================================
+     ✅ STORYQUEST GAMEPLAY + HEART SHOP MODAL
+     Consolidated — walang duplicate selectors
+     ============================================================ */
+  #root > div > div[style*="position: fixed"],
+  #root > div > div[style*="position:fixed"] {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    padding: 6px 10px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Images sa StoryQuest — paliitin */
+  #root > div > div[style*="position: fixed"] img,
+  #root > div > div[style*="position:fixed"] img {
+    max-height: 45vh !important;
+    max-width: 70% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  /* Modal card mismo — i-limit height */
+  #root > div > div[style*="position: fixed"] > div,
+  #root > div > div[style*="position:fixed"] > div {
+    max-height: 96vh !important;
+    max-width: 96vw !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 12px 18px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Modal content — paliitin ang text */
+  #root > div > div[style*="position: fixed"] > div h2,
+  #root > div > div[style*="position: fixed"] > div h3 {
+    font-size: 16px !important;
     margin: 4px 0 !important;
-    min-height: 40px !important;
-    max-width: 90% !important;
+  }
+
+  #root > div > div[style*="position: fixed"] > div p {
+    font-size: 11px !important;
+    margin: 4px 0 !important;
+  }
+
+  /* Modal images at icons */
+  #root > div > div[style*="position: fixed"] > div img,
+  #root > div > div[style*="position: fixed"] > div svg {
+    max-height: 50px !important;
+    width: auto !important;
+  }
+
+  /* Modal buttons — compact */
+  #root > div > div[style*="position: fixed"] > div button {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+    margin: 3px 0 !important;
+    min-height: 34px !important;
   }
 }
