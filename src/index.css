@@ -257,9 +257,8 @@ textarea:focus-visible,
 
   /* ============================================================
      ✅ STORYQUEST — Welcome modal
-     IMPORTANTE: Hindi ginagalaw yung parent (full screen pa rin
-     yung MAP background). Yung inner welcome content lang ang
-     ginagawang maliit at itinataas.
+     Pinaliit pa yung inner content para kitang-kita lahat.
+     Hindi ginalaw yung parent (full screen pa rin yung MAP).
      ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
@@ -282,52 +281,52 @@ textarea:focus-visible,
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: flex-start !important;  /* ✅ Itaas yung content */
+    justify-content: flex-start !important;
     gap: 0 !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-    padding-top: 10px !important;  /* ✅ Konting espasyo sa taas */
+    padding-top: 6px !important;
   }
 
-  /* ✅ WELCOME IMAGE — maliit para umakyat lahat */
+  /* ✅ IMAGE — mas maliit pa para kasya lahat */
   .sq-book-select-wrapper img {
-    max-height: 20vh !important;
-    max-width: 130px !important;
+    max-height: 16vh !important;
+    max-width: 100px !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
-    margin: 2px 0 4px 0 !important;
+    margin: 1px 0 2px 0 !important;
   }
 
   /* ✅ TITLE */
   .sq-book-select-wrapper h1,
   .sq-book-select-wrapper h2 {
-    font-size: 13px !important;
+    font-size: 12px !important;
+    margin: 1px 0 !important;
+    text-align: center !important;
+    line-height: 1.15 !important;
+  }
+
+  /* ✅ BODY TEXT */
+  .sq-book-select-wrapper p {
+    font-size: 9px !important;
     margin: 1px 0 !important;
     text-align: center !important;
     line-height: 1.2 !important;
   }
 
-  /* ✅ BODY TEXT */
-  .sq-book-select-wrapper p {
+  /* ✅ BUTTONS — mas maliit pa */
+  .sq-book-select-wrapper button {
+    padding: 5px 16px !important;
     font-size: 10px !important;
     margin: 1px 0 !important;
-    text-align: center !important;
-    line-height: 1.25 !important;
-  }
-
-  /* ✅ BUTTONS — compact */
-  .sq-book-select-wrapper button {
-    padding: 6px 18px !important;
-    font-size: 11px !important;
-    margin: 2px 0 !important;
-    min-height: 28px !important;
-    max-width: 240px !important;
+    min-height: 24px !important;
+    max-width: 220px !important;
     width: auto !important;
   }
 
   /* ✅ "Speaking..." badge at iba pang spans */
   .sq-book-select-wrapper span {
-    font-size: 9px !important;
+    font-size: 8px !important;
   }
 }
