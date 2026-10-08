@@ -1,9 +1,10 @@
 // src/components/dashboard/MatchGame.jsx
-// ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
-// ✅ More columns in landscape, smaller cards, compact header
-// ✅ Uses 100dvh for mobile browsers
-// ✅ NEW: Exit returns to GAMES selection screen (via onExitToGames prop)
-// ============================================================
+// ✅ Same heart/diamond flow as SynoQuest
+// ✅ 5 wrong matches = -1 ❤️
+// ✅ Timeout = instant -1 ❤️
+// ✅ Diamond reward per level completion
+// ✅ +50 💎 completion bonus (A1 → C2)
+// ✅ FIXED: Dev panel state preserved (call as function, not component)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { auth, db } from '../../pages/firebase';
@@ -13,9 +14,6 @@ import { updateUserStats } from '../../services/firebaseService';
 import { claimGameDiamonds, spendDiamonds, HEART_PRICES } from '../../services/diamondService';
 import MatchGameDevPanel from './MatchGameDevPanel';
 
-// ============================================================
-// ===== PALETTE =====
-// ============================================================
 const palette = {
   warmOrange: '#E9A075', warmOrangeShadow: '#C27E4F',
   coral: '#DB7A64', coralShadow: '#A95845',
@@ -34,30 +32,27 @@ const FONT_BODY = "'Nunito', sans-serif";
 
 const imageBasePath = '/image/';
 
-// ============================================================
-// ===== CEFR WORD LIBRARY =====
-// ============================================================
 const wordLevelMap = {
-  'above':'A1','across':'A1','action':'A1','activity':'A1','actress':'A1','add':'A1','address':'A1','adult':'A1','beach':'A1','change':'A1',
-  'ability':'A2','able':'A2','accept':'A2','achieve':'A2','active':'A2','decision':'A2','education':'A2','famous':'A2','improve':'A2','journey':'A2',
-  'balance':'B1','benefit':'B1','budget':'B1','capable':'B1','challenge':'B1','character':'B1','knowledge':'B1','opportunity':'B1','prepare':'B1','successful':'B1',
-  'abandon':'B2','accurate':'B2','confident':'B2','conscious':'B2','demonstrate':'B2','efficient':'B2','organize':'B2','maintain':'B2','relevant':'B2','sufficient':'B2',
-  'adapt':'C1','brilliant':'C1','complex':'C1','crucial':'C1','dominate':'C1','establish':'C1','flexible':'C1','genuine':'C1','isolate':'C1','vital':'C1',
-  'abundant':'C2','decisive':'C2','exquisite':'C2','futile':'C2','harmonious':'C2','inevitable':'C2','lucid':'C2','profound':'C2','resilient':'C2','tranquil':'C2'
+  'apple':'A1','bicycle':'A1','camera':'A1','doctor':'A1','elephant':'A1',
+  'flower':'A1','guitar':'A1','hospital':'A1','island':'A1','jacket':'A1',
+  'airport':'A2','butterfly':'A2','dangerous':'A2','exercise':'A2','festival':'A2',
+  'kitchen':'A2','library':'A2','mountain':'A2','restaurant':'A2','umbrella':'A2',
+  'achievement':'B1','celebration':'B1','cooperation':'B1','bravery':'B1','determination':'B1',
+  'friendship':'B1','leadership':'B1','motivation':'B1','patience':'B1','teamwork':'B1',
+  'accomplish':'B2','adventure':'B2','communicate':'B2','consequence':'B2','creativity':'B2',
+  'discovery':'B2','exploration':'B2','innovation':'B2','perspective':'B2','significant':'B2',
+  'aspiration':'C1','collaboration':'C1','dedication':'C1','eloquent':'C1','exceptional':'C1',
+  'fundamental':'C1','perseverance':'C1','sophisticated':'C1','versatile':'C1','visionary':'C1',
+  'ambivalent':'C2','clandestine':'C2','effervescent':'C2','transient':'C2','celestial':'C2',
+  'gregarious':'C2','luminous':'C2','scrupulous':'C2','quintessential':'C2','serendipity':'C2',
 };
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
-// ============================================================
-// ===== Progressive pairs per level =====
-// ============================================================
 const LEVEL_PAIRS = {
   'A1': 10, 'A2': 12, 'B1': 14, 'B2': 16, 'C1': 18, 'C2': 20,
 };
 
-// ============================================================
-// ===== Consistent 4-row layout =====
-// ============================================================
 const LEVEL_GRID = {
   'A1': { cols: 5,  maxWidth: '560px' },
   'A2': { cols: 6,  maxWidth: '660px' },
@@ -91,9 +86,6 @@ const getWordsForLevel = (level) => {
   return allVocabPairs.filter(p => allowedLevels.includes(p.level));
 };
 
-// ============================================================
-// ===== BACKGROUND / THEME =====
-// ============================================================
 const fullScreenBg = {
   position: 'fixed', top: 0, left: 0, width: '100vw',
   height: '100vh', minHeight: '100dvh', overflowY: 'auto',
@@ -102,67 +94,27 @@ const fullScreenBg = {
   animation: 'bgPan 30s ease-in-out infinite alternate', fontFamily: FONT_BODY,
 };
 
-// ✅ CRITICAL: Comprehensive landscape CSS
 const bgAnimationStyle = (
   <style>{`
     @keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } }
 
-    /* ============================================================
-       TABLET / SMALL LAPTOP
-       ============================================================ */
     @media (max-width: 1100px) {
       .mg-cards { gap: 5px !important; padding: 8px !important; }
     }
 
-    /* ============================================================
-       LANDSCAPE MOBILE — KEY FIX
-       ============================================================ */
     @media (max-height: 500px) and (orientation: landscape) {
-      /* Compact header — single row, smaller everything */
-      .mg-header {
-        padding: 4px 10px !important;
-        margin-bottom: 4px !important;
-        border-radius: 10px !important;
-      }
+      .mg-header { padding: 4px 10px !important; margin-bottom: 4px !important; border-radius: 10px !important; }
       .mg-header span { font-size: 9px !important; }
       .mg-header button { font-size: 12px !important; padding: 2px 4px !important; }
       .mg-header > div { gap: 3px !important; }
-
-      /* Progress bar thinner */
       .mg-progress-wrap { margin-bottom: 4px !important; }
       .mg-progress-bar { height: 2px !important; }
-
-      /* Cards container — tighter */
-      .mg-cards {
-        gap: 3px !important;
-        padding: 6px !important;
-        border-radius: 10px !important;
-        max-height: calc(100dvh - 70px) !important;
-      }
-      .mg-card {
-        min-height: 0 !important;
-      }
-
-      /* Card inner face */
+      .mg-cards { gap: 3px !important; padding: 6px !important; border-radius: 10px !important; max-height: calc(100dvh - 70px) !important; }
+      .mg-card { min-height: 0 !important; }
       .mg-card-face-front span { font-size: 11px !important; }
       .mg-card-face-back-word { font-size: 8px !important; padding: 1px !important; }
-
-      /* Footer */
-      .mg-footer {
-        padding: 4px 10px !important;
-        margin-top: 4px !important;
-        font-size: 9px !important;
-        border-radius: 8px !important;
-      }
-
-      /* Intro card */
-      .mg-intro-card {
-        max-width: 640px !important;
-        padding: 12px 20px !important;
-        border-radius: 16px !important;
-        max-height: calc(100dvh - 12px) !important;
-        overflow-y: auto !important;
-      }
+      .mg-footer { padding: 4px 10px !important; margin-top: 4px !important; font-size: 9px !important; border-radius: 8px !important; }
+      .mg-intro-card { max-width: 640px !important; padding: 12px 20px !important; border-radius: 16px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; }
       .mg-intro-card h1 { font-size: 20px !important; margin-bottom: 0 !important; }
       .mg-intro-card p { font-size: 10px !important; margin-bottom: 8px !important; }
       .mg-intro-icon { width: 44px !important; height: 44px !important; margin-bottom: 6px !important; }
@@ -177,14 +129,7 @@ const bgAnimationStyle = (
       .mg-intro-music { padding: 4px !important; margin-bottom: 8px !important; }
       .mg-intro-start-btn { padding: 10px !important; font-size: 12px !important; border-radius: 10px !important; }
       .mg-intro-back-btn { padding: 6px !important; font-size: 10px !important; margin-top: 4px !important; }
-
-      /* Level up card */
-      .mg-levelup-card {
-        padding: 16px 20px !important;
-        max-width: 400px !important;
-        max-height: calc(100dvh - 12px) !important;
-        overflow-y: auto !important;
-      }
+      .mg-levelup-card { padding: 16px 20px !important; max-width: 400px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; }
       .mg-levelup-emoji { font-size: 40px !important; margin-bottom: 2px !important; }
       .mg-levelup-title { font-size: 20px !important; margin-bottom: 2px !important; }
       .mg-levelup-sub { font-size: 11px !important; margin-bottom: 10px !important; }
@@ -196,14 +141,7 @@ const bgAnimationStyle = (
       .mg-levelup-stat-box > div:first-child { font-size: 16px !important; margin-bottom: 2px !important; }
       .mg-levelup-stat-box > div:nth-child(2) { font-size: 14px !important; }
       .mg-levelup-btn { padding: 10px !important; font-size: 12px !important; border-radius: 10px !important; }
-
-      /* Gameover / Finished card */
-      .mg-gameover-card {
-        padding: 14px 20px !important;
-        max-width: 520px !important;
-        max-height: calc(100dvh - 12px) !important;
-        overflow-y: auto !important;
-      }
+      .mg-gameover-card { padding: 14px 20px !important; max-width: 520px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; }
       .mg-gameover-emoji { font-size: 36px !important; margin-bottom: 2px !important; }
       .mg-gameover-title { font-size: 18px !important; margin-bottom: 2px !important; }
       .mg-gameover-sub { font-size: 11px !important; margin-bottom: 8px !important; }
@@ -214,23 +152,10 @@ const bgAnimationStyle = (
       .mg-gameover-reward { padding: 8px !important; margin-bottom: 6px !important; }
       .mg-gameover-reward span { font-size: 12px !important; }
       .mg-gameover-btn { padding: 10px !important; font-size: 11px !important; }
-
-      /* Loading screen */
-      .mg-loading-card {
-        padding: 20px !important;
-        max-width: 320px !important;
-      }
+      .mg-loading-card { padding: 20px !important; max-width: 320px !important; }
       .mg-loading-card h2 { font-size: 18px !important; }
       .mg-loading-spinner { width: 56px !important; height: 56px !important; margin-bottom: 12px !important; }
-
-      /* Modals */
-      .mg-modal-card {
-        padding: 14px 18px !important;
-        max-width: 440px !important;
-        max-height: calc(100dvh - 12px) !important;
-        overflow-y: auto !important;
-        border-radius: 14px !important;
-      }
+      .mg-modal-card { padding: 14px 18px !important; max-width: 440px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; border-radius: 14px !important; }
       .mg-modal-card h2 { font-size: 16px !important; margin-bottom: 2px !important; }
       .mg-modal-card h3 { font-size: 15px !important; margin-bottom: 4px !important; }
       .mg-modal-card p { font-size: 11px !important; margin-bottom: 8px !important; }
@@ -241,7 +166,6 @@ const bgAnimationStyle = (
       .mg-modal-btn { padding: 8px !important; font-size: 11px !important; border-radius: 8px !important; }
     }
 
-    /* EXTRA small height (old landscape phones, ~320px) */
     @media (max-height: 380px) and (orientation: landscape) {
       .mg-cards { gap: 2px !important; padding: 4px !important; }
       .mg-header { padding: 3px 8px !important; }
@@ -260,10 +184,6 @@ const theme = {
 
 const REFILL_TIME = 1800;
 
-// ============================================================
-// ===== MAIN COMPONENT =====
-// ============================================================
-// ✅ UPDATED: Added onExitToGames prop
 const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const [gameState, setGameState] = useState('intro');
   const [currentLevel, setCurrentLevel] = useState('A1');
@@ -311,6 +231,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const progressSavedRef = useRef(false);
   const completionBonusSavedRef = useRef(false);
   const matchedWordsRef = useRef([]);
+  const wrongAttemptsRef = useRef(0);
   const livesRef = useRef(5);
   const lastRefillTimeRef = useRef(Date.now());
   const timerIntervalRef = useRef(null);
@@ -649,6 +570,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     setTimerRunning(true);
     setCurrentLevel(level);
     matchedWordsRef.current = [];
+    wrongAttemptsRef.current = 0;
     sessionSavedRef.current = false;
   };
 
@@ -666,6 +588,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       progressSavedRef.current = false;
       completionBonusSavedRef.current = false;
       sessionSavedRef.current = false;
+      wrongAttemptsRef.current = 0;
       startLevel('A1');
       setGameState('playing');
       setShowNoLivesMessage(false);
@@ -749,6 +672,18 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setAttempts(prev => prev + 1);
           setTotalAnswers(prev => prev + 1);
           playMatchFail();
+
+          wrongAttemptsRef.current += 1;
+          if (wrongAttemptsRef.current % 5 === 0) {
+            const newLives = livesRef.current - 1;
+            livesRef.current = newLives;
+            setLives(newLives);
+
+            if (newLives === 0) {
+              setShowNoLivesMessage(true);
+              setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
+            }
+          }
         }, 700);
       }
     }
@@ -760,6 +695,23 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     if (matches === totalPairsNeeded && totalPairsNeeded > 0) {
       if (answeredPairsInLevel === totalPairsNeeded) {
         setTimerRunning(false);
+
+        const awardLevelDiamonds = async () => {
+          if (!currentUser) return;
+          const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+          try {
+            const result = await claimGameDiamonds(currentUser.uid, 'matchGame', accuracy);
+            if (result.earned > 0) {
+              setDiamondsEarnedThisGame(prev => prev + result.earned);
+              setLocalDiamonds(result.newBalance);
+              playDiamondSound();
+            }
+          } catch (err) {
+            console.error('Error claiming level diamonds:', err);
+          }
+        };
+        awardLevelDiamonds();
+
         const currentIdx = CEFR_LEVELS.indexOf(currentLevel);
         if (currentIdx === CEFR_LEVELS.length - 1) {
           playCompletionFanfare();
@@ -833,18 +785,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       saveGameToFirebase();
     }
 
-    if (!diamondSavedRef.current && currentUser) {
-      diamondSavedRef.current = true;
-      const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
-      claimGameDiamonds(currentUser.uid, 'matchGame', accuracy).then((result) => {
-        if (result.earned > 0) {
-          setDiamondsEarnedThisGame(result.earned);
-          setLocalDiamonds(result.newBalance);
-          playDiamondSound();
-        }
-      }).catch(err => console.error('Error claiming diamonds:', err));
-    }
-
     if (gameState === 'finished' && !completionBonusSavedRef.current && currentUser) {
       completionBonusSavedRef.current = true;
       (async () => {
@@ -897,6 +837,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         setCompletionBonus(0);
         setScore(0);
         setContinueFromGameOver(false);
+        wrongAttemptsRef.current = 0;
         startLevel(currentLevel);
         setGameState('playing');
       }
@@ -917,7 +858,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     setShowExitConfirm(true);
   };
 
-  // ✅ FIXED: Return to GAMES selection screen (not Dashboard)
   const confirmExit = () => {
     setShowExitConfirm(false);
     setShowSettings(false);
@@ -942,6 +882,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     progressSavedRef.current = false;
     completionBonusSavedRef.current = false;
     sessionSavedRef.current = false;
+    wrongAttemptsRef.current = 0;
     startLevel(level);
     setGameState('playing');
     setShowNoLivesMessage(false);
@@ -978,9 +919,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     );
   };
 
-  // ============================================================
-  // ===== MODALS =====
-  // ============================================================
   const ExitConfirmModal = () => (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px' }}>
       <div className="mg-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '28px', maxWidth: '340px', width: '100%', textAlign: 'center', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }}>
@@ -1111,14 +1049,11 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     );
   };
 
-  // ============================================================
-  // ===== LOADING SCREEN =====
-  // ============================================================
   if (gameState === 'loading') {
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', overflow: 'hidden' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
           <div style={{ position: 'absolute', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', top: '10%', left: '5%', animation: 'floatShape 8s ease-in-out infinite' }} />
           <div style={{ position: 'absolute', width: '150px', height: '150px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', bottom: '15%', right: '8%', animation: 'floatShape 10s ease-in-out infinite reverse' }} />
@@ -1127,25 +1062,20 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             <div key={i} style={{ position: 'absolute', width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', top: `${10 + Math.random() * 80}%`, left: `${10 + Math.random() * 80}%`, animation: `twinkle 2s ease-in-out ${i * 0.3}s infinite` }} />
           ))}
         </div>
-
         <div className="mg-loading-card" style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '400px', width: '100%', padding: '40px', background: 'rgba(255, 255, 255, 0.06)', backdropFilter: 'blur(16px)', borderRadius: '24px', border: `1.5px solid ${palette.border}30` }}>
           <div className="mg-loading-spinner" style={{ width: '80px', height: '80px', margin: '0 auto 24px', position: 'relative', animation: 'spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite' }}>
             <div style={{ position: 'absolute', width: '100%', height: '100%', border: '4px solid rgba(255,255,255,0.2)', borderRadius: '16px', borderTop: `4px solid ${palette.warmOrange}`, animation: 'spinBorder 1.2s ease-in-out infinite' }}>
               <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '32px' }}>🧩</div>
             </div>
           </div>
-
           <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#FFFFFF', marginBottom: '8px', fontFamily: FONT_DISPLAY, animation: 'fadeInOut 1.5s ease-in-out infinite' }}>Loading...</h2>
-
           <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '8px' }}>
             {[...Array(3)].map((_, i) => (
               <div key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', background: palette.warmOrange, animation: `bounceDot 1.4s ease-in-out ${i * 0.3}s infinite` }} />
             ))}
           </div>
-
           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)', marginTop: '16px', fontStyle: 'italic', fontFamily: FONT_BODY, fontWeight: 600 }}>Preparing your game...</p>
         </div>
-
         <style>{`
           @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           @keyframes spinBorder { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -1159,14 +1089,11 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     );
   }
 
-  // ============================================================
-  // ===== INTRO SCREEN =====
-  // ============================================================
   if (gameState === 'intro') {
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         {showSettings && <SettingsModal />}
         {showLeaderboard && <LeaderboardModal />}
         {showExitConfirm && <ExitConfirmModal />}
@@ -1182,7 +1109,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           )}
           <h1 style={{ fontSize: '30px', fontWeight: '800', color: theme.textPrimary, marginBottom: '2px', letterSpacing: '-0.5px', fontFamily: FONT_DISPLAY }}>Match Game</h1>
           <p style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>🧩 Match words with images • CEFR A1 to C2!</p>
-
           <div className="mg-intro-chips" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <div style={{ background: `linear-gradient(135deg, ${palette.gold}20, ${palette.warmOrange}20)`, padding: '8px 14px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', border: `1.5px solid ${palette.gold}60` }}>
               <span style={{ fontSize: '14px' }}>💰</span>
@@ -1195,7 +1121,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, fontFamily: FONT_BODY }}>gems</span>
             </div>
           </div>
-
           <div className="mg-intro-levels" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
             {CEFR_LEVELS.map((level) => {
               const config = LEVEL_CONFIG[level];
@@ -1210,7 +1135,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               );
             })}
           </div>
-
           <div className="mg-intro-hearts" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px', padding: '10px', background: theme.surfaceBg, borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
             <div style={{ display: 'flex', gap: '1px' }}>
               {[...Array(lives)].map((_, i) => (<span key={i} style={{ fontSize: '18px' }}>❤️</span>))}
@@ -1219,14 +1143,12 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '4px', fontWeight: '600', fontFamily: FONT_BODY }}>{lives > 0 ? `${lives}/${maxLives} hearts` : 'No hearts'}</span>
             {lives < maxLives && timeRemaining && (<span style={{ fontSize: '11px', color: palette.warmOrange, fontWeight: '700', fontFamily: FONT_BODY }}>⏳ {timeRemaining}</span>)}
           </div>
-
           <div className="mg-intro-music" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '14px', padding: '8px 12px', background: theme.surfaceBg, border: `1px solid ${theme.surfaceBorder}`, borderRadius: '10px' }}>
             <button onClick={toggleMusic} style={{ padding: '4px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: FONT_DISPLAY }}>
               {isMuted ? '🔇 Music Off' : '🔊 Music On'}
             </button>
             <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: 600 }}>🎵 8-bit vibes</span>
           </div>
-
           {lives > 0 ? (
             <button onClick={startGame} className="mg-intro-start-btn" style={{ width: '100%', padding: '14px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase' }}>🚀 Start Game</button>
           ) : (
@@ -1239,16 +1161,12 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               </button>
             </div>
           )}
-
           {onBack && (<button onClick={onBack} className="mg-intro-back-btn" style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // ===== LEVEL UP MODAL =====
-  // ============================================================
   if (gameState === 'levelup') {
     const nextConfig = LEVEL_CONFIG[nextLevelName];
     const nextPairs = LEVEL_PAIRS[nextLevelName];
@@ -1257,8 +1175,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
-
+        {DevPanelElement()}
         <div className="mg-levelup-card" style={{
           maxWidth: '440px', width: '100%', background: palette.white, borderRadius: '28px',
           padding: '40px 32px', textAlign: 'center', border: `3px solid ${palette.warmOrange}`,
@@ -1268,17 +1185,13 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         }}>
           <div style={{ position: 'absolute', top: '-12px', left: '20%', fontSize: '28px', animation: 'floatUp 2s ease-in-out infinite' }}>✨</div>
           <div style={{ position: 'absolute', top: '-12px', right: '20%', fontSize: '28px', animation: 'floatUp 2s ease-in-out infinite 0.3s' }}>🎉</div>
-
           <div className="mg-levelup-emoji" style={{ fontSize: '72px', marginBottom: '8px', lineHeight: 1 }}>🏆</div>
-
           <h2 className="mg-levelup-title" style={{ fontSize: '32px', fontWeight: '900', color: palette.warmOrange, fontFamily: FONT_DISPLAY, marginBottom: '8px', letterSpacing: '1px', textShadow: `0 3px 0 ${palette.warmOrangeShadow}` }}>
             LEVEL UP!
           </h2>
-
           <p className="mg-levelup-sub" style={{ fontSize: '14px', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: '600', marginBottom: '24px' }}>
             You cleared {previousLevel}! Ready for the next challenge?
           </p>
-
           <div className="mg-levelup-badges" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '20px' }}>
             <div style={{ padding: '12px 22px', background: palette.creamSoft, borderRadius: '16px', border: `2px solid ${palette.border}`, fontFamily: FONT_DISPLAY, fontWeight: '800', fontSize: '18px', color: palette.bodyTextSoft, textDecoration: 'line-through', opacity: 0.7 }}>
               {previousLevel}
@@ -1288,7 +1201,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               {nextLevelName}
             </div>
           </div>
-
           <div className="mg-levelup-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
             <div className="mg-levelup-stat-box" style={{ padding: '14px', background: palette.creamSoft, borderRadius: '12px', border: `1.5px solid ${palette.border}` }}>
               <div style={{ fontSize: '22px', marginBottom: '4px' }}>🃏</div>
@@ -1301,7 +1213,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               <div style={{ fontSize: '10px', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Time Limit</div>
             </div>
           </div>
-
           <button
             onClick={() => { startLevel(nextLevelName); setGameState('playing'); }}
             className="mg-levelup-btn"
@@ -1309,7 +1220,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           >
             Continue →
           </button>
-
           <style>{`
             @keyframes levelPop { 0% { transform: scale(0.5) translateY(20px); opacity: 0; } 60% { transform: scale(1.05) translateY(-3px); opacity: 1; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
             @keyframes floatUp { 0%, 100% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(-8px); opacity: 0.7; } }
@@ -1320,16 +1230,13 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     );
   }
 
-  // ============================================================
-  // ===== GAMEOVER / FINISHED =====
-  // ============================================================
   if (gameState === 'gameover' || gameState === 'finished') {
     const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
     const isFinished = gameState === 'finished';
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         {showHeartShop && <HeartShopModal />}
         <div className="mg-gameover-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
           <div className="mg-gameover-emoji" style={{ fontSize: '64px', marginBottom: '6px' }}>{isFinished ? '👑' : '💀'}</div>
@@ -1343,7 +1250,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               <>Reached <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{currentLevel}</strong> with <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{correctAnswers}</strong> correct!</>
             )}
           </p>
-
           <div className="mg-gameover-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
             <div className="mg-gameover-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
               <div style={{ fontSize: '20px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{score}</div>
@@ -1358,14 +1264,12 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               <div style={{ fontSize: '10px', color: theme.textSecondary, fontFamily: FONT_DISPLAY, fontWeight: 800 }}>ATTEMPTS</div>
             </div>
           </div>
-
           {diamondsEarnedThisGame > 0 && (
             <div className="mg-gameover-reward" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: `linear-gradient(135deg, ${palette.diamond}15, ${palette.diamond}08)`, borderRadius: '12px', marginBottom: '12px', border: `1.5px solid ${palette.diamond}50` }}>
               <span style={{ fontSize: '20px' }}>💎</span>
               <span style={{ fontSize: '16px', fontWeight: '800', color: palette.diamond, fontFamily: FONT_DISPLAY }}>+{diamondsEarnedThisGame} diamonds</span>
             </div>
           )}
-
           {isFinished && completionBonus > 0 && (
             <div className="mg-gameover-reward" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', background: `linear-gradient(135deg, #FEF3C7, #FDE68A)`, borderRadius: '14px', marginBottom: '16px', border: `2px solid ${palette.gold}`, boxShadow: `0 4px 0 #B45309, 0 0 24px ${palette.gold}80`, animation: 'bonusPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
               <div style={{ position: 'absolute', top: '-14px', left: '15%', fontSize: '20px', animation: 'sparkle 1.8s ease-in-out infinite' }}>✨</div>
@@ -1381,7 +1285,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               </div>
             </div>
           )}
-
           <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
             {!isFinished && (
               <button onClick={openHeartShopFromGameOver} className="mg-gameover-btn" style={{ padding: '13px', background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`, color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: '800', boxShadow: `0 3px 0 ${palette.diamondShadow}`, fontFamily: FONT_DISPLAY }}>
@@ -1393,26 +1296,15 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             </button>
             <button onClick={() => setGameState('intro')} className="mg-gameover-btn" style={{ padding: '10px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Back to Menu</button>
           </div>
-
           <style>{`
-            @keyframes bonusPop {
-              0% { transform: scale(0.5) translateY(15px); opacity: 0; }
-              60% { transform: scale(1.08) translateY(-3px); opacity: 1; }
-              100% { transform: scale(1) translateY(0); opacity: 1; }
-            }
-            @keyframes sparkle {
-              0%, 100% { opacity: 0.4; transform: scale(1) rotate(0deg); }
-              50% { opacity: 1; transform: scale(1.3) rotate(15deg); }
-            }
+            @keyframes bonusPop { 0% { transform: scale(0.5) translateY(15px); opacity: 0; } 60% { transform: scale(1.08) translateY(-3px); opacity: 1; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+            @keyframes sparkle { 0%, 100% { opacity: 0.4; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.3) rotate(15deg); } }
           `}</style>
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // ===== PLAYING SCREEN =====
-  // ============================================================
   if (gameState === 'playing') {
     const config = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG['A1'];
     const totalPairs = LEVEL_PAIRS[currentLevel] || 10;
@@ -1422,14 +1314,12 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     return (
       <div style={{ ...fullScreenBg, padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100dvh', overflow: 'hidden', boxSizing: 'border-box' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         <NoLivesOverlay />
         {showExitConfirm && <ExitConfirmModal />}
         {showSettings && <SettingsModal />}
         {showLeaderboard && <LeaderboardModal />}
         {showHeartShop && <HeartShopModal />}
-
-        {/* ✅ HEADER */}
         <div className="mg-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: 'rgba(255,255,255,0.9)', borderRadius: '14px', maxWidth: gridConfig.maxWidth, width: '100%', margin: '0 auto 10px', border: `1.5px solid ${palette.border}`, transition: 'max-width 0.3s ease', boxSizing: 'border-box', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: palette.bodyText, padding: 0, lineHeight: 1 }}>⚙️</button>
@@ -1449,15 +1339,11 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             <div style={{ background: palette.warmOrange, padding: '2px 12px', borderRadius: '8px', color: 'white', fontWeight: '800', fontSize: '13px', fontFamily: FONT_DISPLAY, boxShadow: `0 2px 0 ${palette.warmOrangeShadow}`, whiteSpace: 'nowrap' }}>{score}</div>
           </div>
         </div>
-
-        {/* ✅ PROGRESS BAR */}
         <div className="mg-progress-wrap" style={{ maxWidth: gridConfig.maxWidth, width: '100%', margin: '0 auto 10px', transition: 'max-width 0.3s ease', boxSizing: 'border-box' }}>
           <div className="mg-progress-bar" style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{ height: '100%', background: `linear-gradient(90deg, ${palette.warmOrange}, ${palette.coral})`, width: `${progress}%`, transition: 'width 0.4s ease' }} />
           </div>
         </div>
-
-        {/* ✅ CARDS GRID */}
         <div
           className="mg-cards"
           style={{
@@ -1495,8 +1381,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             </div>
           ))}
         </div>
-
-        {/* ✅ FOOTER */}
         <div className="mg-footer" style={{ maxWidth: gridConfig.maxWidth, width: '100%', margin: '10px auto 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: 'rgba(255,255,255,0.9)', borderRadius: '12px', fontSize: '11px', color: palette.bodyText, border: `1.5px solid ${palette.border}`, fontFamily: FONT_BODY, fontWeight: 600, transition: 'max-width 0.3s ease', boxSizing: 'border-box' }}>
           <span>💡 Match words with images</span>
           <span>🔄 {attempts} attempts</span>
