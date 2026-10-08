@@ -256,7 +256,7 @@ textarea:focus-visible,
   }
 
   /* ============================================================
-     ✅ STORYQUEST — Welcome modal (TARGETED via classNames)
+     ✅ STORYQUEST — Welcome modal
      ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
@@ -341,7 +341,7 @@ textarea:focus-visible,
   }
 
   /* ============================================================
-     ✅ STORYQUIZ GAMEPLAY — Fit in landscape (via classNames)
+     ✅ STORYQUIZ GAMEPLAY — Bigger image + scrollbar for choices
      ============================================================ */
 
   .squiz-wrapper {
@@ -382,16 +382,18 @@ textarea:focus-visible,
   .squiz-header {
     padding: 4px 10px !important;
     border-radius: 8px !important;
+    flex-shrink: 0 !important;
   }
   .squiz-header span {
     font-size: 10px !important;
   }
 
-   .squiz-image-box {
+  /* ✅ IMAGE — mas malaking height */
+  .squiz-image-box {
     width: auto !important;
-    height: 30vh !important;
-    max-height: 30vh !important;
-    max-width: 60vw !important;
+    height: 36vh !important;
+    max-height: 36vh !important;
+    max-width: 65vw !important;
     min-width: 40vw !important;
     border-width: 3px !important;
     border-radius: 12px !important;
@@ -402,6 +404,7 @@ textarea:focus-visible,
     padding: 6px 12px !important;
     border-left-width: 3px !important;
     border-radius: 8px !important;
+    flex-shrink: 0 !important;
   }
   .squiz-story p {
     font-size: 12px !important;
@@ -411,13 +414,41 @@ textarea:focus-visible,
   .squiz-question {
     padding: 5px 10px !important;
     border-radius: 8px !important;
+    flex-shrink: 0 !important;
   }
   .squiz-question span {
     font-size: 11px !important;
   }
 
+  /* ============================================================
+     ✅ CHOICES — Custom thin scrollbar
+     ============================================================ */
   .squiz-choices {
     gap: 5px !important;
+    max-height: 24vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 8px !important;
+    flex-shrink: 0 !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(124, 58, 237, 0.5) rgba(243, 244, 246, 0.5) !important;
+  }
+
+  .squiz-choices::-webkit-scrollbar {
+    display: block !important;
+    width: 5px !important;
+    height: 5px !important;
+  }
+  .squiz-choices::-webkit-scrollbar-track {
+    background: rgba(243, 244, 246, 0.5) !important;
+    border-radius: 3px !important;
+  }
+  .squiz-choices::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.5) !important;
+    border-radius: 3px !important;
+  }
+  .squiz-choices::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 58, 237, 0.75) !important;
   }
 
   .squiz-choice {
@@ -434,6 +465,7 @@ textarea:focus-visible,
 
   .squiz-footer {
     margin-top: 2px !important;
+    flex-shrink: 0 !important;
   }
   .squiz-footer span {
     font-size: 10px !important;
