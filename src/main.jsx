@@ -4,35 +4,38 @@ import App from './App.jsx'
 import './index.css'
 
 // ============================================================
-// 🎮 LANDSCAPE FIX — Simple, No Flicker
+// 🎮 LANDSCAPE MOBILE FIX — Optimized (Best of Both)
 // ============================================================
 
 let isInGame = false;
-let isFullscreenActive = false;
 
 async function enterFullscreen() {
   try {
-    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-      await document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    const elem = document.documentElement;
+    if (elem.requestFullscreen && !document.fullscreenElement) {
+      await elem.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    } else if (elem.webkitRequestFullscreen && !document.webkitFullscreenElement) {
+      await elem.webkitRequestFullscreen().catch(() => {});
     }
     if (screen.orientation && screen.orientation.lock) {
       try { await screen.orientation.lock('landscape'); } catch (e) {}
     }
-  } catch (e) {}
+  } catch (err) {}
 }
 
 async function exitFullscreen() {
   try {
     if (document.fullscreenElement && document.exitFullscreen) {
       await document.exitFullscreen().catch(() => {});
+    } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+      await document.webkitExitFullscreen().catch(() => {});
     }
     if (screen.orientation && screen.orientation.unlock) {
       try { screen.orientation.unlock(); } catch (e) {}
     }
-  } catch (e) {}
+  } catch (err) {}
 }
 
-// ✅ SIMPLE check — hindi nag-popol
 function checkGameState() {
   const nowInGame = !!(
     document.querySelector('.sq-play-wrapper') ||
@@ -41,7 +44,6 @@ function checkGameState() {
   );
 
   if (nowInGame === isInGame) return;
-
   isInGame = nowInGame;
 
   if (nowInGame) {
@@ -55,33 +57,18 @@ function checkGameState() {
   }
 }
 
-// ✅ Fullscreen change listener (para sa class toggle)
-document.addEventListener('fullscreenchange', () => {
-  isFullscreenActive = !!document.fullscreenElement;
-  if (isFullscreenActive) {
-    document.documentElement.classList.add('fullscreen-active');
-    document.body.classList.add('fullscreen-active');
-  } else {
-    document.documentElement.classList.remove('fullscreen-active');
-    document.body.classList.remove('fullscreen-active');
-  }
-});
+let checkTimeout = null;
+function debouncedCheck() {
+  if (checkTimeout) clearTimeout(checkTimeout);
+  checkTimeout = setTimeout(checkGameState, 300);
+}
 
-// ✅ Check kapag may navigation (react-router)
-window.addEventListener('popstate', () => setTimeout(checkGameState, 300));
+const observer = new MutationObserver(debouncedCheck);
 
-// ✅ Check after route changes — debounced
-let routeCheckTimer = null;
-const observer = new MutationObserver(() => {
-  if (routeCheckTimer) clearTimeout(routeCheckTimer);
-  routeCheckTimer = setTimeout(checkGameState, 400);
-});
-
-// ✅ Start observer after DOM ready
 const startObserver = () => {
+  checkGameState();
   if (document.body) {
     observer.observe(document.body, { childList: true, subtree: false });
-    checkGameState();
   }
 };
 
@@ -91,7 +78,12 @@ if (document.readyState === 'loading') {
   startObserver();
 }
 
-// ✅ Fullscreen retry on click (browser policy)
+window.addEventListener('orientationchange', () => {
+  setTimeout(checkGameState, 500);
+});
+
+window.addEventListener('popstate', () => setTimeout(checkGameState, 300));
+
 document.addEventListener('click', () => {
   if (isInGame && !document.fullscreenElement) {
     enterFullscreen();
