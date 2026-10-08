@@ -50,6 +50,8 @@ html.fullscreen-active #root, body.fullscreen-active #root {
   }
   *::-webkit-scrollbar {
     display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   /* ✅ Force full screen kapag nasa game */
@@ -90,7 +92,9 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     background: #2A2845 !important;
   }
 
-  /* SYNOQUEST */
+  /* ============================================================
+     SYNOQUEST
+     ============================================================ */
   .sq-play-wrapper {
     padding: 4px 8px !important;
     margin: 0 !important;
@@ -102,6 +106,7 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
+
   .sq-header {
     max-width: 100% !important;
     width: 100% !important;
@@ -110,6 +115,7 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     padding: 4px 10px !important;
     flex-shrink: 0 !important;
   }
+
   .sq-main-card {
     max-width: 100% !important;
     width: 100% !important;
@@ -120,24 +126,29 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     overflow-y: auto !important;
     box-sizing: border-box !important;
   }
+
   .sq-image-box {
     width: 110px !important;
     height: 110px !important;
     min-width: 110px !important;
     max-width: 110px !important;
   }
+
   .sq-blank-box {
     width: 40px !important;
     height: 48px !important;
     font-size: 20px !important;
   }
+
   .sq-letter-btn {
     width: 44px !important;
     height: 44px !important;
     font-size: 18px !important;
   }
 
-  /* MATCH GAME */
+  /* ============================================================
+     MATCH GAME
+     ============================================================ */
   .mg-header, .mg-footer, .mg-progress-wrap {
     max-width: 100% !important;
     width: 100% !important;
@@ -146,6 +157,7 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
   }
+
   .mg-cards {
     display: grid !important;
     grid-template-columns: none !important;
@@ -163,19 +175,23 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
+
   .mg-cards[style*="repeat(5,"]  { grid-template-columns: repeat(5,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(6,"]  { grid-template-columns: repeat(6,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(7,"]  { grid-template-columns: repeat(7,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(8,"]  { grid-template-columns: repeat(8,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(9,"]  { grid-template-columns: repeat(9,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(10,"] { grid-template-columns: repeat(10, calc((100vh - 110px) / 4 - 4px)) !important; }
+
   .mg-card {
     width: 100% !important;
     height: auto !important;
     aspect-ratio: 1 / 1 !important;
   }
 
-  /* STORYQUEST */
+  /* ============================================================
+     STORYQUEST
+     ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
     height: 100% !important;
@@ -187,6 +203,7 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     justify-content: center !important;
     box-sizing: border-box !important;
   }
+
   .sq-book-select-wrapper > div {
     max-height: 100% !important;
     max-width: 100% !important;
@@ -199,12 +216,14 @@ html.fullscreen-active #root, body.fullscreen-active #root {
     gap: 3px !important;
     box-sizing: border-box !important;
   }
+
   .sq-book-select-wrapper img {
     max-height: 40vh !important;
     max-width: 90% !important;
     width: auto !important;
     object-fit: contain !important;
   }
+
   .sq-book-select-wrapper button {
     padding: 10px 24px !important;
     font-size: 13px !important;

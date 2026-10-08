@@ -1,0 +1,25 @@
+{
+  "name": "VocaboPlay",
+  "short_name": "VocaboPlay",
+  "description": "Interactive vocabulary learning games",
+  "start_url": "/dashboard",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#2A2845",
+  "theme_color": "#2A2845",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/image/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/image/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
