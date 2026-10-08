@@ -341,7 +341,8 @@ textarea:focus-visible,
   }
 
   /* ============================================================
-     ✅ STORYQUIZ GAMEPLAY — Bigger image + scrollbar for choices
+     ✅ STORYQUIZ GAMEPLAY — Kita lahat ng choices
+     Card scrolls (hindi choices) — scrollbar sa CARD
      ============================================================ */
 
   .squiz-wrapper {
@@ -356,6 +357,7 @@ textarea:focus-visible,
     padding: 4px 10px !important;
     border-radius: 8px !important;
     margin-bottom: 2px !important;
+    flex-shrink: 0 !important;
   }
   .squiz-topbar span {
     font-size: 10px !important;
@@ -369,6 +371,7 @@ textarea:focus-visible,
     min-height: 24px !important;
   }
 
+  /* ✅ CARD — ito ang mag-scroll, hindi yung choices */
   .squiz-card {
     padding: 8px 14px !important;
     gap: 6px !important;
@@ -376,7 +379,27 @@ textarea:focus-visible,
     margin-bottom: 4px !important;
     flex: 1 !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     max-height: calc(100vh - 60px) !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(124, 58, 237, 0.5) rgba(243, 244, 246, 0.5) !important;
+  }
+
+  /* ✅ Custom thin scrollbar sa CARD mismo */
+  .squiz-card::-webkit-scrollbar {
+    display: block !important;
+    width: 5px !important;
+  }
+  .squiz-card::-webkit-scrollbar-track {
+    background: rgba(243, 244, 246, 0.5) !important;
+    border-radius: 3px !important;
+  }
+  .squiz-card::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.5) !important;
+    border-radius: 3px !important;
+  }
+  .squiz-card::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 58, 237, 0.75) !important;
   }
 
   .squiz-header {
@@ -388,12 +411,12 @@ textarea:focus-visible,
     font-size: 10px !important;
   }
 
-  /* ✅ IMAGE — mas malaking height */
+  /* ✅ IMAGE — smaller para kita lahat ng choices */
   .squiz-image-box {
     width: auto !important;
-    height: 36vh !important;
-    max-height: 36vh !important;
-    max-width: 65vw !important;
+    height: 28vh !important;
+    max-height: 28vh !important;
+    max-width: 55vw !important;
     min-width: 40vw !important;
     border-width: 3px !important;
     border-radius: 12px !important;
@@ -420,35 +443,13 @@ textarea:focus-visible,
     font-size: 11px !important;
   }
 
-  /* ============================================================
-     ✅ CHOICES — Custom thin scrollbar
-     ============================================================ */
+  /* ✅ CHOICES — walang internal scroll, lahat kita (card na ang mag-scroll) */
   .squiz-choices {
     gap: 5px !important;
-    max-height: 24vh !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding-right: 8px !important;
     flex-shrink: 0 !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(124, 58, 237, 0.5) rgba(243, 244, 246, 0.5) !important;
-  }
-
-  .squiz-choices::-webkit-scrollbar {
-    display: block !important;
-    width: 5px !important;
-    height: 5px !important;
-  }
-  .squiz-choices::-webkit-scrollbar-track {
-    background: rgba(243, 244, 246, 0.5) !important;
-    border-radius: 3px !important;
-  }
-  .squiz-choices::-webkit-scrollbar-thumb {
-    background: rgba(124, 58, 237, 0.5) !important;
-    border-radius: 3px !important;
-  }
-  .squiz-choices::-webkit-scrollbar-thumb:hover {
-    background: rgba(124, 58, 237, 0.75) !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
   }
 
   .squiz-choice {

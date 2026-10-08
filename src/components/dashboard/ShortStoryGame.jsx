@@ -2,6 +2,7 @@
 // ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
 // ✅ Auto-adjust padding, font sizes, at image sizes kapag landscape
 // ✅ Uses 100dvh (dynamic viewport height) for mobile browsers
+// ✅ FIXED: Exit button returns to MAP instead of exiting game
 // ============================================================
 
 import React from 'react';
@@ -591,7 +592,14 @@ const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
             feedbackMessage={game.feedbackMessage}
             showFeedback={game.showFeedback}
             handleChoice={game.handleChoice}
-            handleExit={game.handleExit}
+            handleExit={() => {
+              // ✅ FIX: Bumalik sa MAP, hindi sa Games menu
+              if (game.handleReturnToMap) {
+                game.handleReturnToMap();
+              } else if (game.handleExit) {
+                game.handleExit();
+              }
+            }}
             points={game.localPoints || 0}
             diamonds={game.localDiamonds || 0}
           />
