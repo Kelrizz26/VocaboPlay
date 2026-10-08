@@ -42,19 +42,9 @@
   --color-warning-soft: rgba(217, 119, 6, 0.16);
 }
 
-html {
-  transition: background-color 0.2s ease;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body, #root {
-  height: 100%;
-}
+html { transition: background-color 0.2s ease; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { height: 100%; }
 
 body {
   font-family: 'Poppins', system-ui, -apple-system, sans-serif;
@@ -65,27 +55,11 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-button, input, textarea, select {
-  font-family: inherit;
-}
+button, input, textarea, select { font-family: inherit; }
+button { cursor: pointer; }
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
 
-button {
-  cursor: pointer;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* ============================================================
-   Global interaction feedback
-   ============================================================ */
 button:not(:disabled),
 [style*="cursor: pointer"],
 [style*="cursor:pointer"] {
@@ -95,9 +69,7 @@ button:not(:disabled),
 
 button:not(:disabled):hover,
 [style*="cursor: pointer"]:hover,
-[style*="cursor:pointer"]:hover {
-  filter: brightness(0.96);
-}
+[style*="cursor:pointer"]:hover { filter: brightness(0.96); }
 
 button:not(:disabled):active,
 [style*="cursor: pointer"]:active,
@@ -106,13 +78,8 @@ button:not(:disabled):active,
   filter: brightness(0.92);
 }
 
-button:not(:disabled):hover {
-  transform: translateY(-1px);
-}
-
-button:not(:disabled):active {
-  transform: translateY(0) scale(0.97);
-}
+button:not(:disabled):hover { transform: translateY(-1px); }
+button:not(:disabled):active { transform: translateY(0) scale(0.97); }
 
 button:focus-visible,
 a:focus-visible,
@@ -127,7 +94,7 @@ textarea:focus-visible,
 
 
 /* ============================================================
-   🎮 LANDSCAPE MOBILE FIX
+   🎮 LANDSCAPE MOBILE FIX — FULL SCREEN
    ============================================================ */
 
 @media (orientation: landscape) and (max-height: 600px) {
@@ -142,23 +109,38 @@ textarea:focus-visible,
     height: 0 !important;
   }
 
+  /* ✅ FULL SCREEN — position: fixed para walang black bars */
   html.in-game, body.in-game {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    min-width: 100vw !important;
+    min-height: 100vh !important;
     overflow: hidden !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #2A2845 !important;
   }
 
   html.in-game #root, body.in-game #root {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    min-width: 100vw !important;
+    min-height: 100vh !important;
     overflow: hidden !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #2A2845 !important;
@@ -178,7 +160,6 @@ textarea:focus-visible,
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
-
   .sq-header {
     max-width: 100% !important;
     width: 100% !important;
@@ -187,7 +168,6 @@ textarea:focus-visible,
     padding: 4px 10px !important;
     flex-shrink: 0 !important;
   }
-
   .sq-main-card {
     max-width: 100% !important;
     width: 100% !important;
@@ -198,20 +178,17 @@ textarea:focus-visible,
     overflow-y: auto !important;
     box-sizing: border-box !important;
   }
-
   .sq-image-box {
     width: 110px !important;
     height: 110px !important;
     min-width: 110px !important;
     max-width: 110px !important;
   }
-
   .sq-blank-box {
     width: 40px !important;
     height: 48px !important;
     font-size: 20px !important;
   }
-
   .sq-letter-btn {
     width: 44px !important;
     height: 44px !important;
@@ -229,7 +206,6 @@ textarea:focus-visible,
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
   }
-
   .mg-cards {
     display: grid !important;
     grid-template-columns: none !important;
@@ -247,14 +223,12 @@ textarea:focus-visible,
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
-
   .mg-cards[style*="repeat(5,"]  { grid-template-columns: repeat(5,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(6,"]  { grid-template-columns: repeat(6,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(7,"]  { grid-template-columns: repeat(7,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(8,"]  { grid-template-columns: repeat(8,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(9,"]  { grid-template-columns: repeat(9,  calc((100vh - 110px) / 4 - 4px)) !important; }
   .mg-cards[style*="repeat(10,"] { grid-template-columns: repeat(10, calc((100vh - 110px) / 4 - 4px)) !important; }
-
   .mg-card {
     width: 100% !important;
     height: auto !important;
@@ -262,12 +236,11 @@ textarea:focus-visible,
   }
 
   /* ============================================================
-     ✅ STORYQUEST WELCOME SCREEN
+     ✅ STORYQUEST WELCOME — kasya na sa viewport
      ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    height: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
@@ -275,13 +248,11 @@ textarea:focus-visible,
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    position: relative !important;
   }
-
   .sq-book-select-wrapper > div {
-    max-height: 94vh !important;
+    max-height: 92vh !important;
+    max-width: 92vw !important;
     height: auto !important;
-    max-width: 96% !important;
     width: auto !important;
     padding: 8px 16px !important;
     margin: 0 auto !important;
@@ -293,113 +264,107 @@ textarea:focus-visible,
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
-
   .sq-book-select-wrapper img {
-    max-height: 32vh !important;
-    max-width: 55% !important;
+    max-height: 30vh !important;
+    max-width: 50% !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
     margin: 2px 0 !important;
   }
-
   .sq-book-select-wrapper h1,
   .sq-book-select-wrapper h2 {
-    font-size: 16px !important;
+    font-size: 15px !important;
     margin: 2px 0 !important;
     text-align: center !important;
     line-height: 1.2 !important;
   }
-
   .sq-book-select-wrapper p {
-    font-size: 11px !important;
+    font-size: 10px !important;
     margin: 2px 0 !important;
     text-align: center !important;
     line-height: 1.3 !important;
   }
-
   .sq-book-select-wrapper button {
-    padding: 8px 22px !important;
-    font-size: 13px !important;
+    padding: 8px 20px !important;
+    font-size: 12px !important;
     margin: 3px 0 !important;
-    min-height: 38px !important;
-    max-width: 65% !important;
+    min-height: 36px !important;
+    max-width: 60% !important;
     flex-shrink: 0 !important;
   }
-
   .sq-book-select-wrapper [style*="maxWidth"] {
     max-width: 100% !important;
   }
 
-  .sq-book-select-wrapper > div > div {
-    max-width: 100% !important;
-    overflow: hidden !important;
-  }
-
   /* ============================================================
-     ✅ STORYQUEST GAMEPLAY + HEART SHOP MODAL
-     Consolidated — walang duplicate selectors
+     ✅ STORYQUEST GAMEPLAY (Story Quiz) — kasya na
      ============================================================ */
-  #root > div > div[style*="position: fixed"],
-  #root > div > div[style*="position:fixed"] {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100vw !important;
-    max-height: 100vh !important;
+  .sq-playing-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
     overflow: hidden !important;
-    padding: 6px 10px !important;
+    padding: 4px 8px !important;
     box-sizing: border-box !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
   }
-
-  /* Images sa StoryQuest — paliitin */
-  #root > div > div[style*="position: fixed"] img,
-  #root > div > div[style*="position:fixed"] img {
-    max-height: 45vh !important;
-    max-width: 70% !important;
+  .sq-playing-wrapper img {
+    max-height: 40vh !important;
+    max-width: 55% !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
   }
+  .sq-playing-wrapper > div {
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
 
-  /* Modal card mismo — i-limit height */
-  #root > div > div[style*="position: fixed"] > div,
-  #root > div > div[style*="position:fixed"] > div {
-    max-height: 96vh !important;
-    max-width: 96vw !important;
+  /* ============================================================
+     ✅ MODALS (Heart Shop, Settings, Leaderboard, Level Up)
+     ============================================================ */
+  .sq-modal-card,
+  .mg-modal-card,
+  .sq-card {
+    max-height: 92vh !important;
+    max-width: 92vw !important;
     height: auto !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding: 12px 18px !important;
     box-sizing: border-box !important;
   }
-
-  /* Modal content — paliitin ang text */
-  #root > div > div[style*="position: fixed"] > div h2,
-  #root > div > div[style*="position: fixed"] > div h3 {
+  .sq-modal-card h2,
+  .mg-modal-card h2,
+  .sq-card h2 {
     font-size: 16px !important;
     margin: 4px 0 !important;
   }
-
-  #root > div > div[style*="position: fixed"] > div p {
-    font-size: 11px !important;
+  .sq-modal-card h3,
+  .mg-modal-card h3,
+  .sq-card h3 {
+    font-size: 14px !important;
     margin: 4px 0 !important;
   }
-
-  /* Modal images at icons */
-  #root > div > div[style*="position: fixed"] > div img,
-  #root > div > div[style*="position: fixed"] > div svg {
-    max-height: 50px !important;
-    width: auto !important;
+  .sq-modal-card p,
+  .mg-modal-card p,
+  .sq-card p {
+    font-size: 11px !important;
+    margin: 3px 0 !important;
   }
-
-  /* Modal buttons — compact */
-  #root > div > div[style*="position: fixed"] > div button {
+  .sq-modal-card button,
+  .mg-modal-card button,
+  .sq-card button {
     padding: 8px 14px !important;
     font-size: 12px !important;
-    margin: 3px 0 !important;
     min-height: 34px !important;
+    margin: 3px 0 !important;
+  }
+  .sq-modal-card img,
+  .mg-modal-card img,
+  .sq-card img {
+    max-height: 50px !important;
+    width: auto !important;
   }
 }
