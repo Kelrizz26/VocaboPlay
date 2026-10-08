@@ -3,6 +3,7 @@
 // ✅ Background music: starts muted (auto-plays), unmutes sa first user click
 // ✅ Welcome modal shows on Dashboard entry, hides when returning from level
 // ✅ Full character visible (objectFit: contain)
+// ✅ ADDED: classNames para ma-target ng landscape CSS
 
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -53,7 +54,7 @@ const StoryQuestBookSelect = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [isMusicMuted, setIsMusicMuted] = useState(true); // 👈 Start muted
+  const [isMusicMuted, setIsMusicMuted] = useState(true);
   const hasPlayedRef = useRef(false);
   const hasUnmutedRef = useRef(false);
   const videoRef = useRef(null);
@@ -65,22 +66,19 @@ const StoryQuestBookSelect = ({
     }
   }, [skipWelcome]);
 
-  // 🎵 Background music — start MUTED (para mag-autoplay), unmute sa first click
   useEffect(() => {
     const audio = new Audio(MAP_BGM);
     audio.loop = true;
     audio.volume = 0.35;
-    audio.muted = true; // 👈 Critical: muted start = auto-play allowed
+    audio.muted = true;
     bgMusicRef.current = audio;
 
-    // Subukang i-play (muted) — gagana kahit walang user interaction
     audio.play().then(() => {
       console.log('✅ Map BGM started (muted)');
     }).catch((err) => {
       console.warn('⚠️ Map BGM play failed:', err);
     });
 
-    // 👈 Sa unang click/keydown/touch, i-unmute ang music
     const unmuteMusic = () => {
       if (bgMusicRef.current) {
         bgMusicRef.current.muted = false;
@@ -111,7 +109,6 @@ const StoryQuestBookSelect = ({
     };
   }, []);
 
-  // Sync mute state kapag manually clinick yung mute button
   useEffect(() => {
     if (bgMusicRef.current) {
       bgMusicRef.current.muted = isMusicMuted;
@@ -512,37 +509,47 @@ const StoryQuestBookSelect = ({
 
       {/* ===== WELCOME MODAL WITH VIDEO ===== */}
       {showWelcome && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(0, 0, 0, 0.55)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 500, animation: 'fadeIn 0.35s ease',
-        }}>
-          <div style={{
-            position: 'relative',
-            width: 'min(440px, 92vw)',
-            background: 'linear-gradient(180deg, #FCD34D 0%, #F59E0B 60%, #EA580C 100%)',
-            borderRadius: '24px',
-            padding: '24px 22px 22px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 4px 8px rgba(255,255,255,0.35)',
-            border: '4px solid #B45309',
-            animation: 'popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            textAlign: 'center',
-          }}>
+        <div
+          className="sq-welcome-overlay"
+          style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 500, animation: 'fadeIn 0.35s ease',
+          }}
+        >
+          <div
+            className="sq-welcome-card"
+            style={{
+              position: 'relative',
+              width: 'min(440px, 92vw)',
+              background: 'linear-gradient(180deg, #FCD34D 0%, #F59E0B 60%, #EA580C 100%)',
+              borderRadius: '24px',
+              padding: '24px 22px 22px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 4px 8px rgba(255,255,255,0.35)',
+              border: '4px solid #B45309',
+              animation: 'popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              textAlign: 'center',
+            }}
+          >
             <div style={{ position: 'absolute', top: '-12px', left: '12%', fontSize: '20px', animation: 'bounceConfetti 2s infinite' }}>✨</div>
             <div style={{ position: 'absolute', top: '-10px', right: '15%', fontSize: '18px', animation: 'bounceConfetti 2.2s infinite 0.3s' }}>🎉</div>
             <div style={{ position: 'absolute', bottom: '-8px', left: '18%', fontSize: '16px', animation: 'bounceConfetti 2.4s infinite 0.6s' }}>⭐</div>
             <div style={{ position: 'absolute', bottom: '-8px', right: '14%', fontSize: '16px', animation: 'bounceConfetti 2.6s infinite 0.9s' }}>💫</div>
 
-            <h2 style={{
-              fontSize: '26px', fontWeight: '900', color: '#FFFFFF',
-              fontFamily: FONT_DISPLAY, margin: '4px 0 16px 0',
-              textShadow: '0 3px 6px rgba(0,0,0,0.35), 0 0 20px rgba(255,255,255,0.3)',
-              letterSpacing: '-0.5px',
-            }}>Start Adventure!</h2>
+            <h2
+              className="sq-welcome-title"
+              style={{
+                fontSize: '26px', fontWeight: '900', color: '#FFFFFF',
+                fontFamily: FONT_DISPLAY, margin: '4px 0 16px 0',
+                textShadow: '0 3px 6px rgba(0,0,0,0.35), 0 0 20px rgba(255,255,255,0.3)',
+                letterSpacing: '-0.5px',
+              }}
+            >Start Adventure!</h2>
 
             <div
+              className="sq-welcome-image"
               onClick={handleReplayVoice}
               style={{
                 width: '180px', height: '180px',
@@ -594,12 +601,15 @@ const StoryQuestBookSelect = ({
             </div>
 
             {isSpeaking && !videoError && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '4px 12px', background: 'rgba(255,255,255,0.25)',
-                borderRadius: '12px', marginBottom: '12px',
-                animation: 'fadeInOut 1.5s ease-in-out infinite',
-              }}>
+              <div
+                className="sq-welcome-badge"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '4px 12px', background: 'rgba(255,255,255,0.25)',
+                  borderRadius: '12px', marginBottom: '12px',
+                  animation: 'fadeInOut 1.5s ease-in-out infinite',
+                }}
+              >
                 <span style={{
                   display: 'inline-block', width: '7px', height: '7px',
                   background: '#FFFFFF', borderRadius: '50%',
@@ -613,17 +623,21 @@ const StoryQuestBookSelect = ({
               </div>
             )}
 
-            <p style={{
-              fontSize: '14px', fontWeight: '800', color: '#FFFFFF',
-              fontFamily: FONT_DISPLAY,
-              margin: (isSpeaking && !videoError) ? '0 0 20px 0' : '12px 0 20px 0',
-              lineHeight: 1.4, textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-            }}>
+            <p
+              className="sq-welcome-text"
+              style={{
+                fontSize: '14px', fontWeight: '800', color: '#FFFFFF',
+                fontFamily: FONT_DISPLAY,
+                margin: (isSpeaking && !videoError) ? '0 0 20px 0' : '12px 0 20px 0',
+                lineHeight: 1.4, textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              }}
+            >
               Welcome to StoryQuest!<br />
               Choose your adventure below! 👇
             </p>
 
             <button
+              className="sq-welcome-start"
               onClick={handleStartPlay}
               style={{
                 width: '100%', padding: '16px 24px',
@@ -656,6 +670,7 @@ const StoryQuestBookSelect = ({
             </button>
 
             <button
+              className="sq-welcome-replay"
               onClick={handleReplayVoice}
               style={{
                 marginTop: '10px', padding: '6px 14px',

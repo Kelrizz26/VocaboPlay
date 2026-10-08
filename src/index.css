@@ -256,9 +256,8 @@ textarea:focus-visible,
   }
 
   /* ============================================================
-     ✅ STORYQUEST — Welcome modal
-     Compact card na nasa GITNA, may rounded corners at shadow.
-     Yung MAP background sa likod — hindi ginalaw (full screen).
+     ✅ STORYQUEST — Welcome modal (TARGETED via classNames)
+     Hindi na CSS guessing — direktang classNames ang tina-target
      ============================================================ */
   .sq-book-select-wrapper {
     width: 100% !important;
@@ -272,68 +271,81 @@ textarea:focus-visible,
     box-sizing: border-box !important;
   }
 
-  /* ✅ WELCOME CARD — compact at naka-center (parang modal sa 2nd image) */
-  .sq-book-select-wrapper > div {
-    max-width: 400px !important;
-    min-width: 320px !important;
-    width: 90vw !important;
-    max-height: 88vh !important;
+  /* ✅ Welcome OVERLAY — yung dark background sa likod ng modal */
+  .sq-welcome-overlay {
+    padding: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  /* ✅ Welcome CARD mismo — compact modal sa gitna */
+  .sq-welcome-card {
+    width: min(380px, 88vw) !important;
+    max-height: 92vh !important;
     height: auto !important;
-    padding: 16px 24px !important;
-    margin: auto !important;
+    padding: 12px 18px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
-    box-sizing: border-box !important;
     overflow: hidden !important;
-    border-radius: 24px !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25) !important;
+    box-sizing: border-box !important;
+    gap: 2px !important;
+    border-radius: 18px !important;
+    border-width: 3px !important;
   }
 
-  /* ✅ IMAGE — readable size pero kasya */
-  .sq-book-select-wrapper img {
-    max-height: 18vh !important;
-    max-width: 100px !important;
-    width: auto !important;
-    height: auto !important;
-    object-fit: contain !important;
-    margin: 2px 0 4px 0 !important;
+  /* ✅ Title — "Start Adventure!" */
+  .sq-welcome-title {
+    font-size: 16px !important;
+    margin: 2px 0 6px 0 !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.3px !important;
   }
 
-  /* ✅ TITLE — "Start Adventure!" */
-  .sq-book-select-wrapper h1,
-  .sq-book-select-wrapper h2 {
-    font-size: 14px !important;
-    margin: 2px 0 !important;
-    text-align: center !important;
-    line-height: 1.2 !important;
-    font-weight: 700 !important;
+  /* ✅ Image circle — paliitin significantly */
+  .sq-welcome-image {
+    width: 85px !important;
+    height: 85px !important;
+    margin: 0 auto 6px !important;
+    border-width: 3px !important;
+    flex-shrink: 0 !important;
   }
 
-  /* ✅ BODY TEXT */
-  .sq-book-select-wrapper p {
-    font-size: 10px !important;
-    margin: 2px 0 !important;
-    text-align: center !important;
-    line-height: 1.3 !important;
+  /* ✅ Speaking badge */
+  .sq-welcome-badge {
+    padding: 2px 8px !important;
+    margin-bottom: 4px !important;
+    border-radius: 8px !important;
   }
-
-  /* ✅ BUTTONS — compact, centered */
-  .sq-book-select-wrapper button {
-    padding: 7px 20px !important;
-    font-size: 11px !important;
-    margin: 3px 0 !important;
-    min-height: 30px !important;
-    max-width: 240px !important;
-    width: auto !important;
-    display: block !important;
-    align-self: center !important;
-  }
-
-  /* ✅ Spans / badges */
-  .sq-book-select-wrapper span {
+  .sq-welcome-badge span {
     font-size: 9px !important;
+  }
+
+  /* ✅ Body text */
+  .sq-welcome-text {
+    font-size: 10px !important;
+    margin: 4px 0 8px 0 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* ✅ START PLAY button */
+  .sq-welcome-start {
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+    min-height: 34px !important;
+    border-width: 2px !important;
+    flex-shrink: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  /* ✅ Play voice again button */
+  .sq-welcome-replay {
+    margin-top: 4px !important;
+    padding: 4px 10px !important;
+    font-size: 9px !important;
+    flex-shrink: 0 !important;
   }
 }
