@@ -3,6 +3,7 @@
 // ✅ Auto-adjust padding, font sizes, at image sizes kapag landscape
 // ✅ Uses 100dvh (dynamic viewport height) for mobile browsers
 // ✅ FIXED: Exit button now shows confirmation modal, returns to MAP on confirm
+// ✅ NEW: Back button returns to GAMES selection screen (via onExitToGames prop)
 // ============================================================
 
 import React from 'react';
@@ -177,7 +178,8 @@ const LEVEL_CONFIG = {
   'C2': { timer: 15, emoji: '👑' },
 };
 
-const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
+// ✅ UPDATED: Added onExitToGames prop
+const ShortStoryGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const game = useGameLogic({ onBack, updateProgress, recordGame });
   const [hasSeenWelcome, setHasSeenWelcome] = React.useState(false);
 
@@ -205,11 +207,22 @@ const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
     onReturnToMap: game.devReturnToMap,
   });
 
+  // ✅ NEW: Back button → returns to GAMES selection screen (not Dashboard)
+  const handleBackToGames = () => {
+    if (onExitToGames) {
+      onExitToGames();
+    } else if (onBack) {
+      onBack();
+    }
+  };
+
   // ✅ Confirm exit → back to MAP (not Games menu)
   const handleConfirmExit = () => {
     game.cancelExit(); // Close the modal
     if (game.handleReturnToMap) {
       game.handleReturnToMap();
+    } else if (onExitToGames) {
+      onExitToGames();
     } else if (onBack) {
       onBack();
     }
@@ -362,7 +375,7 @@ const ShortStoryGame = ({ onBack, updateProgress, recordGame }) => {
         <div className="sq-book-select-wrapper" style={{ width: '100%', height: '100dvh', overflow: 'hidden' }}>
           <StoryQuestBookSelect
             onSelectBook={(level) => game.startGame(level)}
-            onBack={onBack}
+            onBack={handleBackToGames}
             completedLevels={game.completedLevels || []}
             localDiamonds={game.localDiamonds}
             localPoints={game.localPoints || 0}

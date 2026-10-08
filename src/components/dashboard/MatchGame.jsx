@@ -2,6 +2,7 @@
 // ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
 // ✅ More columns in landscape, smaller cards, compact header
 // ✅ Uses 100dvh for mobile browsers
+// ✅ NEW: Exit returns to GAMES selection screen (via onExitToGames prop)
 // ============================================================
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -262,7 +263,8 @@ const REFILL_TIME = 1800;
 // ============================================================
 // ===== MAIN COMPONENT =====
 // ============================================================
-const MatchGame = ({ onBack, updateProgress, recordGame }) => {
+// ✅ UPDATED: Added onExitToGames prop
+const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const [gameState, setGameState] = useState('intro');
   const [currentLevel, setCurrentLevel] = useState('A1');
   const [previousLevel, setPreviousLevel] = useState('A1');
@@ -915,11 +917,16 @@ const MatchGame = ({ onBack, updateProgress, recordGame }) => {
     setShowExitConfirm(true);
   };
 
+  // ✅ FIXED: Return to GAMES selection screen (not Dashboard)
   const confirmExit = () => {
     setShowExitConfirm(false);
     setShowSettings(false);
     stopBackgroundMusic();
-    if (onBack) onBack();
+    if (onExitToGames) {
+      onExitToGames();
+    } else if (onBack) {
+      onBack();
+    }
   };
 
   const cancelExit = () => setShowExitConfirm(false);

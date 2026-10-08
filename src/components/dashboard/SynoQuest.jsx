@@ -5,6 +5,7 @@
 // ✅ UPDATED: Dev Panel matches MatchGame layout
 // ✅ NEW: FINISHED SCREEN with COMPLETION BONUS +50 💎 (same as MatchGame)
 // ✅ FIXED: devForceLevelUp no longer crashes (removed undefined setters)
+// ✅ FIXED: Exit returns to GAMES selection screen (via onExitToGames prop)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -67,12 +68,7 @@ const fullScreenBg = {
 const bgAnimationStyle = (<style>{`
   @keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } }
 
-  /* ============================================================
-     LANDSCAPE MOBILE — KEY FIX
-     ============================================================ */
   @media (max-height: 500px) and (orientation: landscape) {
-
-    /* -------- PLAYING SCREEN -------- */
     .sq-play-wrapper {
       padding: 4px 10px !important;
       height: 100dvh !important;
@@ -82,8 +78,6 @@ const bgAnimationStyle = (<style>{`
       flex-direction: column !important;
       align-items: center !important;
     }
-
-    /* Header */
     .sq-header {
       padding: 4px 10px !important;
       margin-bottom: 4px !important;
@@ -97,8 +91,6 @@ const bgAnimationStyle = (<style>{`
     .sq-header > div > div:last-child { padding: 1px 8px !important; font-size: 10px !important; }
     .sq-header-hearts span { font-size: 11px !important; }
     .sq-header-timer { width: 20px !important; height: 20px !important; font-size: 9px !important; }
-
-    /* Main card */
     .sq-main-card {
       padding: 8px 14px !important;
       border-radius: 14px !important;
@@ -108,95 +100,27 @@ const bgAnimationStyle = (<style>{`
       max-width: 720px !important;
       box-sizing: border-box !important;
     }
-
-    /* Level indicator row */
     .sq-level-row { margin-bottom: 6px !important; }
     .sq-level-row span { font-size: 11px !important; }
-
-    /* Image comparison row */
     .sq-image-row {
       padding: 6px 10px !important;
       margin-bottom: 8px !important;
       gap: 8px !important;
       border-radius: 10px !important;
     }
-    .sq-image-box {
-      width: 80px !important;
-      height: 80px !important;
-      border-radius: 8px !important;
-    }
+    .sq-image-box { width: 80px !important; height: 80px !important; border-radius: 8px !important; }
     .sq-image-arrow { font-size: 20px !important; }
-    .sq-image-eq {
-      font-size: 18px !important;
-      padding: 0 10px !important;
-      border-radius: 8px !important;
-    }
-
-    /* Category text */
-    .sq-category {
-      font-size: 11px !important;
-      margin-bottom: 6px !important;
-    }
-
-    /* Word blanks */
-    .sq-blanks-row {
-      gap: 4px !important;
-      margin-bottom: 8px !important;
-      padding: 8px 10px !important;
-      border-radius: 10px !important;
-    }
-    .sq-blank-box {
-      width: 30px !important;
-      height: 36px !important;
-      font-size: 16px !important;
-      border-radius: 8px !important;
-    }
-
-    /* Letter options */
-    .sq-letters-row {
-      gap: 4px !important;
-      margin-bottom: 8px !important;
-      padding: 8px 10px !important;
-      border-radius: 10px !important;
-      min-height: 38px !important;
-    }
-    .sq-letter-btn {
-      width: 34px !important;
-      height: 34px !important;
-      font-size: 14px !important;
-      border-radius: 8px !important;
-    }
-
-    /* Clear/Submit buttons */
-    .sq-action-btns {
-      gap: 6px !important;
-      margin-bottom: 6px !important;
-    }
-    .sq-action-btn {
-      padding: 8px !important;
-      font-size: 11px !important;
-      border-radius: 10px !important;
-    }
-
-    /* Hint button */
-    .sq-hint-btn {
-      padding: 8px !important;
-      font-size: 10px !important;
-      border-radius: 10px !important;
-      margin-bottom: 6px !important;
-    }
-
-    /* Feedback */
+    .sq-image-eq { font-size: 18px !important; padding: 0 10px !important; border-radius: 8px !important; }
+    .sq-category { font-size: 11px !important; margin-bottom: 6px !important; }
+    .sq-blanks-row { gap: 4px !important; margin-bottom: 8px !important; padding: 8px 10px !important; border-radius: 10px !important; }
+    .sq-blank-box { width: 30px !important; height: 36px !important; font-size: 16px !important; border-radius: 8px !important; }
+    .sq-letters-row { gap: 4px !important; margin-bottom: 8px !important; padding: 8px 10px !important; border-radius: 10px !important; min-height: 38px !important; }
+    .sq-letter-btn { width: 34px !important; height: 34px !important; font-size: 14px !important; border-radius: 8px !important; }
+    .sq-action-btns { gap: 6px !important; margin-bottom: 6px !important; }
+    .sq-action-btn { padding: 8px !important; font-size: 11px !important; border-radius: 10px !important; }
+    .sq-hint-btn { padding: 8px !important; font-size: 10px !important; border-radius: 10px !important; margin-bottom: 6px !important; }
     .sq-feedback { font-size: 10px !important; padding: 5px !important; border-radius: 8px !important; }
-
-    /* -------- INTRO SCREEN -------- */
-    .sq-intro-card {
-      max-width: 720px !important;
-      padding: 12px 20px !important;
-      border-radius: 16px !important;
-      max-height: calc(100dvh - 12px) !important;
-      overflow-y: auto !important;
-    }
+    .sq-intro-card { max-width: 720px !important; padding: 12px 20px !important; border-radius: 16px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; }
     .sq-intro-icon { width: 44px !important; height: 44px !important; margin-bottom: 6px !important; }
     .sq-intro-icon > div { width: 28px !important; height: 28px !important; font-size: 16px !important; }
     .sq-intro-chip { padding: 3px 8px !important; font-size: 10px !important; margin-bottom: 4px !important; }
@@ -214,15 +138,7 @@ const bgAnimationStyle = (<style>{`
     .sq-intro-hearts + span { font-size: 10px !important; }
     .sq-intro-btn { padding: 10px !important; font-size: 12px !important; border-radius: 10px !important; }
     .sq-intro-back-btn { padding: 6px !important; font-size: 10px !important; margin-top: 4px !important; }
-
-    /* -------- FINISHED / GAMEOVER -------- */
-    .sq-end-card {
-      max-width: 720px !important;
-      padding: 14px 20px !important;
-      border-radius: 16px !important;
-      max-height: calc(100dvh - 12px) !important;
-      overflow-y: auto !important;
-    }
+    .sq-end-card { max-width: 720px !important; padding: 14px 20px !important; border-radius: 16px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; }
     .sq-end-emoji { font-size: 40px !important; margin-bottom: 2px !important; }
     .sq-end-title { font-size: 18px !important; margin-bottom: 2px !important; }
     .sq-end-sub { font-size: 11px !important; margin-bottom: 8px !important; }
@@ -233,15 +149,7 @@ const bgAnimationStyle = (<style>{`
     .sq-end-reward { padding: 8px !important; margin-bottom: 6px !important; border-radius: 10px !important; }
     .sq-end-reward span { font-size: 12px !important; }
     .sq-end-btn { padding: 8px !important; font-size: 11px !important; border-radius: 8px !important; }
-
-    /* -------- MODALS -------- */
-    .sq-modal-card {
-      padding: 14px 18px !important;
-      max-width: 640px !important;
-      max-height: calc(100dvh - 12px) !important;
-      overflow-y: auto !important;
-      border-radius: 14px !important;
-    }
+    .sq-modal-card { padding: 14px 18px !important; max-width: 640px !important; max-height: calc(100dvh - 12px) !important; overflow-y: auto !important; border-radius: 14px !important; }
     .sq-modal-card h2 { font-size: 16px !important; margin-bottom: 2px !important; }
     .sq-modal-card h3 { font-size: 15px !important; margin-bottom: 4px !important; }
     .sq-modal-card p { font-size: 11px !important; margin-bottom: 6px !important; }
@@ -250,13 +158,10 @@ const bgAnimationStyle = (<style>{`
     .sq-modal-price-btn > div:first-child > div:first-child { font-size: 20px !important; }
     .sq-modal-price-btn > div:first-child > div:last-child > div:first-child { font-size: 12px !important; }
     .sq-modal-btn { padding: 8px !important; font-size: 11px !important; border-radius: 8px !important; }
-
-    /* -------- LOADING -------- */
     .sq-loading-card { padding: 20px !important; max-width: 400px !important; }
     .sq-loading-card h2 { font-size: 22px !important; }
     .sq-loading-bar { height: 22px !important; margin-top: 16px !important; }
   }
-
   @media (max-height: 380px) and (orientation: landscape) {
     .sq-main-card { padding: 6px 10px !important; }
     .sq-image-box { width: 65px !important; height: 65px !important; }
@@ -344,7 +249,7 @@ const wordPairs = {
 };
 const getWordsByLevel = (l) => wordPairs[l] || wordPairs['A1'];
 
-const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPointsChange }) => {
+const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentPoints, onPointsChange }) => {
   const [gameState, setGameState] = useState('intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answered, setAnswered] = useState(false);
@@ -376,9 +281,7 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
   const completionBonusSavedRef = useRef(false);
 
   const gameStateRef = useRef('intro');
-  useEffect(() => {
-    gameStateRef.current = gameState;
-  }, [gameState]);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
 
   const updateProgressRef = useRef(updateProgress);
   const recordGameRef = useRef(recordGame);
@@ -1145,7 +1048,18 @@ const SynoQuest = ({ onBack, updateProgress, recordGame, currentPoints, onPoints
     setShowExitConfirm(true);
   };
 
-  const confirmExit = () => { setShowExitConfirm(false); setShowSettings(false); backgroundMusic.stop(); if (onBack) onBack(); };
+  // ✅ FIXED: Return to GAMES selection screen (not Dashboard)
+  const confirmExit = () => {
+    setShowExitConfirm(false);
+    setShowSettings(false);
+    backgroundMusic.stop();
+    if (onExitToGames) {
+      onExitToGames();
+    } else if (onBack) {
+      onBack();
+    }
+  };
+
   const cancelExit = () => setShowExitConfirm(false);
 
   const showDevPanel = typeof window !== 'undefined' && window.location.search.includes('dev=1');

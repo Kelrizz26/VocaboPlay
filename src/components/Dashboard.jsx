@@ -2,6 +2,8 @@
 // ============================================================
 // ✅ FULLSCREEN API: Auto-fullscreen kapag nasa game
 // ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
+// ✅ NEW: onExitToGames prop — bumabalik sa Games selection screen
+// ✅ FIXED: X button sa sidebar — mobile lang visible (hidden sa web)
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -217,18 +219,16 @@ const Dashboard = () => {
   useEffect(() => {
     if (currentGame) {
       setIsSidebarVisible(false);
-      // Try to enter fullscreen
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
         elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
-      } else if (elem.webkitRequestFullscreen) { /* Safari */
+      } else if (elem.webkitRequestFullscreen) {
         elem.webkitRequestFullscreen();
-      } else if (elem.msRequestFullscreen) { /* IE11 */
+      } else if (elem.msRequestFullscreen) {
         elem.msRequestFullscreen();
       }
     } else {
       setIsSidebarVisible(!isMobile);
-      // Exit fullscreen kapag labas na sa game
       if (document.fullscreenElement) {
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(err => console.log('Exit fullscreen error:', err));
@@ -521,10 +521,28 @@ const Dashboard = () => {
     window.scrollTo(0, 0);
   };
 
+  // ✅ BUMALIK SA DASHBOARD MENU
   const exitGame = () => {
     setCurrentGame(null);
     setActiveMenu('Dashboard');
     refreshRecentActivities();
+  };
+
+  // ✅ BAGO: BUMALIK SA GAMES SELECTION SCREEN (SynoQuest, MatchGame, etc.)
+  const exitToGames = () => {
+    setCurrentGame(null);
+    setActiveMenu('Games');
+    refreshRecentActivities();
+    // Close fullscreen if active
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
   };
 
   const changeMenu = (menu) => {
@@ -713,13 +731,16 @@ const Dashboard = () => {
               <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
               <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
             </div>
-            <button
-              onClick={() => setIsSidebarVisible(false)}
-              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              aria-label="Close menu"
-            >
-              <Icon name="close" size={18} color={palette.white} />
-            </button>
+            {/* ✅ X BUTTON: MOBILE LANG — hindi lalabas sa web */}
+            {isMobile && (
+              <button
+                onClick={() => setIsSidebarVisible(false)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="Close menu"
+              >
+                <Icon name="close" size={18} color={palette.white} />
+              </button>
+            )}
           </div>
           <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
             {menuItems.map((item) => {
@@ -797,16 +818,47 @@ const Dashboard = () => {
           {currentGame === 'wordpics' && (
             <WordPicsGame
               onBack={exitGame}
+              onExitToGames={exitToGames}
               updateProgress={updateProgress}
               recordGame={recordSoloGame}
               currentPoints={displayProgress.totalPoints}
               onPointsChange={(newPoints) => setProgress({ ...progress, totalPoints: newPoints })}
             />
           )}
-          {currentGame === 'match' && <MatchGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
-          {currentGame === 'quiz' && <QuizGame onBack={exitGame} updateProgress={updateProgress} completeActivity={completeActivity} activityData={selectedActivity} recordGame={recordSoloGame} />}
-          {currentGame === 'guesswhat' && <GuessWhatGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
-          {currentGame === 'short-story' && <ShortStoryGame onBack={exitGame} updateProgress={updateProgress} recordGame={recordSoloGame} />}
+          {currentGame === 'match' && (
+            <MatchGame
+              onBack={exitGame}
+              onExitToGames={exitToGames}
+              updateProgress={updateProgress}
+              recordGame={recordSoloGame}
+            />
+          )}
+          {currentGame === 'quiz' && (
+            <QuizGame
+              onBack={exitGame}
+              onExitToGames={exitToGames}
+              updateProgress={updateProgress}
+              completeActivity={completeActivity}
+              activityData={selectedActivity}
+              recordGame={recordSoloGame}
+            />
+          )}
+          {currentGame === 'guesswhat' && (
+            <GuessWhatGame
+              onBack={exitGame}
+              onExitToGames={exitToGames}
+              updateProgress={updateProgress}
+              recordGame={recordSoloGame}
+            />
+          )}
+          {currentGame === 'short-story' && (
+            <ShortStoryGame
+              onBack={exitGame}
+              onExitToGames={exitToGames}
+              updateProgress={updateProgress}
+              recordGame={recordSoloGame}
+            />
+          )}
 
           {!currentGame && activeMenu === 'Word Library' && <WordLibrary />}
           {!currentGame && activeMenu === 'Games' && <PlayGames startGame={startGame} />}
