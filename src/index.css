@@ -1,34 +1,13 @@
 /* ============================================================
-   🎮 LANDSCAPE MOBILE FIX — FULL SCREEN FILL (FINAL)
+   🎮 LANDSCAPE MOBILE FIX — FINAL
    ============================================================ */
 
 @media (orientation: landscape) and (max-height: 600px) {
   
-  /* ============================================================
-     1. VIEWPORT LOCK — Force full screen, no scroll
-     ============================================================ */
+  /* Viewport lock */
   html, body {
     width: 100vw !important;
     height: 100dvh !important;
-    max-width: 100vw !important;
-    max-height: 100dvh !important;
-    min-width: 100vw !important;
-    min-height: 100dvh !important;
-    overflow: hidden !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #2A2845 !important;
-  }
-
-  #root {
-    width: 100vw !important;
-    height: 100dvh !important;
-    max-width: 100vw !important;
     max-height: 100dvh !important;
     overflow: hidden !important;
     position: fixed !important;
@@ -39,193 +18,129 @@
   }
 
   /* ============================================================
-     2. DASHBOARD + MAIN CONTENT — Full screen kapag naka-game
-     ============================================================ */
-  .dashboard-container,
-  .dashboard-container.game-mode,
-  .main-content,
-  .main-content.game-mode {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100vw !important;
-    min-width: 100vw !important;
-    width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-    box-sizing: border-box !important;
-    position: relative !important;
-  }
-
-  /* ============================================================
-     3. SYNOQUEST — Full screen fill
+     SYNOQUEST — Full width (single column layout, okay lang)
      ============================================================ */
   .sq-play-wrapper {
     padding: 4px 8px !important;
     margin: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    min-width: 100vw !important;
     height: 100dvh !important;
-    max-height: 100dvh !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
     box-sizing: border-box !important;
-    gap: 4px !important;
     overflow: hidden !important;
-    position: relative !important;
   }
 
   .sq-header {
     max-width: 100% !important;
-    min-width: 100% !important;
     width: 100% !important;
-    margin: 0 !important;
+    margin: 0 0 4px 0 !important;
     border-radius: 8px !important;
-    box-sizing: border-box !important;
     padding: 4px 10px !important;
     flex-shrink: 0 !important;
   }
 
   .sq-main-card {
     max-width: 100% !important;
-    min-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
     border-radius: 8px !important;
-    box-sizing: border-box !important;
     padding: 10px 14px !important;
     flex: 1 !important;
     overflow-y: auto !important;
-    overflow-x: hidden !important;
+    box-sizing: border-box !important;
   }
 
-  /* Images — mas malaki para puno yung width */
+  /* Images para sa SynoQuest */
   .sq-image-row {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     gap: 14px !important;
-    padding: 10px 8px !important;
-    margin-bottom: 8px !important;
+    padding: 8px !important;
+    margin-bottom: 6px !important;
   }
 
   .sq-image-box {
-    width: 130px !important;
-    height: 130px !important;
-    min-width: 130px !important;
-    max-width: 130px !important;
-  }
-
-  .sq-image-arrow {
-    font-size: 24px !important;
-  }
-
-  .sq-image-eq {
-    font-size: 22px !important;
-    padding: 0 12px !important;
-  }
-
-  /* Word blanks — mas malaki */
-  .sq-blanks-row {
-    padding: 10px 12px !important;
-    margin-bottom: 8px !important;
-    gap: 5px !important;
+    width: 110px !important;
+    height: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
   }
 
   .sq-blank-box {
-    width: 42px !important;
-    height: 50px !important;
-    min-width: 42px !important;
-    max-width: 42px !important;
-    font-size: 22px !important;
-  }
-
-  /* Letter buttons — mas malaki */
-  .sq-letters-row {
-    padding: 10px 12px !important;
-    margin-bottom: 8px !important;
-    gap: 5px !important;
-    min-height: 50px !important;
+    width: 40px !important;
+    height: 48px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    font-size: 20px !important;
   }
 
   .sq-letter-btn {
-    width: 46px !important;
-    height: 46px !important;
-    min-width: 46px !important;
-    max-width: 46px !important;
-    font-size: 19px !important;
-  }
-
-  /* Action buttons — full width */
-  .sq-action-btns {
-    gap: 8px !important;
-    margin-bottom: 6px !important;
-  }
-
-  .sq-action-btn {
-    padding: 10px !important;
-    font-size: 13px !important;
-    min-height: 42px !important;
-  }
-
-  .sq-hint-btn {
-    padding: 10px !important;
-    font-size: 12px !important;
-    min-height: 40px !important;
-    margin-bottom: 6px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    font-size: 18px !important;
   }
 
   /* ============================================================
-     4. MATCH GAME — Full screen fill
+     MATCH GAME — Center at proper card size (HINDI full width)
      ============================================================ */
-  .mg-cards,
+  
+  /* Header at footer — full width */
   .mg-header,
   .mg-footer,
   .mg-progress-wrap {
-    max-width: 100% !important;
-    min-width: 100% !important;
-    width: 100% !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+    border-radius: 0 !important;
     box-sizing: border-box !important;
-    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    padding: 4px 10px !important;
   }
 
+  /* ✅ Cards grid — centered, sized based on available height */
   .mg-cards {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    padding: 8px !important;
-    gap: 4px !important;
+    /* Alisin ang forced full width */
+    width: auto !important;
+    min-width: 0 !important;
+    /* I-limit ang height base sa viewport */
+    max-height: calc(100dvh - 80px) !important;
+    height: calc(100dvh - 80px) !important;
+    /* Center sa screen */
+    margin: 4px auto !important;
+    /* Grid gap mas maliit */
+    gap: 3px !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    /* ✅ Force rows to fit equally */
+    grid-auto-rows: 1fr !important;
+    /* ✅ Let columns shrink to fit width */
+    justify-content: center !important;
+    overflow: hidden !important;
   }
 
-  .mg-header {
-    padding: 4px 10px !important;
-    margin-bottom: 4px !important;
-    flex-shrink: 0 !important;
-  }
-
-  .mg-footer {
-    padding: 4px 10px !important;
-    margin-top: 4px !important;
-    flex-shrink: 0 !important;
+  /* ✅ Individual cards — square, size based on row height */
+  .mg-card {
+    aspect-ratio: 1 / 1 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    justify-self: center !important;
+    align-self: center !important;
   }
 
   /* ============================================================
-     5. STORYQUEST — Welcome screen full fit
+     STORYQUEST — Full width for welcome
      ============================================================ */
   .sq-book-select-wrapper {
     width: 100vw !important;
-    max-width: 100vw !important;
-    min-width: 100vw !important;
     height: 100dvh !important;
-    max-height: 100dvh !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
@@ -233,7 +148,6 @@
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    position: relative !important;
   }
 
   .sq-book-select-wrapper > div {
