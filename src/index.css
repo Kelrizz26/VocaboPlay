@@ -341,8 +341,7 @@ textarea:focus-visible,
   }
 
   /* ============================================================
-     ✅ STORYQUIZ GAMEPLAY — Kita lahat ng choices
-     Card scrolls (hindi choices) — scrollbar sa CARD
+     ✅ STORYQUIZ GAMEPLAY — Card scrolls, kita lahat ng choices
      ============================================================ */
 
   .squiz-wrapper {
@@ -351,6 +350,8 @@ textarea:focus-visible,
     height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .squiz-topbar {
@@ -371,35 +372,39 @@ textarea:focus-visible,
     min-height: 24px !important;
   }
 
-  /* ✅ CARD — ito ang mag-scroll, hindi yung choices */
+  /* ✅ CARD — ito ang mag-scroll, kita lahat ng choices (A/B/C/D) */
   .squiz-card {
-    padding: 8px 14px !important;
+    padding: 8px 14px 20px 14px !important;
     gap: 6px !important;
     border-radius: 12px !important;
     margin-bottom: 4px !important;
-    flex: 1 !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;  /* ✅ IMPORTANTE para gumana ang scroll */
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    max-height: calc(100vh - 60px) !important;
+    max-height: calc(100dvh - 60px) !important;
+    -webkit-overflow-scrolling: touch !important;
     scrollbar-width: thin !important;
-    scrollbar-color: rgba(124, 58, 237, 0.5) rgba(243, 244, 246, 0.5) !important;
+    scrollbar-color: rgba(124, 58, 237, 0.7) rgba(243, 244, 246, 0.5) !important;
   }
 
-  /* ✅ Custom thin scrollbar sa CARD mismo */
+  /* ✅ Custom scrollbar — mas visible (8px) */
   .squiz-card::-webkit-scrollbar {
     display: block !important;
-    width: 5px !important;
+    width: 8px !important;
+    height: 8px !important;
   }
   .squiz-card::-webkit-scrollbar-track {
-    background: rgba(243, 244, 246, 0.5) !important;
-    border-radius: 3px !important;
+    background: rgba(243, 244, 246, 0.8) !important;
+    border-radius: 4px !important;
   }
   .squiz-card::-webkit-scrollbar-thumb {
-    background: rgba(124, 58, 237, 0.5) !important;
-    border-radius: 3px !important;
+    background: rgba(124, 58, 237, 0.6) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(243, 244, 246, 0.5) !important;
   }
   .squiz-card::-webkit-scrollbar-thumb:hover {
-    background: rgba(124, 58, 237, 0.75) !important;
+    background: rgba(124, 58, 237, 0.9) !important;
   }
 
   .squiz-header {
@@ -411,7 +416,7 @@ textarea:focus-visible,
     font-size: 10px !important;
   }
 
-  /* ✅ IMAGE — smaller para kita lahat ng choices */
+  /* ✅ IMAGE — balanced size, kita lahat ng choices */
   .squiz-image-box {
     width: auto !important;
     height: 28vh !important;
@@ -443,13 +448,14 @@ textarea:focus-visible,
     font-size: 11px !important;
   }
 
-  /* ✅ CHOICES — walang internal scroll, lahat kita (card na ang mag-scroll) */
+  /* ✅ CHOICES — walang internal scroll, lahat kita sa loob ng card */
   .squiz-choices {
     gap: 5px !important;
     flex-shrink: 0 !important;
     max-height: none !important;
     overflow: visible !important;
-    padding-right: 0 !important;
+    padding-right: 4px !important;
+    padding-bottom: 8px !important;
   }
 
   .squiz-choice {
@@ -467,6 +473,7 @@ textarea:focus-visible,
   .squiz-footer {
     margin-top: 2px !important;
     flex-shrink: 0 !important;
+    padding-bottom: 4px !important;
   }
   .squiz-footer span {
     font-size: 10px !important;
