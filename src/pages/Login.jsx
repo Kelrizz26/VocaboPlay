@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "./firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // ===== MUTED GAME UI PALETTE =====
@@ -99,6 +99,17 @@ const Login = () => {
   const pressButton = (e, s) => { e.currentTarget.style.transform = 'translateY(3px)'; e.currentTarget.style.boxShadow = 'none'; };
   const releaseButton = (e, s) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 3px 0 ${s}`; };
 
+  // ✅ NEW: Helper para i-update yung lastActive timestamp sa Firestore
+  const updateLastActive = async (uid) => {
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        lastActive: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('Error updating lastActive:', err);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setError(''); setLoading(true);
     try {
@@ -114,6 +125,10 @@ const Login = () => {
           setError('Please use the Admin Login page.');
           await auth.signOut(); setLoading(false); return;
         }
+
+        // ✅ NEW: Update lastActive timestamp sa Firestore
+        await updateLastActive(user.uid);
+
         const userProfile = {
           uid: user.uid, email: user.email,
           displayName: userData.displayName || user.displayName,
@@ -157,6 +172,10 @@ const Login = () => {
         if (userRole === 'admin' || userRole === 'super_admin') {
           setError('Please use the Admin Login page.'); setLoading(false); await auth.signOut(); return;
         }
+
+        // ✅ NEW: Update lastActive timestamp sa Firestore
+        await updateLastActive(user.uid);
+
         let userProgress = userData.progress || { wordsLearned: 0, gamesPlayed: 0, totalPoints: 0, level: 1, xp: 0, streak: 0 };
         try {
           const { getUserProgress } = await import('../services/firebaseService');
