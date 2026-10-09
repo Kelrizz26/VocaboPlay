@@ -13,10 +13,12 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "firebase": "^12.9.0",
+    "firebase-admin": "^14.5.0",
     "framer-motion": "^13.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
+    "resend": "^6.32.1",
     "three": "^0.185.1",
     "troika-three-text": "^0.52.5",
     "use-sound": "^5.0.0"
