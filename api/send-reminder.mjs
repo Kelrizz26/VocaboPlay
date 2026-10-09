@@ -2,7 +2,7 @@
 // Cron job: sends inactivity reminders (daily) + weekly reminders (Monday)
 
 import { Resend } from 'resend';
-import { db } from './_firebase.js';
+import { db } from './_firebase.mjs';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
