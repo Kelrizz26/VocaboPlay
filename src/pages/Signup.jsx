@@ -200,6 +200,14 @@ const Signup = () => {
       const userProfile = { uid: user.uid, displayName: username, username: username, email: user.email, avatar: user.photoURL || '👤', role: finalRole, emailVerified: true, googleAccount: true, progress: userProgress, settings: { emailNotifications: true, darkMode: false, language: 'en' } };
       localStorage.setItem('userProfile', JSON.stringify(userProfile));
       const token = await auth.currentUser.getIdToken();
+
+      // ✅ NEW: Trigger welcome email (fire-and-forget, hindi nag-block sa signup flow)
+      fetch('/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: token }),
+      }).catch(err => console.error('Welcome email trigger failed:', err));
+
       localStorage.setItem('token', token);
       localStorage.setItem('userType', finalRole);
       if (finalRole === 'admin') {
