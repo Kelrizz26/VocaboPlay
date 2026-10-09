@@ -6,6 +6,8 @@
 // ✅ NEW: FINISHED SCREEN with COMPLETION BONUS +50 💎 (same as MatchGame)
 // ✅ FIXED: devForceLevelUp no longer crashes (removed undefined setters)
 // ✅ FIXED: Exit returns to GAMES selection screen (via onExitToGames prop)
+// ✅ FIXED: Back button returns to GAMES selection screen
+// ✅ FIXED: Dev panel state preserved (call as function, not component)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -64,26 +66,12 @@ const fullScreenBg = {
   animation: 'bgPan 30s ease-in-out infinite alternate', fontFamily: FONT_BODY,
 };
 
-// ✅ COMPREHENSIVE LANDSCAPE CSS
 const bgAnimationStyle = (<style>{`
   @keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } }
 
   @media (max-height: 500px) and (orientation: landscape) {
-    .sq-play-wrapper {
-      padding: 4px 10px !important;
-      height: 100dvh !important;
-      overflow: hidden !important;
-      box-sizing: border-box !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-    }
-    .sq-header {
-      padding: 4px 10px !important;
-      margin-bottom: 4px !important;
-      border-radius: 10px !important;
-      max-width: 100% !important;
-    }
+    .sq-play-wrapper { padding: 4px 10px !important; height: 100dvh !important; overflow: hidden !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; align-items: center !important; }
+    .sq-header { padding: 4px 10px !important; margin-bottom: 4px !important; border-radius: 10px !important; max-width: 100% !important; }
     .sq-header span { font-size: 9px !important; }
     .sq-header button { font-size: 12px !important; padding: 0 4px !important; }
     .sq-header > div { gap: 3px !important; }
@@ -91,23 +79,10 @@ const bgAnimationStyle = (<style>{`
     .sq-header > div > div:last-child { padding: 1px 8px !important; font-size: 10px !important; }
     .sq-header-hearts span { font-size: 11px !important; }
     .sq-header-timer { width: 20px !important; height: 20px !important; font-size: 9px !important; }
-    .sq-main-card {
-      padding: 8px 14px !important;
-      border-radius: 14px !important;
-      max-height: calc(100dvh - 45px) !important;
-      overflow-y: auto !important;
-      width: 100% !important;
-      max-width: 720px !important;
-      box-sizing: border-box !important;
-    }
+    .sq-main-card { padding: 8px 14px !important; border-radius: 14px !important; max-height: calc(100dvh - 45px) !important; overflow-y: auto !important; width: 100% !important; max-width: 720px !important; box-sizing: border-box !important; }
     .sq-level-row { margin-bottom: 6px !important; }
     .sq-level-row span { font-size: 11px !important; }
-    .sq-image-row {
-      padding: 6px 10px !important;
-      margin-bottom: 8px !important;
-      gap: 8px !important;
-      border-radius: 10px !important;
-    }
+    .sq-image-row { padding: 6px 10px !important; margin-bottom: 8px !important; gap: 8px !important; border-radius: 10px !important; }
     .sq-image-box { width: 80px !important; height: 80px !important; border-radius: 8px !important; }
     .sq-image-arrow { font-size: 20px !important; }
     .sq-image-eq { font-size: 18px !important; padding: 0 10px !important; border-radius: 8px !important; }
@@ -1048,7 +1023,6 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     setShowExitConfirm(true);
   };
 
-  // ✅ FIXED: Return to GAMES selection screen (not Dashboard)
   const confirmExit = () => {
     setShowExitConfirm(false);
     setShowSettings(false);
@@ -1288,7 +1262,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, zIndex: 999999, background: palette.deepNavy }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
           <div className="loading-scroll-track">
             <img src={images['pixel-town']} className="loading-scroll-img" alt="" onError={(e) => { e.target.style.display = 'none'; }} />
@@ -1321,7 +1295,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         <div style={{ background: palette.white, borderRadius: '16px', padding: '40px', textAlign: 'center', maxWidth: '400px', width: '100%', border: `1.5px solid ${palette.border}`, boxShadow: '0 10px 30px rgba(42,40,69,0.15)' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
           <h2 style={{ fontSize: '20px', fontWeight: '800', color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>Loading...</h2>
@@ -1334,7 +1308,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         {showSettings && <SettingsModal />}
         {showLeaderboard && <LeaderboardModal />}
         {showExitConfirm && <ExitConfirmModal />}
@@ -1394,7 +1368,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
             </div>
           )}
           {showFeedback && (<div className="sq-feedback" style={{ marginTop: '10px', padding: '8px', borderRadius: '10px', background: `${palette.warmOrange}12`, border: `1.5px solid ${palette.warmOrange}40`, textAlign: 'center', fontSize: '12px', fontWeight: '700', color: palette.warmOrange, fontFamily: FONT_BODY }}>{feedbackMessage}</div>)}
-          {onBack && (<button onClick={onBack} className="sq-intro-back-btn" style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
+          {(onExitToGames || onBack) && (<button onClick={onExitToGames || onBack} className="sq-intro-back-btn" style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
         </div>
       </div>
     );
@@ -1406,7 +1380,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
 
         <div className="sq-end-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto', animation: 'finishedPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
           <div className="sq-end-emoji" style={{ fontSize: '64px', marginBottom: '6px' }}>👑</div>
@@ -1485,7 +1459,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         {showHeartShop && <HeartShopModal />}
         <div className="sq-end-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
           <div className="sq-end-emoji" style={{ fontSize: '60px', marginBottom: '6px' }}>💀</div>
@@ -1518,7 +1492,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   if (gameState === 'playing') {
     if (!currentQuestion) {
-      return (<div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>{bgAnimationStyle}<DevPanelElement /><div style={{ background: theme.cardBg, border: theme.cardBorder, boxShadow: theme.cardShadow, borderRadius: '16px', padding: '24px' }}><div style={{ fontSize: '32px' }}>🔄</div></div></div>);
+      return (<div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>{bgAnimationStyle}{DevPanelElement()}<div style={{ background: theme.cardBg, border: theme.cardBorder, boxShadow: theme.cardShadow, borderRadius: '16px', padding: '24px' }}><div style={{ fontSize: '32px' }}>🔄</div></div></div>);
     }
 
     const word = currentQuestion.word || '';
@@ -1539,7 +1513,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div className="sq-play-wrapper" style={{ ...fullScreenBg, padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100dvh', overflow: 'hidden', boxSizing: 'border-box' }}>
         {bgAnimationStyle}
-        <DevPanelElement />
+        {DevPanelElement()}
         <NoLivesOverlay />
         {showExitConfirm && <ExitConfirmModal />}
         {showSettings && <SettingsModal />}

@@ -4,6 +4,7 @@
 // ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
 // ✅ NEW: onExitToGames prop — bumabalik sa Games selection screen
 // ✅ FIXED: X button sa sidebar — mobile lang visible (hidden sa web)
+// ✅ UPDATED: Rotate phone prompt in English
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -690,10 +691,10 @@ const Dashboard = () => {
             <Icon name="rotate" size={80} color={palette.warmOrange} />
           </div>
           <h2 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '24px', marginBottom: '12px' }}>
-            I-rotate ang Phone Mo! 📱↔️
+            Rotate Your Phone! 📱↔️
           </h2>
           <p style={{ fontSize: '15px', opacity: 0.8, maxWidth: '300px', lineHeight: 1.5 }}>
-            Para sa mas magandang experience, pihitin mo yung phone mo papuntang <strong>landscape mode</strong> para magpatuloy sa game.
+            For a better experience, please rotate your phone to <strong>landscape mode</strong> to continue playing.
           </p>
           <style>{`
             @keyframes rotatePhone {

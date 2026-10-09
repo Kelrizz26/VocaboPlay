@@ -5,6 +5,7 @@
 // ✅ Diamond reward per level completion
 // ✅ +50 💎 completion bonus (A1 → C2)
 // ✅ FIXED: Dev panel state preserved (call as function, not component)
+// ✅ NEW: Back button returns to GAMES selection (via onExitToGames)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { auth, db } from '../../pages/firebase';
@@ -597,7 +598,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
 
   const restartGame = () => { startGame(); };
 
-  // ✅ TIMEOUT = -1 ❤️ + GAME OVER AGAD (walang restart)
   useEffect(() => {
     if (livesRef.current <= 0) { setTimerRunning(false); return; }
     if (timerRunning && timer > 0) {
@@ -610,7 +610,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       setLives(newLives);
       playMatchFail();
 
-      // ✅ ALWAYS game over on timeout (regardless of remaining hearts)
       setShowNoLivesMessage(true);
       setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
     }
@@ -652,7 +651,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setIsLocked(false);
           playMatchSuccess();
 
-          // ✅ RESET wrong counter on correct match
           wrongAttemptsRef.current = 0;
 
           const matchedWord = card1.type === 'word' ? card1.content : card2.word;
@@ -672,13 +670,11 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setTotalAnswers(prev => prev + 1);
           playMatchFail();
 
-          // ✅ 5 CONSECUTIVE wrong matches = -1 ❤️
           wrongAttemptsRef.current += 1;
           if (wrongAttemptsRef.current >= 5) {
             const newLives = livesRef.current - 1;
             livesRef.current = newLives;
             setLives(newLives);
-            // ✅ RESET counter after -1 heart
             wrongAttemptsRef.current = 0;
 
             if (newLives === 0) {
@@ -1163,7 +1159,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               </button>
             </div>
           )}
-          {onBack && (<button onClick={onBack} className="mg-intro-back-btn" style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
+          {(onExitToGames || onBack) && (<button onClick={onExitToGames || onBack} className="mg-intro-back-btn" style={{ marginTop: '10px', width: '100%', padding: '10px', background: 'transparent', color: theme.textSecondary, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>← Back</button>)}
         </div>
       </div>
     );
