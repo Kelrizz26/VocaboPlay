@@ -2,7 +2,7 @@
 // Cron job: sends inactivity reminders (daily) + weekly reminders (Monday)
 
 const { Resend } = require('resend');
-const { db } = require('./_firebase.cjs');
+const { db } = require('./_firebase.js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

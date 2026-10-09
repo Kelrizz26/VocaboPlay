@@ -1,5 +1,5 @@
 const { Resend } = require('resend');
-const { auth, db } = require('./_firebase.cjs');
+const { auth, db } = require('./_firebase.js');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
