@@ -1,41 +1,9 @@
-// api/send-welcome.js
-// Sends welcome email after user signs up
+const { Resend } = require('resend');
+const { auth, db } = require('./_firebase.cjs');
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-  try {
-    // Dynamic imports para maiwasan yung ESM bundling issue
-    const { Resend } = await import('resend');
-    const { getFirebase } = await import('./_firebase.js');
-
-    const { db, auth } = await getFirebase();
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { idToken } = req.body || {};
-    if (!idToken) {
-      return res.status(400).json({ error: 'Missing idToken' });
-    }
-
-    const decoded = await auth.verifyIdToken(idToken);
-    const user = await auth.getUser(decoded.uid);
-
-    if (!user.email) {
-      return res.status(400).json({ error: 'User has no email' });
-    }
-
-    const firstName = (user.displayName || user.email.split('@')[0] || 'there').split(' ')[0];
-
-    const userRef = db.collection('users').doc(decoded.uid);
-    const userDoc = await userRef.get();
-
-    if (userDoc.exists && userDoc.data()?.welcomeEmailSent) {
-      return res.status(200).json({ success: true, message: 'Already sent' });
-    }
-
-    const welcomeHtml = (name) => `
+const welcomeHtml = (name) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -84,6 +52,33 @@ export default async function handler(req, res) {
 </html>
 `;
 
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { idToken } = req.body || {};
+    if (!idToken) {
+      return res.status(400).json({ error: 'Missing idToken' });
+    }
+
+    const decoded = await auth.verifyIdToken(idToken);
+    const user = await auth.getUser(decoded.uid);
+
+    if (!user.email) {
+      return res.status(400).json({ error: 'User has no email' });
+    }
+
+    const firstName = (user.displayName || user.email.split('@')[0] || 'there').split(' ')[0];
+
+    const userRef = db.collection('users').doc(decoded.uid);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists && userDoc.data()?.welcomeEmailSent) {
+      return res.status(200).json({ success: true, message: 'Already sent' });
+    }
+
     const result = await resend.emails.send({
       from: 'VocaboPlay <onboarding@resend.dev>',
       to: user.email,
@@ -101,4 +96,4 @@ export default async function handler(req, res) {
     console.error('Welcome email error:', error);
     return res.status(500).json({ error: 'Failed to send welcome email', details: error.message });
   }
-}
+};

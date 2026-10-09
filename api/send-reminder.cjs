@@ -1,8 +1,8 @@
-// api/send-reminder.js
+// api/send-reminder.cjs
 // Cron job: sends inactivity reminders (daily) + weekly reminders (Monday)
 
-import { Resend } from 'resend';
-import { db } from './_firebase.js';
+const { Resend } = require('resend');
+const { db } = require('./_firebase.cjs');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -78,7 +78,7 @@ const emailHtml = (name, intro, body) => `
 </html>
 `;
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const authHeader = req.headers.authorization;
   const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
   const isManual = req.query.manual === 'true';
@@ -160,4 +160,4 @@ export default async function handler(req, res) {
     console.error('Reminder error:', error);
     return res.status(500).json({ error: 'Failed to send reminders', details: error.message });
   }
-}
+};
