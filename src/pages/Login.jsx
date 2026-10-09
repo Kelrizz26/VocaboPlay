@@ -99,7 +99,7 @@ const Login = () => {
   const pressButton = (e, s) => { e.currentTarget.style.transform = 'translateY(3px)'; e.currentTarget.style.boxShadow = 'none'; };
   const releaseButton = (e, s) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 3px 0 ${s}`; };
 
-  // ✅ NEW: Helper para i-update yung lastActive timestamp sa Firestore
+  // ✅ Helper para i-update yung lastActive timestamp sa Firestore
   const updateLastActive = async (uid) => {
     try {
       await updateDoc(doc(db, 'users', uid), {
@@ -126,8 +126,22 @@ const Login = () => {
           await auth.signOut(); setLoading(false); return;
         }
 
-        // ✅ NEW: Update lastActive timestamp sa Firestore
+        // ✅ Update lastActive timestamp sa Firestore
         await updateLastActive(user.uid);
+
+        // 🆕 Trigger welcome email para sa mga existing users na hindi pa nakatanggap
+        if (!userData.welcomeEmailSent) {
+          try {
+            const token = await user.getIdToken();
+            fetch('/api/send-welcome', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken: token }),
+            }).catch(err => console.error('Welcome email trigger failed:', err));
+          } catch (err) {
+            console.error('Token retrieval failed for welcome email:', err);
+          }
+        }
 
         const userProfile = {
           uid: user.uid, email: user.email,
@@ -173,8 +187,22 @@ const Login = () => {
           setError('Please use the Admin Login page.'); setLoading(false); await auth.signOut(); return;
         }
 
-        // ✅ NEW: Update lastActive timestamp sa Firestore
+        // ✅ Update lastActive timestamp sa Firestore
         await updateLastActive(user.uid);
+
+        // 🆕 Trigger welcome email para sa mga existing users na hindi pa nakatanggap
+        if (!userData.welcomeEmailSent) {
+          try {
+            const token = await user.getIdToken();
+            fetch('/api/send-welcome', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken: token }),
+            }).catch(err => console.error('Welcome email trigger failed:', err));
+          } catch (err) {
+            console.error('Token retrieval failed for welcome email:', err);
+          }
+        }
 
         let userProgress = userData.progress || { wordsLearned: 0, gamesPlayed: 0, totalPoints: 0, level: 1, xp: 0, streak: 0 };
         try {
