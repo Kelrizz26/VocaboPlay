@@ -2,7 +2,7 @@
 // Sends welcome email after user signs up
 
 import { Resend } from 'resend';
-import { auth, db } from './_firebase.mjs';
+import { auth, db } from './_firebase.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
