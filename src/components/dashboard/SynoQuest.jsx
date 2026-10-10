@@ -1,6 +1,7 @@
 // src/components/dashboard/SynoQuest.jsx
 // ✅ LANDSCAPE-RESPONSIVE
 // ✅ UPDATED: Music starts at loading screen, continues through playing
+// ✅ FIXED: Uses 'lobby' track (tata-cute-cute) instead of 'gameplay' (Retro_Game)
 // ✅ All existing features preserved
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -452,13 +453,13 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   // ══════════════════════════════════════════════════════════════
   // 🎵 BACKGROUND MUSIC — STARTS AT LOADING, CONTINUES IN PLAYING
+  // ✅ FIXED: Uses 'lobby' track (tata-cute-cute) for SynoQuest
   // ══════════════════════════════════════════════════════════════
   useEffect(() => {
-    // ✅ Music starts at loading, continues through playing
     const musicStates = ['loading', 'playing'];
 
     if (musicStates.includes(gameState) && !isMuted) {
-      backgroundMusic.start('gameplay');
+      backgroundMusic.start('lobby');   // ✅ 'lobby' — tata-cute-cute music
     } else {
       backgroundMusic.stop();
     }
