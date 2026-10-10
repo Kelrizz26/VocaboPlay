@@ -2,6 +2,8 @@
 // ✅ NEW: Clickable stats → Words Learned, Games Played, Total Points
 // ✅ FIXED: Words modal — uses `stats.progress.learnedWords` (correct path)
 // ✅ UPDATED: Removed "Correct Answers", made stat cards into 3 columns
+// ✅ NEW: Game Performance bar resets every 100 games (100/200, 200/300, ... 900/1000)
+// ✅ NEW: Listens to `demo-overrides` window event from the DEV/DEMO PANEL
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -253,6 +255,25 @@ const MyProgress = () => {
   const [learnedWords, setLearnedWords] = useState([]);
   const [gameHistory, setGameHistory] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // 🧪 DEMO overrides — driven by DEV/DEMO PANEL via window event
+  const [demoOverrides, setDemoOverrides] = useState({
+    level: '',
+    xp: '',
+    xpToNext: '',
+    games: {}, // { synoQuest: '250', matchGame: '', ... }
+  });
+
+  // 🧪 Listen sa events galing sa DEV/DEMO PANEL
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail) {
+        setDemoOverrides((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('demo-overrides', handler);
+    return () => window.removeEventListener('demo-overrides', handler);
+  }, []);
 
   useEffect(() => {
     if (stats) {
@@ -553,6 +574,18 @@ const MyProgress = () => {
     }
   ];
 
+  // 🧪 DEMO: apply per-game overrides
+  const gameTypesFinal = gameTypes.map((g) => {
+    const override = demoOverrides.games[g.key];
+    if (override !== undefined && override !== '') {
+      return {
+        ...g,
+        data: { ...g.data, gamesPlayed: Math.max(0, Number(override) || 0) },
+      };
+    }
+    return g;
+  });
+
   let totalCorrect = 0;
   let totalQuestions = 0;
   gameTypes.forEach(game => {
@@ -563,16 +596,16 @@ const MyProgress = () => {
     totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
   const displayAccuracy = stats?.accuracy || overallAccuracy || 0;
 
-  const level = stats?.level || 1;
-  const xp = stats?.xp || 0;
-  const xpToNext = stats?.xpToNext || 100;
+  // 🧪 DEMO: apply XP overrides if set, otherwise use real stats
+  const level = demoOverrides.level !== '' ? Number(demoOverrides.level) : (stats?.level || 1);
+  const xp = demoOverrides.xp !== '' ? Number(demoOverrides.xp) : (stats?.xp || 0);
+  const xpToNext = demoOverrides.xpToNext !== '' ? Number(demoOverrides.xpToNext) : (stats?.xpToNext || 100);
+
   const totalPoints = stats?.totalPoints || 0;
   const gamesPlayed = stats?.gamesPlayed || 0;
   const streak = stats?.currentStreak || 0;
   const wordsLearned = stats?.wordsLearned || 0;
   const correctAnswers = stats?.correctAnswers || 0;
-
-  const maxPlayed = 100;
 
   return (
     <div
@@ -947,9 +980,13 @@ const MyProgress = () => {
           Game Performance
         </div>
 
-        {gameTypes.map((game, i) => {
+        {gameTypesFinal.map((game, i) => {
           const gamesPlayedCount = game.data.gamesPlayed || 0;
-          const barPct = Math.min((gamesPlayedCount / maxPlayed) * 100, 100);
+
+          // ✅ Tier-based progress — resets every 100 games
+          // 0-99 → X/100, 100-199 → X/200, 200-299 → X/300, ... 900-999 → X/1000
+          const tierEnd = (Math.floor(gamesPlayedCount / 100) + 1) * 100;
+          const barPct = gamesPlayedCount % 100;
 
           return (
             <div
@@ -961,7 +998,7 @@ const MyProgress = () => {
                 gap: '14px',
                 padding: '14px 0',
                 borderBottom:
-                  i !== gameTypes.length - 1 ? `1.5px solid ${palette.borderSoft}` : 'none'
+                  i !== gameTypesFinal.length - 1 ? `1.5px solid ${palette.borderSoft}` : 'none'
               }}
             >
               <img
@@ -1019,7 +1056,7 @@ const MyProgress = () => {
               </div>
 
               <div className="game-perf-pill">
-                <Pill>{gamesPlayedCount} {gamesPlayedCount === 1 ? 'game' : 'games'}</Pill>
+                <Pill>{gamesPlayedCount}/{tierEnd} games</Pill>
               </div>
             </div>
           );

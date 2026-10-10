@@ -1,13 +1,7 @@
 // src/components/dashboard/SynoQuest.jsx
-// ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
+// ✅ LANDSCAPE-RESPONSIVE
+// ✅ UPDATED: Music starts at loading screen, continues through playing
 // ✅ All existing features preserved
-// ✅ UPDATED: Timer 15s → 12s → 10s (max 10s)
-// ✅ UPDATED: Dev Panel matches MatchGame layout
-// ✅ NEW: FINISHED SCREEN with COMPLETION BONUS +50 💎 (same as MatchGame)
-// ✅ FIXED: devForceLevelUp no longer crashes (removed undefined setters)
-// ✅ FIXED: Exit returns to GAMES selection screen (via onExitToGames prop)
-// ✅ FIXED: Back button returns to GAMES selection screen
-// ✅ FIXED: Dev panel state preserved (call as function, not component)
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -456,10 +450,26 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     });
   };
 
+  // ══════════════════════════════════════════════════════════════
+  // 🎵 BACKGROUND MUSIC — STARTS AT LOADING, CONTINUES IN PLAYING
+  // ══════════════════════════════════════════════════════════════
   useEffect(() => {
-    if (!isMuted && gameState !== 'intro') backgroundMusic.start('gameplay');
-    return () => backgroundMusic.stop();
+    // ✅ Music starts at loading, continues through playing
+    const musicStates = ['loading', 'playing'];
+
+    if (musicStates.includes(gameState) && !isMuted) {
+      backgroundMusic.start('gameplay');
+    } else {
+      backgroundMusic.stop();
+    }
   }, [isMuted, gameState]);
+
+  // ✅ Stop music on unmount
+  useEffect(() => {
+    return () => {
+      backgroundMusic.stop();
+    };
+  }, []);
 
   const createWordPuzzle = (pair, level) => {
     const config = LEVEL_CONFIG[level] || LEVEL_CONFIG['A1'];

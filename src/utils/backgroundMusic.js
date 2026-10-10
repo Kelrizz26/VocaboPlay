@@ -1,229 +1,207 @@
 // src/utils/backgroundMusic.js
+// 🎵 MP3-BASED BACKGROUND MUSIC
+// ✅ Same API as before — start(), stop(), toggle(), setTrack()
+// ✅ Fade in/out, loop, volume control
+// ✅ Fallback sa silence kung walang MP3
+// ✅ Different music per game:
+//    - SynoQuest → 'lobby' track (lobby.mp3)
+//    - MatchGame → 'gameplay' track (gameplay.mp3)
 
 class BackgroundMusic {
   constructor() {
     this.enabled = true;
-    this.audioContext = null;
+    this.audioElement = null;
     this.isPlaying = false;
     this.currentTrack = 'lobby';
-    this.noteIndex = 0;
-    this.timerId = null;
-    this.patternIndex = 0;
-  }
+    this.volume = 0.35;                 // Master volume (0.0 – 1.0)
+    this.fadeInterval = null;
+    this.hasUserInteracted = false;
 
-  initAudio() {
+    // 🎵 MP3 file paths
+    // ✅ UPDATED: Different tracks per game
+    this.tracks = {
+      lobby: '/music/lobby.mp3',          // SynoQuest music (tatamusic)
+      gameplay: '/music/gameplay.mp3',    // MatchGame music (Retro_Game)
+      final: '/music/gameplay.mp3',       // Fallback sa gameplay
+      victory: '/music/lobby.mp3',        // Fallback sa lobby
+      menu: '/music/lobby.mp3',           // Fallback sa lobby
+    };
+
+    // Track-specific volumes
+    this.trackVolumes = {
+      lobby: 0.30,
+      gameplay: 0.35,
+      final: 0.40,
+      victory: 0.45,
+      menu: 0.25,
+    };
+
+    // Load user preferences
     try {
-      if (!this.audioContext) {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const soundPref = localStorage.getItem('vocaboplay_sound');
+      if (soundPref !== null) this.enabled = JSON.parse(soundPref);
+
+      const volPref = localStorage.getItem('vocaboplay_music_volume');
+      if (volPref !== null) this.volume = parseFloat(volPref);
+    } catch (e) { /* ignore */ }
+
+    // Detect first user interaction (autoplay policy workaround)
+    if (typeof window !== 'undefined') {
+      const markInteracted = () => {
+        this.hasUserInteracted = true;
+        window.removeEventListener('click', markInteracted);
+        window.removeEventListener('keydown', markInteracted);
+        window.removeEventListener('touchstart', markInteracted);
+        // Retry play kung may pending track
+        if (this.enabled && !this.isPlaying && this.currentTrack) {
+          this.start(this.currentTrack);
+        }
+      };
+      window.addEventListener('click', markInteracted);
+      window.addEventListener('keydown', markInteracted);
+      window.addEventListener('touchstart', markInteracted);
+    }
+  }
+
+  // 🎵 Get or create audio element for a track
+  getAudioElement(track) {
+    const src = this.tracks[track] || this.tracks.lobby;
+
+    // Reuse if same source
+    if (this.audioElement && this.audioElement.dataset.track === track) {
+      return this.audioElement;
+    }
+
+    // Cleanup previous
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.src = '';
+      } catch (e) { /* ignore */ }
+    }
+
+    const audio = new Audio(src);
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0;
+    audio.dataset.track = track;
+
+    audio.onerror = () => {
+      console.warn(`[Music] MP3 not found: ${src}`);
+      this.isPlaying = false;
+    };
+
+    audio.onplay = () => { this.isPlaying = true; };
+    audio.onpause = () => { this.isPlaying = false; };
+
+    this.audioElement = audio;
+    return audio;
+  }
+
+  // 🎚️ Smooth fade to target volume
+  fadeTo(targetVolume, duration = 800) {
+    if (!this.audioElement) return;
+    if (this.fadeInterval) clearInterval(this.fadeInterval);
+
+    const startVolume = this.audioElement.volume;
+    const steps = 20;
+    const stepTime = duration / steps;
+    const volumeStep = (targetVolume - startVolume) / steps;
+    let currentStep = 0;
+
+    this.fadeInterval = setInterval(() => {
+      currentStep++;
+      if (!this.audioElement) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+        return;
       }
-      if (this.audioContext.state === 'suspended') {
-        this.audioContext.resume();
+      const newVol = Math.max(0, Math.min(1, startVolume + volumeStep * currentStep));
+      this.audioElement.volume = newVol;
+
+      if (currentStep >= steps) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+        this.audioElement.volume = Math.max(0, Math.min(1, targetVolume));
       }
-      return true;
-    } catch (e) {
-      return false;
-    }
+    }, stepTime);
   }
 
-  playNote(frequency, duration = 0.15, volume = 0.06, type = 'sine') {
-    if (!this.enabled || !this.audioContext) return;
-    try {
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
-      
-      oscillator.type = type;
-      oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-      
-      gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-      
-      oscillator.start();
-      oscillator.stop(this.audioContext.currentTime + duration);
-    } catch (e) {}
-  }
-
-  // 🎵 BLOOKET LOBBY - Chill but catchy
-  playLobby() {
-    const melody = [
-      523.25, 0, 587.33, 0, 659.25, 0, 587.33, 0,
-      523.25, 0, 587.33, 0, 659.25, 0, 783.99, 0
-    ];
-    const note = melody[this.noteIndex % melody.length];
-    if (note > 0) {
-      this.playNote(note, 0.12, 0.06, 'sine');
-      // Add a soft harmony
-      setTimeout(() => {
-        this.playNote(note * 1.25, 0.08, 0.03, 'sine');
-      }, 40);
-    }
-    // Add a soft bass beat
-    if (this.noteIndex % 4 === 0) {
-      this.playNote(110, 0.2, 0.04, 'square');
-    }
-    this.noteIndex++;
-  }
-
-  // 🎵 BLOOKET GAMEPLAY - Upbeat with energy
-  playGameplay() {
-    const melody = [
-      587.33, 659.25, 783.99, 880.00,
-      783.99, 880.00, 987.77, 880.00,
-      783.99, 659.25, 587.33, 523.25,
-      587.33, 659.25, 783.99, 659.25
-    ];
-    const note = melody[this.noteIndex % melody.length];
-    
-    // Main melody
-    this.playNote(note, 0.1, 0.07, 'sine');
-    
-    // Harmony (higher octave)
-    setTimeout(() => {
-      this.playNote(note * 1.5, 0.06, 0.035, 'sine');
-    }, 30);
-    
-    // Beat/drum effect
-    if (this.noteIndex % 2 === 0) {
-      this.playNote(100, 0.1, 0.05, 'square');
-    }
-    if (this.noteIndex % 4 === 0) {
-      this.playNote(80, 0.15, 0.04, 'square');
-    }
-    
-    this.noteIndex++;
-  }
-
-  // 🎵 BLOOKET FINAL ROUND - Intense and fast
-  playFinal() {
-    const melody = [
-      659.25, 783.99, 880.00, 987.77,
-      1046.50, 987.77, 880.00, 783.99,
-      880.00, 987.77, 1046.50, 1174.66,
-      1046.50, 987.77, 880.00, 783.99
-    ];
-    const note = melody[this.noteIndex % melody.length];
-    
-    // Fast melody
-    this.playNote(note, 0.06, 0.08, 'sine');
-    
-    // Harmony
-    setTimeout(() => {
-      this.playNote(note * 1.25, 0.04, 0.04, 'sine');
-    }, 20);
-    
-    // Fast drums
-    if (this.noteIndex % 2 === 0) {
-      this.playNote(120, 0.06, 0.06, 'square');
-    }
-    if (this.noteIndex % 4 === 0) {
-      this.playNote(90, 0.1, 0.05, 'square');
-    }
-    if (this.noteIndex % 8 === 0) {
-      this.playNote(70, 0.15, 0.04, 'square');
-    }
-    
-    this.noteIndex++;
-  }
-
-  // 🎵 BLOOKET VICTORY - Celebration music
-  playVictory() {
-    const melody = [
-      523.25, 587.33, 659.25, 783.99,
-      523.25, 587.33, 659.25, 783.99,
-      659.25, 783.99, 880.00, 987.77,
-      1046.50, 987.77, 880.00, 783.99
-    ];
-    const note = melody[this.noteIndex % melody.length];
-    
-    // Happy melody
-    this.playNote(note, 0.15, 0.08, 'sine');
-    
-    // Harmony
-    setTimeout(() => {
-      this.playNote(note * 1.5, 0.1, 0.04, 'sine');
-    }, 50);
-    
-    // Celebration bass
-    if (this.noteIndex % 4 === 0) {
-      this.playNote(130, 0.2, 0.05, 'square');
-    }
-    
-    this.noteIndex++;
-  }
-
-  // 🎵 BLOOKET MENU - Simple loop
-  playMenu() {
-    const melody = [523.25, 0, 659.25, 0, 783.99, 0, 659.25, 0];
-    const note = melody[this.noteIndex % melody.length];
-    if (note > 0) {
-      this.playNote(note, 0.15, 0.05, 'sine');
-    }
-    if (this.noteIndex % 8 === 0) {
-      this.playNote(110, 0.3, 0.03, 'sine');
-    }
-    this.noteIndex++;
-  }
-
+  // ▶️ Start playing music
   start(track = 'lobby') {
-    if (this.isPlaying) return;
-    
-    this.initAudio();
-    if (!this.audioContext) return;
-    
+    // Kung muted, huwag mag-play
+    if (!this.enabled) {
+      this.isPlaying = false;
+      return;
+    }
+
+    // Kung same track at tumutugtog na — huwag i-restart
+    if (this.isPlaying && this.currentTrack === track && this.audioElement && !this.audioElement.paused) {
+      return;
+    }
+
+    const previousTrack = this.currentTrack;
     this.currentTrack = track;
-    this.isPlaying = true;
-    this.noteIndex = 0;
-    
-    const soundPref = localStorage.getItem('vocaboplay_sound');
-    if (soundPref !== null) {
-      this.enabled = JSON.parse(soundPref);
+
+    // Switch track — pause yung luma
+    if (previousTrack !== track && this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.currentTime = 0;
+      } catch (e) { /* ignore */ }
     }
-    
-    this.playLoop();
-  }
 
-  playLoop() {
-    if (!this.isPlaying) return;
-    
-    const trackFunctions = {
-      lobby: this.playLobby.bind(this),
-      gameplay: this.playGameplay.bind(this),
-      final: this.playFinal.bind(this),
-      victory: this.playVictory.bind(this),
-      menu: this.playMenu.bind(this),
-    };
-    
-    const playFn = trackFunctions[this.currentTrack] || trackFunctions.lobby;
-    playFn();
-    
-    const intervals = {
-      lobby: 350,
-      gameplay: 200,
-      final: 120,
-      victory: 250,
-      menu: 400,
-    };
-    
-    const interval = intervals[this.currentTrack] || 300;
-    
-    this.timerId = setTimeout(() => {
-      this.playLoop();
-    }, interval);
-  }
+    const audio = this.getAudioElement(track);
+    const targetVolume = this.trackVolumes[track] || this.volume;
 
-  stop() {
-    this.isPlaying = false;
-    if (this.timerId) {
-      clearTimeout(this.timerId);
-      this.timerId = null;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          this.isPlaying = true;
+          this.fadeTo(targetVolume, 1000);   // Fade in over 1s
+        })
+        .catch((err) => {
+          console.warn('[Music] Autoplay blocked:', err.message);
+          this.isPlaying = false;
+        });
     }
-    this.noteIndex = 0;
   }
 
+  // ⏹️ Stop playing (with optional fade out)
+  stop(fadeOut = true) {
+    if (!this.audioElement) return;
+
+    if (fadeOut) {
+      this.fadeTo(0, 600);
+      setTimeout(() => {
+        if (this.audioElement) {
+          try {
+            this.audioElement.pause();
+            this.audioElement.currentTime = 0;
+          } catch (e) { /* ignore */ }
+        }
+        this.isPlaying = false;
+      }, 650);
+    } else {
+      try {
+        this.audioElement.pause();
+        this.audioElement.currentTime = 0;
+      } catch (e) { /* ignore */ }
+
+      if (this.fadeInterval) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+      }
+      this.isPlaying = false;
+    }
+  }
+
+  // 🔄 Toggle on/off
   toggle() {
     this.enabled = !this.enabled;
+    localStorage.setItem('vocaboplay_sound', JSON.stringify(this.enabled));
+
     if (!this.enabled) {
       this.stop();
     } else {
@@ -232,14 +210,54 @@ class BackgroundMusic {
     return this.enabled;
   }
 
+  // 🎵 Change track
   setTrack(track) {
+    if (this.currentTrack === track && this.isPlaying) return;
+    this.stop(false);
     this.currentTrack = track;
-    if (this.isPlaying) {
-      this.stop();
-      this.start(track);
+    if (this.enabled) this.start(track);
+  }
+
+  // 🔊 Set master volume (0.0 – 1.0)
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, vol));
+    localStorage.setItem('vocaboplay_music_volume', String(this.volume));
+
+    if (this.audioElement && this.isPlaying) {
+      const trackVol = this.trackVolumes[this.currentTrack] || this.volume;
+      this.audioElement.volume = this.volume * trackVol;
     }
+  }
+
+  // 🎚️ Get current volume
+  getVolume() {
+    return this.volume;
+  }
+
+  // 🔇 Set enabled state
+  setEnabled(enabled) {
+    this.enabled = !!enabled;
+    localStorage.setItem('vocaboplay_sound', JSON.stringify(this.enabled));
+    if (!this.enabled) this.stop();
+  }
+
+  // 🔍 Check if music is currently playing
+  getIsPlaying() {
+    return this.isPlaying;
+  }
+
+  // 🧹 Cleanup
+  destroy() {
+    if (this.fadeInterval) clearInterval(this.fadeInterval);
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.src = '';
+      } catch (e) { /* ignore */ }
+    }
+    this.isPlaying = false;
   }
 }
 
 const backgroundMusic = new BackgroundMusic();
-export default backgroundMusic; 
+export default backgroundMusic;

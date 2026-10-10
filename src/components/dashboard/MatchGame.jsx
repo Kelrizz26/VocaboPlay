@@ -1,13 +1,14 @@
 // src/components/dashboard/MatchGame.jsx
 // ✅ Same heart/diamond flow as SynoQuest
-// ✅ 5 CONSECUTIVE wrong matches = -1 ❤️ (resets on correct match)
-// ✅ Timeout = -1 ❤️ + GAME OVER AGAD (no restart)
+// ✅ 5 CONSECUTIVE wrong matches = -1 ❤️
+// ✅ Timeout = -1 ❤️ + GAME OVER AGAD
 // ✅ Diamond reward per level completion
 // ✅ +50 💎 completion bonus (A1 → C2)
-// ✅ FIXED: Dev panel state preserved (call as function, not component)
-// ✅ NEW: Back button returns to GAMES selection (via onExitToGames)
+// ✅ NEW: MP3 background music via backgroundMusic.js (no synthesized music)
+// ✅ NEW: Sound effects still Web Audio API synthesized
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import backgroundMusic from '../../utils/backgroundMusic';
 import { auth, db } from '../../pages/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -50,26 +51,24 @@ const wordLevelMap = {
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
-const LEVEL_PAIRS = {
-  'A1': 10, 'A2': 12, 'B1': 14, 'B2': 16, 'C1': 18, 'C2': 20,
-};
+const LEVEL_PAIRS = { 'A1': 10, 'A2': 12, 'B1': 14, 'B2': 16, 'C1': 18, 'C2': 20 };
 
 const LEVEL_GRID = {
-  'A1': { cols: 5,  maxWidth: '560px' },
-  'A2': { cols: 6,  maxWidth: '660px' },
-  'B1': { cols: 7,  maxWidth: '750px' },
-  'B2': { cols: 8,  maxWidth: '840px' },
-  'C1': { cols: 9,  maxWidth: '930px' },
+  'A1': { cols: 5, maxWidth: '560px' },
+  'A2': { cols: 6, maxWidth: '660px' },
+  'B1': { cols: 7, maxWidth: '750px' },
+  'B2': { cols: 8, maxWidth: '840px' },
+  'C1': { cols: 9, maxWidth: '930px' },
   'C2': { cols: 10, maxWidth: '1020px' },
 };
 
 const LEVEL_CONFIG = {
-  'A1': { timer: 80, label: 'A1 - Beginner',          emoji: '🟢' },
-  'A2': { timer: 75, label: 'A2 - Elementary',        emoji: '🟢' },
-  'B1': { timer: 70, label: 'B1 - Intermediate',      emoji: '🟡' },
-  'B2': { timer: 65, label: 'B2 - Upper Intermediate',emoji: '🟡' },
-  'C1': { timer: 60, label: 'C1 - Advanced',          emoji: '🟠' },
-  'C2': { timer: 55, label: 'C2 - Proficiency',       emoji: '👑' },
+  'A1': { timer: 80, label: 'A1 - Beginner', emoji: '🟢' },
+  'A2': { timer: 75, label: 'A2 - Elementary', emoji: '🟢' },
+  'B1': { timer: 70, label: 'B1 - Intermediate', emoji: '🟡' },
+  'B2': { timer: 65, label: 'B2 - Upper Intermediate', emoji: '🟡' },
+  'C1': { timer: 60, label: 'C1 - Advanced', emoji: '🟠' },
+  'C2': { timer: 55, label: 'C2 - Proficiency', emoji: '👑' },
 };
 
 const COMPLETION_BONUS_DIAMONDS = 50;
@@ -98,11 +97,7 @@ const fullScreenBg = {
 const bgAnimationStyle = (
   <style>{`
     @keyframes bgPan { 0% { background-position: 0% 0%; } 50% { background-position: 100% 50%; } 100% { background-position: 50% 100%; } }
-
-    @media (max-width: 1100px) {
-      .mg-cards { gap: 5px !important; padding: 8px !important; }
-    }
-
+    @media (max-width: 1100px) { .mg-cards { gap: 5px !important; padding: 8px !important; } }
     @media (max-height: 500px) and (orientation: landscape) {
       .mg-header { padding: 4px 10px !important; margin-bottom: 4px !important; border-radius: 10px !important; }
       .mg-header span { font-size: 9px !important; }
@@ -166,7 +161,6 @@ const bgAnimationStyle = (
       .mg-modal-price-btn > div:last-child > div:first-child { font-size: 12px !important; }
       .mg-modal-btn { padding: 8px !important; font-size: 11px !important; border-radius: 8px !important; }
     }
-
     @media (max-height: 380px) and (orientation: landscape) {
       .mg-cards { gap: 2px !important; padding: 4px !important; }
       .mg-header { padding: 3px 8px !important; }
@@ -213,7 +207,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
-
   const [localPoints, setLocalPoints] = useState(0);
 
   const [lives, setLives] = useState(5);
@@ -245,36 +238,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   useEffect(() => { updateProgressRef.current = updateProgress; }, [updateProgress]);
   useEffect(() => { recordGameRef.current = recordGame; }, [recordGame]);
 
+  // Sound effects only (Web Audio API) — MP3 background music separate
   const audioCtx = useRef(null);
   const gainNode = useRef(null);
-  const audioCtxRef = useRef(null);
-  const musicIntervalRef = useRef(null);
-  const musicGainRef = useRef(null);
-  const isMusicPlaying = useRef(false);
-
-  const NINTENDO_MELODY = [
-    { note: 523.25, duration: 0.15 }, { note: 587.33, duration: 0.15 }, { note: 659.25, duration: 0.15 },
-    { note: 783.99, duration: 0.15 }, { note: 659.25, duration: 0.15 }, { note: 587.33, duration: 0.15 },
-    { note: 523.25, duration: 0.15 }, { note: 659.25, duration: 0.15 }, { note: 783.99, duration: 0.15 },
-    { note: 880.00, duration: 0.15 }, { note: 783.99, duration: 0.15 }, { note: 659.25, duration: 0.15 },
-    { note: 783.99, duration: 0.15 }, { note: 880.00, duration: 0.15 }, { note: 987.77, duration: 0.20 },
-    { note: 880.00, duration: 0.20 }, { note: 783.99, duration: 0.20 }, { note: 659.25, duration: 0.15 },
-    { note: 783.99, duration: 0.15 }, { note: 880.00, duration: 0.15 }, { note: 1046.50, duration: 0.25 },
-    { note: 987.77, duration: 0.15 }, { note: 880.00, duration: 0.15 }, { note: 783.99, duration: 0.15 },
-  ];
-
-  const BASS_LINE = [
-    { note: 130.81, duration: 0.4 }, { note: 130.81, duration: 0.4 }, { note: 146.83, duration: 0.4 },
-    { note: 146.83, duration: 0.4 }, { note: 164.81, duration: 0.4 }, { note: 164.81, duration: 0.4 },
-    { note: 196.00, duration: 0.4 }, { note: 196.00, duration: 0.4 },
-  ];
-
-  const CHORD_PROGRESSION = [
-    { notes: [261.63, 329.63, 392.00], duration: 1.0 },
-    { notes: [392.00, 493.88, 587.33], duration: 1.0 },
-    { notes: [440.00, 523.25, 659.25], duration: 1.0 },
-    { notes: [349.23, 440.00, 523.25], duration: 1.0 },
-  ];
 
   const getUserId = useCallback(() => currentUser ? currentUser.uid : 'guest', [currentUser]);
   const getLivesStorageKey = useCallback(() => `matchgame_lives_${getUserId()}`, [getUserId]);
@@ -365,132 +331,25 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     }
   }, [lives, lastRefillTime, gameState, currentUser, getLivesStorageKey]);
 
-  const initMusicAudio = () => {
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        musicGainRef.current = audioCtxRef.current.createGain();
-        musicGainRef.current.gain.value = isMuted ? 0 : 0.12;
-        musicGainRef.current.connect(audioCtxRef.current.destination);
-      }
-      if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
-      return true;
-    } catch (e) { return false; }
-  };
-
-  const playMusicNote = (frequency, duration = 0.15, type = 'square', volume = 0.12) => {
-    if (isMuted || !audioCtxRef.current) return;
-    try {
-      const oscillator = audioCtxRef.current.createOscillator();
-      const gain = audioCtxRef.current.createGain();
-      oscillator.type = type;
-      oscillator.frequency.setValueAtTime(frequency, audioCtxRef.current.currentTime);
-      gain.gain.setValueAtTime(volume, audioCtxRef.current.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + duration);
-      oscillator.connect(gain);
-      gain.connect(musicGainRef.current);
-      oscillator.start();
-      oscillator.stop(audioCtxRef.current.currentTime + duration);
-      return oscillator;
-    } catch (e) { return null; }
-  };
-
-  const playChord = (notes, duration = 1.0) => {
-    if (isMuted || !audioCtxRef.current) return;
-    notes.forEach(freq => {
-      try {
-        const oscillator = audioCtxRef.current.createOscillator();
-        const gain = audioCtxRef.current.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(freq, audioCtxRef.current.currentTime);
-        gain.gain.setValueAtTime(0.05, audioCtxRef.current.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + duration);
-        oscillator.connect(gain);
-        gain.connect(musicGainRef.current);
-        oscillator.start();
-        oscillator.stop(audioCtxRef.current.currentTime + duration);
-      } catch (e) {}
-    });
-  };
-
-  const startBackgroundMusic = () => {
-    if (!initMusicAudio()) return;
-    if (isMusicPlaying.current) return;
-    isMusicPlaying.current = true;
-    let noteIndex = 0;
-    let chordIndex = 0;
-
-    const playNextNote = () => {
-      if (!isMusicPlaying.current || isMuted) return;
-      try {
-        const melodyNote = NINTENDO_MELODY[noteIndex % NINTENDO_MELODY.length];
-        playMusicNote(melodyNote.note, melodyNote.duration, 'square', 0.10);
-        if (noteIndex % 4 === 0) {
-          const bassNote = BASS_LINE[Math.floor(noteIndex / 4) % BASS_LINE.length];
-          playMusicNote(bassNote.note, bassNote.duration, 'sawtooth', 0.05);
-        }
-        if (noteIndex % 8 === 0) {
-          const chord = CHORD_PROGRESSION[chordIndex % CHORD_PROGRESSION.length];
-          playChord(chord.notes, 2.0);
-          chordIndex++;
-        }
-        noteIndex++;
-        if (Math.random() > 0.7) {
-          const arpNote = 523.25 + (Math.random() * 400);
-          playMusicNote(arpNote, 0.05, 'sine', 0.025);
-        }
-      } catch (e) {}
-      const nextDelay = 150 + (Math.random() * 20);
-      musicIntervalRef.current = setTimeout(playNextNote, nextDelay);
-    };
-    setTimeout(playNextNote, 300);
-  };
-
-  const stopBackgroundMusic = () => {
-    isMusicPlaying.current = false;
-    if (musicIntervalRef.current) {
-      clearTimeout(musicIntervalRef.current);
-      musicIntervalRef.current = null;
-    }
-    if (audioCtxRef.current) {
-      try { audioCtxRef.current.close(); } catch (e) {}
-      audioCtxRef.current = null;
-    }
-  };
-
-  const toggleMusic = () => {
-    setIsMuted(!isMuted);
-    if (!isMuted) {
-      if (musicGainRef.current && audioCtxRef.current) {
-        musicGainRef.current.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
-      }
-      if (gainNode.current && audioCtx.current) {
-        gainNode.current.gain.setValueAtTime(0, audioCtx.current.currentTime);
-      }
+  // ══════════════════════════════════════════════════════════════
+  // 🎵 BACKGROUND MUSIC (MP3 ONLY) — Starts at loading, continues in playing
+  // ══════════════════════════════════════════════════════════════
+  useEffect(() => {
+    const musicStates = ['loading', 'playing'];
+    if (musicStates.includes(gameState) && !isMuted) {
+      backgroundMusic.start('gameplay');
     } else {
-      if (musicGainRef.current && audioCtxRef.current) {
-        musicGainRef.current.gain.setValueAtTime(0.12, audioCtxRef.current.currentTime);
-      }
-      if (gainNode.current && audioCtx.current) {
-        gainNode.current.gain.setValueAtTime(0.4, audioCtx.current.currentTime);
-      }
-      if (!isMusicPlaying.current && gameState === 'playing') {
-        startBackgroundMusic();
-      }
+      backgroundMusic.stop();
     }
-  };
+  }, [isMuted, gameState]);
 
   useEffect(() => {
-    if (gameState === 'playing') {
-      if (!isMuted && !isMusicPlaying.current) startBackgroundMusic();
-    } else {
-      stopBackgroundMusic();
-    }
-    return () => { stopBackgroundMusic(); };
-  }, [gameState]);
+    return () => { backgroundMusic.stop(); };
+  }, []);
 
-  useEffect(() => { return () => { stopBackgroundMusic(); }; }, []);
-
+  // ══════════════════════════════════════════════════════════════
+  // 🔊 SOUND EFFECTS (Web Audio API synthesized — NOT music)
+  // ══════════════════════════════════════════════════════════════
   const initAudio = () => {
     try {
       if (!audioCtx.current) {
@@ -609,7 +468,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       livesRef.current = newLives;
       setLives(newLives);
       playMatchFail();
-
       setShowNoLivesMessage(true);
       setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
     }
@@ -650,9 +508,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setFlippedCards([]);
           setIsLocked(false);
           playMatchSuccess();
-
           wrongAttemptsRef.current = 0;
-
           const matchedWord = card1.type === 'word' ? card1.content : card2.word;
           if (matchedWord && !matchedWordsRef.current.includes(matchedWord)) {
             matchedWordsRef.current.push(matchedWord);
@@ -676,7 +532,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             livesRef.current = newLives;
             setLives(newLives);
             wrongAttemptsRef.current = 0;
-
             if (newLives === 0) {
               setShowNoLivesMessage(true);
               setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
@@ -693,7 +548,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     if (matches === totalPairsNeeded && totalPairsNeeded > 0) {
       if (answeredPairsInLevel === totalPairsNeeded) {
         setTimerRunning(false);
-
         const awardLevelDiamonds = async () => {
           if (!currentUser) return;
           const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
@@ -704,9 +558,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               setLocalDiamonds(result.newBalance);
               playDiamondSound();
             }
-          } catch (err) {
-            console.error('Error claiming level diamonds:', err);
-          }
+          } catch (err) { console.error('Error claiming level diamonds:', err); }
         };
         awardLevelDiamonds();
 
@@ -729,7 +581,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const saveGameProgress = (isWin) => {
     if (sessionSavedRef.current) return;
     sessionSavedRef.current = true;
-
     const wordsList = [...matchedWordsRef.current];
     const saved = localStorage.getItem('vocaboplay_progress');
     const currentProgress = saved ? JSON.parse(saved) : {};
@@ -737,16 +588,13 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     const lastPlayed = localStorage.getItem('vocaboplay_lastPlayed');
     let newStreak = currentProgress.streak || 0;
     if (!lastPlayed || lastPlayed !== today) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
       if (lastPlayed === yesterday.toDateString()) newStreak = (currentProgress.streak || 0) + 1;
       else newStreak = 1;
       localStorage.setItem('vocaboplay_lastPlayed', today);
     }
-
     const progressFn = updateProgressRef.current;
     const recordFn = recordGameRef.current;
-
     if (progressFn) {
       progressFn({
         gamesPlayed: 1, totalPoints: score, xp: score,
@@ -762,14 +610,10 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const saveGameToFirebase = async () => {
     if (!currentUser) return;
     const gameData = {
-      gameType: 'matchGame',
-      pointsEarned: score || 0,
-      newWordsLearned: correctAnswers || 0,
-      correctAnswers: correctAnswers || 0,
-      totalQuestions: totalAnswers || 0,
-      won: correctAnswers >= totalAnswers / 2,
-      score: score || 0,
-      levelReached: currentLevel,
+      gameType: 'matchGame', pointsEarned: score || 0,
+      newWordsLearned: correctAnswers || 0, correctAnswers: correctAnswers || 0,
+      totalQuestions: totalAnswers || 0, won: correctAnswers >= totalAnswers / 2,
+      score: score || 0, levelReached: currentLevel,
     };
     try { await updateUserStats(currentUser.uid, gameData); }
     catch (err) { console.error('Error saving to Firebase:', err); }
@@ -777,12 +621,10 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
 
   useEffect(() => {
     if (gameState !== 'gameover' && gameState !== 'finished') return;
-
     if (!firebaseSavedRef.current && currentUser) {
       firebaseSavedRef.current = true;
       saveGameToFirebase();
     }
-
     if (gameState === 'finished' && !completionBonusSavedRef.current && currentUser) {
       completionBonusSavedRef.current = true;
       (async () => {
@@ -795,12 +637,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setLocalDiamonds(newTotal);
           setCompletionBonus(COMPLETION_BONUS_DIAMONDS);
           playDiamondSound();
-        } catch (err) {
-          console.error('Error awarding completion bonus:', err);
-        }
+        } catch (err) { console.error('Error awarding completion bonus:', err); }
       })();
     }
-
     if (!progressSavedRef.current && currentUser) {
       progressSavedRef.current = true;
       saveGameProgress(true);
@@ -815,17 +654,14 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     try {
       const result = await spendDiamonds(currentUser.uid, heartPackage.diamonds);
       if (!result.success) { setHeartShopProcessing(false); return; }
-
       setLocalDiamonds(result.newBalance);
       const newLives = Math.min(livesRef.current + heartPackage.hearts, maxLives);
       setLives(newLives); livesRef.current = newLives;
       setLastRefillTime(Date.now()); lastRefillTimeRef.current = Date.now();
       localStorage.setItem(getLivesStorageKey(), JSON.stringify({ lives: newLives, lastRefillTime: Date.now() }));
-
       playBuySound();
       setShowHeartShop(false);
       setShowNoLivesMessage(false);
-
       if (continueFromGameOver) {
         firebaseSavedRef.current = false;
         diamondSavedRef.current = false;
@@ -839,9 +675,8 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         startLevel(currentLevel);
         setGameState('playing');
       }
-    } catch (err) {
-      console.error('Error buying hearts:', err);
-    } finally { setHeartShopProcessing(false); }
+    } catch (err) { console.error('Error buying hearts:', err); }
+    finally { setHeartShopProcessing(false); }
   };
 
   const openHeartShopFromGameOver = () => { setContinueFromGameOver(true); setShowHeartShop(true); };
@@ -859,12 +694,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const confirmExit = () => {
     setShowExitConfirm(false);
     setShowSettings(false);
-    stopBackgroundMusic();
-    if (onExitToGames) {
-      onExitToGames();
-    } else if (onBack) {
-      onBack();
-    }
+    backgroundMusic.stop();
+    if (onExitToGames) { onExitToGames(); }
+    else if (onBack) { onBack(); }
   };
 
   const cancelExit = () => setShowExitConfirm(false);
@@ -993,7 +825,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         </div>
         <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '12px', fontWeight: '700', color: palette.bodyText, fontFamily: FONT_DISPLAY }}>🎵 Background Music</span>
-          <button onClick={toggleMusic} className="mg-modal-btn" style={{ padding: '3px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{isMuted ? 'OFF' : 'ON'}</button>
+          <button onClick={() => setIsMuted(!isMuted)} className="mg-modal-btn" style={{ padding: '3px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>{isMuted ? 'OFF' : 'ON'}</button>
         </div>
         <button onClick={() => { setShowLeaderboard(true); setShowSettings(false); }} className="mg-modal-btn" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.border}`, background: palette.creamSoft, color: palette.bodyText, cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginBottom: '6px', fontFamily: FONT_DISPLAY }}>🏆 Leaderboard</button>
         <button onClick={handleExitGame} className="mg-modal-btn" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: `1.5px solid ${palette.danger}40`, background: `${palette.danger}10`, color: palette.danger, cursor: 'pointer', fontSize: '12px', fontWeight: '800', marginBottom: '6px', fontFamily: FONT_DISPLAY }}>❌ Exit Game</button>
@@ -1142,10 +974,10 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             {lives < maxLives && timeRemaining && (<span style={{ fontSize: '11px', color: palette.warmOrange, fontWeight: '700', fontFamily: FONT_BODY }}>⏳ {timeRemaining}</span>)}
           </div>
           <div className="mg-intro-music" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '14px', padding: '8px 12px', background: theme.surfaceBg, border: `1px solid ${theme.surfaceBorder}`, borderRadius: '10px' }}>
-            <button onClick={toggleMusic} style={{ padding: '4px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: FONT_DISPLAY }}>
+            <button onClick={() => setIsMuted(!isMuted)} style={{ padding: '4px 14px', borderRadius: '8px', border: 'none', background: isMuted ? palette.danger : palette.softGreen, color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: FONT_DISPLAY }}>
               {isMuted ? '🔇 Music Off' : '🔊 Music On'}
             </button>
-            <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: 600 }}>🎵 8-bit vibes</span>
+            <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: 600 }}>🎵 Background music</span>
           </div>
           {lives > 0 ? (
             <button onClick={startGame} className="mg-intro-start-btn" style={{ width: '100%', padding: '14px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '800', cursor: 'pointer', boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase' }}>🚀 Start Game</button>
@@ -1174,13 +1006,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
         {DevPanelElement()}
-        <div className="mg-levelup-card" style={{
-          maxWidth: '440px', width: '100%', background: palette.white, borderRadius: '28px',
-          padding: '40px 32px', textAlign: 'center', border: `3px solid ${palette.warmOrange}`,
-          boxShadow: `0 30px 80px rgba(0,0,0,0.4), 0 0 0 8px rgba(233, 160, 117, 0.2)`,
-          animation: 'levelPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)', position: 'relative',
-          maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto',
-        }}>
+        <div className="mg-levelup-card" style={{ maxWidth: '440px', width: '100%', background: palette.white, borderRadius: '28px', padding: '40px 32px', textAlign: 'center', border: `3px solid ${palette.warmOrange}`, boxShadow: `0 30px 80px rgba(0,0,0,0.4), 0 0 0 8px rgba(233, 160, 117, 0.2)`, animation: 'levelPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)', position: 'relative', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
           <div style={{ position: 'absolute', top: '-12px', left: '20%', fontSize: '28px', animation: 'floatUp 2s ease-in-out infinite' }}>✨</div>
           <div style={{ position: 'absolute', top: '-12px', right: '20%', fontSize: '28px', animation: 'floatUp 2s ease-in-out infinite 0.3s' }}>🎉</div>
           <div className="mg-levelup-emoji" style={{ fontSize: '72px', marginBottom: '8px', lineHeight: 1 }}>🏆</div>
@@ -1211,11 +1037,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               <div style={{ fontSize: '10px', color: palette.bodyTextSoft, fontFamily: FONT_BODY, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Time Limit</div>
             </div>
           </div>
-          <button
-            onClick={() => { startLevel(nextLevelName); setGameState('playing'); }}
-            className="mg-levelup-btn"
-            style={{ width: '100%', padding: '16px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '900', cursor: 'pointer', boxShadow: `0 4px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '1px' }}
-          >
+          <button onClick={() => { startLevel(nextLevelName); setGameState('playing'); }} className="mg-levelup-btn" style={{ width: '100%', padding: '16px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '900', cursor: 'pointer', boxShadow: `0 4px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '1px' }}>
             Continue →
           </button>
           <style>{`
@@ -1242,11 +1064,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             {isFinished ? 'All Levels Complete!' : 'Game Over!'}
           </h2>
           <p className="mg-gameover-sub" style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
-            {isFinished ? (
-              <>You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C2</strong>! 🎉</>
-            ) : (
-              <>Reached <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{currentLevel}</strong> with <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{correctAnswers}</strong> correct!</>
-            )}
+            {isFinished ? (<>You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C2</strong>! 🎉</>) : (<>Reached <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{currentLevel}</strong> with <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{correctAnswers}</strong> correct!</>)}
           </p>
           <div className="mg-gameover-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
             <div className="mg-gameover-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
@@ -1269,17 +1087,11 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             </div>
           )}
           {isFinished && completionBonus > 0 && (
-            <div className="mg-gameover-reward" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', background: `linear-gradient(135deg, #FEF3C7, #FDE68A)`, borderRadius: '14px', marginBottom: '16px', border: `2px solid ${palette.gold}`, boxShadow: `0 4px 0 #B45309, 0 0 24px ${palette.gold}80`, animation: 'bonusPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
-              <div style={{ position: 'absolute', top: '-14px', left: '15%', fontSize: '20px', animation: 'sparkle 1.8s ease-in-out infinite' }}>✨</div>
-              <div style={{ position: 'absolute', top: '-14px', right: '15%', fontSize: '20px', animation: 'sparkle 1.8s ease-in-out infinite 0.4s' }}>✨</div>
-              <span style={{ fontSize: '32px', filter: 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.8))' }}>🏆</span>
+            <div className="mg-gameover-reward" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '16px', background: `linear-gradient(135deg, #FEF3C7, #FDE68A)`, borderRadius: '14px', marginBottom: '16px', border: `2px solid ${palette.gold}`, boxShadow: `0 4px 0 #B45309, 0 0 24px ${palette.gold}80` }}>
+              <span style={{ fontSize: '32px' }}>🏆</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: '#78350F', fontFamily: FONT_DISPLAY, letterSpacing: '0.5px' }}>
-                  COMPLETION BONUS!
-                </div>
-                <div style={{ fontSize: '16px', fontWeight: '800', color: '#B45309', fontFamily: FONT_DISPLAY }}>
-                  +{completionBonus} 💎 Diamonds
-                </div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: '#78350F', fontFamily: FONT_DISPLAY }}>COMPLETION BONUS!</div>
+                <div style={{ fontSize: '16px', fontWeight: '800', color: '#B45309', fontFamily: FONT_DISPLAY }}>+{completionBonus} 💎 Diamonds</div>
               </div>
             </div>
           )}
@@ -1294,10 +1106,6 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             </button>
             <button onClick={() => setGameState('intro')} className="mg-gameover-btn" style={{ padding: '10px', background: palette.creamSoft, color: palette.bodyText, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', fontFamily: FONT_DISPLAY }}>Back to Menu</button>
           </div>
-          <style>{`
-            @keyframes bonusPop { 0% { transform: scale(0.5) translateY(15px); opacity: 0; } 60% { transform: scale(1.08) translateY(-3px); opacity: 1; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-            @keyframes sparkle { 0%, 100% { opacity: 0.4; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.3) rotate(15deg); } }
-          `}</style>
         </div>
       </div>
     );
@@ -1324,9 +1132,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             <span style={{ fontWeight: '800', color: palette.deepNavy, fontSize: '12px', fontFamily: FONT_DISPLAY, whiteSpace: 'nowrap' }}>🧩 {config.emoji} Lv.{currentLevel}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap', justifyContent: 'flex-end' }}>
-            <div style={{ fontSize: '10px', color: palette.bodyText, fontWeight: '800', background: palette.creamSoft, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.border}`, whiteSpace: 'nowrap' }}>
-              {matches}/{totalPairs}
-            </div>
+            <div style={{ fontSize: '10px', color: palette.bodyText, fontWeight: '800', background: palette.creamSoft, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.border}`, whiteSpace: 'nowrap' }}>{matches}/{totalPairs}</div>
             <div style={{ fontSize: '10px', color: palette.gold, fontWeight: '800', background: `${palette.gold}15`, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.gold}40`, whiteSpace: 'nowrap' }}>💰 {localPoints}</div>
             <div style={{ fontSize: '10px', color: palette.diamond, fontWeight: '800', background: `${palette.diamond}15`, padding: '2px 8px', borderRadius: '8px', fontFamily: FONT_DISPLAY, border: `1px solid ${palette.diamond}40`, whiteSpace: 'nowrap' }}>💎 {localDiamonds}</div>
             <div style={{ display: 'flex', gap: '1px' }}>
@@ -1342,25 +1148,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             <div style={{ height: '100%', background: `linear-gradient(90deg, ${palette.warmOrange}, ${palette.coral})`, width: `${progress}%`, transition: 'width 0.4s ease' }} />
           </div>
         </div>
-        <div
-          className="mg-cards"
-          style={{
-            maxWidth: gridConfig.maxWidth,
-            width: '100%',
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: `repeat(${gridConfig.cols}, 1fr)`,
-            gap: '8px',
-            padding: '12px',
-            background: theme.cardBg,
-            borderRadius: '18px',
-            border: theme.cardBorder,
-            boxShadow: theme.cardShadow,
-            transition: 'max-width 0.3s ease',
-            boxSizing: 'border-box',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="mg-cards" style={{ maxWidth: gridConfig.maxWidth, width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: `repeat(${gridConfig.cols}, 1fr)`, gap: '8px', padding: '12px', background: theme.cardBg, borderRadius: '18px', border: theme.cardBorder, boxShadow: theme.cardShadow, transition: 'max-width 0.3s ease', boxSizing: 'border-box', overflow: 'hidden' }}>
           {cards.map((card, index) => (
             <div key={card.id} className="mg-card" onClick={() => handleCardClick(index)} style={{ aspectRatio: '1', cursor: card.isMatched || flippedCards.includes(index) || isLocked ? 'default' : 'pointer', opacity: card.isMatched ? 0.35 : 1, perspective: '800px', touchAction: 'manipulation' }}>
               <div style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}>

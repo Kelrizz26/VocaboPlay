@@ -2,6 +2,7 @@
 // ✅ NEW: Diamond purchasing option for avatars
 // ✅ Dual currency: Points (grindable) + Diamonds (premium)
 // ✅ Diamond price auto-computed based on rarity
+// ✅ SMOOTH ANIMATIONS: Better transitions on filter change + avatar grid
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +15,6 @@ import {
 } from '../../data/avatarShop';
 import { colors, fontFamily } from './dashboardStyles';
 
-// ===== MUTED GAME UI PALETTE (soft, not too bright) =====
 const palette = {
   warmOrange: '#E9A075',
   warmOrangeShadow: '#C27E4F',
@@ -35,7 +35,6 @@ const palette = {
   softGreenShadow: '#5E7F55',
   shadow: 'rgba(42, 40, 69, 0.06)',
   shadowMd: 'rgba(42, 40, 69, 0.10)',
-  // 💎 Diamond colors
   diamond: '#5DADE2',
   diamondShadow: '#3D8BBF',
   diamondSoft: '#DBEAFE',
@@ -47,18 +46,17 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
-// ============================================================
-// 💎 DIAMOND PRICE COMPUTATION
-// Base sa rarity — mas premium (mas mahal) habang rare
-// Formula: points × multiplier, min 5 💎
-// ============================================================
+// 🎬 Smooth spring transitions
+const SPRING_SMOOTH = { type: 'spring', stiffness: 320, damping: 30 };
+const SPRING_SNAPPY = { type: 'spring', stiffness: 450, damping: 32 };
+
 const DIAMOND_MULTIPLIERS = {
   free: 0,
-  common: 0.15,      // 100 pts → 15 💎
-  rare: 0.12,        // 500 pts → 60 💎
-  epic: 0.10,        // 1000 pts → 100 💎
-  legendary: 0.09,   // 5000 pts → 450 💎
-  mythic: 0.08,      // 10000 pts → 800 💎
+  common: 0.15,
+  rare: 0.12,
+  epic: 0.10,
+  legendary: 0.09,
+  mythic: 0.08,
 };
 
 const getDiamondPrice = (item) => {
@@ -69,7 +67,6 @@ const getDiamondPrice = (item) => {
   return Math.max(5, Math.round(item.price * multiplier));
 };
 
-// ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = `${palette.bodyTextSoft}55` }) => {
   const icons = {
     shop: (
@@ -91,18 +88,14 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = 
         <path d="M2 9h20M12 3l-4 6 4 12M12 3l4 6-4 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </>
     ),
-    check: (
-      <path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    ),
+    check: (<path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
     lock: (
       <>
         <rect x="4" y="11" width="16" height="10" rx="2" stroke={color} strokeWidth="2" fill="none"/>
         <path d="M8 11V7a4 4 0 118 0v4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </>
     ),
-    sparkle: (
-      <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    ),
+    sparkle: (<path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
     reset: (
       <>
         <path d="M1 4v6h6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -117,9 +110,6 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = 
   );
 };
 
-// ============================================================
-// ✅ RARITY SIDEBAR CONFIG
-// ============================================================
 const RARITY_SIDEBAR = [
   { id: 'all', label: 'All', icon: 'sparkle', color: palette.warmOrange },
   { id: 'free', label: 'Free', icon: 'check', color: palette.softGreen },
@@ -129,14 +119,11 @@ const RARITY_SIDEBAR = [
   { id: 'legendary', label: 'Legend', icon: 'sparkle', color: '#d4af37' }
 ];
 
-// ============================================================
-// ✅ AVATAR SHOP
-// ============================================================
 const AvatarShop = ({ 
   currentPoints, 
   onPointsChange, 
-  currentDiamonds = 0,        // 👈 BAGO
-  onDiamondsChange,           // 👈 BAGO
+  currentDiamonds = 0,
+  onDiamondsChange,
   onEquipChange 
 }) => {
   const [ownedAvatars, setOwnedAvatars] = useState([]);
@@ -146,17 +133,15 @@ const AvatarShop = ({
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedRarity, setSelectedRarity] = useState('all');
   const [showBuyModal, setShowBuyModal] = useState(false);
-  const [buyCurrency, setBuyCurrency] = useState('points'); // 👈 BAGO: 'points' | 'diamonds'
+  const [buyCurrency, setBuyCurrency] = useState('points');
   const [isMobileView, setIsMobileView] = useState(false);
   const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [localDiamonds, setLocalDiamonds] = useState(currentDiamonds);
 
-  // Sync diamonds prop
   useEffect(() => {
     setLocalDiamonds(currentDiamonds);
   }, [currentDiamonds]);
 
-  // ===== LOAD USER DATA =====
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -188,7 +173,6 @@ const AvatarShop = ({
           setEquippedAvatar(equipped);
           setPreviewAvatar(equipped);
           
-          // 👈 Sync diamonds from Firebase
           if (typeof data.totalDiamonds === 'number') {
             setLocalDiamonds(data.totalDiamonds);
             if (onDiamondsChange) onDiamondsChange(data.totalDiamonds);
@@ -210,7 +194,6 @@ const AvatarShop = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ===== RESPONSIVE BREAKPOINTS =====
   useEffect(() => {
     const checkViewport = () => {
       const w = window.innerWidth;
@@ -222,7 +205,6 @@ const AvatarShop = ({
     return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
-  // ===== AUTO-HIDE MESSAGE =====
   useEffect(() => {
     if (message.text) {
       const timer = setTimeout(() => setMessage({ type: '', text: '' }), 3000);
@@ -230,7 +212,6 @@ const AvatarShop = ({
     }
   }, [message.text]);
 
-  // ===== BUY (supports both points and diamonds) =====
   const handleBuy = async () => {
     const avatarToBuy = previewAvatar;
     const avatarData = AVATAR_SHOP_ITEMS.find(a => a.id === avatarToBuy);
@@ -247,7 +228,6 @@ const AvatarShop = ({
 
     const diamondPrice = getDiamondPrice(avatarData);
 
-    // ===== PURCHASE WITH DIAMONDS =====
     if (buyCurrency === 'diamonds') {
       if (localDiamonds < diamondPrice) {
         setMessage({ 
@@ -280,7 +260,6 @@ const AvatarShop = ({
       return;
     }
 
-    // ===== PURCHASE WITH POINTS =====
     if (currentPoints < avatarData.price) {
       setMessage({ 
         type: 'error', 
@@ -310,7 +289,6 @@ const AvatarShop = ({
     }
   };
 
-  // ===== EQUIP =====
   const handleEquip = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -329,7 +307,6 @@ const AvatarShop = ({
     }
   };
 
-  // ===== RESET =====
   const handleReset = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -349,14 +326,12 @@ const AvatarShop = ({
     }
   };
 
-  // ===== OPEN BUY MODAL (auto-select affordable currency) =====
   const openBuyModal = () => {
     const avatarData = AVATAR_SHOP_ITEMS.find(a => a.id === previewAvatar);
     const diamondPrice = getDiamondPrice(avatarData);
     const canAffordPoints = currentPoints >= (avatarData?.price || 0);
     const canAffordDiamonds = localDiamonds >= diamondPrice;
 
-    // Auto-select currency: prefer points, fallback diamonds
     if (canAffordPoints) setBuyCurrency('points');
     else if (canAffordDiamonds) setBuyCurrency('diamonds');
     else setBuyCurrency('points');
@@ -364,12 +339,10 @@ const AvatarShop = ({
     setShowBuyModal(true);
   };
 
-  // ===== FILTERED =====
   const filteredAvatars = selectedRarity === 'all'
     ? AVATAR_SHOP_ITEMS
     : AVATAR_SHOP_ITEMS.filter(a => a.rarity === selectedRarity);
 
-  // ===== PREVIEW DATA =====
   const previewData = AVATAR_SHOP_ITEMS.find(a => a.id === previewAvatar);
   const previewRarity = previewData?.rarity || 'free';
   const previewConfig = RARITY_CONFIG[previewRarity];
@@ -380,10 +353,8 @@ const AvatarShop = ({
   const canAffordDiamonds = localDiamonds >= previewDiamondPrice;
   const canAffordEither = canAffordPoints || canAffordDiamonds;
 
-  // ===== DYNAMIC CARD SIZES =====
   const isCompact = screenWidth < 480;
 
-  // ===== LOADING =====
   if (loading) {
     return (
       <div style={{
@@ -443,7 +414,10 @@ const AvatarShop = ({
           .shop-modal-image { width: 80px !important; height: 80px !important; }
         }
         .shop-avatar-card {
-          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+          transition: border-color 0.22s ease, box-shadow 0.22s ease;
+        }
+        .shop-avatar-card img {
+          transition: filter 0.25s ease, transform 0.25s ease;
         }
       `}</style>
 
@@ -495,13 +469,12 @@ const AvatarShop = ({
           </p>
         </div>
         
-        {/* BALANCE PILLS: Points + Diamonds */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <motion.div
             key={currentPoints}
             initial={{ scale: 1.15 }}
             animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+            transition={SPRING_SMOOTH}
             style={{
               background: palette.creamSoft,
               border: `1.5px solid ${palette.border}`,
@@ -524,12 +497,11 @@ const AvatarShop = ({
             </div>
           </motion.div>
 
-          {/* 💎 DIAMONDS BALANCE */}
           <motion.div
             key={localDiamonds}
             initial={{ scale: 1.15 }}
             animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+            transition={SPRING_SMOOTH}
             style={{
               background: palette.diamondSoft,
               border: `1.5px solid ${palette.diamond}60`,
@@ -561,6 +533,7 @@ const AvatarShop = ({
             initial={{ opacity: 0, y: -16, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: -16, height: 0 }}
+            transition={{ duration: 0.25 }}
             style={{
               background: message.type === 'success' 
                 ? `${palette.softGreen}15` 
@@ -594,7 +567,7 @@ const AvatarShop = ({
         alignItems: 'stretch',
       }}>
 
-        {/* LEFT: RARITY SIDEBAR (desktop only) */}
+        {/* LEFT: RARITY SIDEBAR (desktop) */}
         {!isMobileView && (
           <motion.div
             initial={{ opacity: 0, x: -16 }}
@@ -619,19 +592,25 @@ const AvatarShop = ({
               return (
                 <motion.button
                   key={rarity.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedRarity(rarity.id)}
+                  // ✅ Smooth active state transition
+                  animate={{
+                    scale: isActive ? 1.04 : 1,
+                    borderColor: isActive ? rarity.color : palette.border,
+                    backgroundColor: isActive ? `${rarity.color}12` : palette.creamSoft,
+                    boxShadow: isActive 
+                      ? `0 2px 0 ${rarity.color}40` 
+                      : `0 0 0 rgba(0,0,0,0)`,
+                  }}
+                  whileHover={{ scale: isActive ? 1.06 : 1.05 }}
+                  whileTap={{ scale: 0.94 }}
+                  transition={SPRING_SNAPPY}
                   style={{
                     width: '100%',
                     aspectRatio: '1',
                     borderRadius: '10px',
-                    border: isActive 
-                      ? `1.5px solid ${rarity.color}` 
-                      : `1.5px solid ${palette.border}`,
-                    background: isActive 
-                      ? `${rarity.color}12`
-                      : palette.creamSoft,
+                    borderWidth: '1.5px',
+                    borderStyle: 'solid',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -639,25 +618,36 @@ const AvatarShop = ({
                     cursor: 'pointer',
                     gap: '3px',
                     padding: '6px 4px',
-                    transition: 'all 0.18s ease',
-                    boxShadow: isActive ? `0 2px 0 ${rarity.color}40` : 'none',
                   }}
                 >
-                  <Icon 
-                    name={rarity.icon} 
-                    size={18} 
-                    color={isActive ? rarity.color : palette.bodyTextSoft} 
-                  />
-                  <span style={{
-                    fontSize: '8px',
-                    fontWeight: '800',
-                    color: isActive ? rarity.color : palette.bodyTextSoft,
-                    textTransform: 'uppercase',
-                    fontFamily: BRAND_FONT_DISPLAY,
-                    letterSpacing: '0.05em'
-                  }}>
+                  <motion.div
+                    animate={{ 
+                      color: isActive ? rarity.color : palette.bodyTextSoft,
+                      scale: isActive ? 1.08 : 1,
+                    }}
+                    transition={SPRING_SNAPPY}
+                  >
+                    <Icon 
+                      name={rarity.icon} 
+                      size={18} 
+                      color={isActive ? rarity.color : palette.bodyTextSoft} 
+                    />
+                  </motion.div>
+                  <motion.span 
+                    animate={{ 
+                      color: isActive ? rarity.color : palette.bodyTextSoft,
+                      fontWeight: isActive ? 800 : 700,
+                    }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      fontSize: '8px',
+                      textTransform: 'uppercase',
+                      fontFamily: BRAND_FONT_DISPLAY,
+                      letterSpacing: '0.05em'
+                    }}
+                  >
                     {rarity.label}
-                  </span>
+                  </motion.span>
                 </motion.button>
               );
             })}
@@ -678,19 +668,26 @@ const AvatarShop = ({
               {RARITY_SIDEBAR.map((rarity) => {
                 const isActive = selectedRarity === rarity.id;
                 return (
-                  <button
+                  <motion.button
                     key={rarity.id}
                     onClick={() => setSelectedRarity(rarity.id)}
+                    animate={{
+                      scale: isActive ? 1.05 : 1,
+                      borderColor: isActive ? rarity.color : palette.border,
+                      backgroundColor: isActive ? `${rarity.color}12` : palette.white,
+                      color: isActive ? rarity.color : palette.bodyTextSoft,
+                      boxShadow: isActive 
+                        ? `0 2px 0 ${rarity.color}40` 
+                        : `0 2px 0 ${palette.border}`,
+                    }}
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.94 }}
+                    transition={SPRING_SNAPPY}
                     style={{
                       padding: isCompact ? '5px 10px' : '6px 12px',
                       borderRadius: '999px',
-                      border: isActive 
-                        ? `1.5px solid ${rarity.color}` 
-                        : `1.5px solid ${palette.border}`,
-                      background: isActive 
-                        ? `${rarity.color}12`
-                        : palette.white,
-                      color: isActive ? rarity.color : palette.bodyTextSoft,
+                      borderWidth: '1.5px',
+                      borderStyle: 'solid',
                       fontSize: isCompact ? '10px' : '11px',
                       fontWeight: '800',
                       whiteSpace: 'nowrap',
@@ -702,20 +699,21 @@ const AvatarShop = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '5px',
-                      boxShadow: isActive ? `0 2px 0 ${rarity.color}40` : `0 2px 0 ${palette.border}`,
                     }}
                   >
                     <Icon name={rarity.icon} size={11} color={isActive ? rarity.color : palette.bodyTextSoft} />
                     {rarity.label}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
           )}
 
+          {/* ✅ SMOOTH GRID with popLayout + layout animations */}
           <motion.div
             layout
             className="shop-avatar-grid"
+            transition={{ layout: { duration: 0.4, type: 'spring', stiffness: 300, damping: 32 } }}
             style={{
               display: 'grid',
               gridTemplateColumns: isMobileView 
@@ -726,7 +724,8 @@ const AvatarShop = ({
               boxSizing: 'border-box'
             }}
           >
-            <AnimatePresence>
+            {/* ✅ mode="popLayout" — exiting items pop out, remaining items slide smoothly */}
+            <AnimatePresence mode="popLayout" initial={false}>
               {filteredAvatars.map((avatar, index) => {
                 const isOwned = ownedAvatars.includes(avatar.id);
                 const isEquipped = equippedAvatar === avatar.id;
@@ -737,12 +736,30 @@ const AvatarShop = ({
                   <motion.div
                     key={avatar.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.85 }}
-                    transition={{ duration: 0.22, delay: index * 0.02 }}
-                    whileHover={{ scale: 1.04, y: -3 }}
-                    whileTap={{ scale: 0.97 }}
+                    initial={{ opacity: 0, scale: 0.7, y: 30 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: 1, 
+                      y: 0,
+                      transition: {
+                        opacity: { duration: 0.25, delay: Math.min(index * 0.025, 0.3) },
+                        scale: { duration: 0.35, delay: Math.min(index * 0.025, 0.3), type: 'spring', stiffness: 320, damping: 28 },
+                        y: { duration: 0.35, delay: Math.min(index * 0.025, 0.3), type: 'spring', stiffness: 320, damping: 28 },
+                        layout: { duration: 0.4, type: 'spring', stiffness: 280, damping: 30 },
+                      }
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      scale: 0.7, 
+                      y: -20,
+                      transition: { duration: 0.22, ease: 'easeIn' }
+                    }}
+                    whileHover={{ 
+                      scale: 1.04, 
+                      y: -3,
+                      transition: { duration: 0.18, type: 'spring', stiffness: 400, damping: 25 }
+                    }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setPreviewAvatar(avatar.id)}
                     className="shop-avatar-card"
                     style={{
@@ -766,7 +783,6 @@ const AvatarShop = ({
                       boxSizing: 'border-box'
                     }}
                   >
-                    {/* Rarity badge */}
                     <div 
                       className="shop-rarity-badge"
                       style={{
@@ -789,11 +805,11 @@ const AvatarShop = ({
                       {avatar.rarity}
                     </div>
 
-                    {/* Equipped check */}
                     {isEquipped && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
+                        transition={SPRING_SMOOTH}
                         style={{
                           position: 'absolute',
                           top: '3px',
@@ -814,7 +830,6 @@ const AvatarShop = ({
                       </motion.div>
                     )}
 
-                    {/* Lock for unowned */}
                     {!isOwned && (
                       <div style={{
                         position: 'absolute',
@@ -834,7 +849,6 @@ const AvatarShop = ({
                       </div>
                     )}
 
-                    {/* Image */}
                     <div 
                       className="shop-avatar-img-wrap"
                       style={{
@@ -862,14 +876,12 @@ const AvatarShop = ({
                           filter: isOwned 
                             ? 'none' 
                             : 'grayscale(0.6) brightness(0.85)',
-                          transition: 'filter 0.18s ease',
                           position: 'relative',
                           zIndex: 1
                         }}
                       />
                     </div>
 
-                    {/* Name */}
                     <div 
                       className="shop-avatar-name"
                       style={{
@@ -887,7 +899,6 @@ const AvatarShop = ({
                       {avatar.name}
                     </div>
 
-                    {/* Price */}
                     <div 
                       className="shop-avatar-price"
                       style={{
@@ -944,7 +955,6 @@ const AvatarShop = ({
             marginBottom: isMobileView ? '6px' : '0'
           }}
         >
-          {/* Preview Header */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -965,6 +975,7 @@ const AvatarShop = ({
               key={previewRarity}
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              transition={SPRING_SMOOTH}
               style={{
                 padding: '4px 11px',
                 borderRadius: '8px',
@@ -982,7 +993,6 @@ const AvatarShop = ({
             </motion.div>
           </div>
 
-          {/* Preview Image */}
           <div 
             className="shop-preview-image"
             style={{
@@ -1004,31 +1014,14 @@ const AvatarShop = ({
                 key={previewAvatar}
                 src={previewData?.image}
                 alt={previewData?.name}
-                initial={{ 
-                  opacity: 0, 
-                  scale: 0.6, 
-                  rotate: -10 
-                }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1, 
-                  rotate: 0,
-                  y: [0, -8, 0]
-                }}
-                exit={{ 
-                  opacity: 0, 
-                  scale: 0.6, 
-                  rotate: 10 
-                }}
+                initial={{ opacity: 0, scale: 0.6, rotate: -10 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0, y: [0, -8, 0] }}
+                exit={{ opacity: 0, scale: 0.6, rotate: 10 }}
                 transition={{
                   opacity: { duration: 0.3 },
-                  scale: { duration: 0.4, type: 'spring' },
+                  scale: { duration: 0.4, type: 'spring', stiffness: 300, damping: 25 },
                   rotate: { duration: 0.4 },
-                  y: { 
-                    duration: 3.5, 
-                    repeat: Infinity, 
-                    ease: 'easeInOut' 
-                  }
+                  y: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' }
                 }}
                 style={{
                   maxWidth: '85%',
@@ -1042,11 +1035,11 @@ const AvatarShop = ({
             </AnimatePresence>
           </div>
 
-          {/* Preview Info */}
           <motion.div
             key={previewAvatar + '_info'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
             style={{ textAlign: 'center', marginBottom: '14px' }}
           >
             <h2 style={{
@@ -1081,7 +1074,6 @@ const AvatarShop = ({
             </p>
           </motion.div>
 
-          {/* Ownership / Price Display */}
           <div style={{
             textAlign: 'center',
             marginBottom: '14px',
@@ -1119,14 +1111,12 @@ const AvatarShop = ({
                 FREE
               </span>
             ) : (
-              // 👈 BAGO: Dual price display
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',
                 gap: '8px',
                 flexWrap: 'wrap',
               }}>
-                {/* Points price */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1147,7 +1137,6 @@ const AvatarShop = ({
                   </span>
                 </div>
 
-                {/* Divider */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1159,7 +1148,6 @@ const AvatarShop = ({
                   or
                 </div>
 
-                {/* Diamonds price */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1183,7 +1171,6 @@ const AvatarShop = ({
             )}
           </div>
 
-          {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {isPreviewOwned ? (
               isPreviewEquipped ? (
@@ -1191,6 +1178,7 @@ const AvatarShop = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleReset}
+                  transition={SPRING_SNAPPY}
                   style={{
                     padding: '12px',
                     background: palette.white,
@@ -1206,7 +1194,6 @@ const AvatarShop = ({
                     justifyContent: 'center',
                     gap: '8px',
                     boxShadow: `0 3px 0 ${palette.border}`,
-                    transition: 'all 0.15s ease',
                   }}
                 >
                   <Icon name="reset" size={14} color={palette.bodyText} />
@@ -1217,6 +1204,7 @@ const AvatarShop = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleEquip}
+                  transition={SPRING_SNAPPY}
                   style={{
                     padding: '12px',
                     background: palette.softGreen,
@@ -1240,7 +1228,6 @@ const AvatarShop = ({
               )
             ) : (
               <>
-                {/* 👈 BAGO: Two buy buttons when affordable with either currency */}
                 {canAffordPoints && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -1249,6 +1236,7 @@ const AvatarShop = ({
                       setBuyCurrency('points');
                       setShowBuyModal(true);
                     }}
+                    transition={SPRING_SNAPPY}
                     style={{
                       padding: '12px',
                       background: palette.warmOrange,
@@ -1279,6 +1267,7 @@ const AvatarShop = ({
                       setBuyCurrency('diamonds');
                       setShowBuyModal(true);
                     }}
+                    transition={SPRING_SNAPPY}
                     style={{
                       padding: '12px',
                       background: `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})`,
@@ -1301,7 +1290,6 @@ const AvatarShop = ({
                   </motion.button>
                 )}
 
-                {/* Kung hindi afford kahit alin */}
                 {!canAffordEither && (
                   <motion.button
                     disabled
@@ -1330,7 +1318,6 @@ const AvatarShop = ({
             )}
           </div>
 
-          {/* Collection count */}
           <div style={{
             marginTop: '14px',
             paddingTop: '14px',
@@ -1358,6 +1345,7 @@ const AvatarShop = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setShowBuyModal(false)}
             style={{
               position: 'fixed',
@@ -1377,7 +1365,7 @@ const AvatarShop = ({
               initial={{ scale: 0.85, y: 30, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.85, y: 30, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
               onClick={(e) => e.stopPropagation()}
               style={{
                 background: palette.white,
@@ -1405,7 +1393,7 @@ const AvatarShop = ({
                 className="shop-modal-image"
                 initial={{ scale: 0.6, rotate: -10 }}
                 animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+                transition={{ type: 'spring', stiffness: 220, delay: 0.08 }}
                 style={{
                   width: '140px',
                   height: '140px',
@@ -1451,7 +1439,6 @@ const AvatarShop = ({
                 {previewData.anime}
               </p>
 
-              {/* 👈 BAGO: Currency toggle */}
               {previewData.price > 0 && (
                 <div style={{
                   display: 'flex',
@@ -1484,6 +1471,7 @@ const AvatarShop = ({
                       justifyContent: 'center',
                       gap: '6px',
                       opacity: canAffordPoints ? 1 : 0.5,
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     <Icon name="coin" size={14} color={canAffordPoints ? palette.gold : palette.bodyTextSoft} />
@@ -1511,6 +1499,7 @@ const AvatarShop = ({
                       justifyContent: 'center',
                       gap: '6px',
                       opacity: canAffordDiamonds ? 1 : 0.5,
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     <Icon name="diamond" size={14} color={canAffordDiamonds ? palette.diamond : palette.bodyTextSoft} />
@@ -1519,12 +1508,11 @@ const AvatarShop = ({
                 </div>
               )}
 
-              {/* Price display */}
               <motion.div
                 key={buyCurrency}
                 initial={{ scale: 0.85 }}
                 animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                transition={SPRING_SMOOTH}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -1583,6 +1571,7 @@ const AvatarShop = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowBuyModal(false)}
+                  transition={SPRING_SNAPPY}
                   style={{
                     flex: 1,
                     padding: '12px',
@@ -1604,6 +1593,7 @@ const AvatarShop = ({
                   whileTap={{ scale: 0.98 }}
                   onClick={handleBuy}
                   disabled={buyCurrency === 'points' ? !canAffordPoints : !canAffordDiamonds}
+                  transition={SPRING_SNAPPY}
                   style={{
                     flex: 1,
                     padding: '12px',

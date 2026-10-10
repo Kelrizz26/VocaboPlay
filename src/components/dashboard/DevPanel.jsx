@@ -2,6 +2,7 @@
 // ============================================================
 // 🧪 DEV / DEMO PANEL — Testing tools for diamond rewards
 // Only visible when ?dev=1 is in URL
+// ✅ NEW: XP Bar Override + Games Override sections (dispatch to MyProgress)
 // ============================================================
 
 import React, { useState } from 'react';
@@ -10,6 +11,16 @@ import { db } from '../../pages/firebase';
 
 const FONT_DISPLAY = "'Fredoka', sans-serif";
 const FONT_BODY = "'Nunito', sans-serif";
+
+// ✅ List ng games para sa override inputs (key dapat match sa MyProgress)
+const GAMES_LIST = [
+  { key: 'synoQuest', label: 'Syno Quest' },
+  { key: 'matchGame', label: 'Match Game' },
+  { key: 'shortStory', label: 'Short Story' },
+  { key: 'quizMaster', label: 'Quiz Master' },
+  { key: 'guessWhat', label: 'GuessWhat' },
+  { key: 'sentenceBuilder', label: 'Sentence Builder' },
+];
 
 const DevPanel = ({
   userId,
@@ -24,6 +35,12 @@ const DevPanel = ({
   const [diamondsInput, setDiamondsInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // 🧪 MyProgress override state
+  const [xpLevelInput, setXpLevelInput] = useState('');
+  const [xpCurrentInput, setXpCurrentInput] = useState('');
+  const [xpMaxInput, setXpMaxInput] = useState('');
+  const [gamesInput, setGamesInput] = useState({}); // { synoQuest: '250', ... }
 
   // ✅ Points formula (same as Dashboard)
   const XP_BASE = 100;
@@ -134,6 +151,63 @@ const DevPanel = ({
       setLoading(false);
       setTimeout(() => setMessage(''), 2500);
     }
+  };
+
+  // 🧪 ============================================================
+  // 🧪 MyProgress override handlers
+  // ============================================================
+  const handleApplyOverrides = () => {
+    const games = {};
+    GAMES_LIST.forEach((g) => {
+      const v = gamesInput[g.key];
+      if (v !== '' && v !== undefined && v !== null) {
+        games[g.key] = Number(v);
+      }
+    });
+
+    window.dispatchEvent(
+      new CustomEvent('demo-overrides', {
+        detail: {
+          level: xpLevelInput,
+          xp: xpCurrentInput,
+          xpToNext: xpMaxInput,
+          games,
+        },
+      })
+    );
+
+    setMessage('✅ Applied to MyProgress');
+    setTimeout(() => setMessage(''), 2000);
+  };
+
+  const handleResetOverrides = () => {
+    setXpLevelInput('');
+    setXpCurrentInput('');
+    setXpMaxInput('');
+    setGamesInput({});
+
+    window.dispatchEvent(
+      new CustomEvent('demo-overrides', {
+        detail: { level: '', xp: '', xpToNext: '', games: {} },
+      })
+    );
+
+    setMessage('🔄 MyProgress overrides cleared');
+    setTimeout(() => setMessage(''), 2000);
+  };
+
+  const applyXpPreset = (level, xp, xpToNext) => {
+    setXpLevelInput(String(level));
+    setXpCurrentInput(String(xp));
+    setXpMaxInput(String(xpToNext));
+  };
+
+  const applyGamesPreset = (n) => {
+    const newGames = {};
+    GAMES_LIST.forEach((g) => {
+      newGames[g.key] = String(n);
+    });
+    setGamesInput(newGames);
   };
 
   // ✅ UPDATED: Complete set ng levels — 1-6 (early), tapos lahat ng milestones
@@ -309,6 +383,12 @@ const DevPanel = ({
         }
         .dev-btn-diamond:active { box-shadow: 0 1px 0 #075985; }
 
+        .dev-btn-green {
+          background: linear-gradient(180deg, #10B981, #059669);
+          box-shadow: 0 3px 0 #064E3B;
+        }
+        .dev-btn-green:active { box-shadow: 0 1px 0 #064E3B; }
+
         .dev-input {
           width: 100%;
           padding: 8px 10px;
@@ -361,6 +441,53 @@ const DevPanel = ({
           display: block;
           text-transform: uppercase;
         }
+
+        .dev-input-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 6px;
+          margin-bottom: 6px;
+        }
+        .dev-input-grid .dev-input {
+          margin-bottom: 0;
+          padding: 8px 6px;
+          font-size: 12px;
+          text-align: center;
+        }
+
+        .dev-game-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 5px;
+        }
+        .dev-game-label {
+          flex: 1;
+          font-size: 11px;
+          font-weight: 700;
+          color: rgba(255,255,255,0.85);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .dev-game-input {
+          width: 74px;
+          padding: 6px 8px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid rgba(167, 139, 250, 0.4);
+          border-radius: 8px;
+          color: white;
+          font-size: 12px;
+          font-family: ${FONT_BODY};
+          font-weight: 700;
+          text-align: center;
+        }
+        .dev-game-input:focus {
+          outline: none;
+          border-color: #A78BFA;
+          box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3);
+        }
+        .dev-game-input::placeholder { color: rgba(255,255,255,0.3); }
       `}</style>
 
       {/* FAB Button */}
@@ -495,6 +622,97 @@ const DevPanel = ({
               <button className="dev-btn dev-btn-diamond" onClick={() => handleAddDiamonds(10)} disabled={loading}>+10 💎</button>
               <button className="dev-btn dev-btn-diamond" onClick={() => handleAddDiamonds(50)} disabled={loading}>+50 💎</button>
               <button className="dev-btn dev-btn-diamond" onClick={() => handleAddDiamonds(100)} disabled={loading}>+100 💎</button>
+            </div>
+          </div>
+
+          {/* 🧪 ============================================================ */}
+          {/* 🧪 XP BAR OVERRIDE (MyProgress) */}
+          {/* 🧪 ============================================================ */}
+          <div className="dev-section">
+            <span className="dev-label">📊 XP Bar Override (MyProgress)</span>
+
+            <div className="dev-input-grid">
+              <input
+                className="dev-input"
+                type="number"
+                placeholder="Level"
+                value={xpLevelInput}
+                onChange={(e) => setXpLevelInput(e.target.value)}
+              />
+              <input
+                className="dev-input"
+                type="number"
+                placeholder="XP"
+                value={xpCurrentInput}
+                onChange={(e) => setXpCurrentInput(e.target.value)}
+              />
+              <input
+                className="dev-input"
+                type="number"
+                placeholder="Max"
+                value={xpMaxInput}
+                onChange={(e) => setXpMaxInput(e.target.value)}
+              />
+            </div>
+
+            <div className="dev-subsection">
+              <span className="dev-subsection-label">Quick Presets</span>
+              <div className="dev-btn-row">
+                <button className="dev-btn" onClick={() => applyXpPreset(1, 0, 100)}>0%</button>
+                <button className="dev-btn" onClick={() => applyXpPreset(3, 25, 100)}>25%</button>
+                <button className="dev-btn" onClick={() => applyXpPreset(5, 50, 100)}>50%</button>
+                <button className="dev-btn" onClick={() => applyXpPreset(9, 99, 100)}>99%</button>
+              </div>
+            </div>
+          </div>
+
+          {/* 🧪 ============================================================ */}
+          {/* 🧪 GAMES OVERRIDE (MyProgress) */}
+          {/* 🧪 ============================================================ */}
+          <div className="dev-section">
+            <span className="dev-label">🎮 Games Override (MyProgress)</span>
+
+            {GAMES_LIST.map((g) => (
+              <div key={g.key} className="dev-game-row">
+                <span className="dev-game-label">{g.label}</span>
+                <input
+                  className="dev-game-input"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={gamesInput[g.key] ?? ''}
+                  onChange={(e) =>
+                    setGamesInput((prev) => ({ ...prev, [g.key]: e.target.value }))
+                  }
+                />
+              </div>
+            ))}
+
+            <div className="dev-subsection">
+              <span className="dev-subsection-label">Quick Presets (all games)</span>
+              <div className="dev-btn-row">
+                <button className="dev-btn" onClick={() => applyGamesPreset(50)}>50</button>
+                <button className="dev-btn" onClick={() => applyGamesPreset(100)}>100</button>
+                <button className="dev-btn" onClick={() => applyGamesPreset(250)}>250</button>
+                <button className="dev-btn" onClick={() => applyGamesPreset(999)}>999</button>
+              </div>
+            </div>
+
+            <div className="dev-btn-row" style={{ marginTop: '10px' }}>
+              <button
+                className="dev-btn dev-btn-green"
+                onClick={handleApplyOverrides}
+                style={{ flex: 2 }}
+              >
+                ✅ Apply to MyProgress
+              </button>
+              <button
+                className="dev-btn"
+                onClick={handleResetOverrides}
+                style={{ flex: 1 }}
+              >
+                🔄 Reset
+              </button>
             </div>
           </div>
 
