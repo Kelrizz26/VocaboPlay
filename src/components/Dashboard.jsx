@@ -5,6 +5,8 @@
 // ✅ NEW: onExitToGames prop — returns to the Games selection screen
 // ✅ FIXED: X button in sidebar — visible on mobile only (hidden on web)
 // ✅ UPDATED: Rotate phone prompt in English
+// ✅ REMOVED: Light Mode toggle from sidebar
+// ✅ UPDATED: Sidebar menu spacing — bigger padding + gap
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +44,6 @@ import { LevelUpCelebration } from './dashboard/GoatMascot';
 import GoatCardCollection from './dashboard/MyCards';
 
 import { colors, fontFamily } from './dashboard/dashboardStyles';
-import ThemeToggle from './ThemeToggle';
 
 const DEMO_FORCE_LEVEL = false;
 
@@ -610,7 +611,6 @@ const Dashboard = () => {
         .menu-item { transition: background 0.18s ease; }
         .menu-item:hover { background: rgba(233, 160, 117, 0.12) !important; }
         .menu-item.active { background: rgba(233, 160, 117, 0.18) !important; border-left: 3px solid ${palette.warmOrange} !important; padding-left: 21px !important; }
-        .theme-toggle-wrap, .theme-toggle-wrap span { color: rgba(255,255,255,0.85) !important; }
         .dashboard-container { opacity: 0; transform: translateY(16px); animation: fadeInUp 0.7s ease-out forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         .profile-menu-item { transition: background 0.15s ease; }
@@ -743,22 +743,19 @@ const Dashboard = () => {
               </button>
             )}
           </div>
-          <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
+          {/* ✅ UPDATED: Added flex column + gap for consistent spacing */}
+          <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {menuItems.map((item) => {
               const isActive = activeMenu === item.name;
               return (
-                <div key={item.name} className={`menu-item ${isActive ? 'active' : ''}`} onClick={() => changeMenu(item.name)} style={{ padding: '13px 22px', margin: '3px 10px', display: 'flex', alignItems: 'center', gap: '13px', cursor: 'pointer', fontSize: '15px', fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px', borderLeft: '3px solid transparent' }}>
-                  <Icon name={item.icon} size={20} color={isActive ? palette.warmOrange : 'rgba(255,255,255,0.72)'} secondaryColor={isActive ? `${palette.warmOrange}66` : 'rgba(255,255,255,0.4)'} />
+                /* ✅ UPDATED: Increased padding from 13px to 17px, margin-bottom removed (gap handles it), font-size 15 → 16 */
+                <div key={item.name} className={`menu-item ${isActive ? 'active' : ''}`} onClick={() => changeMenu(item.name)} style={{ padding: '17px 22px', margin: '0 10px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', fontSize: '16px', fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px', borderLeft: '3px solid transparent' }}>
+                  <Icon name={item.icon} size={21} color={isActive ? palette.warmOrange : 'rgba(255,255,255,0.72)'} secondaryColor={isActive ? `${palette.warmOrange}66` : 'rgba(255,255,255,0.4)'} />
                   <span>{item.name}</span>
                 </div>
               );
             })}
           </nav>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '10px 0' }}>
-            <div className="theme-toggle-wrap" style={{ padding: '4px 22px' }}>
-              <ThemeToggle colors={colors} fontFamily={fontFamily} />
-            </div>
-          </div>
         </div>
       )}
 

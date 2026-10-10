@@ -133,6 +133,12 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
     shield: (
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     ),
+    chevronDown: (
+      <path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    ),
+    close: (
+      <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    ),
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
@@ -208,7 +214,6 @@ const SuperAdminDashboard = () => {
           navigate('/admin');
           return;
         }
-        // ✅ Load profile data
         setProfile({
           displayName: userData.displayName || user.email?.split('@')[0] || 'Super Admin',
           email: userData.email || user.email || '',
@@ -495,7 +500,7 @@ const SuperAdminDashboard = () => {
     teachers.forEach(t => { if (t.createdAt) recentEvents.push({ type: 'teacher', icon: 'user', color: palette.warmOrange, title: `New teacher: ${t.displayName || t.email?.split('@')[0]}`, time: t.createdAt }); });
     students.forEach(s => { if (s.createdAt) recentEvents.push({ type: 'student', icon: 'graduation', color: palette.softGreen, title: `New student: ${s.displayName || s.email?.split('@')[0]}`, time: s.createdAt }); });
     activities.forEach(a => { if (a.createdAt) recentEvents.push({ type: 'activity', icon: 'clipboard', color: palette.teal, title: `New activity: "${a.title}" (PIN ${a.gamePin})`, time: a.createdAt }); });
-    scores.forEach(s => { if (s.completedAt) recentEvents.push({ type: 'score', icon: 'trophy', color: palette.coral, title: `${s.studentName} scored ${s.score} in "${s.activityTitle || 'Activity'}"`, time: s.completedAt }); });
+    scores.forEach(s => { if (s.completedAt) recentEvents.push({ type: 'score', icon: 'trophy', color: palette.coral, title: `${s.studentName} scored s.scorein"{s.activityTitle || 'Activity'}"`, time: s.completedAt }); });
     recentEvents.sort((a, b) => new Date(b.time) - new Date(a.time));
     const recentTop = recentEvents.slice(0, 15);
 
@@ -606,7 +611,7 @@ const SuperAdminDashboard = () => {
           })}
         </div>
 
-        {/* ✅ RIGHT: PROFILE DROPDOWN (replaces Logout button) */}
+        {/* RIGHT: PROFILE DROPDOWN */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -624,7 +629,6 @@ const SuperAdminDashboard = () => {
               gap: '8px',
             }}
           >
-            {/* Avatar */}
             <div style={{
               width: '30px', height: '30px', borderRadius: '50%',
               background: profile.gender === 'male' ? '#6B8ACB' : palette.coral,
@@ -640,7 +644,6 @@ const SuperAdminDashboard = () => {
                 </span>
               )}
             </div>
-            {/* Name */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
               <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap' }}>
                 {profile.displayName}
@@ -649,10 +652,9 @@ const SuperAdminDashboard = () => {
                 Super Admin
               </span>
             </div>
-            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', marginLeft: '2px' }}>▼</span>
+            <Icon name="chevronDown" size={12} color="rgba(255,255,255,0.6)" />
           </button>
 
-          {/* ✅ Profile Dropdown Menu */}
           {showProfileMenu && (
             <>
               <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
@@ -668,7 +670,6 @@ const SuperAdminDashboard = () => {
                 border: `1.5px solid ${palette.border}`,
                 boxShadow: '0 10px 30px rgba(42, 40, 69, 0.15)',
               }}>
-                {/* Profile Header */}
                 <div style={{
                   padding: '12px 14px',
                   background: palette.creamSoft,
@@ -701,7 +702,6 @@ const SuperAdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Menu Items */}
                 <div style={{ padding: '6px' }}>
                   <button
                     onClick={() => { setShowProfileMenu(false); setShowSettingsModal(true); }}
@@ -836,10 +836,19 @@ const SuperAdminDashboard = () => {
                   return (
                     <div key={year} style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: `1.5px solid ${palette.borderSoft}` }}>
                       <span style={{ fontSize: '14px', fontWeight: 800, color: palette.deepNavy, fontFamily: FONT_DISPLAY, width: '60px' }}>{year}</span>
-                      <div style={{ display: 'flex', gap: '16px', flex: 1, justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: palette.warmOrange, fontFamily: FONT_BODY }}>👤 {t}</span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: palette.softGreen, fontFamily: FONT_BODY }}>🎓 {s}</span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: palette.teal, fontFamily: FONT_BODY }}>📋 {a}</span>
+                      <div style={{ display: 'flex', gap: '16px', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: palette.warmOrange, fontFamily: FONT_BODY }}>
+                          <Icon name="user" size={11} color={palette.warmOrange} />
+                          {t}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: palette.softGreen, fontFamily: FONT_BODY }}>
+                          <Icon name="graduation" size={11} color={palette.softGreen} />
+                          {s}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: palette.teal, fontFamily: FONT_BODY }}>
+                          <Icon name="clipboard" size={11} color={palette.teal} />
+                          {a}
+                        </span>
                       </div>
                     </div>
                   );
@@ -1167,7 +1176,7 @@ const SuperAdminDashboard = () => {
                         <td style={{ padding: '12px', textAlign: 'center' }}>
                           <span style={{
                             display: 'inline-block', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 800, fontFamily: FONT_DISPLAY,
-                            background: student._accuracy >= 70 ? `${palette.softGreen}15` : student._accuracy >= 40 ? `${palette.gold}15` : student._accuracy > 0 ? `${palette.danger}15` : palette.creamSoft,
+                            background: student._accuracy >= 70 ? `palette.softGreen15`:student.accuracy>=40?`{palette.gold}15` : student._accuracy > 0 ? `${palette.danger}15` : palette.creamSoft,
                             color: student._accuracy >= 70 ? palette.softGreen : student._accuracy >= 40 ? palette.gold : student._accuracy > 0 ? palette.danger : palette.bodyTextSoft,
                             border: `1px solid ${student._accuracy >= 70 ? palette.softGreen + '40' : student._accuracy >= 40 ? palette.gold + '40' : student._accuracy > 0 ? palette.danger + '40' : palette.border}`,
                           }}>{student._accuracy}%</span>
@@ -1234,7 +1243,6 @@ const SuperAdminDashboard = () => {
               Settings
             </h2>
 
-            {/* Profile Info */}
             <div style={{ marginBottom: '18px' }}>
               <label style={{ fontSize: '11px', fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
                 Display Name
@@ -1277,13 +1285,14 @@ const SuperAdminDashboard = () => {
                 Role
               </label>
               <div style={{
-                display: 'inline-block', padding: '6px 14px', borderRadius: '999px',
+                display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px',
                 background: `${palette.warmOrange}15`, color: palette.warmOrange,
                 border: `1.5px solid ${palette.warmOrange}40`,
                 fontSize: '11px', fontWeight: 800, fontFamily: FONT_DISPLAY,
                 textTransform: 'uppercase', letterSpacing: '0.05em',
               }}>
-                👑 Super Admin
+                <Icon name="crown" size={11} color={palette.warmOrange} />
+                Super Admin
               </div>
             </div>
 
@@ -1374,3 +1383,4 @@ const menuItemStyle = {
 };
 
 export default SuperAdminDashboard;
+

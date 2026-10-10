@@ -1,6 +1,5 @@
 import React from 'react';
 import { colors, fontFamily, fontFamilyDisplay } from './adminStyles';
-import ThemeToggle from '../ThemeToggle';
 
 const AdminSidebar = ({ activeMenu, setActiveMenu, handleLogout }) => {
   const menuItems = [
@@ -67,8 +66,8 @@ const AdminSidebar = ({ activeMenu, setActiveMenu, handleLogout }) => {
           </div>
         </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 0' }}>
+        {/* ✅ UPDATED: Nav with flex column + gap for consistent spacing */}
+        <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {menuItems.map((item) => {
             const active = activeMenu === item.name;
             return (
@@ -77,13 +76,13 @@ const AdminSidebar = ({ activeMenu, setActiveMenu, handleLogout }) => {
                 className="admin-menu-item"
                 onClick={() => setActiveMenu(item.name)}
                 style={{
-                  padding: '11px 24px',
-                  margin: '2px 12px',
+                  padding: '17px 24px',
+                  margin: '0 12px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: '14px',
                   cursor: 'pointer',
-                  fontSize: '14px',
+                  fontSize: '15px',
                   fontWeight: active ? 800 : 700,
                   color: active ? colors.accent : colors.textSecondary,
                   fontFamily: active ? fontFamilyDisplay : fontFamily,
@@ -93,23 +92,12 @@ const AdminSidebar = ({ activeMenu, setActiveMenu, handleLogout }) => {
                   boxShadow: active ? `0 2px 0 ${colors.accent}30` : 'none',
                 }}
               >
-                <span style={{ fontSize: '16px', width: '18px', textAlign: 'center' }}>{item.icon}</span>
+                <span style={{ fontSize: '17px', width: '20px', textAlign: 'center' }}>{item.icon}</span>
                 <span>{item.name}</span>
               </div>
             );
           })}
         </nav>
-
-        {/* Theme toggle */}
-        <div style={{
-          borderTop: `1.5px solid ${colors.border}`,
-          padding: '12px 0',
-          background: colors.surfaceSoft,
-        }}>
-          <div className="theme-toggle-wrap">
-            <ThemeToggle colors={colors} fontFamily={fontFamily} />
-          </div>
-        </div>
       </div>
     </>
   );

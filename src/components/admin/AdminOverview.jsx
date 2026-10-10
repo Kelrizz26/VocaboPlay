@@ -1,12 +1,71 @@
 // src/components/admin/AdminOverview.jsx
 // ============================================================
-// ✅ ADMIN OVERVIEW - Wayground/Quizizz Style
+// ✅ ADMIN OVERVIEW — polished to match Super Admin
 // ✅ CONNECTED TO AVATAR SHOP — Shows FACE of character
 // ============================================================
 
-import React from 'react';
-import { colors, fontFamily, fontFamilyDisplay } from "../dashboard/dashboardStyles";
+import React, { useState } from 'react';
 import { AVATAR_SHOP_ITEMS, DEFAULT_AVATAR_ID } from '../../data/avatarShop';
+
+// ===== MUTED DASHBOARD PALETTE =====
+const palette = {
+  warmOrange: '#E9A075',
+  warmOrangeShadow: '#C27E4F',
+  coral: '#DB7A64',
+  coralShadow: '#A95845',
+  teal: '#4F9188',
+  tealShadow: '#3A6A63',
+  deepNavy: '#2A2845',
+  bodyText: '#6B6880',
+  bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3',
+  creamSoft: '#F5EFE6',
+  white: '#FFFFFF',
+  border: '#EBE2D5',
+  borderSoft: '#F2EBE0',
+  softGreen: '#7FA574',
+  softGreenShadow: '#5E7F55',
+  gold: '#C9A227',
+  shadow: 'rgba(42, 40, 69, 0.06)',
+  shadowMd: 'rgba(42, 40, 69, 0.10)',
+  danger: '#DB7A64',
+  dangerShadow: '#A95845',
+};
+
+const FONT_DISPLAY = "'Fredoka', sans-serif";
+const FONT_BODY = "'Nunito', sans-serif";
+
+// ===== DUOTONE SVG ICONS =====
+const Icon = ({ name, size = 18, color = palette.bodyTextSoft }) => {
+  const icons = {
+    students: (
+      <>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <circle cx="9" cy="7" r="4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    book: (
+      <>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    activities: (
+      <>
+        <rect x="3" y="4" width="18" height="16" rx="3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M8 2v4M16 2v4M3 10h18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    chart: <path d="M18 20V10M12 20V4M6 20v-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />,
+    arrowRight: <path d="M5 12h14M12 5l7 7-7 7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
+      {icons[name] || icons.chart}
+    </svg>
+  );
+};
 
 // ✅ HELPER — Get the avatar image from the Avatar Shop
 const getStudentAvatar = (student) => {
@@ -17,8 +76,8 @@ const getStudentAvatar = (student) => {
 };
 
 // ✅ REUSABLE — Student avatar (image or initial fallback)
-const StudentAvatarImage = ({ student, size = 36, borderRadius = 10 }) => {
-  const [imgError, setImgError] = React.useState(false);
+const StudentAvatarImage = ({ student, size = 36 }) => {
+  const [imgError, setImgError] = useState(false);
   const avatarSrc = getStudentAvatar(student);
 
   if (!imgError && avatarSrc) {
@@ -39,10 +98,70 @@ const StudentAvatarImage = ({ student, size = 36, borderRadius = 10 }) => {
   }
 
   return (
-    <span style={{ color: colors.white, fontWeight: '800', fontSize: size * 0.45, fontFamily: fontFamilyDisplay }}>
+    <span style={{ color: palette.white, fontWeight: '800', fontSize: size * 0.45, fontFamily: FONT_DISPLAY }}>
       {student.displayName?.charAt(0)?.toUpperCase() || '?'}
     </span>
   );
+};
+
+// ===== Shared style helpers (matching Super Admin) =====
+const summaryCardStyle = (color) => ({
+  background: palette.white,
+  padding: '16px 18px',
+  borderRadius: '14px',
+  boxShadow: `0 2px 0 ${palette.border}`,
+  border: `1.5px solid ${palette.border}`,
+  borderLeft: `4px solid ${color}`,
+});
+
+const summaryIconStyle = (color) => ({
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  background: `${color}15`,
+  border: `1.5px solid ${color}30`,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 10,
+});
+
+const summaryLabelStyle = {
+  fontSize: '10px',
+  fontWeight: 800,
+  color: palette.bodyTextSoft,
+  fontFamily: FONT_DISPLAY,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  marginBottom: '4px',
+};
+
+const summaryValueStyle = (color) => ({
+  fontSize: '24px',
+  fontWeight: 800,
+  color: color,
+  fontFamily: FONT_DISPLAY,
+  lineHeight: 1,
+});
+
+const cardStyle = {
+  background: palette.white,
+  padding: '24px',
+  borderRadius: '16px',
+  boxShadow: `0 2px 0 ${palette.border}`,
+  border: `1.5px solid ${palette.border}`,
+};
+
+const cardTitleStyle = {
+  margin: '0 0 16px 0',
+  fontFamily: FONT_DISPLAY,
+  color: palette.deepNavy,
+  fontWeight: 800,
+  fontSize: '16px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  letterSpacing: '-0.2px',
 };
 
 const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] }) => {
@@ -89,33 +208,29 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
     {
       label: 'Total Students',
       value: String(students.length),
-      icon: '▣',
-      color: colors.accent,
-      bg: colors.accentSoft,
+      icon: 'students',
+      color: palette.warmOrange,
       change: `${students.length} total`
     },
     {
       label: 'Active Words',
       value: String(words.length),
-      icon: '☰',
-      color: colors.success,
-      bg: colors.successSoft,
+      icon: 'book',
+      color: palette.softGreen,
       change: `${words.length} total`
     },
     {
       label: 'Total Activities',
       value: String(totalActivities),
-      icon: '◉',
-      color: colors.warning,
-      bg: colors.warningSoft,
+      icon: 'activities',
+      color: palette.gold,
       change: `${totalActivities} total`
     },
     {
       label: 'Avg Score',
       value: avgScore + '%',
-      icon: '▦',
-      color: colors.accent,
-      bg: colors.accentSoft,
+      icon: 'chart',
+      color: palette.teal,
       change: 'Class average'
     },
   ];
@@ -126,345 +241,232 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
         @media (max-width: 768px) {
           .admin-ov-wrapper .stats-grid {
             grid-template-columns: 1fr 1fr !important;
-            gap: 10px !important;
-          }
-          .admin-ov-wrapper .stats-grid .stat-card {
-            padding: 14px !important;
-          }
-          .admin-ov-wrapper .stats-grid .stat-card .stat-value {
-            font-size: 22px !important;
-          }
-          .admin-ov-wrapper .stats-grid .stat-card .stat-icon {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 16px !important;
-          }
-          .admin-ov-wrapper .stats-grid .stat-card .stat-change {
-            font-size: 9px !important;
-            padding: 2px 6px !important;
+            gap: 12px !important;
           }
           .admin-ov-wrapper .two-col {
             grid-template-columns: 1fr !important;
             gap: 16px !important;
           }
-          .admin-ov-wrapper .two-col .col-card {
-            padding: 16px !important;
-          }
           .admin-ov-wrapper .platform-stats {
             grid-template-columns: 1fr 1fr !important;
-            gap: 6px !important;
-          }
-          .admin-ov-wrapper .platform-stats .stat-item {
-            padding: 10px !important;
-          }
-          .admin-ov-wrapper .platform-stats .stat-item .stat-num {
-            font-size: 18px !important;
-          }
-          .admin-ov-wrapper .activity-item {
-            padding: 8px 10px !important;
-          }
-          .admin-ov-wrapper .activity-item .avatar {
-            width: 32px !important;
-            height: 32px !important;
-          }
-          .admin-ov-wrapper .activity-item .name {
-            font-size: 12px !important;
-          }
-          .admin-ov-wrapper .activity-item .date {
-            font-size: 10px !important;
-          }
-          .admin-ov-wrapper .header h1 {
-            font-size: 20px !important;
-          }
-          .admin-ov-wrapper .header p {
-            font-size: 12px !important;
-          }
-          .admin-ov-wrapper .students-summary {
-            padding: 16px !important;
-          }
-          .admin-ov-wrapper .students-summary h3 {
-            font-size: 14px !important;
-          }
-          .admin-ov-wrapper .students-summary p {
-            font-size: 12px !important;
-          }
-          .admin-ov-wrapper .students-summary button {
-            font-size: 12px !important;
-            padding: 6px 16px !important;
           }
         }
         @media (max-width: 480px) {
           .admin-ov-wrapper .stats-grid {
             grid-template-columns: 1fr !important;
-            gap: 8px !important;
           }
-          .admin-ov-wrapper .stats-grid .stat-card {
-            padding: 12px !important;
-          }
-          .admin-ov-wrapper .stats-grid .stat-card .stat-value {
-            font-size: 20px !important;
-          }
-          .admin-ov-wrapper .platform-stats .stat-item {
-            padding: 8px !important;
-          }
-          .admin-ov-wrapper .platform-stats .stat-item .stat-num {
-            font-size: 16px !important;
-          }
-          .admin-ov-wrapper .two-col .col-card {
-            padding: 12px !important;
-          }
-          .admin-ov-wrapper .header h1 {
-            font-size: 18px !important;
-          }
-          .admin-ov-wrapper .activity-item {
-            padding: 6px 8px !important;
-            gap: 8px !important;
-          }
-          .admin-ov-wrapper .activity-item .avatar {
-            width: 28px !important;
-            height: 28px !important;
+          .admin-ov-wrapper .platform-stats {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>
 
-      <div>
-        {/* Header Section */}
-        <div className="header" style={{
-          marginBottom: '24px',
-          borderBottom: `1.5px solid ${colors.border}`,
-          paddingBottom: '16px'
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* ===== Page header bar (Super-Admin style) ===== */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          padding: '16px 20px',
+          background: palette.white,
+          borderRadius: '14px',
+          border: `1.5px solid ${palette.border}`,
+          boxShadow: `0 2px 0 ${palette.border}`,
         }}>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '800',
-            color: colors.textPrimary,
-            marginBottom: '6px',
-            fontFamily: fontFamilyDisplay,
-            letterSpacing: '-0.4px',
-          }}>Dashboard Overview</h1>
-          <p style={{
-            fontSize: '15px',
-            color: colors.textSecondary,
-            margin: 0,
-            fontWeight: 600,
-            fontFamily
-          }}>Monitor your vocabulary learning platform</p>
+          <div>
+            <h2 style={{
+              margin: 0,
+              fontFamily: FONT_DISPLAY,
+              color: palette.deepNavy,
+              fontWeight: 800,
+              fontSize: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              letterSpacing: '-0.2px',
+            }}>
+              <Icon name="chart" size={18} color={palette.warmOrange} />
+              Dashboard Overview
+            </h2>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 600 }}>
+              Monitor your vocabulary learning platform
+            </p>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="stats-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4,1fr)',
-          gap: '16px',
-          marginBottom: '24px'
-        }}>
+        {/* ===== Stat tiles (borderLeft: 4px, same as SA) ===== */}
+        <div
+          className="stats-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+          }}
+        >
           {stats.map((s, i) => (
-            <div key={i}
-              className="stat-card"
-              style={{
-                background: colors.surface,
-                borderRadius: '16px',
-                padding: '20px',
-                border: `1.5px solid ${colors.border}`,
-                borderTop: `6px solid ${s.color}`,
-                boxShadow: `0 2px 0 ${colors.border}`,
-                transition: 'all 0.2s ease',
-                cursor: 'default'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = `0 2px 0 ${colors.border}, 0 10px 24px ${colors.shadow}`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = `0 2px 0 ${colors.border}`;
-              }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <div className="stat-icon" style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  background: s.bg,
-                  color: s.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
-                  border: `1.5px solid ${s.color}30`
-                }}>{s.icon}</div>
-                <span className="stat-change" style={{
-                  fontSize: '11px',
-                  color: colors.textSecondary,
-                  background: colors.surfaceSoft,
-                  padding: '4px 8px',
-                  borderRadius: '999px',
-                  border: `1.5px solid ${colors.border}`,
-                  fontWeight: 800,
-                  fontFamily: fontFamilyDisplay,
-                  letterSpacing: '0.04em',
-                }}>{s.change}</span>
+            <div key={i} style={summaryCardStyle(s.color)}>
+              <div style={summaryIconStyle(s.color)}>
+                <Icon name={s.icon} size={14} color={s.color} />
               </div>
-              <div className="stat-value" style={{
-                fontSize: '28px',
-                fontWeight: '800',
-                color: colors.textPrimary,
-                marginBottom: '2px',
-                fontFamily: fontFamilyDisplay,
-                lineHeight: 1.2
-              }}>{s.value}</div>
-              <div style={{
-                fontSize: '13px',
-                color: colors.textSecondary,
-                fontWeight: 600,
-                fontFamily
-              }}>{s.label}</div>
+              <div style={summaryLabelStyle}>{s.label}</div>
+              <div style={summaryValueStyle(s.color)}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        {/* Two Column Layout */}
-        <div className="two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+        {/* ===== Two Column Layout ===== */}
+        <div
+          className="two-col"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+        >
           {/* Recent Activity */}
-          <div className="col-card" style={{
-            background: colors.surface,
-            borderRadius: '16px',
-            padding: '20px',
-            border: `1.5px solid ${colors.border}`,
-            boxShadow: `0 2px 0 ${colors.border}`,
-          }}>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '800',
-              color: colors.textPrimary,
-              margin: '0 0 16px 0',
-              fontFamily: fontFamilyDisplay,
-              letterSpacing: '-0.2px',
-            }}>Recent Activity</h3>
+          <div style={cardStyle}>
+            <h3 style={cardTitleStyle}>
+              <Icon name="students" size={16} color={palette.warmOrange} />
+              Recent Activity
+            </h3>
             {recentStudents.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {recentStudents.map((st, i) => (
-                  <div key={i} className="activity-item" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '10px 12px',
-                    background: colors.surfaceSoft,
-                    borderRadius: '12px',
-                    border: `1.5px solid ${colors.border}`,
-                  }}>
-                    {/* ✅ AVATAR FROM SHOP — FACE FOCUS */}
-                    <div className="avatar" style={{
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 12px',
+                      background: palette.creamSoft,
+                      borderRadius: '12px',
+                      border: `1.5px solid ${palette.border}`,
+                    }}
+                  >
+                    <div style={{
                       width: '36px',
                       height: '36px',
                       borderRadius: '10px',
                       overflow: 'hidden',
-                      background: colors.accentSoft,
+                      background: palette.creamSoft,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      border: `1.5px solid ${colors.border}`,
+                      border: `1.5px solid ${palette.border}`,
                     }}>
                       <StudentAvatarImage student={st} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="name" style={{
+                      <div style={{
                         fontSize: '13px',
                         fontWeight: 700,
-                        color: colors.textPrimary,
-                        fontFamily
+                        color: palette.deepNavy,
+                        fontFamily: FONT_BODY,
                       }}>
                         <strong style={{ fontWeight: 800 }}>{st.displayName}</strong> joined
                       </div>
-                      <div className="date" style={{
+                      <div style={{
                         fontSize: '11px',
-                        color: colors.textSecondary,
+                        color: palette.bodyTextSoft,
                         fontWeight: 600,
+                        marginTop: '2px',
                       }}>
                         {st.joinDate || 'Recently'}
                       </div>
                     </div>
-                    {st.createdAt && new Date(st.createdAt) > new Date(Date.now() - 7*24*60*60*1000) && (
+                    {st.createdAt && new Date(st.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
                       <span style={{
                         fontSize: '10px',
-                        background: colors.successSoft,
-                        color: colors.success,
+                        background: `${palette.softGreen}15`,
+                        color: palette.softGreen,
                         padding: '3px 8px',
                         borderRadius: '999px',
                         fontWeight: 800,
-                        border: `1px solid ${colors.success}40`,
-                        fontFamily: fontFamilyDisplay,
+                        border: `1px solid ${palette.softGreen}40`,
+                        fontFamily: FONT_DISPLAY,
                         letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
                       }}>New</span>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '32px', color: colors.textSecondary, fontWeight: 600 }}>
-                <div style={{ fontSize: '28px', marginBottom: '8px' }}>👋</div>
+              <div style={{
+                textAlign: 'center',
+                padding: '32px 20px',
+                color: palette.bodyTextSoft,
+                fontWeight: 600,
+              }}>
+                <div style={{
+                  display: 'inline-flex',
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: palette.creamSoft,
+                  border: `1.5px solid ${palette.border}`,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '12px',
+                }}>
+                  <Icon name="students" size={24} color={palette.bodyTextSoft} />
+                </div>
                 <div style={{ fontSize: '13px' }}>No students yet</div>
               </div>
             )}
           </div>
 
           {/* Platform Stats */}
-          <div className="col-card" style={{
-            background: colors.surface,
-            borderRadius: '16px',
-            padding: '20px',
-            border: `1.5px solid ${colors.border}`,
-            boxShadow: `0 2px 0 ${colors.border}`,
-          }}>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '800',
-              color: colors.textPrimary,
-              margin: '0 0 16px 0',
-              fontFamily: fontFamilyDisplay,
-              letterSpacing: '-0.2px',
-            }}>Platform Stats</h3>
-            <div className="platform-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <div style={cardStyle}>
+            <h3 style={cardTitleStyle}>
+              <Icon name="chart" size={16} color={palette.teal} />
+              Platform Stats
+            </h3>
+            <div
+              className="platform-stats"
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}
+            >
               {[
-                { label: 'Easy Words',   value: easyWords,   color: colors.success, bg: colors.successSoft },
-                { label: 'Medium Words', value: mediumWords, color: colors.warning, bg: colors.warningSoft },
-                { label: 'Hard Words',   value: hardWords,   color: colors.danger,  bg: colors.dangerSoft },
-                { label: 'Total Plays',  value: totalPlays,  color: colors.accent,  bg: colors.accentSoft },
+                { label: 'Easy Words', value: easyWords, color: palette.softGreen },
+                { label: 'Medium Words', value: mediumWords, color: palette.gold },
+                { label: 'Hard Words', value: hardWords, color: palette.danger },
+                { label: 'Total Plays', value: totalPlays, color: palette.warmOrange },
               ].map((item, i) => (
-                <div key={i} className="stat-item" style={{
-                  padding: '14px',
-                  background: item.bg,
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  border: `1.5px solid ${item.color}30`,
-                  transition: 'all 0.2s ease'
-                }}
+                <div
+                  key={i}
+                  style={{
+                    padding: '14px',
+                    background: `${item.color}15`,
+                    borderRadius: '12px',
+                    textAlign: 'center',
+                    border: `1.5px solid ${item.color}30`,
+                    transition: 'all 0.2s ease',
+                  }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = `0 2px 0 ${item.color}20`;
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${palette.shadowMd}`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = 'none';
-                  }}>
-                  <div className="stat-num" style={{
+                  }}
+                >
+                  <div style={{
                     fontSize: '22px',
                     fontWeight: 800,
                     color: item.color,
-                    fontFamily: fontFamilyDisplay,
-                    lineHeight: 1.2
+                    fontFamily: FONT_DISPLAY,
+                    lineHeight: 1.2,
                   }}>{item.value}</div>
                   <div style={{
                     fontSize: '11px',
                     color: item.color,
                     fontWeight: 700,
                     marginTop: '2px',
-                    fontFamily
+                    fontFamily: FONT_DISPLAY,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
                   }}>{item.label}</div>
                 </div>
               ))}
@@ -472,33 +474,47 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
           </div>
         </div>
 
-        {/* Students Summary */}
-        <div className="students-summary" style={{
-          background: colors.surface,
-          padding: students.length > 0 ? '24px' : '48px 24px',
+        {/* ===== Students Summary ===== */}
+        <div style={{
+          background: palette.white,
+          padding: students.length > 0 ? '24px' : '40px 24px',
           borderRadius: '16px',
-          border: `1.5px solid ${colors.border}`,
-          boxShadow: `0 2px 0 ${colors.border}`,
-          textAlign: 'center'
+          border: `1.5px solid ${palette.border}`,
+          boxShadow: `0 2px 0 ${palette.border}`,
+          textAlign: 'center',
         }}>
-          {students.length === 0 && <div style={{ fontSize: '40px', marginBottom: '12px' }}>👋</div>}
+          {students.length === 0 && (
+            <div style={{
+              display: 'inline-flex',
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              background: palette.creamSoft,
+              border: `1.5px solid ${palette.border}`,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '16px',
+            }}>
+              <Icon name="students" size={32} color={palette.warmOrange} />
+            </div>
+          )}
           <h3 style={{
             fontSize: '18px',
             fontWeight: 800,
-            color: colors.textPrimary,
-            marginBottom: '4px',
-            fontFamily: fontFamilyDisplay,
+            color: palette.deepNavy,
+            marginBottom: '6px',
+            fontFamily: FONT_DISPLAY,
             letterSpacing: '-0.2px',
           }}>
-            {students.length > 0 ? `${students.length} Active Student${students.length > 1 ? 's' : ''}` : 'No Students Yet'}
+            {students.length > 0 ? `students.lengthActiveStudent{students.length > 1 ? 's' : ''}` : 'No Students Yet'}
           </h3>
           <p style={{
-            fontSize: '14px',
-            color: colors.textSecondary,
+            fontSize: '13px',
+            color: palette.bodyTextSoft,
             maxWidth: '500px',
             margin: '0 auto',
             lineHeight: '1.6',
-            fontFamily,
+            fontFamily: FONT_BODY,
             fontWeight: 600,
           }}>
             {students.length > 0
@@ -510,28 +526,38 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
               onClick={() => setActiveMenu('Students')}
               style={{
                 marginTop: '16px',
-                padding: '12px 24px',
-                background: colors.accent,
-                color: colors.white,
+                padding: '11px 22px',
+                background: palette.warmOrange,
+                color: palette.white,
                 border: 'none',
                 borderRadius: '12px',
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: 800,
                 cursor: 'pointer',
-                fontFamily: fontFamilyDisplay,
+                fontFamily: FONT_DISPLAY,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                transition: 'all 0.2s ease',
-                boxShadow: `0 4px 0 ${colors.accentHover}`,
+                transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+                boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'translateY(3px)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
-              onMouseOut={(e) => {
+              onMouseUp={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = `0 3px 0 ${palette.warmOrangeShadow}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = `0 3px 0 ${palette.warmOrangeShadow}`;
               }}
             >
               View All Students
+              <Icon name="arrowRight" size={13} color={palette.white} />
             </button>
           )}
         </div>
@@ -541,3 +567,5 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
 };
 
 export default AdminOverview;
+
+

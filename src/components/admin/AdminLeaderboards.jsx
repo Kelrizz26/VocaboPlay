@@ -1,10 +1,10 @@
 // src/components/admin/AdminLeaderboards.jsx
 // ============================================================
-// ✅ ADMIN LEADERBOARDS - Shows ONLY teacher's students
-// Filtered by teacherId (from activities created by the teacher)
+// ✅ ADMIN LEADERBOARDS - Polished to match Super Admin
+// Shows ONLY teacher's students (filtered by teacherId)
 // ============================================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db, auth } from '../../pages/firebase';
 import {
   collection,
@@ -12,13 +12,154 @@ import {
   query,
   where,
   doc,
-  getDoc,
-  updateDoc
+  getDoc
 } from 'firebase/firestore';
-import { colors, fontFamily, fontFamilyDisplay } from '../dashboard/dashboardStyles';
-import { AVATAR_SHOP_ITEMS, DEFAULT_AVATAR_ID, RARITY_CONFIG } from '../../data/avatarShop';
+import { AVATAR_SHOP_ITEMS, DEFAULT_AVATAR_ID } from '../../data/avatarShop';
 
-// ✅ HELPER — Get the avatar URL from the Avatar Shop
+// ===== MUTED DASHBOARD PALETTE =====
+const palette = {
+  warmOrange: '#E9A075',
+  warmOrangeShadow: '#C27E4F',
+  coral: '#DB7A64',
+  coralShadow: '#A95845',
+  teal: '#4F9188',
+  tealShadow: '#3A6A63',
+  deepNavy: '#2A2845',
+  bodyText: '#6B6880',
+  bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3',
+  creamSoft: '#F5EFE6',
+  white: '#FFFFFF',
+  border: '#EBE2D5',
+  borderSoft: '#F2EBE0',
+  softGreen: '#7FA574',
+  softGreenShadow: '#5E7F55',
+  gold: '#C9A227',
+  shadow: 'rgba(42, 40, 69, 0.06)',
+  shadowMd: 'rgba(42, 40, 69, 0.10)',
+  danger: '#DB7A64',
+  dangerShadow: '#A95845',
+};
+
+const FONT_DISPLAY = "'Fredoka', sans-serif";
+const FONT_BODY = "'Nunito', sans-serif";
+
+// ===== DUOTONE SVG ICONS =====
+const Icon = ({ name, size = 18, color = palette.bodyTextSoft }) => {
+  const icons = {
+    trophy: (
+      <>
+        <path d="M6 4h12v4a6 6 0 01-12 0V4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M6 8H4a2 2 0 002 2M18 8h2a2 2 0 01-2 2M9 18h6M10 21h4M12 14v4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />,
+    book: (
+      <>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    flame: (
+      <path d="M12 2s4 5 4 9a4 4 0 0 1-8 0c0-1.5.5-2.5 1-3 0 0-2 1-2 4a5 5 0 0 0 10 0c0-4-5-10-5-10z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    ),
+    game: (
+      <>
+        <path d="M6 12h4m-2-2v4m6-4h.01M17 12h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M8 20h8a4 4 0 004-4V8a4 4 0 00-4-4H8a4 4 0 00-4 4v8a4 4 0 004 4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    clock: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M12 6v6l4 2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    alert: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M12 8v4M12 16h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    trending: (
+      <>
+        <path d="M23 6l-9.5 9.5-5-5L1 18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M17 6h6v6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
+      {icons[name] || icons.trophy}
+    </svg>
+  );
+};
+
+// ===== SHARED STYLE HELPERS =====
+const summaryCardStyle = (color) => ({
+  background: palette.white,
+  padding: '16px 18px',
+  borderRadius: '14px',
+  boxShadow: `0 2px 0 ${palette.border}`,
+  border: `1.5px solid ${palette.border}`,
+  borderLeft: `4px solid ${color}`,
+});
+
+const summaryIconStyle = (color) => ({
+  width: 28,
+  height: 28,
+  borderRadius: 8,
+  background: `${color}15`,
+  border: `1.5px solid ${color}30`,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 8,
+});
+
+const summaryLabelStyle = {
+  fontSize: '10px',
+  fontWeight: 800,
+  color: palette.bodyTextSoft,
+  fontFamily: FONT_DISPLAY,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  marginBottom: '4px',
+};
+
+const summaryValueStyle = (color) => ({
+  fontSize: '22px',
+  fontWeight: 800,
+  color: color,
+  fontFamily: FONT_DISPLAY,
+  lineHeight: 1,
+});
+
+const thStyle = {
+  padding: '12px',
+  textAlign: 'left',
+  color: palette.bodyTextSoft,
+  fontFamily: FONT_DISPLAY,
+  fontSize: '10px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  fontWeight: 800,
+};
+
+const selectFilterStyle = {
+  padding: '9px 14px',
+  border: `1.5px solid ${palette.border}`,
+  borderRadius: '10px',
+  fontSize: '13px',
+  fontFamily: FONT_BODY,
+  fontWeight: 700,
+  background: palette.white,
+  color: palette.deepNavy,
+  cursor: 'pointer',
+  outline: 'none',
+};
+
+// ✅ HELPER — Get avatar URL from the Avatar Shop
 const getStudentAvatar = (student) => {
   if (!student) return AVATAR_SHOP_ITEMS[0]?.image || '';
   const avatarId = student.equippedAvatar || DEFAULT_AVATAR_ID;
@@ -26,7 +167,7 @@ const getStudentAvatar = (student) => {
   return found?.image || AVATAR_SHOP_ITEMS[0]?.image || '';
 };
 
-// ✅ REUSABLE — FACE-FOCUSED Avatar
+// ✅ REUSABLE — Face-focused avatar
 const StudentAvatar = ({ student, size = 40, borderRadius = '50%' }) => {
   const [imgError, setImgError] = useState(false);
   const avatarSrc = getStudentAvatar(student);
@@ -50,7 +191,7 @@ const StudentAvatar = ({ student, size = 40, borderRadius = '50%' }) => {
   }
 
   return (
-    <span style={{ color: colors.white, fontWeight: '800', fontSize: size * 0.4, fontFamily: fontFamilyDisplay }}>
+    <span style={{ color: palette.white, fontWeight: '800', fontSize: size * 0.4, fontFamily: FONT_DISPLAY }}>
       {student.displayName?.charAt(0)?.toUpperCase() || '?'}
     </span>
   );
@@ -61,11 +202,12 @@ const AdminLeaderboards = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedLeaderboard, setSelectedLeaderboard] = useState('points');
-  const [currentTeacher, setCurrentTeacher] = useState(null);
-  const [teacherActivityIds, setTeacherActivityIds] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(false);
+
+  // ✅ NEW: sort + date filter (matches SA pattern)
+  const [sortBy, setSortBy] = useState('rank');
+  const [dateFilter, setDateFilter] = useState('all');
 
   // ============================================================
   // ✅ GET VALUE PER CATEGORY
@@ -106,25 +248,18 @@ const AdminLeaderboards = () => {
         return;
       }
 
-      // ✅ STEP 1: Get teacher data
+      // STEP 1: teacher data
       const teacherRef = doc(db, 'users', user.uid);
       const teacherDoc = await getDoc(teacherRef);
       const teacherData = teacherDoc.exists() ? teacherDoc.data() : {};
-      setCurrentTeacher({
-        uid: user.uid,
-        displayName: teacherData.displayName || user.email?.split('@')[0] || 'Teacher',
-        email: user.email || '',
-        ...teacherData
-      });
 
-      // ✅ STEP 2: Get all activities of the teacher
+      // STEP 2: activities of the teacher
       const activitiesQuery = query(
         collection(db, 'activities'),
         where('teacherId', '==', user.uid)
       );
       const activitiesSnap = await getDocs(activitiesQuery);
       const activityIds = activitiesSnap.docs.map(d => d.id);
-      setTeacherActivityIds(activityIds);
 
       if (activityIds.length === 0) {
         setLeaderboardData([]);
@@ -132,7 +267,7 @@ const AdminLeaderboards = () => {
         return;
       }
 
-      // ✅ STEP 3: Get scores for the teacher's activities → student IDs
+      // STEP 3: scores for teacher activities → student IDs
       const scoresSnap = await getDocs(collection(db, 'scores'));
       const studentIds = [];
       scoresSnap.forEach(d => {
@@ -148,7 +283,7 @@ const AdminLeaderboards = () => {
         return;
       }
 
-      // ✅ STEP 4: Get students data (users with role=student AND in studentIds)
+      // STEP 4: student users in that set
       const usersSnap = await getDocs(collection(db, 'users'));
       const students = usersSnap.docs
         .map(d => {
@@ -171,10 +306,10 @@ const AdminLeaderboards = () => {
         })
         .filter(s => s !== null);
 
-      // ✅ STEP 5: Sort by selected category
+      // STEP 5: sort by selected category
       students.sort((a, b) => getValue(b) - getValue(a));
 
-      // ✅ STEP 6: Add rank
+      // STEP 6: add rank
       students.forEach((s, i) => { s.rank = i + 1; });
 
       setLeaderboardData(students);
@@ -192,7 +327,7 @@ const AdminLeaderboards = () => {
   }, [fetchTeacherLeaderboard]);
 
   // ============================================================
-  // ✅ RE-SORT when the category changes
+  // ✅ RE-SORT when category changes
   // ============================================================
   useEffect(() => {
     if (leaderboardData.length > 0) {
@@ -206,7 +341,6 @@ const AdminLeaderboards = () => {
   // ✅ FETCH PROFILE FOR MODAL
   // ============================================================
   const fetchUserProfile = async (userId) => {
-    setProfileLoading(true);
     try {
       const userRef = doc(db, 'users', userId);
       const userDoc = await getDoc(userRef);
@@ -227,8 +361,6 @@ const AdminLeaderboards = () => {
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
-    } finally {
-      setProfileLoading(false);
     }
   };
 
@@ -236,86 +368,121 @@ const AdminLeaderboards = () => {
   // ✅ LEADERBOARD CATEGORIES
   // ============================================================
   const leaderboardTypes = [
-    { id: 'points', label: 'Total Points', icon: '⭐', color: colors.accent,  bg: colors.accentSoft },
-    { id: 'words',  label: 'Words Learned', icon: '📚', color: colors.success, bg: colors.successSoft },
-    { id: 'streak', label: 'Longest Streak', icon: '🔥', color: colors.warning, bg: colors.warningSoft },
-    { id: 'games',  label: 'Games Played', icon: '🎮', color: colors.danger,  bg: colors.dangerSoft },
+    { id: 'points', label: 'Total Points',   icon: 'star',   color: palette.warmOrange, bg: `${palette.warmOrange}15` },
+    { id: 'words',  label: 'Words Learned',  icon: 'book',   color: palette.softGreen,  bg: `${palette.softGreen}15` },
+    { id: 'streak', label: 'Longest Streak', icon: 'flame',  color: palette.gold,       bg: `${palette.gold}15` },
+    { id: 'games',  label: 'Games Played',   icon: 'game',   color: palette.coral,      bg: `${palette.coral}15` },
   ];
 
   const currentType = leaderboardTypes.find(t => t.id === selectedLeaderboard) || leaderboardTypes[0];
 
   // ============================================================
+  // ✅ FILTERED + SORTED TABLE (for the sort/date dropdowns)
+  // ============================================================
+  const visibleRows = React.useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const daysAgo = (days) => { const d = new Date(now); d.setDate(d.getDate() - days); return d; };
+    const threshold =
+      dateFilter === 'today' ? startOfToday :
+      dateFilter === 'week' ? daysAgo(7) :
+      dateFilter === 'month' ? daysAgo(30) :
+      dateFilter === 'year' ? daysAgo(365) : null;
+
+    let result = leaderboardData.filter(s => {
+      if (threshold) {
+        const t = s.createdAt || s.joinDate || s._registered;
+        if (!t || new Date(t) < threshold) return false;
+      }
+      return true;
+    });
+
+    switch (sortBy) {
+      case 'rank': result.sort((a, b) => a.rank - b.rank); break;
+      case 'value': result.sort((a, b) => getValue(b) - getValue(a)); break;
+      case 'nameAZ': result.sort((a, b) => (a.displayName || '').toLowerCase().localeCompare((b.displayName || '').toLowerCase())); break;
+      case 'nameZA': result.sort((a, b) => (b.displayName || '').toLowerCase().localeCompare((a.displayName || '').toLowerCase())); break;
+      default: break;
+    }
+
+    return result;
+  }, [leaderboardData, dateFilter, sortBy, getValue]);
+
+  // ============================================================
+  // ✅ SUMMARY (for tiles)
+  // ============================================================
+  const summary = React.useMemo(() => {
+    if (leaderboardData.length === 0) return { top: 0, avg: 0, active: 0, low: 0 };
+    const values = leaderboardData.map(getValue);
+    const top = Math.max(...values);
+    const low = Math.min(...values);
+    const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+    const now = new Date();
+    const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
+    const active = leaderboardData.filter(s => {
+      const t = s.lastActive || s.updatedAt;
+      return t && new Date(t) >= weekAgo;
+    }).length;
+    return { top, avg, active, low };
+  }, [leaderboardData, getValue]);
+
+  // ============================================================
   // ✅ RENDER
   // ============================================================
   return (
-    <div className="admin-lb-container" style={{
-      fontFamily,
-      maxWidth: '1400px',
-      margin: '0 auto',
-      padding: '24px',
-      color: colors.textPrimary
-    }}>
-      <style>{`
-        @media (max-width: 768px) {
-          .admin-lb-container { padding: 16px !important; }
-          .admin-lb-types { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-          .admin-lb-table th, .admin-lb-table td { padding: 10px 12px !important; font-size: 12px !important; }
-          .admin-lb-podium { flex-direction: column !important; align-items: center !important; gap: 16px !important; }
-        }
-        .admin-lb-row:hover { background: ${colors.surfaceSoft} !important; }
-      `}</style>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* HEADER */}
+      {/* ===== HEADER BAR ===== */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        marginBottom: '24px',
-        borderBottom: `1.5px solid ${colors.border}`,
-        paddingBottom: '20px',
+        alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '12px'
+        gap: '12px',
+        padding: '16px 20px',
+        background: palette.white,
+        borderRadius: '14px',
+        border: `1.5px solid ${palette.border}`,
+        boxShadow: `0 2px 0 ${palette.border}`,
       }}>
         <div>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '800',
-            color: colors.textPrimary,
-            marginBottom: '6px',
-            fontFamily: fontFamilyDisplay,
-            letterSpacing: '-0.4px',
-          }}>Class Leaderboard</h1>
-          <p style={{
-            fontSize: '15px',
-            color: colors.textSecondary,
+          <h2 style={{
             margin: 0,
-            fontWeight: 600,
-            fontFamily
+            fontFamily: FONT_DISPLAY,
+            color: palette.deepNavy,
+            fontWeight: 800,
+            fontSize: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            letterSpacing: '-0.2px',
           }}>
+            <Icon name="trophy" size={18} color={palette.gold} />
+            Class Leaderboard
+          </h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 600 }}>
             Rankings of your students — only those who joined your activities
           </p>
         </div>
         <span style={{
-          fontSize: '13px',
-          color: colors.textSecondary,
-          background: colors.surfaceSoft,
-          padding: '8px 16px',
+          fontSize: '12px',
+          color: palette.bodyTextSoft,
+          background: palette.creamSoft,
+          padding: '8px 14px',
           borderRadius: '999px',
-          border: `1.5px solid ${colors.border}`,
-          fontFamily,
+          border: `1.5px solid ${palette.border}`,
+          fontFamily: FONT_BODY,
           fontWeight: 700,
-          boxShadow: `0 2px 0 ${colors.border}`,
         }}>
           {leaderboardData.length} Student{leaderboardData.length !== 1 ? 's' : ''} Enrolled
         </span>
       </div>
 
-      {/* CATEGORY TABS */}
-      <div className="admin-lb-types" style={{
+      {/* ===== CATEGORY TABS ===== */}
+      <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '12px',
-        marginBottom: '24px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '10px',
       }}>
         {leaderboardTypes.map(type => {
           const active = selectedLeaderboard === type.id;
@@ -324,80 +491,129 @@ const AdminLeaderboards = () => {
               key={type.id}
               onClick={() => setSelectedLeaderboard(type.id)}
               style={{
-                background: active ? type.color : colors.surface,
-                border: `1.5px solid ${active ? type.color : colors.border}`,
-                borderRadius: '14px',
-                padding: '14px',
+                background: active ? type.color : palette.white,
+                border: `1.5px solid ${active ? type.color : palette.border}`,
+                borderRadius: '12px',
+                padding: '12px 14px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                boxShadow: active ? `0 3px 0 ${type.color}AA` : `0 2px 0 ${colors.border}`,
-                fontFamily
+                boxShadow: active ? `0 3px 0 ${type.color}AA` : `0 2px 0 ${palette.border}`,
+                fontFamily: FONT_BODY,
               }}
             >
               <div style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
                 background: active ? 'rgba(255,255,255,0.22)' : type.bg,
                 border: active ? '1.5px solid rgba(255,255,255,0.35)' : `1.5px solid ${type.color}30`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px',
                 flexShrink: 0,
-              }}>{type.icon}</div>
+              }}>
+                <Icon name={type.icon} size={16} color={active ? palette.white : type.color} />
+              </div>
               <div style={{
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: 800,
-                color: active ? colors.white : colors.textPrimary,
-                fontFamily: fontFamilyDisplay,
+                color: active ? palette.white : palette.deepNavy,
+                fontFamily: FONT_DISPLAY,
                 letterSpacing: '0.02em',
+                textAlign: 'left',
               }}>{type.label}</div>
             </button>
           );
         })}
       </div>
 
-      {/* LOADING */}
+      {/* ===== SUMMARY TILES (visible when we have data) ===== */}
+      {leaderboardData.length > 0 && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px',
+        }}>
+          <div style={summaryCardStyle(palette.gold)}>
+            <div style={summaryIconStyle(palette.gold)}>
+              <Icon name="trophy" size={14} color={palette.gold} />
+            </div>
+            <div style={summaryLabelStyle}>Top Score</div>
+            <div style={summaryValueStyle(palette.gold)}>{summary.top.toLocaleString()}</div>
+          </div>
+          <div style={summaryCardStyle(palette.warmOrange)}>
+            <div style={summaryIconStyle(palette.warmOrange)}>
+              <Icon name="trending" size={14} color={palette.warmOrange} />
+            </div>
+            <div style={summaryLabelStyle}>Class Average</div>
+            <div style={summaryValueStyle(palette.warmOrange)}>{summary.avg}</div>
+          </div>
+          <div style={summaryCardStyle(palette.softGreen)}>
+            <div style={summaryIconStyle(palette.softGreen)}>
+              <Icon name="flame" size={14} color={palette.softGreen} />
+            </div>
+            <div style={summaryLabelStyle}>Active This Week</div>
+            <div style={summaryValueStyle(palette.softGreen)}>{summary.active}</div>
+          </div>
+          <div style={summaryCardStyle(palette.coral)}>
+            <div style={summaryIconStyle(palette.coral)}>
+              <Icon name="alert" size={14} color={palette.coral} />
+            </div>
+            <div style={summaryLabelStyle}>Lowest Score</div>
+            <div style={summaryValueStyle(palette.coral)}>{summary.low.toLocaleString()}</div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== LOADING ===== */}
       {loading ? (
         <div style={{
           textAlign: 'center',
-          padding: '80px',
-          background: colors.surface,
+          padding: '48px 20px',
+          background: palette.white,
           borderRadius: '16px',
-          border: `1.5px solid ${colors.border}`,
-          boxShadow: `0 2px 0 ${colors.border}`,
+          border: `1.5px solid ${palette.border}`,
+          boxShadow: `0 2px 0 ${palette.border}`,
+          color: palette.bodyTextSoft,
+          fontFamily: FONT_BODY,
+          fontWeight: 600,
+          fontSize: '13px',
         }}>
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>⏳</div>
-          <div style={{ fontSize: '15px', color: colors.textSecondary, fontWeight: 600 }}>Loading your class leaderboard...</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+            <Icon name="clock" size={32} color={palette.warmOrange} />
+          </div>
+          Loading your class leaderboard...
         </div>
       ) : error ? (
         <div style={{
           textAlign: 'center',
-          padding: '40px',
-          background: colors.dangerSoft,
-          border: `1.5px solid ${colors.danger}40`,
+          padding: '32px 20px',
+          background: `${palette.danger}12`,
+          border: `1.5px solid ${palette.danger}40`,
           borderRadius: '16px',
-          boxShadow: `0 2px 0 ${colors.danger}20`,
         }}>
-          <div style={{ fontSize: '15px', color: colors.danger, marginBottom: '12px', fontWeight: 700 }}>⚠️ {error}</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+            <Icon name="alert" size={32} color={palette.danger} />
+          </div>
+          <div style={{ fontSize: '14px', color: palette.danger, marginBottom: '16px', fontWeight: 700 }}>{error}</div>
           <button
             onClick={fetchTeacherLeaderboard}
             style={{
-              padding: '12px 22px',
-              background: colors.danger,
-              color: colors.white,
+              padding: '10px 20px',
+              background: palette.danger,
+              color: palette.white,
               border: 'none',
-              borderRadius: '12px',
+              borderRadius: '10px',
               cursor: 'pointer',
-              fontFamily: fontFamilyDisplay,
+              fontFamily: FONT_DISPLAY,
               fontWeight: 800,
-              letterSpacing: '0.04em',
+              letterSpacing: '0.05em',
               textTransform: 'uppercase',
-              boxShadow: `0 3px 0 ${colors.dangerHover}`,
+              fontSize: '12px',
+              boxShadow: `0 3px 0 ${palette.dangerShadow}`,
             }}
           >Retry</button>
         </div>
@@ -405,418 +621,484 @@ const AdminLeaderboards = () => {
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: colors.surface,
+          background: palette.white,
           borderRadius: '16px',
-          border: `1.5px dashed ${colors.border}`,
+          border: `1.5px dashed ${palette.border}`,
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🏆</div>
+          <div style={{
+            display: 'inline-flex',
+            width: '72px',
+            height: '72px',
+            borderRadius: '50%',
+            background: palette.creamSoft,
+            border: `1.5px solid ${palette.border}`,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '16px',
+          }}>
+            <Icon name="trophy" size={32} color={palette.gold} />
+          </div>
           <h3 style={{
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: 800,
-            color: colors.textPrimary,
+            color: palette.deepNavy,
             marginBottom: '6px',
-            fontFamily: fontFamilyDisplay,
+            fontFamily: FONT_DISPLAY,
+            letterSpacing: '-0.2px',
           }}>No students yet</h3>
           <p style={{
-            fontSize: '14px',
-            color: colors.textSecondary,
+            fontSize: '13px',
+            color: palette.bodyTextSoft,
             margin: 0,
-            fontFamily,
+            fontFamily: FONT_BODY,
             fontWeight: 600,
+            maxWidth: '420px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            lineHeight: 1.6,
           }}>
             Once a student joins your activities, they will appear here.
           </p>
         </div>
       ) : (
         <>
-          {/* TOP 3 PODIUM */}
+          {/* ===== PODIUM ===== */}
           {leaderboardData.length >= 3 && (
-            <div className="admin-lb-podium" style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              gap: '16px',
-              marginBottom: '24px',
-              padding: '20px',
-              background: colors.accentSoft,
+            <div style={{
+              background: palette.white,
+              padding: '24px 20px',
               borderRadius: '16px',
-              border: `1.5px solid ${colors.border}`,
-              boxShadow: `0 2px 0 ${colors.border}`,
-              flexWrap: 'wrap'
+              border: `1.5px solid ${palette.border}`,
+              boxShadow: `0 2px 0 ${palette.border}`,
             }}>
-              {/* 2nd Place */}
-              {leaderboardData[1] && (
-                <div
-                  onClick={() => fetchUserProfile(leaderboardData[1].id)}
-                  style={{ textAlign: 'center', cursor: 'pointer' }}
-                >
-                  <div style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    background: colors.accentSoft,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 8px',
-                    border: '3px solid #a0a0a0',
-                    position: 'relative',
-                    boxShadow: `0 6px 16px ${colors.shadowMd}`,
-                  }}>
-                    <StudentAvatar student={leaderboardData[1]} />
+              <h3 style={{
+                margin: '0 0 20px 0',
+                fontFamily: FONT_DISPLAY,
+                color: palette.deepNavy,
+                fontWeight: 800,
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                letterSpacing: '-0.2px',
+              }}>
+                <Icon name="trophy" size={16} color={palette.gold} />
+                Top Performers
+              </h3>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                gap: '16px',
+                flexWrap: 'wrap',
+              }}>
+                {/* 2nd Place */}
+                {leaderboardData[1] && (
+                  <div
+                    onClick={() => fetchUserProfile(leaderboardData[1].id)}
+                    style={{ textAlign: 'center', cursor: 'pointer' }}
+                  >
                     <div style={{
-                      position: 'absolute',
-                      top: -4,
-                      right: -4,
-                      width: '26px',
-                      height: '26px',
+                      width: '80px',
+                      height: '80px',
                       borderRadius: '50%',
-                      background: '#a0a0a0',
-                      color: colors.white,
+                      overflow: 'hidden',
+                      background: palette.creamSoft,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      margin: '0 auto 8px',
+                      border: '3px solid #a0a0a0',
+                      position: 'relative',
+                      boxShadow: `0 6px 16px ${palette.shadowMd}`,
+                    }}>
+                      <StudentAvatar student={leaderboardData[1]} />
+                      <div style={{
+                        position: 'absolute',
+                        top: -4,
+                        right: -4,
+                        width: '26px',
+                        height: '26px',
+                        borderRadius: '50%',
+                        background: '#a0a0a0',
+                        color: palette.white,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        border: `2px solid ${palette.white}`,
+                        fontFamily: FONT_DISPLAY,
+                      }}>2</div>
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 800,
+                      color: palette.deepNavy,
+                      marginBottom: '4px',
+                      fontFamily: FONT_DISPLAY,
+                    }}>{leaderboardData[1].displayName}</div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: palette.bodyTextSoft,
+                      background: palette.creamSoft,
+                      padding: '3px 10px',
+                      borderRadius: '999px',
+                      display: 'inline-block',
+                      fontFamily: FONT_DISPLAY,
+                      fontWeight: 800,
+                      border: `1.5px solid ${palette.border}`,
+                    }}>{getValue(leaderboardData[1])} {getUnit()}</div>
+                  </div>
+                )}
+
+                {/* 1st Place */}
+                {leaderboardData[0] && (
+                  <div
+                    onClick={() => fetchUserProfile(leaderboardData[0].id)}
+                    style={{ textAlign: 'center', transform: 'scale(1.08)', zIndex: 2, cursor: 'pointer' }}
+                  >
+                    <div style={{
+                      width: '96px',
+                      height: '96px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      background: palette.creamSoft,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 8px',
+                      border: `3px solid ${palette.gold}`,
+                      position: 'relative',
+                      boxShadow: `0 8px 20px ${palette.gold}40`,
+                    }}>
+                      <StudentAvatar student={leaderboardData[0]} />
+                      <div style={{
+                        position: 'absolute',
+                        top: -4,
+                        right: -4,
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '50%',
+                        background: palette.gold,
+                        color: palette.white,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '15px',
+                        fontWeight: 800,
+                        border: `2px solid ${palette.white}`,
+                        fontFamily: FONT_DISPLAY,
+                      }}>1</div>
+                    </div>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: 800,
+                      color: palette.deepNavy,
+                      marginBottom: '4px',
+                      fontFamily: FONT_DISPLAY,
+                    }}>{leaderboardData[0].displayName}</div>
+                    <div style={{
                       fontSize: '13px',
                       fontWeight: 800,
-                      border: `2px solid ${colors.white}`,
-                      fontFamily: fontFamilyDisplay,
-                    }}>2</div>
+                      color: palette.warmOrange,
+                      background: `${palette.warmOrange}15`,
+                      padding: '4px 12px',
+                      borderRadius: '999px',
+                      display: 'inline-block',
+                      fontFamily: FONT_DISPLAY,
+                      border: `1.5px solid ${palette.warmOrange}40`,
+                    }}>{getValue(leaderboardData[0])} {getUnit()}</div>
                   </div>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 800,
-                    color: colors.textPrimary,
-                    marginBottom: '4px',
-                    fontFamily: fontFamilyDisplay,
-                  }}>{leaderboardData[1].displayName}</div>
-                  <div style={{
-                    fontSize: '13px',
-                    color: colors.textSecondary,
-                    background: colors.surfaceSoft,
-                    padding: '3px 10px',
-                    borderRadius: '999px',
-                    display: 'inline-block',
-                    fontFamily,
-                    fontWeight: 700,
-                    border: `1.5px solid ${colors.border}`,
-                  }}>{getValue(leaderboardData[1])} {getUnit()}</div>
-                </div>
-              )}
+                )}
 
-              {/* 1st Place */}
-              {leaderboardData[0] && (
-                <div
-                  onClick={() => fetchUserProfile(leaderboardData[0].id)}
-                  style={{ textAlign: 'center', transform: 'scale(1.08)', zIndex: 2, cursor: 'pointer' }}
-                >
-                  <div style={{
-                    width: '96px',
-                    height: '96px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    background: colors.accentSoft,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 8px',
-                    border: `3px solid ${colors.warning}`,
-                    position: 'relative',
-                    boxShadow: `0 8px 20px ${colors.warning}40`,
-                  }}>
-                    <StudentAvatar student={leaderboardData[0]} />
+                {/* 3rd Place */}
+                {leaderboardData[2] && (
+                  <div
+                    onClick={() => fetchUserProfile(leaderboardData[2].id)}
+                    style={{ textAlign: 'center', cursor: 'pointer' }}
+                  >
                     <div style={{
-                      position: 'absolute',
-                      top: -4,
-                      right: -4,
-                      width: '30px',
-                      height: '30px',
+                      width: '72px',
+                      height: '72px',
                       borderRadius: '50%',
-                      background: colors.warning,
-                      color: colors.white,
+                      overflow: 'hidden',
+                      background: palette.creamSoft,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '15px',
+                      margin: '0 auto 8px',
+                      border: '3px solid #b08d6b',
+                      position: 'relative',
+                      boxShadow: `0 6px 16px ${palette.shadowMd}`,
+                    }}>
+                      <StudentAvatar student={leaderboardData[2]} />
+                      <div style={{
+                        position: 'absolute',
+                        top: -4,
+                        right: -4,
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: '#b08d6b',
+                        color: palette.white,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        border: `2px solid ${palette.white}`,
+                        fontFamily: FONT_DISPLAY,
+                      }}>3</div>
+                    </div>
+                    <div style={{
+                      fontSize: '13px',
                       fontWeight: 800,
-                      border: `2px solid ${colors.white}`,
-                      fontFamily: fontFamilyDisplay,
-                    }}>1</div>
-                  </div>
-                  <div style={{
-                    fontSize: '16px',
-                    fontWeight: 800,
-                    color: colors.textPrimary,
-                    marginBottom: '4px',
-                    fontFamily: fontFamilyDisplay,
-                  }}>{leaderboardData[0].displayName}</div>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 800,
-                    color: colors.accent,
-                    background: colors.accentSoft,
-                    padding: '4px 12px',
-                    borderRadius: '999px',
-                    display: 'inline-block',
-                    fontFamily: fontFamilyDisplay,
-                    border: `1.5px solid ${colors.accent}40`,
-                  }}>{getValue(leaderboardData[0])} {getUnit()}</div>
-                </div>
-              )}
-
-              {/* 3rd Place */}
-              {leaderboardData[2] && (
-                <div
-                  onClick={() => fetchUserProfile(leaderboardData[2].id)}
-                  style={{ textAlign: 'center', cursor: 'pointer' }}
-                >
-                  <div style={{
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    background: colors.accentSoft,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 8px',
-                    border: '3px solid #b08d6b',
-                    position: 'relative',
-                    boxShadow: `0 6px 16px ${colors.shadowMd}`,
-                  }}>
-                    <StudentAvatar student={leaderboardData[2]} />
+                      color: palette.deepNavy,
+                      marginBottom: '4px',
+                      fontFamily: FONT_DISPLAY,
+                    }}>{leaderboardData[2].displayName}</div>
                     <div style={{
-                      position: 'absolute',
-                      top: -4,
-                      right: -4,
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: '#b08d6b',
-                      color: colors.white,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
                       fontSize: '12px',
+                      color: palette.bodyTextSoft,
+                      background: palette.creamSoft,
+                      padding: '3px 10px',
+                      borderRadius: '999px',
+                      display: 'inline-block',
+                      fontFamily: FONT_DISPLAY,
                       fontWeight: 800,
-                      border: `2px solid ${colors.white}`,
-                      fontFamily: fontFamilyDisplay,
-                    }}>3</div>
+                      border: `1.5px solid ${palette.border}`,
+                    }}>{getValue(leaderboardData[2])} {getUnit()}</div>
                   </div>
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    color: colors.textPrimary,
-                    marginBottom: '4px',
-                    fontFamily: fontFamilyDisplay,
-                  }}>{leaderboardData[2].displayName}</div>
-                  <div style={{
-                    fontSize: '12px',
-                    color: colors.textSecondary,
-                    background: colors.surfaceSoft,
-                    padding: '3px 10px',
-                    borderRadius: '999px',
-                    display: 'inline-block',
-                    fontFamily,
-                    fontWeight: 700,
-                    border: `1.5px solid ${colors.border}`,
-                  }}>{getValue(leaderboardData[2])} {getUnit()}</div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
-          {/* TABLE */}
+          {/* ===== TABLE CARD ===== */}
           <div style={{
-            background: colors.surface,
+            background: palette.white,
+            padding: '24px',
             borderRadius: '16px',
-            border: `1.5px solid ${colors.border}`,
-            boxShadow: `0 2px 0 ${colors.border}, 0 8px 24px ${colors.shadow}`,
-            overflow: 'hidden'
+            boxShadow: `0 2px 0 ${palette.border}`,
+            border: `1.5px solid ${palette.border}`,
           }}>
+            {/* Card header + filters */}
             <div style={{
-              padding: '16px 20px',
-              borderBottom: `1.5px solid ${colors.border}`,
-              background: colors.surfaceSoft,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               flexWrap: 'wrap',
-              gap: '8px'
+              gap: '12px',
+              marginBottom: '18px',
             }}>
               <h3 style={{
-                fontSize: '15px',
-                fontWeight: 800,
-                color: colors.textPrimary,
                 margin: 0,
+                fontFamily: FONT_DISPLAY,
+                color: palette.deepNavy,
+                fontWeight: 800,
+                fontSize: '16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontFamily: fontFamilyDisplay,
+                gap: '10px',
                 letterSpacing: '-0.2px',
               }}>
-                <span style={{ fontSize: '18px', color: currentType.color }}>{currentType.icon}</span>
+                <Icon name={currentType.icon} size={16} color={currentType.color} />
                 {currentType.label} Ranking
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  color: currentType.color,
+                  background: `${currentType.color}15`,
+                  padding: '3px 10px',
+                  borderRadius: '999px',
+                  border: `1px solid ${currentType.color}40`,
+                  fontFamily: FONT_DISPLAY,
+                  marginLeft: '4px',
+                }}>
+                  {visibleRows.length}
+                </span>
               </h3>
-              <span style={{
-                fontSize: '12px',
-                color: colors.textSecondary,
-                background: colors.surface,
-                padding: '4px 10px',
-                borderRadius: '999px',
-                border: `1.5px solid ${colors.border}`,
-                fontFamily,
-                fontWeight: 700,
-              }}>
-                {leaderboardData.length} student{leaderboardData.length !== 1 ? 's' : ''}
-              </span>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <select value={dateFilter} onChange={e => setDateFilter(e.target.value)} style={selectFilterStyle}>
+                  <option value="all">All Time</option>
+                  <option value="today">Registered Today</option>
+                  <option value="week">Last 7 Days</option>
+                  <option value="month">Last 30 Days</option>
+                  <option value="year">Last Year</option>
+                </select>
+                <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={selectFilterStyle}>
+                  <option value="rank">Sort: By Rank</option>
+                  <option value="value">Sort: By Score</option>
+                  <option value="nameAZ">Sort: Name A→Z</option>
+                  <option value="nameZA">Sort: Name Z→A</option>
+                </select>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table className="admin-lb-table" style={{
+              <table style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                fontFamily,
+                fontFamily: FONT_BODY,
                 minWidth: '600px'
               }}>
                 <thead>
-                  <tr style={{
-                    background: colors.surface,
-                    borderBottom: `1.5px solid ${colors.border}`
-                  }}>
-                    <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: colors.textSecondary, fontFamily: fontFamilyDisplay, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Rank</th>
-                    <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: colors.textSecondary, fontFamily: fontFamilyDisplay, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Student</th>
-                    <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: colors.textSecondary, fontFamily: fontFamilyDisplay, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Email</th>
-                    <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: colors.textSecondary, fontFamily: fontFamilyDisplay, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Level</th>
-                    <th style={{ padding: '14px 20px', textAlign: 'right', fontSize: '12px', fontWeight: 800, color: colors.textSecondary, fontFamily: fontFamilyDisplay, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{currentType.label}</th>
+                  <tr style={{ borderBottom: `1.5px solid ${palette.border}` }}>
+                    <th style={{ ...thStyle, textAlign: 'left', width: '80px' }}>Rank</th>
+                    <th style={thStyle}>Student</th>
+                    <th style={thStyle}>Email</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>Level</th>
+                    <th style={{ ...thStyle, textAlign: 'right' }}>{currentType.label}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {leaderboardData.map((student, index) => (
+                  {visibleRows.map((student) => (
                     <tr
                       key={student.id}
-                      className="admin-lb-row"
                       onClick={() => fetchUserProfile(student.id)}
                       style={{
-                        borderBottom: index < leaderboardData.length - 1 ? `1.5px solid ${colors.borderSoft}` : 'none',
+                        borderBottom: `1.5px solid ${palette.borderSoft}`,
                         cursor: 'pointer',
-                        transition: 'background 0.15s ease'
+                        transition: 'background 0.15s ease',
                       }}
+                      onMouseOver={e => e.currentTarget.style.background = palette.creamSoft}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      <td style={{ padding: '14px 20px' }}>
+                      <td style={{ padding: '12px' }}>
                         <div style={{
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
-                          background: student.rank === 1 ? colors.warningSoft : student.rank === 2 ? colors.surfaceSoft : student.rank === 3 ? colors.dangerSoft : 'transparent',
-                          border: student.rank <= 3 ? `1.5px solid ${student.rank === 1 ? `${colors.warning}40` : student.rank === 2 ? colors.border : `${colors.danger}30`}` : 'none',
+                          background: student.rank === 1 ? `palette.gold15`:student.rank===2?palette.creamSoft:student.rank===3?`{palette.coral}15` : 'transparent',
+                          border: student.rank <= 3 ? `1.5px solid ${student.rank === 1 ? `${palette.gold}40` : student.rank === 2 ? palette.border : `${palette.coral}30`}` : 'none',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: student.rank === 1 ? colors.warning : student.rank === 2 ? colors.textSecondary : student.rank === 3 ? colors.danger : colors.textMuted,
+                          color: student.rank === 1 ? palette.gold : student.rank === 2 ? palette.bodyText : student.rank === 3 ? palette.coral : palette.bodyTextSoft,
                           fontWeight: 800,
                           fontSize: '13px',
-                          fontFamily: fontFamilyDisplay,
+                          fontFamily: FONT_DISPLAY,
                         }}>
                           {student.rank <= 3 ? student.rank : `#${student.rank}`}
                         </div>
                       </td>
-                      <td style={{ padding: '14px 20px' }}>
+                      <td style={{ padding: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{
-                            width: '40px',
-                            height: '40px',
+                            width: '36px',
+                            height: '36px',
                             borderRadius: '50%',
                             overflow: 'hidden',
-                            background: colors.accentSoft,
+                            background: palette.creamSoft,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             flexShrink: 0,
-                            border: `1.5px solid ${colors.border}`
+                            border: `1.5px solid ${palette.border}`,
                           }}>
                             <StudentAvatar student={student} />
                           </div>
-                          <div>
+                          <div style={{ minWidth: 0 }}>
                             <div style={{
-                              fontSize: '14px',
+                              fontSize: '13px',
                               fontWeight: 800,
-                              color: colors.textPrimary,
-                              fontFamily: fontFamilyDisplay,
+                              color: palette.deepNavy,
+                              fontFamily: FONT_DISPLAY,
                             }}>{student.displayName}</div>
                             <div style={{
                               fontSize: '11px',
-                              color: colors.textMuted,
-                              fontFamily,
+                              color: palette.bodyTextSoft,
+                              fontFamily: FONT_BODY,
                               fontWeight: 600,
+                              marginTop: '2px',
                             }}>{student.username}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '14px 20px', color: colors.textSecondary, fontSize: '13px', fontFamily, fontWeight: 600 }}>{student.email}</td>
-                      <td style={{ padding: '14px 20px' }}>
+                      <td style={{ padding: '12px', color: palette.bodyText, fontSize: '13px', fontFamily: FONT_BODY, fontWeight: 600 }}>{student.email}</td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
                         <span style={{
                           padding: '4px 10px',
                           borderRadius: '999px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          background: colors.surfaceSoft,
-                          color: colors.textSecondary,
-                          fontFamily,
-                          border: `1.5px solid ${colors.border}`,
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          background: palette.creamSoft,
+                          color: palette.bodyText,
+                          fontFamily: FONT_DISPLAY,
+                          border: `1.5px solid ${palette.border}`,
                         }}>
-                          Level {student.progress?.level || 1}
+                          Lv {student.progress?.level || 1}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 20px', textAlign: 'right' }}>
+                      <td style={{ padding: '12px', textAlign: 'right' }}>
                         <span style={{
-                          fontSize: '16px',
+                          fontSize: '15px',
                           fontWeight: 800,
                           color: currentType.color,
-                          fontFamily: fontFamilyDisplay,
+                          fontFamily: FONT_DISPLAY,
                         }}>{getValue(student).toLocaleString()}</span>
                         <span style={{
                           fontSize: '11px',
-                          color: colors.textMuted,
+                          color: palette.bodyTextSoft,
                           marginLeft: '4px',
-                          fontFamily,
+                          fontFamily: FONT_BODY,
                           fontWeight: 600,
                         }}>{getUnit()}</span>
                       </td>
                     </tr>
                   ))}
+                  {visibleRows.length === 0 && leaderboardData.length > 0 && (
+                    <tr>
+                      <td colSpan={5} style={{
+                        padding: '32px',
+                        textAlign: 'center',
+                        color: palette.bodyTextSoft,
+                        fontWeight: 600,
+                        fontSize: '13px',
+                      }}>
+                        No students match your filters
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
-          </div>
 
-          {/* FOOTER STATS */}
-          <div style={{
-            marginTop: '20px',
-            padding: '16px 20px',
-            background: colors.surfaceSoft,
-            borderRadius: '14px',
-            border: `1.5px solid ${colors.border}`,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '8px',
-            fontSize: '13px',
-            color: colors.textSecondary,
-            fontFamily,
-            fontWeight: 700,
-          }}>
-            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-              <span>🏆 Top: {leaderboardData[0] ? getValue(leaderboardData[0]).toLocaleString() : 0} {getUnit()}</span>
-              <span>📊 Average: {leaderboardData.length > 0 ? Math.round(leaderboardData.reduce((acc, s) => acc + getValue(s), 0) / leaderboardData.length).toLocaleString() : 0} {getUnit()}</span>
-            </div>
-            <span style={{ color: colors.accent, fontFamily: fontFamilyDisplay }}>Live • Updated just now</span>
+            {/* Footer stats */}
+            {leaderboardData.length > 0 && (
+              <div style={{
+                marginTop: '20px',
+                padding: '14px 18px',
+                background: palette.creamSoft,
+                borderRadius: '12px',
+                border: `1.5px solid ${palette.border}`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '12px',
+                color: palette.bodyTextSoft,
+                fontFamily: FONT_BODY,
+                fontWeight: 700,
+              }}>
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Icon name="trophy" size={12} color={palette.gold} />
+                    Top: {leaderboardData[0] ? getValue(leaderboardData[0]).toLocaleString() : 0} {getUnit()}
+                  </span>
+                  <span>Average: {summary.avg} {getUnit()}</span>
+                </div>
+                <span style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>Live • Updated just now</span>
+              </div>
+            )}
           </div>
         </>
       )}
 
-      {/* PROFILE MODAL */}
+      {/* ===== PROFILE MODAL ===== */}
       {showProfileModal && selectedProfile && (
         <div
           onClick={() => setShowProfileModal(false)}
@@ -830,22 +1112,22 @@ const AdminLeaderboards = () => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
-            padding: '20px'
+            padding: '20px',
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: colors.surface,
+              background: palette.white,
               borderRadius: '20px',
-              maxWidth: '500px',
+              maxWidth: '480px',
               width: '100%',
               maxHeight: '90vh',
               overflowY: 'auto',
               padding: '24px',
-              fontFamily,
-              border: `1.5px solid ${colors.border}`,
-              boxShadow: `0 2px 0 ${colors.border}, 0 20px 50px rgba(42, 40, 69, 0.3)`,
+              fontFamily: FONT_BODY,
+              border: `1.5px solid ${palette.border}`,
+              boxShadow: `0 2px 0 ${palette.border}, 0 20px 50px rgba(42, 40, 69, 0.3)`,
             }}
           >
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -854,26 +1136,26 @@ const AdminLeaderboards = () => {
                 height: '96px',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                background: colors.accentSoft,
+                background: palette.creamSoft,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 12px',
-                border: `3px solid ${colors.accent}40`
+                border: `3px solid ${palette.warmOrange}40`,
               }}>
                 <StudentAvatar student={selectedProfile} />
               </div>
               <h2 style={{
                 fontSize: '20px',
                 fontWeight: 800,
-                color: colors.textPrimary,
+                color: palette.deepNavy,
                 margin: '0 0 4px',
-                fontFamily: fontFamilyDisplay,
+                fontFamily: FONT_DISPLAY,
                 letterSpacing: '-0.2px',
               }}>{selectedProfile.displayName}</h2>
               <p style={{
-                fontSize: '14px',
-                color: colors.textSecondary,
+                fontSize: '13px',
+                color: palette.bodyTextSoft,
                 margin: 0,
                 fontWeight: 600,
               }}>{selectedProfile.email}</p>
@@ -882,16 +1164,16 @@ const AdminLeaderboards = () => {
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: '12px'
+              gap: '10px',
             }}>
               {[
-                { label: 'Words Learned', value: selectedProfile.progress?.wordsLearned || 0, color: colors.success, bg: colors.successSoft },
-                { label: 'Games Played', value: selectedProfile.progress?.gamesPlayed || 0, color: colors.danger, bg: colors.dangerSoft },
-                { label: 'Streak', value: selectedProfile.progress?.streak || 0, color: colors.warning, bg: colors.warningSoft },
-                { label: 'Total Points', value: selectedProfile.totalPoints || selectedProfile.progress?.totalPoints || 0, color: colors.accent, bg: colors.accentSoft },
+                { label: 'Words Learned', value: selectedProfile.progress?.wordsLearned || 0, color: palette.softGreen },
+                { label: 'Games Played', value: selectedProfile.progress?.gamesPlayed || 0, color: palette.coral },
+                { label: 'Streak', value: selectedProfile.progress?.streak || 0, color: palette.gold },
+                { label: 'Total Points', value: selectedProfile.totalPoints || selectedProfile.progress?.totalPoints || 0, color: palette.warmOrange },
               ].map((stat, i) => (
                 <div key={i} style={{
-                  background: stat.bg,
+                  background: `${stat.color}15`,
                   padding: '14px',
                   borderRadius: '12px',
                   textAlign: 'center',
@@ -901,15 +1183,17 @@ const AdminLeaderboards = () => {
                     fontSize: '22px',
                     fontWeight: 800,
                     color: stat.color,
-                    fontFamily: fontFamilyDisplay,
+                    fontFamily: FONT_DISPLAY,
                     lineHeight: 1.1,
                   }}>{stat.value}</div>
                   <div style={{
                     fontSize: '11px',
                     color: stat.color,
                     marginTop: '4px',
-                    fontWeight: 700,
-                    fontFamily,
+                    fontWeight: 800,
+                    fontFamily: FONT_DISPLAY,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
                   }}>{stat.label}</div>
                 </div>
               ))}
@@ -920,18 +1204,18 @@ const AdminLeaderboards = () => {
               style={{
                 width: '100%',
                 padding: '12px',
-                background: colors.accent,
-                color: colors.white,
+                background: palette.warmOrange,
+                color: palette.white,
                 border: 'none',
-                borderRadius: '12px',
-                fontSize: '14px',
+                borderRadius: '10px',
+                fontSize: '12px',
                 fontWeight: 800,
                 cursor: 'pointer',
-                fontFamily: fontFamilyDisplay,
-                letterSpacing: '0.04em',
+                fontFamily: FONT_DISPLAY,
+                letterSpacing: '0.05em',
                 textTransform: 'uppercase',
-                boxShadow: `0 4px 0 ${colors.accentHover}`,
-                marginTop: '20px'
+                boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
+                marginTop: '20px',
               }}
             >Close</button>
           </div>
@@ -942,3 +1226,5 @@ const AdminLeaderboards = () => {
 };
 
 export default AdminLeaderboards;
+
+

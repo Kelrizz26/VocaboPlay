@@ -26,6 +26,30 @@ const palette = {
 const FONT_DISPLAY = "'Fredoka', sans-serif";
 const FONT_BODY = "'Nunito', sans-serif";
 
+// ===== DUOTONE SVG ICONS =====
+const Icon = ({ name, size = 16, color = palette.bodyTextSoft }) => {
+  const icons = {
+    add: <path d="M12 5v14M5 12h14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />,
+    search: (
+      <>
+        <circle cx="11" cy="11" r="8" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M21 21l-4.35-4.35" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    book: (
+      <>
+        <path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 00-3 3V4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M4 4v16" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+      </>
+    ),
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
+      {icons[name] || icons.book}
+    </svg>
+  );
+};
+
 const DIFFICULTY_LABELS = {
   1: { label: 'Beginner', color: palette.softGreen },
   2: { label: 'Easy', color: palette.softGreen },
@@ -54,7 +78,6 @@ const SuperAdminVocabulary = ({ words = [] }) => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
 
-  // Get unique categories
   const categories = useMemo(() => {
     const set = new Set();
     words.forEach(w => {
@@ -63,7 +86,6 @@ const SuperAdminVocabulary = ({ words = [] }) => {
     return Array.from(set).sort();
   }, [words]);
 
-  // Filtered + Sorted
   const filtered = useMemo(() => {
     let result = words.filter(w => {
       if (searchTerm) {
@@ -101,7 +123,6 @@ const SuperAdminVocabulary = ({ words = [] }) => {
     return result;
   }, [words, searchTerm, filterDifficulty, filterCategory, sortBy]);
 
-  // Difficulty breakdown (based on filtered or all? Let's use ALL words)
   const difficultyCounts = useMemo(() => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, unknown: 0 };
     words.forEach(w => {
@@ -112,7 +133,6 @@ const SuperAdminVocabulary = ({ words = [] }) => {
     return counts;
   }, [words]);
 
-  // Recently added (top 8)
   const recentlyAdded = useMemo(() => {
     return [...words]
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -153,7 +173,7 @@ const SuperAdminVocabulary = ({ words = [] }) => {
       {/* ====== RECENTLY ADDED VOCABULARY ====== */}
       <div style={cardStyle}>
         <h3 style={cardTitleStyle}>
-          <span style={{ fontSize: '16px' }}>🆕</span>
+          <Icon name="add" size={16} color={palette.warmOrange} />
           Recently Added Vocabulary
         </h3>
         {recentlyAdded.length === 0 ? (
@@ -240,13 +260,36 @@ const SuperAdminVocabulary = ({ words = [] }) => {
           display: 'flex', gap: '10px', flexWrap: 'wrap',
           marginBottom: '16px',
         }}>
-          <input
-            type="text"
-            placeholder="🔍 Search word, definition, or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ ...inputStyle, flex: '1', minWidth: '220px' }}
-          />
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '0 14px',
+            border: `1.5px solid ${palette.border}`,
+            borderRadius: '10px',
+            background: palette.creamSoft,
+            flex: '1',
+            minWidth: '220px',
+          }}>
+            <Icon name="search" size={14} color={palette.bodyTextSoft} />
+            <input
+              type="text"
+              placeholder="Search word, definition, or category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '10px 0',
+                border: 'none',
+                background: 'transparent',
+                fontSize: '13px',
+                fontFamily: FONT_BODY,
+                fontWeight: 600,
+                color: palette.deepNavy,
+                outline: 'none',
+              }}
+            />
+          </div>
           <select
             value={filterDifficulty}
             onChange={(e) => setFilterDifficulty(e.target.value)}
@@ -416,18 +459,6 @@ const summaryValueStyle = (color) => ({
   lineHeight: 1,
 });
 
-const inputStyle = {
-  padding: '10px 14px',
-  border: `1.5px solid ${palette.border}`,
-  borderRadius: '10px',
-  fontSize: '13px',
-  fontFamily: FONT_BODY,
-  fontWeight: 600,
-  background: palette.creamSoft,
-  color: palette.deepNavy,
-  outline: 'none',
-};
-
 const selectStyle = {
   padding: '10px 14px',
   border: `1.5px solid ${palette.border}`,
@@ -467,3 +498,4 @@ const badgeStyle = (color) => ({
 });
 
 export default SuperAdminVocabulary;
+

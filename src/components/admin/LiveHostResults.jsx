@@ -4,6 +4,8 @@
 // ✅ FIXED: 1 correct = 1 point (not live game score)
 // ✅ UPDATED: Added Matrix Table, Summary Stats, Print Layout
 // ✅ FIXED: Robust per-question answers parsing (Q1, Q2...)
+// ✅ FIXED: Index-shift bug — now properly detects 0-indexed vs 1-indexed
+//           objects so the matrix matches the correct count
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -67,24 +69,62 @@ const parseAnswerValue = (val) => {
 
 // ============================================================
 // ✅ Helper: Get answer for a specific question number (q = 1, 2, 3...)
-// Handles various formats: arrays, {Q1: true}, {1: true}, {0: true}
+//
+// ✅ FIX: Removed the ambiguous `q - 1` / `String(q - 1)` fallbacks
+//    that were causing an index-shift when the answers object was
+//    0-indexed (e.g., {0: false, 1: false, ..., 4: true}).
+//
+//    New strategy:
+//      1. Explicit Q-prefixed keys win first ({Q1: true, q1: true})
+//      2. Detect indexing style via presence of key "0"
+//         - Has "0" key → 0-indexed → look up q-1
+//         - No "0" key → 1-indexed → look up q
+//
+// Handles:
+//   - Arrays:                    [true, false, true, ...]
+//   - 1-indexed objects:         {Q1: true}, {q1: true}, {1: true}, {1: "true"}
+//   - 0-indexed objects:         {0: true, 1: false, ...}
 // ============================================================
 const getAnswerForQuestion = (answers, q) => {
   if (!answers) return false;
 
-  // Format 1: Array of booleans [true, false, true...]
+  // -------- Format 1: Array of booleans (0-indexed) --------
   if (Array.isArray(answers)) {
     return parseAnswerValue(answers[q - 1]);
   }
 
-  // Format 2: Object with various key formats
-  if (typeof answers === 'object') {
-    const keysToTry = [`Q${q}`, `q${q}`, `${q}`, q, q - 1, String(q - 1)];
-    for (const key of keysToTry) {
-      if (Object.prototype.hasOwnProperty.call(answers, key)) {
-        return parseAnswerValue(answers[key]);
-      }
+  if (typeof answers !== 'object') return false;
+
+  // -------- Format 2a: Explicit Q-prefixed keys (unambiguous) --------
+  if (Object.prototype.hasOwnProperty.call(answers, `Q${q}`)) {
+    return parseAnswerValue(answers[`Q${q}`]);
+  }
+  if (Object.prototype.hasOwnProperty.call(answers, `q${q}`)) {
+    return parseAnswerValue(answers[`q${q}`]);
+  }
+
+  // -------- Format 2b: Detect 0-indexed vs 1-indexed numeric keys --------
+  const hasZeroKey =
+    Object.prototype.hasOwnProperty.call(answers, 0) ||
+    Object.prototype.hasOwnProperty.call(answers, '0');
+
+  if (hasZeroKey) {
+    // 0-indexed object: {0: ..., 1: ..., 2: ..., 3: ..., 4: ...}
+    if (Object.prototype.hasOwnProperty.call(answers, q - 1)) {
+      return parseAnswerValue(answers[q - 1]);
     }
+    if (Object.prototype.hasOwnProperty.call(answers, String(q - 1))) {
+      return parseAnswerValue(answers[String(q - 1)]);
+    }
+    return false;
+  }
+
+  // 1-indexed numeric keys: {1: ..., 2: ..., 3: ..., 4: ..., 5: ...}
+  if (Object.prototype.hasOwnProperty.call(answers, q)) {
+    return parseAnswerValue(answers[q]);
+  }
+  if (Object.prototype.hasOwnProperty.call(answers, String(q))) {
+    return parseAnswerValue(answers[String(q)]);
   }
 
   return false;
@@ -300,7 +340,7 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
                       <td style={{...styles.td, textAlign: 'left', fontWeight: 'bold'}}>{player.name}</td>
                       <td style={styles.td}>{correct}/{totalQ}</td>
                       {questionNumbers.map(q => {
-                        // ✅ FIX: Use flexible parser that handles arrays, {Q1: true}, {1: true}, etc.
+                        // ✅ FIX: Use flexible parser that handles arrays, {Q1: true}, {1: true}, {0: true}, etc.
                         const isCorrect = getAnswerForQuestion(answersSource, q);
                         return (
                           <td key={`Q${q}`} style={styles.td}>

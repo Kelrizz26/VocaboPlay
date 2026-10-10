@@ -32,14 +32,80 @@ const palette = {
 const FONT_DISPLAY = "'Fredoka', sans-serif";
 const FONT_BODY = "'Nunito', sans-serif";
 
-const getTypeIcon = (type) => {
+// ===== DUOTONE SVG ICONS =====
+const Icon = ({ name, size = 16, color = palette.bodyTextSoft }) => {
+  const icons = {
+    quiz: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="3" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    target: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <circle cx="12" cy="12" r="6" stroke={color} strokeWidth="2" fill="none"/>
+        <circle cx="12" cy="12" r="2" stroke={color} strokeWidth="2" fill="none"/>
+      </>
+    ),
+    image: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth="2" fill="none"/>
+        <circle cx="8.5" cy="8.5" r="1.5" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M21 15l-5-5L5 21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    help: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    book: (
+      <>
+        <path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 00-3 3V4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M4 4v16" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+      </>
+    ),
+    game: (
+      <>
+        <path d="M6 12h4m-2-2v4m6-4h.01M17 12h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M8 20h8a4 4 0 004-4V8a4 4 0 00-4-4H8a4 4 0 00-4 4v8a4 4 0 004 4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    flame: (
+      <path d="M12 2s4 5 4 9a4 4 0 0 1-8 0c0-1.5.5-2.5 1-3 0 0-2 1-2 4a5 5 0 0 0 10 0c0-4-5-10-5-10z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    ),
+    add: <path d="M12 5v14M5 12h14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />,
+    search: (
+      <>
+        <circle cx="11" cy="11" r="8" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M21 21l-4.35-4.35" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    users: (
+      <>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <circle cx="9" cy="7" r="4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
+      {icons[name] || icons.game}
+    </svg>
+  );
+};
+
+const getTypeIconName = (type) => {
   switch (type) {
-    case 'quiz': return '📝';
-    case 'match': return '🎯';
-    case 'wordpics': return '🖼️';
-    case 'guesswhat': return '❓';
-    case 'short-story': return '📖';
-    default: return '🎮';
+    case 'quiz': return 'quiz';
+    case 'match': return 'target';
+    case 'wordpics': return 'image';
+    case 'guesswhat': return 'help';
+    case 'short-story': return 'book';
+    default: return 'game';
   }
 };
 
@@ -81,7 +147,6 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
   const [filterDateRange, setFilterDateRange] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
 
-  // Derive teacher list from activities (in case teachers prop is empty)
   const teacherOptions = useMemo(() => {
     const set = new Set();
     activities.forEach(a => {
@@ -94,7 +159,6 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
     return Array.from(set).sort();
   }, [activities, teachers]);
 
-  // Filter + Sort
   const filtered = useMemo(() => {
     const now = new Date();
     const daysAgo = (days) => {
@@ -110,7 +174,6 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
       null;
 
     let result = activities.filter(a => {
-      // Search
       if (searchTerm) {
         const q = searchTerm.toLowerCase();
         const matchTitle = a.title?.toLowerCase().includes(q);
@@ -119,11 +182,8 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
         const matchCategory = a.category?.toLowerCase().includes(q);
         if (!matchTitle && !matchPin && !matchTeacher && !matchCategory) return false;
       }
-      // Type filter
       if (filterType !== 'all' && a.gameType !== filterType) return false;
-      // Teacher filter
       if (filterTeacher !== 'all' && a.teacherName !== filterTeacher) return false;
-      // Date filter
       if (dateThreshold && a.createdAt) {
         if (new Date(a.createdAt) < dateThreshold) return false;
       }
@@ -131,13 +191,11 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
       return true;
     });
 
-    // Attach participant count from scores
     result = result.map(a => {
       const participantCount = scores.filter(s => s.activityId === a.id).length;
       return { ...a, _participantCount: participantCount };
     });
 
-    // Sort
     switch (sortBy) {
       case 'recent':
         result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -164,7 +222,6 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
     return result;
   }, [activities, scores, searchTerm, filterType, filterTeacher, filterDateRange, sortBy]);
 
-  // Most played (top 5 overall, regardless of filter)
   const mostPlayed = useMemo(() => {
     return activities
       .map(a => ({
@@ -175,7 +232,6 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
       .slice(0, 5);
   }, [activities, scores]);
 
-  // Recently added (top 5)
   const recentlyAdded = useMemo(() => {
     return [...activities]
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -191,7 +247,7 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
         {/* Most Played */}
         <div style={cardStyle}>
           <h3 style={cardTitleStyle}>
-            <span style={{ fontSize: '16px' }}>🔥</span>
+            <Icon name="flame" size={16} color={palette.warmOrange} />
             Most Played Activities
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -215,11 +271,13 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
                   </div>
                 </div>
                 <span style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
                   fontSize: '13px', fontWeight: 800,
                   color: palette.warmOrange, fontFamily: FONT_DISPLAY,
                   flexShrink: 0,
                 }}>
-                  {a._participantCount} 👥
+                  {a._participantCount}
+                  <Icon name="users" size={12} color={palette.warmOrange} />
                 </span>
               </div>
             ))}
@@ -230,7 +288,7 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
         {/* Recently Added */}
         <div style={cardStyle}>
           <h3 style={cardTitleStyle}>
-            <span style={{ fontSize: '16px' }}>🆕</span>
+            <Icon name="add" size={16} color={palette.warmOrange} />
             Recently Added Activities
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -240,10 +298,10 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
                   width: '28px', height: '28px', borderRadius: '8px',
                   background: `${getTypeColor(a.gameType)}15`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '14px', flexShrink: 0,
+                  flexShrink: 0,
                   border: `1.5px solid ${getTypeColor(a.gameType)}30`,
                 }}>
-                  {getTypeIcon(a.gameType)}
+                  <Icon name={getTypeIconName(a.gameType)} size={14} color={getTypeColor(a.gameType)} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={smallRowTitleStyle}>{a.title}</div>
@@ -264,24 +322,45 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
           display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center',
           marginBottom: '16px',
         }}>
-          <input
-            type="text"
-            placeholder="🔍 Search title, PIN, teacher, category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ ...inputStyle, flex: '1', minWidth: '220px' }}
-          />
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '0 14px',
+            border: `1.5px solid ${palette.border}`,
+            borderRadius: '10px',
+            background: palette.creamSoft,
+            flex: '1',
+            minWidth: '220px',
+          }}>
+            <Icon name="search" size={14} color={palette.bodyTextSoft} />
+            <input
+              type="text"
+              placeholder="Search title, PIN, teacher, category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '10px 0',
+                border: 'none',
+                background: 'transparent',
+                fontSize: '13px',
+                fontFamily: FONT_BODY,
+                fontWeight: 600,
+                color: palette.deepNavy,
+                outline: 'none',
+              }}
+            />
+          </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             style={selectStyle}
           >
             <option value="all">All Types</option>
-            <option value="quiz">📝 Quiz</option>
-            <option value="match">🎯 Match</option>
-            <option value="wordpics">🖼️ Word Pics</option>
-            <option value="guesswhat">❓ Guess What</option>
-            <option value="short-story">📖 Short Story</option>
+            <option value="quiz">Quiz</option>
+            <option value="match">Match</option>
+            <option value="wordpics">Word Pics</option>
+            <option value="guesswhat">Guess What</option>
+            <option value="short-story">Short Story</option>
           </select>
           <select
             value={filterTeacher}
@@ -351,10 +430,10 @@ const SuperAdminActivities = ({ activities = [], scores = [], teachers = [] }) =
                         width: '28px', height: '28px', borderRadius: '8px',
                         background: `${getTypeColor(a.gameType)}15`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '14px', flexShrink: 0,
+                        flexShrink: 0,
                         border: `1.5px solid ${getTypeColor(a.gameType)}30`,
                       }}>
-                        {getTypeIcon(a.gameType)}
+                        <Icon name={getTypeIconName(a.gameType)} size={14} color={getTypeColor(a.gameType)} />
                       </span>
                       <div style={{ minWidth: 0 }}>
                         <div style={{
@@ -441,18 +520,6 @@ const cardTitleStyle = {
   gap: '8px',
 };
 
-const inputStyle = {
-  padding: '10px 14px',
-  border: `1.5px solid ${palette.border}`,
-  borderRadius: '10px',
-  fontSize: '13px',
-  fontFamily: FONT_BODY,
-  fontWeight: 600,
-  background: palette.creamSoft,
-  color: palette.deepNavy,
-  outline: 'none',
-};
-
 const selectStyle = {
   padding: '10px 14px',
   border: `1.5px solid ${palette.border}`,
@@ -525,7 +592,8 @@ const EmptyMini = ({ text }) => (
     color: palette.bodyTextSoft,
     fontSize: '12px',
     fontWeight: 600,
-  }}>{text}</div>   
+  }}>{text}</div>
 );
 
 export default SuperAdminActivities;
+

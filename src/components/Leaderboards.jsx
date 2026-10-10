@@ -139,6 +139,44 @@ const getLastActiveMs = (data) => {
 };
 
 // ============================================================
+// ✅ NEW HELPER — Format "Joined" date from various formats
+//    (string / number / Firestore Timestamp / ISO)
+// ============================================================
+const formatJoinedDate = (val) => {
+  if (!val) return 'Unknown';
+  try {
+    let date;
+    if (typeof val === 'string') date = new Date(val);
+    else if (typeof val === 'number') date = new Date(val);
+    else if (typeof val.toDate === 'function') date = val.toDate();
+    else if (typeof val.toMillis === 'function') date = new Date(val.toMillis());
+    else if (typeof val.seconds === 'number') date = new Date(val.seconds * 1000);
+    else return 'Unknown';
+
+    if (isNaN(date.getTime())) return 'Unknown';
+
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return 'Unknown';
+  }
+};
+
+// ============================================================
+// ✅ NEW HELPER — Format role for display (student → Student)
+// ============================================================
+const formatRoleLabel = (role) => {
+  if (!role || typeof role !== 'string') return 'Student';
+  return role
+    .split(/[_\s-]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
+// ============================================================
 // ✅ REUSABLE — Face-focused Avatar component
 // ============================================================
 const PlayerAvatar = ({ user, size = 36, fontSize = 16, borderRadius = '50%' }) => {
@@ -262,6 +300,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
   // ============================================================
   // ===== FETCH USER PROFILE FOR MODAL =====
+  // ✅ UPDATED: Added joinedAt + role for display
   // ============================================================
   const fetchUserProfile = async (userId) => {
     setProfileLoading(true);
@@ -293,6 +332,10 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
           emailNotifications: data.emailNotifications !== undefined ? data.emailNotifications : true,
           darkMode: data.darkMode || false,
           language: data.language || 'English',
+          // ✅ NEW: Joined date + role for display
+          joinedAt: formatJoinedDate(data.createdAt),
+          role: data.role || 'student',
+          roleLabel: formatRoleLabel(data.role || 'student'),
           stats: {
             wordsLearned: stats.wordsLearned || 0,
             gamesPlayed: stats.gamesPlayed || 0,
@@ -326,6 +369,10 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             emailNotifications: true,
             darkMode: false,
             language: 'English',
+            // ✅ NEW: Joined date + role for local fallback
+            joinedAt: 'Unknown',
+            role: 'student',
+            roleLabel: 'Student',
             stats: {
               wordsLearned: localUser.wordsLearned || 0,
               gamesPlayed: localUser.gamesPlayed || 0,
@@ -1961,11 +2008,15 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                 </div>
 
                 {/* Info sections */}
+                {/* ✅ UPDATED:
+                    - Basic Information: removed Email, added Joined
+                    - Settings: replaced Dark Mode with Account Type
+                */}
                 {[
                   { title: 'Basic Information', items: [
                     ['Display Name', selectedProfile.displayName],
                     ['Username', selectedProfile.username],
-                    ['Email', selectedProfile.email],
+                    ['Joined', selectedProfile.joinedAt],           // ✅ NEW
                     ['Bio', selectedProfile.bio],
                   ]},
                   { title: 'Contact Information', items: [
@@ -1980,7 +2031,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   ]},
                   { title: 'Settings', items: [
                     ['Email Notifications', selectedProfile.emailNotifications ? 'Enabled' : 'Disabled'],
-                    ['Dark Mode', selectedProfile.darkMode ? 'Enabled' : 'Disabled'],
+                    ['Account Type', selectedProfile.roleLabel || 'Student'],  // ✅ REPLACED (was Dark Mode)
                     ['Language', selectedProfile.language],
                   ]},
                 ].map((section, sIdx) => (

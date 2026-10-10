@@ -4,6 +4,7 @@
 // ✅ NEW: Accepts completeActivity prop to save to Recent Activities
 // ✅ FIXED: 1 correct = 1 point (All displays: score bar, waiting screen)
 // ✅ FIXED: Now contributes per-question answers (Q1, Q2, etc.) to completeActivity
+// ✅ UPDATED: Options layout — 2x2 grid (A/B top, C/D bottom)
 // ============================================================
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -352,8 +353,8 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* Options */}
-        <div style={styles.optionsGrid}>
+        {/* ✅ UPDATED: Options — 2x2 grid (A/B top, C/D bottom) */}
+        <div className="live-options-grid" style={styles.optionsGrid}>
           {currentQuestion.options?.map((option, index) => {
             const isSelected = selectedAnswer === option;
             const isCorrectAnswer = option === currentQuestion.correctAnswer;
@@ -582,9 +583,11 @@ const styles = {
     color: palette.deepNavy,
     letterSpacing: '-0.3px',
   },
+  // ✅ UPDATED: 2x2 grid (A/B top, C/D bottom)
   optionsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(240px, 30vw, 380px), 1fr))',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gridAutoFlow: 'row',
     gap: 'clamp(10px, 1.6vw, 16px)',
   },
   optionBtn: {
@@ -759,6 +762,12 @@ if (typeof document !== 'undefined' && !document.querySelector('#liveplayer-styl
     @keyframes pulse {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.3); opacity: 0.5; }
+    }
+    /* ✅ UPDATED: Mobile fallback — stack options in single column */
+    @media (max-width: 560px) {
+      .live-options-grid {
+        grid-template-columns: 1fr !important;
+      }
     }
   `;
   document.head.appendChild(style);
