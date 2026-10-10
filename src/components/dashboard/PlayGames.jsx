@@ -77,6 +77,9 @@ const PlayGames = ({ startGame }) => {
     setPageLoaded(true);
   }, []);
 
+  // ✅ 6 games total:
+  //    - 3 available (Syno Quest, Match Game, Story Quest)
+  //    - 3 locked   (Quiz Master, GuessWhat, Sentence Builder) — All Games lang
   const games = [
     {
       id: 'wordpics',
@@ -85,7 +88,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/wordpics.png',
       accentColor: palette.warmOrange,
       lightColor: palette.creamSoft,
-      category: 'vocab',
+      categories: ['challenge'],
       timeEstimate: '5-10 min',
       difficulty: 'beginner',
       players: '1 player',
@@ -98,7 +101,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/matchgame.png',
       accentColor: palette.coral,
       lightColor: palette.creamSoft,
-      category: 'vocab',
+      categories: ['challenge'],
       timeEstimate: '3-5 min',
       difficulty: 'beginner',
       players: '1 player',
@@ -111,12 +114,13 @@ const PlayGames = ({ startGame }) => {
       image: '/image/shortstory.png',
       accentColor: palette.teal,
       lightColor: palette.creamSoft,
-      category: 'reading',
+      categories: ['reading', 'challenge'],   // 👈 nasa both reading + challenge
       timeEstimate: '15-20 min',
       difficulty: 'intermediate',
       players: '1 player',
       available: true
     },
+    // 🔒 LOCKED — All Games lang (walang category)
     {
       id: 'quiz',
       name: 'Quiz Master',
@@ -124,7 +128,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/quizgame.png',
       accentColor: palette.deepNavy,
       lightColor: palette.creamSoft,
-      category: 'challenge',
+      categories: [],                          // 👈 walang category → All Games lang
       timeEstimate: '10-15 min',
       difficulty: 'intermediate',
       players: '1 player',
@@ -137,7 +141,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/guesswhatgame.png',
       accentColor: palette.coral,
       lightColor: palette.creamSoft,
-      category: 'challenge',
+      categories: [],                          // 👈 walang category → All Games lang
       timeEstimate: '8-12 min',
       difficulty: 'advanced',
       players: '1 player',
@@ -150,7 +154,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/sentence.png',
       accentColor: palette.softGreen,
       lightColor: palette.creamSoft,
-      category: 'vocab',
+      categories: [],                          // 👈 walang category → All Games lang
       timeEstimate: '6-10 min',
       difficulty: 'beginner',
       players: '1 player',
@@ -158,16 +162,17 @@ const PlayGames = ({ startGame }) => {
     },
   ];
 
+  // ✅ 3 filters: All Games, Reading, Challenge
   const categories = [
-    { id: 'all', name: 'All Games', icon: 'game', color: palette.deepNavy },
-    { id: 'vocab', name: 'Vocabulary', icon: 'book', color: palette.warmOrange },
-    { id: 'reading', name: 'Reading', icon: 'book', color: palette.teal },
-    { id: 'challenge', name: 'Challenge', icon: 'zap', color: palette.coral },
+    { id: 'all',       name: 'All Games', icon: 'game', color: palette.deepNavy },
+    { id: 'reading',   name: 'Reading',   icon: 'book', color: palette.teal },
+    { id: 'challenge', name: 'Challenge', icon: 'zap',  color: palette.coral },
   ];
 
+  // ✅ Filter using ARRAY includes
   const filteredGames = filter === 'all'
     ? games
-    : games.filter(game => game.category === filter);
+    : games.filter(game => game.categories.includes(filter));
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
@@ -437,7 +442,6 @@ const PlayGames = ({ startGame }) => {
                   fontWeight: '800',
                   background: palette.white,
                   color: getDifficultyColor(game.difficulty),
-                  textTransform: 'capitalize',
                   boxShadow: `0 2px 4px ${palette.shadow}`,
                   zIndex: 2,
                   fontFamily: "'Fredoka', sans-serif",
@@ -618,15 +622,11 @@ const PlayGames = ({ startGame }) => {
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <Icon name="book" size={12} color={palette.bodyTextSoft} />
-              {games.filter(g => g.category === 'vocab').length} vocabulary
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <Icon name="book" size={12} color={palette.bodyTextSoft} />
-              {games.filter(g => g.category === 'reading').length} reading
+              {games.filter(g => g.categories.includes('reading')).length} reading
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <Icon name="zap" size={12} color={palette.bodyTextSoft} />
-              {games.filter(g => g.category === 'challenge').length} challenge
+              {games.filter(g => g.categories.includes('challenge')).length} challenge
             </span>
           </div>
           <span style={{

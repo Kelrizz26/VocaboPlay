@@ -4,8 +4,9 @@
 // ✅ Timeout = -1 ❤️ + GAME OVER AGAD
 // ✅ Diamond reward per level completion
 // ✅ +50 💎 completion bonus (A1 → C2)
-// ✅ NEW: MP3 background music via backgroundMusic.js (no synthesized music)
-// ✅ NEW: Sound effects still Web Audio API synthesized
+// ✅ MP3 background music via backgroundMusic.js
+// ✅ FIXED: Footer "attempts" now resets to 0 every 5 wrong matches
+// ✅ All existing features preserved
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -219,6 +220,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const [totalAnswers, setTotalAnswers] = useState(0);
   const [answeredPairsInLevel, setAnsweredPairsInLevel] = useState(0);
 
+  // ✅ NEW: display counter for footer — mirrors wrongAttemptsRef, resets to 0 every 5 wrong
+  const [displayAttempts, setDisplayAttempts] = useState(0);
+
   const sessionSavedRef = useRef(false);
   const firebaseSavedRef = useRef(false);
   const diamondSavedRef = useRef(false);
@@ -424,6 +428,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     setCorrectAnswers(0);
     setTotalAnswers(0);
     setAnsweredPairsInLevel(0);
+    setDisplayAttempts(0); // ✅ Reset footer counter on new level
     setFlippedCards([]);
     setIsLocked(false);
     setTimer(config.timer);
@@ -449,6 +454,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       completionBonusSavedRef.current = false;
       sessionSavedRef.current = false;
       wrongAttemptsRef.current = 0;
+      setDisplayAttempts(0);
       startLevel('A1');
       setGameState('playing');
       setShowNoLivesMessage(false);
@@ -508,7 +514,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           setFlippedCards([]);
           setIsLocked(false);
           playMatchSuccess();
+          // ✅ Correct match resets the wrong-attempt streak AND the footer counter
           wrongAttemptsRef.current = 0;
+          setDisplayAttempts(0);
           const matchedWord = card1.type === 'word' ? card1.content : card2.word;
           if (matchedWord && !matchedWordsRef.current.includes(matchedWord)) {
             matchedWordsRef.current.push(matchedWord);
@@ -532,10 +540,14 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             livesRef.current = newLives;
             setLives(newLives);
             wrongAttemptsRef.current = 0;
+            setDisplayAttempts(0); // ✅ Reset footer counter after heart deduction
             if (newLives === 0) {
               setShowNoLivesMessage(true);
               setTimeout(() => { setGameState('gameover'); playGameOver(); }, 1500);
             }
+          } else {
+            // ✅ Footer counter increments with the wrong streak (1-4)
+            setDisplayAttempts(wrongAttemptsRef.current);
           }
         }, 700);
       }
@@ -672,6 +684,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         setScore(0);
         setContinueFromGameOver(false);
         wrongAttemptsRef.current = 0;
+        setDisplayAttempts(0);
         startLevel(currentLevel);
         setGameState('playing');
       }
@@ -713,6 +726,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     completionBonusSavedRef.current = false;
     sessionSavedRef.current = false;
     wrongAttemptsRef.current = 0;
+    setDisplayAttempts(0);
     startLevel(level);
     setGameState('playing');
     setShowNoLivesMessage(false);
@@ -1169,7 +1183,8 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         </div>
         <div className="mg-footer" style={{ maxWidth: gridConfig.maxWidth, width: '100%', margin: '10px auto 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: 'rgba(255,255,255,0.9)', borderRadius: '12px', fontSize: '11px', color: palette.bodyText, border: `1.5px solid ${palette.border}`, fontFamily: FONT_BODY, fontWeight: 600, transition: 'max-width 0.3s ease', boxSizing: 'border-box' }}>
           <span>💡 Match words with images</span>
-          <span>🔄 {attempts} attempts</span>
+          {/* ✅ FIXED: shows the wrong-streak counter (resets to 0 every 5 wrong) */}
+          <span>🔄 {displayAttempts} attempts</span>
         </div>
       </div>
     );

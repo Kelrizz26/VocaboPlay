@@ -116,6 +116,29 @@ const getStudentAvatarUrl = (user) => {
 };
 
 // ============================================================
+// ✅ NEW HELPER — Extract last-active timestamp (ms) from user data
+//    Tries common Firestore fields. Returns 0 if none found.
+// ============================================================
+const getLastActiveMs = (data) => {
+  if (!data) return 0;
+  const candidates = ['lastActive', 'lastPlayed', 'updatedAt', 'lastLogin', 'lastSeen', 'createdAt'];
+  for (const field of candidates) {
+    const val = data[field];
+    if (!val) continue;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const parsed = Date.parse(val);
+      if (!isNaN(parsed)) return parsed;
+      continue;
+    }
+    // Firestore Timestamp
+    if (typeof val.toMillis === 'function') return val.toMillis();
+    if (typeof val.seconds === 'number') return val.seconds * 1000;
+  }
+  return 0;
+};
+
+// ============================================================
 // ✅ REUSABLE — Face-focused Avatar component
 // ============================================================
 const PlayerAvatar = ({ user, size = 36, fontSize = 16, borderRadius = '50%' }) => {
@@ -225,6 +248,19 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   }, [selectedLeaderboard]);
 
   // ============================================================
+  // ✅ NEW — Time filter helper. Returns true if user passes filter.
+  // ============================================================
+  const passesTimeFilter = useCallback((lastActiveMs) => {
+    if (timeFilter === 'all') return true;
+    const now = Date.now();
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+    if (timeFilter === 'weekly') return lastActiveMs >= (now - WEEK_MS);
+    if (timeFilter === 'monthly') return lastActiveMs >= (now - MONTH_MS);
+    return true;
+  }, [timeFilter]);
+
+  // ============================================================
   // ===== FETCH USER PROFILE FOR MODAL =====
   // ============================================================
   const fetchUserProfile = async (userId) => {
@@ -323,6 +359,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
   // ============================================================
   // ===== FETCH LEADERBOARD - FIXED MERGE LOGIC =====
+  // ✅ Now applies timeFilter to firebase users
   // ============================================================
   const fetchLeaderboardData = useCallback(async () => {
     setLoading(true);
@@ -331,12 +368,11 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     try {
       console.log('🔄 Fetching leaderboard from users collection...');
       console.log('📊 Selected category:', selectedLeaderboard);
+      console.log('⏱️ Time filter:', timeFilter);
 
       const usersRef = collection(db, 'users');
-      const limitCount = isAdmin ? 50 : 20;
+      const limitCount = isAdmin ? 100 : 50;   // ✅ raised limit so time filter has enough pool
       const sortField = getSortField();
-
-      console.log('📊 Sort field:', sortField);
 
       const q = query(
         usersRef,
@@ -349,30 +385,22 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       console.log('📊 Snapshot size:', snapshot.size);
 
       const firebaseUsers = snapshot.docs
-        .map((doc, index) => {
-          const data = doc.data();
+        .map((docSnap) => {
+          const data = docSnap.data();
           const stats = data.stats || {};
 
-          if (!data.stats || Object.keys(stats).length === 0) {
-            return null;
-          }
+          if (!data.stats || Object.keys(stats).length === 0) return null;
+          if (data.removedFromLeaderboard === true) return null;
 
-          if (data.removedFromLeaderboard === true) {
-            console.log(`🚫 User ${data.displayName} is removed from leaderboard`);
-            return null;
-          }
+          // ✅ Compute last-active ms
+          const lastActiveMs = getLastActiveMs(data);
 
-          if (doc.id === currentUserId) {
-            console.log('👑 YOUR DATA FROM FIREBASE:', {
-              id: doc.id,
-              displayName: data.displayName,
-              stats: stats
-            });
-          }
+          // ✅ NEW: Apply time filter here
+          if (!passesTimeFilter(lastActiveMs)) return null;
 
           return {
-            id: doc.id,
-            rank: index + 1,
+            id: docSnap.id,
+            rank: 0,
             displayName: data.displayName || 'Anonymous User',
             equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
             email: data.email || 'No email',
@@ -389,11 +417,13 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               totalQuestions: stats.totalQuestions || 0
             },
             isLocal: false,
-            _source: 'firebase'
+            _source: 'firebase',
+            _lastActiveMs: lastActiveMs,
           };
         })
         .filter(user => user !== null);
 
+      // ===== LOCAL DATA =====
       const localData = getLeaderboard();
       console.log('📊 Local data from localStorage:', localData.length);
 
@@ -403,38 +433,39 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         if (user) mergedMap.set(user.id, { ...user });
       });
 
-      localData.forEach(localUser => {
-        const userId = localUser.userId;
-
-        if (!mergedMap.has(userId)) {
-          mergedMap.set(userId, {
-            id: userId,
-            rank: mergedMap.size + 1,
-            displayName: localUser.username || 'Player',
-            equippedAvatar: localUser.equippedAvatar || DEFAULT_AVATAR_ID,
-            email: localUser.email || '',
-            username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
-            stats: {
-              totalPoints: localUser.totalPoints || 0,
-              wordsLearned: localUser.wordsLearned || 0,
-              gamesPlayed: localUser.gamesPlayed || 0,
-              longestStreak: localUser.longestStreak || localUser.streak || 0,
-              level: localUser.level || 1
-            },
-            progress: {
-              totalPoints: localUser.totalPoints || 0,
-              wordsLearned: localUser.wordsLearned || 0,
-              gamesPlayed: localUser.gamesPlayed || 0,
-              longestStreak: localUser.longestStreak || localUser.streak || 0,
-              level: localUser.level || 1
-            },
-            isLocal: true,
-            _source: 'local'
-          });
-        } else {
-          console.log(`⚠️ User ${userId} already in Firebase, skipping local data`);
-        }
-      });
+      // ✅ Local users: only include in 'all' time filter (they have no timestamp)
+      if (timeFilter === 'all') {
+        localData.forEach(localUser => {
+          const userId = localUser.userId;
+          if (!mergedMap.has(userId)) {
+            mergedMap.set(userId, {
+              id: userId,
+              rank: 0,
+              displayName: localUser.username || 'Player',
+              equippedAvatar: localUser.equippedAvatar || DEFAULT_AVATAR_ID,
+              email: localUser.email || '',
+              username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
+              stats: {
+                totalPoints: localUser.totalPoints || 0,
+                wordsLearned: localUser.wordsLearned || 0,
+                gamesPlayed: localUser.gamesPlayed || 0,
+                longestStreak: localUser.longestStreak || localUser.streak || 0,
+                level: localUser.level || 1
+              },
+              progress: {
+                totalPoints: localUser.totalPoints || 0,
+                wordsLearned: localUser.wordsLearned || 0,
+                gamesPlayed: localUser.gamesPlayed || 0,
+                longestStreak: localUser.longestStreak || localUser.streak || 0,
+                level: localUser.level || 1
+              },
+              isLocal: true,
+              _source: 'local',
+              _lastActiveMs: 0,
+            });
+          }
+        });
+      }
 
       let mergedData = Array.from(mergedMap.values());
 
@@ -451,20 +482,11 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       setLeaderboardData(mergedData);
       console.log('✅ Leaderboard loaded:', mergedData.length, 'players');
 
-      if (mergedData.length > 0) {
-        console.log('🏆 Top 3:', mergedData.slice(0, 3).map(u => ({
-          name: u.displayName,
-          points: u.stats?.totalPoints || 0,
-          words: u.stats?.wordsLearned || 0,
-          games: u.stats?.gamesPlayed || 0,
-          streak: u.stats?.longestStreak || 0
-        })));
-      }
-
     } catch (error) {
       console.error('❌ Error fetching leaderboard:', error);
       setError(error.message);
 
+      // Fallback: local only
       const localData = getLeaderboard();
       const formatted = localData.map((entry, index) => ({
         id: entry.userId || `local_${index}`,
@@ -493,7 +515,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedLeaderboard, isAdmin, currentUserId, getSortField, getValue]);
+  }, [selectedLeaderboard, isAdmin, currentUserId, getSortField, getValue, timeFilter, passesTimeFilter]);
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -501,6 +523,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
   // ============================================================
   // ===== REAL-TIME LISTENER =====
+  // ✅ Now also respects timeFilter
   // ============================================================
   useEffect(() => {
     if (unsubscribeRef.current) {
@@ -513,7 +536,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     const q = query(
       usersRef,
       orderBy('stats.totalPoints', 'desc'),
-      limit(50)
+      limit(100)   // ✅ raised to have enough for time filter
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -522,20 +545,21 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       if (!loading) {
         try {
           const firebaseUsers = snapshot.docs
-            .map((doc) => {
-              const data = doc.data();
+            .map((docSnap) => {
+              const data = docSnap.data();
               const stats = data.stats || {};
 
-              if (!data.stats || Object.keys(stats).length === 0) {
-                return null;
-              }
+              if (!data.stats || Object.keys(stats).length === 0) return null;
+              if (data.removedFromLeaderboard === true) return null;
 
-              if (data.removedFromLeaderboard === true) {
-                return null;
-              }
+              const lastActiveMs = getLastActiveMs(data);
+
+              // ✅ NEW: Apply time filter
+              if (!passesTimeFilter(lastActiveMs)) return null;
 
               return {
-                id: doc.id,
+                id: docSnap.id,
+                rank: 0,
                 displayName: data.displayName || 'Anonymous User',
                 equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
                 email: data.email || 'No email',
@@ -549,7 +573,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   level: stats.level || 1
                 },
                 isLocal: false,
-                _source: 'firebase'
+                _source: 'firebase',
+                _lastActiveMs: lastActiveMs,
               };
             })
             .filter(user => user !== null);
@@ -561,35 +586,38 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             if (user) mergedMap.set(user.id, { ...user });
           });
 
-          localData.forEach(localUser => {
-            const userId = localUser.userId;
-            if (!mergedMap.has(userId)) {
-              mergedMap.set(userId, {
-                id: userId,
-                rank: mergedMap.size + 1,
-                displayName: localUser.username || 'Player',
-                equippedAvatar: localUser.equippedAvatar || DEFAULT_AVATAR_ID,
-                email: localUser.email || '',
-                username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
-                stats: {
-                  totalPoints: localUser.totalPoints || 0,
-                  wordsLearned: localUser.wordsLearned || 0,
-                  gamesPlayed: localUser.gamesPlayed || 0,
-                  longestStreak: localUser.longestStreak || localUser.streak || 0,
-                  level: localUser.level || 1
-                },
-                progress: {
-                  totalPoints: localUser.totalPoints || 0,
-                  wordsLearned: localUser.wordsLearned || 0,
-                  gamesPlayed: localUser.gamesPlayed || 0,
-                  longestStreak: localUser.longestStreak || localUser.streak || 0,
-                  level: localUser.level || 1
-                },
-                isLocal: true,
-                _source: 'local'
-              });
-            }
-          });
+          if (timeFilter === 'all') {
+            localData.forEach(localUser => {
+              const userId = localUser.userId;
+              if (!mergedMap.has(userId)) {
+                mergedMap.set(userId, {
+                  id: userId,
+                  rank: 0,
+                  displayName: localUser.username || 'Player',
+                  equippedAvatar: localUser.equippedAvatar || DEFAULT_AVATAR_ID,
+                  email: localUser.email || '',
+                  username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
+                  stats: {
+                    totalPoints: localUser.totalPoints || 0,
+                    wordsLearned: localUser.wordsLearned || 0,
+                    gamesPlayed: localUser.gamesPlayed || 0,
+                    longestStreak: localUser.longestStreak || localUser.streak || 0,
+                    level: localUser.level || 1
+                  },
+                  progress: {
+                    totalPoints: localUser.totalPoints || 0,
+                    wordsLearned: localUser.wordsLearned || 0,
+                    gamesPlayed: localUser.gamesPlayed || 0,
+                    longestStreak: localUser.longestStreak || localUser.streak || 0,
+                    level: localUser.level || 1
+                  },
+                  isLocal: true,
+                  _source: 'local',
+                  _lastActiveMs: 0,
+                });
+              }
+            });
+          }
 
           let mergedData = Array.from(mergedMap.values());
           mergedData.sort((a, b) => {
@@ -618,7 +646,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         unsubscribeRef.current = null;
       }
     };
-  }, [loading, getValue]);
+  }, [loading, getValue, timeFilter, passesTimeFilter]);
 
   // ============================================================
   // ===== ADMIN FUNCTIONS =====
@@ -742,6 +770,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   ];
 
   const currentType = leaderboardTypes.find(t => t.id === selectedLeaderboard) || leaderboardTypes[0];
+  const currentTimeLabel = timeFilters.find(t => t.id === timeFilter)?.label || 'All Time';
 
   // ===== CONFIRMATION DIALOG =====
   const ConfirmationDialog = () => {
@@ -1457,6 +1486,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               }}>
                 <Icon name={currentType.icon} size={14} color={currentType.color} />
                 {currentType.label} Ranking
+                <span style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 700 }}>• {currentTimeLabel}</span>
               </h3>
               <span style={{
                 fontSize: '11px',
@@ -1756,7 +1786,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   Top: {leaderboardData.length > 0 ? getValue(leaderboardData[0]).toLocaleString() : 0} {getUnit()}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Icon name="chart" size={12} color={palette.teal} />
+                  <Icon name="star" size={12} color={palette.teal} />
                   Avg: {leaderboardData.length > 0 ? Math.round(leaderboardData.reduce((acc, u) => acc + getValue(u), 0) / leaderboardData.length).toLocaleString() : 0} {getUnit()}
                 </span>
               </div>
@@ -1790,10 +1820,12 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                 <Icon name="trophy" size={36} color={palette.warmOrange} />
               </div>
               <h3 style={{ fontSize: '18px', fontWeight: '800', color: palette.deepNavy, marginBottom: '6px', fontFamily: BRAND_FONT_DISPLAY }}>
-                No data yet
+                {timeFilter === 'all' ? 'No data yet' : `No activity ${currentTimeLabel.toLowerCase()}`}
               </h3>
               <p style={{ fontSize: '13px', color: palette.bodyTextSoft, margin: 0, fontFamily: BRAND_FONT_BODY, fontWeight: '600' }}>
-                Players will appear here once they start playing
+                {timeFilter === 'all'
+                  ? 'Players will appear here once they start playing'
+                  : `Try selecting "All Time" to see everyone`}
               </p>
             </div>
           )}

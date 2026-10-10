@@ -1,6 +1,6 @@
 // src/components/dashboard/ShortStoryGame.jsx
-// ✅ LANDSCAPE-RESPONSIVE: Kasya na lahat sa landscape mobile
-// ✅ Auto-adjust padding, font sizes, at image sizes kapag landscape
+// ✅ LANDSCAPE-RESPONSIVE: Everything fits in landscape mobile
+// ✅ Auto-adjust padding, font sizes, and image sizes when landscape
 // ✅ Uses 100dvh (dynamic viewport height) for mobile browsers
 // ✅ FIXED: Exit button now shows confirmation modal, returns to MAP on confirm
 // ✅ NEW: Back button returns to GAMES selection screen (via onExitToGames prop)
@@ -30,7 +30,7 @@ const palette = {
 const FONT_DISPLAY = "'Fredoka', sans-serif";
 const FONT_BODY = "'Nunito', sans-serif";
 
-// ✅ Landscape CSS na ini-inject sa lahat ng screens
+// ✅ Landscape CSS injected into all screens
 const LANDSCAPE_STYLES = `
   /* Base screen wrapper */
   .sq-screen {
@@ -52,7 +52,7 @@ const LANDSCAPE_STYLES = `
     overflow-y: auto;
   }
 
-  /* Kapag naka-landscape ang phone (maliit ang height) */
+  /* When phone is in landscape (small height) */
   @media (max-height: 500px) and (orientation: landscape) {
     .sq-screen {
       padding: 6px 12px !important;
@@ -80,13 +80,13 @@ const LANDSCAPE_STYLES = `
       margin-bottom: 6px !important;
     }
 
-    /* Emojis/icons sa header */
+    /* Emojis/icons in header */
     .sq-big-emoji {
       font-size: 36px !important;
       margin-bottom: 4px !important;
     }
 
-    /* Stat boxes sa loob ng card */
+    /* Stat boxes inside the card */
     .sq-stats-grid {
       gap: 6px !important;
       margin-bottom: 8px !important;
@@ -147,7 +147,7 @@ const LANDSCAPE_STYLES = `
     }
   }
 
-  /* Kapag sobrang liit ng height (halimbawa 350px) */
+  /* When height is very small (e.g. 350px) */
   @media (max-height: 380px) and (orientation: landscape) {
     .sq-card {
       padding: 8px 14px !important;

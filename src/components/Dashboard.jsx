@@ -1,9 +1,9 @@
 // src/components/Dashboard.jsx
 // ============================================================
-// ✅ FULLSCREEN API: Auto-fullscreen kapag nasa game
+// ✅ FULLSCREEN API: Auto-fullscreen when in a game
 // ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
-// ✅ NEW: onExitToGames prop — bumabalik sa Games selection screen
-// ✅ FIXED: X button sa sidebar — mobile lang visible (hidden sa web)
+// ✅ NEW: onExitToGames prop — returns to the Games selection screen
+// ✅ FIXED: X button in sidebar — visible on mobile only (hidden on web)
 // ✅ UPDATED: Rotate phone prompt in English
 // ============================================================
 import React, { useState, useEffect } from 'react';
@@ -216,7 +216,7 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ FULLSCREEN API: Auto-fullscreen kapag pumasok sa game
+  // ✅ FULLSCREEN API: Auto-fullscreen when entering a game
   useEffect(() => {
     if (currentGame) {
       setIsSidebarVisible(false);
@@ -522,14 +522,14 @@ const Dashboard = () => {
     window.scrollTo(0, 0);
   };
 
-  // ✅ BUMALIK SA DASHBOARD MENU
+  // ✅ RETURN TO DASHBOARD MENU
   const exitGame = () => {
     setCurrentGame(null);
     setActiveMenu('Dashboard');
     refreshRecentActivities();
   };
 
-  // ✅ BAGO: BUMALIK SA GAMES SELECTION SCREEN (SynoQuest, MatchGame, etc.)
+  // ✅ NEW: RETURN TO GAMES SELECTION SCREEN (SynoQuest, MatchGame, etc.)
   const exitToGames = () => {
     setCurrentGame(null);
     setActiveMenu('Games');
@@ -732,7 +732,7 @@ const Dashboard = () => {
               <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
               <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
             </div>
-            {/* ✅ X BUTTON: MOBILE LANG — hindi lalabas sa web */}
+            {/* ✅ X BUTTON: MOBILE ONLY — not shown on web */}
             {isMobile && (
               <button
                 onClick={() => setIsSidebarVisible(false)}

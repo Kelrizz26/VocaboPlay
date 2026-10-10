@@ -1,6 +1,6 @@
 // src/components/dashboard/MatchGameDevPanel.jsx
 // ============================================================
-// 🧪 MATCH GAME DEV PANEL — Testing tools para sa lahat ng levels
+// 🧪 MATCH GAME DEV PANEL
 // Only visible when ?dev=1 is in URL
 // ============================================================
 

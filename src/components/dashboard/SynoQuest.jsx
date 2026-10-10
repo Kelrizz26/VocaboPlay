@@ -1,7 +1,9 @@
 // src/components/dashboard/SynoQuest.jsx
 // ✅ LANDSCAPE-RESPONSIVE
-// ✅ UPDATED: Music starts at loading screen, continues through playing
-// ✅ FIXED: Uses 'lobby' track (tata-cute-cute) instead of 'gameplay' (Retro_Game)
+// ✅ Timer: A1/A2 = 25s, B1/B2 = 35s, C1/C2 = 45s
+// ✅ NEW: Level-Up transition modal ("A1 → A2", etc.)
+// ✅ NEW: Accuracy-based rewards — 0-49%=1-2💎, 50%=3💎, 100%=15💎
+// ✅ FIXED: Modals are now render functions (no blink/remount)
 // ✅ All existing features preserved
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -186,12 +188,37 @@ const QUESTIONS_PER_LEVEL = 10;
 const COMPLETION_BONUS_DIAMONDS = 50;
 
 const LEVEL_CONFIG = {
-  'A1': { timer: 15, label: 'A1 - Beginner', emoji: '🟢', questionsPerLevel: 10 },
-  'A2': { timer: 12, label: 'A2 - Elementary', emoji: '🟢', questionsPerLevel: 10 },
-  'B1': { timer: 10, label: 'B1 - Intermediate', emoji: '🟡', questionsPerLevel: 10 },
-  'B2': { timer: 10, label: 'B2 - Upper Intermediate', emoji: '🟡', questionsPerLevel: 10 },
-  'C1': { timer: 10, label: 'C1 - Advanced', emoji: '🟠', questionsPerLevel: 10 },
-  'C2': { timer: 10, label: 'C2 - Proficiency', emoji: '👑', questionsPerLevel: 10 },
+  'A1': { timer: 25, label: 'A1 - Beginner', emoji: '🟢', questionsPerLevel: 10 },
+  'A2': { timer: 25, label: 'A2 - Elementary', emoji: '🟢', questionsPerLevel: 10 },
+  'B1': { timer: 35, label: 'B1 - Intermediate', emoji: '🟡', questionsPerLevel: 10 },
+  'B2': { timer: 35, label: 'B2 - Upper Intermediate', emoji: '🟡', questionsPerLevel: 10 },
+  'C1': { timer: 45, label: 'C1 - Advanced', emoji: '🟠', questionsPerLevel: 10 },
+  'C2': { timer: 45, label: 'C2 - Proficiency', emoji: '👑', questionsPerLevel: 10 },
+};
+
+// ══════════════════════════════════════════════════════════════
+// ✅ REWARD TABLE — hard to earn, rewarding at the top
+//    0-24%  → 1 💎
+//    25-49% → 2 💎
+//    50-59% → 3 💎   ← base reference
+//    60-69% → 4 💎
+//    70-79% → 6 💎
+//    80-89% → 9 💎
+//    90-99% → 12 💎
+//    100%   → 15 💎  ← max
+// ══════════════════════════════════════════════════════════════
+const getLevelReward = (level, accuracy) => {
+  let diamonds, stars, tier, emoji;
+  if      (accuracy >= 100) { diamonds = 15; stars = 3; tier = 'PERFECT!';   emoji = '🌟'; }
+  else if (accuracy >= 90)  { diamonds = 12; stars = 3; tier = 'EXCELLENT!'; emoji = '💎'; }
+  else if (accuracy >= 80)  { diamonds = 9;  stars = 3; tier = 'AMAZING!';   emoji = '✨'; }
+  else if (accuracy >= 70)  { diamonds = 6;  stars = 2; tier = 'GREAT!';     emoji = '🔥'; }
+  else if (accuracy >= 60)  { diamonds = 4;  stars = 2; tier = 'GOOD';       emoji = '👍'; }
+  else if (accuracy >= 50)  { diamonds = 3;  stars = 1; tier = 'PASS';       emoji = '✅'; }
+  else if (accuracy >= 25)  { diamonds = 2;  stars = 0; tier = 'KEEP GOING'; emoji = '📖'; }
+  else                      { diamonds = 1;  stars = 0; tier = 'TRY HARDER'; emoji = '💪'; }
+
+  return { diamonds, stars, tier, emoji, accuracy };
 };
 
 const wordLevelMap = {
@@ -234,6 +261,12 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   const [stats, setStats] = useState({ gamesPlayed: 0, bestScore: 0, totalCorrect: 0 });
 
+  // ✅ Level-Up transition modal state
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [pendingNextLevel, setPendingNextLevel] = useState(null);
+  const [levelReward, setLevelReward] = useState({ diamonds: 0, stars: 0, tier: '', emoji: '✅', accuracy: 0 });
+  const [correctInLevel, setCorrectInLevel] = useState(0);
+
   const [localDiamonds, setLocalDiamonds] = useState(0);
   const [showHeartShop, setShowHeartShop] = useState(false);
   const [diamondsEarnedThisGame, setDiamondsEarnedThisGame] = useState(0);
@@ -249,6 +282,9 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
   const diamondSavedRef = useRef(false);
   const progressSavedRef = useRef(false);
   const completionBonusSavedRef = useRef(false);
+
+  // ✅ Prevent double-award per level
+  const rewardedLevelsRef = useRef(new Set());
 
   const gameStateRef = useRef('intro');
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
@@ -266,7 +302,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
   const [localPoints, setLocalPoints] = useState(currentPoints || 0);
   const [hintsUsedThisLevel, setHintsUsedThisLevel] = useState(0);
 
-  const [timer, setTimer] = useState(15);
+  const [timer, setTimer] = useState(25);
   const [timerRunning, setTimerRunning] = useState(false);
   const [lives, setLives] = useState(5);
   const [maxLives] = useState(5);
@@ -452,20 +488,18 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
   };
 
   // ══════════════════════════════════════════════════════════════
-  // 🎵 BACKGROUND MUSIC — STARTS AT LOADING, CONTINUES IN PLAYING
-  // ✅ FIXED: Uses 'lobby' track (tata-cute-cute) for SynoQuest
+  // 🎵 BACKGROUND MUSIC
   // ══════════════════════════════════════════════════════════════
   useEffect(() => {
     const musicStates = ['loading', 'playing'];
 
     if (musicStates.includes(gameState) && !isMuted) {
-      backgroundMusic.start('lobby');   // ✅ 'lobby' — tata-cute-cute music
+      backgroundMusic.start('lobby');
     } else {
       backgroundMusic.stop();
     }
   }, [isMuted, gameState]);
 
-  // ✅ Stop music on unmount
   useEffect(() => {
     return () => {
       backgroundMusic.stop();
@@ -507,11 +541,44 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   const checkIfAllAnswered = () => answeredQuestions.length >= questions.length && questions.length === QUESTIONS_PER_LEVEL;
 
+  // ✅ Award diamonds to Firebase
+  const awardLevelReward = async (diamonds) => {
+    if (!currentUser || diamonds <= 0) return;
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const current = userDoc.data()?.totalDiamonds || 0;
+      const newTotal = current + diamonds;
+      await updateDoc(userRef, { totalDiamonds: newTotal });
+      setLocalDiamonds(newTotal);
+    } catch (err) { console.error('Error awarding level reward:', err); }
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // ✅ performLevelUp — computes reward, awards diamonds,
+  //    then shows the transition modal (or 'finished' if C2)
+  // ══════════════════════════════════════════════════════════════
   const performLevelUp = () => {
     const currentIndex = CEFR_LEVELS.indexOf(currentLevel);
     setHintsUsedThisLevel(0);
+    setTimerRunning(false);
+
+    // ✅ Compute reward based on accuracy this level
+    const accuracy = QUESTIONS_PER_LEVEL > 0 ? Math.round((correctInLevel / QUESTIONS_PER_LEVEL) * 100) : 0;
+    const reward = getLevelReward(currentLevel, accuracy);
+    setLevelReward(reward);
+
+    // ✅ Award diamonds only once per level
+    if (!rewardedLevelsRef.current.has(currentLevel)) {
+      rewardedLevelsRef.current.add(currentLevel);
+      if (reward.diamonds > 0) {
+        awardLevelReward(reward.diamonds);
+        playDiamondSound();
+      }
+    }
 
     if (currentIndex === CEFR_LEVELS.length - 1) {
+      // ✅ C2 done → award completion bonus + show 'finished' screen
       if (!completionBonusSavedRef.current && currentUser) {
         completionBonusSavedRef.current = true;
         setCompletionBonus(COMPLETION_BONUS_DIAMONDS);
@@ -527,29 +594,57 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
           } catch (err) { console.error('Error awarding bonus:', err); }
         })();
       }
-      setTimerRunning(false);
-      setGameState('finished');
+      // Show transition modal briefly, then finished screen
+      setPendingNextLevel(null);
+      setShowLevelUpModal(true);
+      playLevelUpSound();
+      setTimeout(() => {
+        setShowLevelUpModal(false);
+        setGameState('finished');
+      }, 2600);
       return;
     }
 
+    // ✅ Show transition modal — proceed only when user confirms
     const newLevel = CEFR_LEVELS[currentIndex + 1];
-    setCurrentLevel(newLevel); setAnsweredInLevel(0); setAnsweredQuestions([]);
-    setRetryQuestion(null); setWrongQuestions([]); wrongQueueRef.current = [];
-    setRetryPhase(false); setRetryIndex(0);
+    setPendingNextLevel(newLevel);
+    setShowLevelUpModal(true);
+    playLevelUpSound();
+  };
 
-    const config = LEVEL_CONFIG[newLevel];
+  // ✅ User tapped "Move to Next Level" → load next level
+  const proceedToNextLevel = () => {
+    const newLevel = pendingNextLevel;
+    if (!newLevel) return;
+
+    setShowLevelUpModal(false);
+    setPendingNextLevel(null);
+
+    // ✅ Reset per-level accuracy tracking
+    setCorrectInLevel(0);
+    setCurrentLevel(newLevel);
+    setAnsweredInLevel(0);
+    setAnsweredQuestions([]);
+    setRetryQuestion(null);
+    setWrongQuestions([]);
+    wrongQueueRef.current = [];
+    setRetryPhase(false);
+    setRetryIndex(0);
+
+    const config = LEVEL_CONFIG[newLevel] || LEVEL_CONFIG['A1'];
     const newQuestions = generateQuestions(newLevel);
-    setQuestions(newQuestions); setCurrentQuestionIndex(0);
-    setTimer(config.timer); setTimerRunning(true); setAnswered(false);
-    setHintUsed(false); setShowCorrectAnimation(false);
+    setQuestions(newQuestions);
+    setCurrentQuestionIndex(0);
+    setTimer(config.timer);
+    setTimerRunning(true);
+    setAnswered(false);
+    setHintUsed(false);
+    setShowCorrectAnimation(false);
     setBlankPositions(newQuestions[0]?.blankPositions || []);
     setVisiblePositions(newQuestions[0]?.visiblePositions || []);
     setAvailableLetters(newQuestions[0]?.letterOptions || []);
-    setUserFilledBlanks({}); setUsedLetters([]);
-
-    setFeedbackMessage(`⬆️ LEVEL UP! ${config.emoji} ${config.label}`);
-    setShowFeedback(true); setTimeout(() => setShowFeedback(false), 2500);
-    playLevelUpSound();
+    setUserFilledBlanks({});
+    setUsedLetters([]);
   };
 
   const retryNextWrongQuestion = () => {
@@ -630,6 +725,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
       if (!answeredQuestions.includes(currentQuestion.id)) {
         setAnsweredQuestions(prev => [...prev, currentQuestion.id]);
         setAnsweredInLevel(prev => prev + 1); setQuestionNumber(prev => prev + 1);
+        // ✅ Track accuracy for level reward (first attempt only)
+        setCorrectInLevel(prev => prev + 1);
       }
       const newStreak = streak + 1; setStreak(newStreak);
       setFeedbackMessage(`✅ Correct! (${newStreak}x streak)`);
@@ -743,6 +840,12 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
       setDiamondsEarnedThisGame(0);
       setContinueFromGameOver(false);
       setCompletionBonus(0);
+      // ✅ Reset level-up + reward tracking
+      setShowLevelUpModal(false);
+      setPendingNextLevel(null);
+      setCorrectInLevel(0);
+      setLevelReward({ diamonds: 0, stars: 0, tier: '', emoji: '✅', accuracy: 0 });
+      rewardedLevelsRef.current = new Set();
       sessionSavedRef.current = false;
       firebaseSavedRef.current = false;
       diamondSavedRef.current = false;
@@ -895,6 +998,10 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
       setUserFilledBlanks({}); setAvailableLetters([]); setUsedLetters([]);
       setHintsUsedThisLevel(0);
       setDiamondsEarnedThisGame(0);
+      setShowLevelUpModal(false);
+      setPendingNextLevel(null);
+      setCorrectInLevel(0);
+      rewardedLevelsRef.current = new Set();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUserLoaded, currentUser]);
@@ -918,6 +1025,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   useEffect(() => {
     if (livesRef.current <= 0) { setTimerRunning(false); return; }
+    // ✅ Pause timer while level-up modal is visible
+    if (showLevelUpModal) { return; }
     if (timerRunning && timer > 0) {
       const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
       return () => clearInterval(interval);
@@ -953,7 +1062,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
       }, 1500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timer, timerRunning]);
+  }, [timer, timerRunning, showLevelUpModal]);
 
   useEffect(() => {
     if (gameState !== 'gameover' && gameState !== 'finished') return;
@@ -1071,6 +1180,10 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     setDiamondsEarnedThisGame(0);
     setContinueFromGameOver(false);
     setCompletionBonus(0);
+    setCorrectInLevel(0);
+    setShowLevelUpModal(false);
+    setPendingNextLevel(null);
+    rewardedLevelsRef.current = new Set();
     sessionSavedRef.current = false;
     firebaseSavedRef.current = false;
     diamondSavedRef.current = false;
@@ -1125,7 +1238,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     setGameState('finished');
   };
 
-  const DevPanelElement = () => {
+  // ✅ FIX: render function (not a component) — prevents remount/blink
+  const renderDevPanel = () => {
     if (!showDevPanel) return null;
     return (
       <SynoQuestDevPanel
@@ -1138,7 +1252,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     );
   };
 
-  const ExitConfirmModal = () => (
+  // ✅ FIX: render function instead of component — no more blinking
+  const renderExitConfirmModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px' }}>
       <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '28px', maxWidth: '340px', width: '100%', textAlign: 'center', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }}>
         <div className="sq-modal-emoji" style={{ fontSize: '40px', marginBottom: '8px' }}>❌</div>
@@ -1152,7 +1267,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     </div>
   );
 
-  const HeartShopModal = () => (
+  // ✅ FIX: render function instead of component — no more blinking
+  const renderHeartShopModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2500, padding: '20px' }}>
       <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '20px', padding: '28px 24px', maxWidth: '460px', width: '100%', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.4)' }}>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -1205,7 +1321,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     </div>
   );
 
-  const SettingsModal = () => (
+  // ✅ FIX: render function instead of component — no more blinking
+  const renderSettingsModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={() => setShowSettings(false)}>
       <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '24px', maxWidth: '360px', width: '100%', maxHeight: '90dvh', overflow: 'auto', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -1230,7 +1347,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     </div>
   );
 
-  const LeaderboardModal = () => (
+  // ✅ FIX: render function instead of component — no more blinking
+  const renderLeaderboardModal = () => (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={() => setShowLeaderboard(false)}>
       <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '18px', padding: '20px', maxWidth: '380px', width: '100%', maxHeight: '90dvh', overflow: 'auto', border: `1.5px solid ${palette.border}`, boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -1251,7 +1369,137 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     </div>
   );
 
-  const NoLivesOverlay = () => {
+  // ══════════════════════════════════════════════════════════════
+  // ✅ Level-Up Transition Modal — RENDER FUNCTION (no blink!)
+  // ══════════════════════════════════════════════════════════════
+  const renderLevelUpModal = () => {
+    if (!showLevelUpModal) return null;
+    const isFinal = !pendingNextLevel;
+    const stars = levelReward.stars || 0;
+
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(42, 40, 69, 0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '20px', animation: 'fadeIn 0.3s ease' }}>
+        <div className="sq-modal-card" style={{ background: palette.white, borderRadius: '24px', padding: '32px 28px', maxWidth: '440px', width: '100%', textAlign: 'center', border: `2px solid ${palette.gold}`, boxShadow: `0 20px 60px rgba(42, 40, 69, 0.5), 0 0 40px ${palette.gold}40`, animation: 'levelPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)', position: 'relative', overflow: 'hidden' }}>
+
+          {/* Sparkles */}
+          <div style={{ position: 'absolute', top: '10px', left: '12%', fontSize: '22px', animation: 'sparkle 1.8s ease-in-out infinite', opacity: 0.7 }}>✨</div>
+          <div style={{ position: 'absolute', top: '20px', right: '12%', fontSize: '22px', animation: 'sparkle 1.8s ease-in-out infinite 0.4s', opacity: 0.7 }}>✨</div>
+          <div style={{ position: 'absolute', bottom: '30px', left: '8%', fontSize: '18px', animation: 'sparkle 2.2s ease-in-out infinite 0.7s', opacity: 0.5 }}>⭐</div>
+          <div style={{ position: 'absolute', bottom: '20px', right: '10%', fontSize: '18px', animation: 'sparkle 2.2s ease-in-out infinite 1s', opacity: 0.5 }}>⭐</div>
+
+          {/* Emoji */}
+          <div style={{ fontSize: '64px', marginBottom: '4px', animation: 'levelEmoji 1s ease-in-out infinite alternate' }}>
+            {isFinal ? '👑' : '🎉'}
+          </div>
+
+          {/* Tier badge */}
+          <div style={{ display: 'inline-block', background: levelReward.stars === 3 ? `linear-gradient(135deg, ${palette.gold}, #FFD700)` : levelReward.stars === 2 ? `linear-gradient(135deg, ${palette.diamond}, ${palette.diamondShadow})` : `linear-gradient(135deg, ${palette.softGreen}, ${palette.softGreenShadow})`, padding: '4px 16px', borderRadius: '20px', marginBottom: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+            <span style={{ fontSize: '12px', fontWeight: '900', color: 'white', fontFamily: FONT_DISPLAY, letterSpacing: '1px' }}>
+              {levelReward.emoji} {levelReward.tier}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h2 style={{ fontSize: '26px', fontWeight: '900', color: palette.deepNavy, marginBottom: '6px', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>
+            {isFinal ? 'All Levels Complete!' : 'Level Complete!'}
+          </h2>
+
+          {/* Level transition */}
+          {!isFinal && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '16px', fontWeight: '800', color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, background: palette.creamSoft, padding: '4px 12px', borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
+                {currentLevel}
+              </span>
+              <span style={{ fontSize: '22px', color: palette.warmOrange }}>→</span>
+              <span style={{ fontSize: '16px', fontWeight: '900', color: palette.warmOrange, fontFamily: FONT_DISPLAY, background: `${palette.warmOrange}15`, padding: '4px 14px', borderRadius: '10px', border: `2px solid ${palette.warmOrange}60`, boxShadow: `0 2px 0 ${palette.warmOrangeShadow}` }}>
+                {pendingNextLevel}
+              </span>
+            </div>
+          )}
+
+          {/* Stars */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '16px' }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{ fontSize: '36px', filter: i < stars ? 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.9))' : 'grayscale(1)', opacity: i < stars ? 1 : 0.25, transition: 'all 0.3s', animation: i < stars ? `starPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${i * 0.15 + 0.2}s both` : 'none' }}>
+                ⭐
+              </span>
+            ))}
+          </div>
+
+          {/* Accuracy */}
+          <div style={{ background: palette.creamSoft, borderRadius: '12px', padding: '12px', marginBottom: '14px', border: `1.5px solid ${palette.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: '700', fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Accuracy</span>
+              <span style={{ fontSize: '16px', color: levelReward.accuracy >= 80 ? palette.softGreen : levelReward.accuracy >= 50 ? palette.warmOrange : palette.danger, fontWeight: '900', fontFamily: FONT_DISPLAY }}>
+                {levelReward.accuracy}%
+              </span>
+            </div>
+            <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: palette.white, overflow: 'hidden', border: `1px solid ${palette.border}` }}>
+              <div style={{ width: `${levelReward.accuracy}%`, height: '100%', background: levelReward.accuracy >= 80 ? `linear-gradient(90deg, ${palette.softGreen}, #8FBF85)` : levelReward.accuracy >= 50 ? `linear-gradient(90deg, ${palette.warmOrange}, ${palette.coral})` : `linear-gradient(90deg, ${palette.danger}, ${palette.coral})`, transition: 'width 0.8s ease', borderRadius: '4px' }} />
+            </div>
+            <div style={{ fontSize: '10px', color: palette.bodyTextSoft, marginTop: '5px', fontFamily: FONT_BODY, fontWeight: 600 }}>
+              {correctInLevel} / {QUESTIONS_PER_LEVEL} correct
+            </div>
+          </div>
+
+          {/* Reward */}
+          {levelReward.diamonds > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: `linear-gradient(135deg, ${palette.diamond}20, ${palette.diamond}08)`, borderRadius: '12px', marginBottom: '16px', border: `2px solid ${palette.diamond}60`, animation: 'rewardPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s both' }}>
+              <span style={{ fontSize: '24px' }}>💎</span>
+              <span style={{ fontSize: '20px', fontWeight: '900', color: palette.diamond, fontFamily: FONT_DISPLAY }}>+{levelReward.diamonds}</span>
+              <span style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: '700', fontFamily: FONT_BODY }}>diamonds</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: `${palette.danger}10`, borderRadius: '12px', marginBottom: '16px', border: `1.5px solid ${palette.danger}40` }}>
+              <span style={{ fontSize: '16px' }}>💪</span>
+              <span style={{ fontSize: '12px', color: palette.danger, fontWeight: '800', fontFamily: FONT_DISPLAY }}>Keep going! More accuracy = more 💎</span>
+            </div>
+          )}
+
+          {/* Button */}
+          {isFinal ? (
+            <div style={{ fontSize: '13px', color: palette.bodyTextSoft, fontWeight: '700', fontFamily: FONT_BODY, padding: '10px' }}>
+              Loading final results...
+            </div>
+          ) : (
+            <button onClick={proceedToNextLevel} className="sq-modal-btn" style={{ width: '100%', padding: '15px', background: theme.accentGradient, color: 'white', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '900', cursor: 'pointer', boxShadow: `0 4px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              ▶ Move to {pendingNextLevel}
+            </button>
+          )}
+
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes levelPop {
+              0% { transform: scale(0.6) translateY(30px); opacity: 0; }
+              60% { transform: scale(1.05) translateY(-4px); opacity: 1; }
+              100% { transform: scale(1) translateY(0); opacity: 1; }
+            }
+            @keyframes levelEmoji {
+              0% { transform: scale(1) rotate(-4deg); }
+              100% { transform: scale(1.08) rotate(4deg); }
+            }
+            @keyframes starPop {
+              0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+              60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+              100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            }
+            @keyframes sparkle {
+              0%, 100% { opacity: 0.3; transform: scale(1) rotate(0deg); }
+              50% { opacity: 1; transform: scale(1.35) rotate(15deg); }
+            }
+            @keyframes rewardPop {
+              0% { transform: scale(0.5); opacity: 0; }
+              60% { transform: scale(1.08); opacity: 1; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  };
+
+  // ✅ FIX: render function instead of component — no more blinking
+  const renderNoLivesOverlay = () => {
     if (!showNoLivesMessage && lives > 0) return null;
     if (gameState !== 'playing') return null;
     return (
@@ -1273,7 +1521,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, zIndex: 999999, background: palette.deepNavy }}>
         {bgAnimationStyle}
-        {DevPanelElement()}
+        {renderDevPanel()}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
           <div className="loading-scroll-track">
             <img src={images['pixel-town']} className="loading-scroll-img" alt="" onError={(e) => { e.target.style.display = 'none'; }} />
@@ -1306,7 +1554,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {bgAnimationStyle}
-        {DevPanelElement()}
+        {renderDevPanel()}
         <div style={{ background: palette.white, borderRadius: '16px', padding: '40px', textAlign: 'center', maxWidth: '400px', width: '100%', border: `1.5px solid ${palette.border}`, boxShadow: '0 10px 30px rgba(42,40,69,0.15)' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
           <h2 style={{ fontSize: '20px', fontWeight: '800', color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>Loading...</h2>
@@ -1319,11 +1567,11 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        {DevPanelElement()}
-        {showSettings && <SettingsModal />}
-        {showLeaderboard && <LeaderboardModal />}
-        {showExitConfirm && <ExitConfirmModal />}
-        {showHeartShop && <HeartShopModal />}
+        {renderDevPanel()}
+        {showSettings && renderSettingsModal()}
+        {showLeaderboard && renderLeaderboardModal()}
+        {showExitConfirm && renderExitConfirmModal()}
+        {showHeartShop && renderHeartShopModal()}
         <div className="sq-intro-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
           <div className="sq-intro-icon" style={{ width: '84px', height: '84px', borderRadius: '50%', background: theme.accentGradient, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: `0 8px 24px ${palette.warmOrange}40` }}>
             <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: palette.white, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>📖</div>
@@ -1391,7 +1639,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        {DevPanelElement()}
+        {renderDevPanel()}
 
         <div className="sq-end-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto', animation: 'finishedPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
           <div className="sq-end-emoji" style={{ fontSize: '64px', marginBottom: '6px' }}>👑</div>
@@ -1470,8 +1718,8 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         {bgAnimationStyle}
-        {DevPanelElement()}
-        {showHeartShop && <HeartShopModal />}
+        {renderDevPanel()}
+        {showHeartShop && renderHeartShopModal()}
         <div className="sq-end-card" style={{ maxWidth: '520px', width: '100%', background: theme.cardBg, borderRadius: '24px', padding: '32px 28px', border: theme.cardBorder, boxShadow: theme.cardShadow, textAlign: 'center', maxHeight: 'calc(100dvh - 12px)', overflowY: 'auto' }}>
           <div className="sq-end-emoji" style={{ fontSize: '60px', marginBottom: '6px' }}>💀</div>
           <h2 className="sq-end-title" style={{ fontSize: '24px', fontWeight: '800', color: theme.textPrimary, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>Game Over!</h2>
@@ -1503,7 +1751,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   if (gameState === 'playing') {
     if (!currentQuestion) {
-      return (<div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>{bgAnimationStyle}{DevPanelElement()}<div style={{ background: theme.cardBg, border: theme.cardBorder, boxShadow: theme.cardShadow, borderRadius: '16px', padding: '24px' }}><div style={{ fontSize: '32px' }}>🔄</div></div></div>);
+      return (<div style={{ ...fullScreenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>{bgAnimationStyle}{renderDevPanel()}<div style={{ background: theme.cardBg, border: theme.cardBorder, boxShadow: theme.cardShadow, borderRadius: '16px', padding: '24px' }}><div style={{ fontSize: '32px' }}>🔄</div></div></div>);
     }
 
     const word = currentQuestion.word || '';
@@ -1524,12 +1772,13 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     return (
       <div className="sq-play-wrapper" style={{ ...fullScreenBg, padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100dvh', overflow: 'hidden', boxSizing: 'border-box' }}>
         {bgAnimationStyle}
-        {DevPanelElement()}
-        <NoLivesOverlay />
-        {showExitConfirm && <ExitConfirmModal />}
-        {showSettings && <SettingsModal />}
-        {showLeaderboard && <LeaderboardModal />}
-        {showHeartShop && <HeartShopModal />}
+        {renderDevPanel()}
+        {renderNoLivesOverlay()}
+        {renderLevelUpModal()}
+        {showExitConfirm && renderExitConfirmModal()}
+        {showSettings && renderSettingsModal()}
+        {showLeaderboard && renderLeaderboardModal()}
+        {showHeartShop && renderHeartShopModal()}
         <div className="sq-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: 'rgba(255,255,255,0.9)', borderRadius: '14px', maxWidth: '620px', width: '100%', margin: '0 auto 10px', border: `1.5px solid ${palette.border}`, boxSizing: 'border-box', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: palette.bodyText, padding: 0, lineHeight: 1 }}>⚙️</button>

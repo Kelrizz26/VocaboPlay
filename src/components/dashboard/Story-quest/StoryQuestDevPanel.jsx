@@ -1,6 +1,6 @@
 // src/components/dashboard/Story-quest/StoryQuestDevPanel.jsx
-// 🧪 DEV PANEL — Para sa testing ng StoryQuest flow
-// Lumalabas lang kapag ?dev=1 sa URL
+// 🧪 DEV PANEL — For testing the StoryQuest flow
+// Only appears when ?dev=1 is in the URL
 
 import React, { useState } from 'react';
 
