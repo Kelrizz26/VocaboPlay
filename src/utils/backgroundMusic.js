@@ -1,30 +1,31 @@
 // src/utils/backgroundMusic.js
-// 🎵 MP3-BASED BACKGROUND MUSIC
-// ✅ Same API as before — start(), stop(), toggle(), setTrack()
-// ✅ Fade in/out, loop, volume control
-// ✅ Fallback sa silence kung walang MP3
-// ✅ Different music per game:
-//    - SynoQuest → 'lobby' track (lobby.mp3)
-//    - MatchGame → 'gameplay' track (gameplay.mp3)
+// 🎵 MP3-BASED BACKGROUND MUSIC — BULLETPROOF VERSION
+// ✅ FIX: Phantom music on first click (currentTrack no longer defaults to 'lobby')
+// ✅ FIX: stop() / start() race conditions (proper timer + stale-guard)
+// ✅ FIX: Auto-retry only for explicitly requested tracks (pendingTrack)
+// ✅ NEW: pause() for immediate halt without reset
+// ✅ NEW: Global beforeunload cleanup
+// ✅ NEW: Stale audio element guards on fade/play callbacks
 
 class BackgroundMusic {
   constructor() {
     this.enabled = true;
     this.audioElement = null;
     this.isPlaying = false;
-    this.currentTrack = 'lobby';
-    this.volume = 0.35;                 // Master volume (0.0 – 1.0)
+    this.currentTrack = null;      // ✅ FIX: no more phantom 'lobby'
+    this.pendingTrack = null;      // ✅ FIX: retry only explicit requests
+    this.volume = 0.35;
     this.fadeInterval = null;
+    this.stopTimer = null;         // ✅ FIX: track the stop timeout
     this.hasUserInteracted = false;
 
     // 🎵 MP3 file paths
-    // ✅ UPDATED: Different tracks per game
     this.tracks = {
-      lobby: '/music/lobby.mp3',          // SynoQuest music (tatamusic)
-      gameplay: '/music/gameplay.mp3',    // MatchGame music (Retro_Game)
-      final: '/music/gameplay.mp3',       // Fallback sa gameplay
-      victory: '/music/lobby.mp3',        // Fallback sa lobby
-      menu: '/music/lobby.mp3',           // Fallback sa lobby
+      lobby: '/music/lobby.mp3',        // SynoQuest music
+      gameplay: '/music/gameplay.mp3',  // MatchGame music
+      final: '/music/gameplay.mp3',
+      victory: '/music/lobby.mp3',
+      menu: '/music/lobby.mp3',
     };
 
     // Track-specific volumes
@@ -52,14 +53,20 @@ class BackgroundMusic {
         window.removeEventListener('click', markInteracted);
         window.removeEventListener('keydown', markInteracted);
         window.removeEventListener('touchstart', markInteracted);
-        // Retry play kung may pending track
-        if (this.enabled && !this.isPlaying && this.currentTrack) {
-          this.start(this.currentTrack);
+
+        // ✅ FIX: Only retry if start() was explicitly requested and blocked
+        if (this.enabled && this.pendingTrack) {
+          const track = this.pendingTrack;
+          this.pendingTrack = null;
+          this.start(track);
         }
       };
       window.addEventListener('click', markInteracted);
       window.addEventListener('keydown', markInteracted);
       window.addEventListener('touchstart', markInteracted);
+
+      // ✅ Global safety net — kill audio when tab closes
+      window.addEventListener('beforeunload', () => this.destroy());
     }
   }
 
@@ -72,12 +79,14 @@ class BackgroundMusic {
       return this.audioElement;
     }
 
-    // Cleanup previous
+    // ✅ Cleanup previous element properly
     if (this.audioElement) {
       try {
         this.audioElement.pause();
         this.audioElement.src = '';
+        this.audioElement.load();
       } catch (e) { /* ignore */ }
+      this.audioElement = null;
     }
 
     const audio = new Audio(src);
@@ -88,11 +97,12 @@ class BackgroundMusic {
 
     audio.onerror = () => {
       console.warn(`[Music] MP3 not found: ${src}`);
-      this.isPlaying = false;
+      if (this.audioElement === audio) this.isPlaying = false;
     };
 
-    audio.onplay = () => { this.isPlaying = true; };
-    audio.onpause = () => { this.isPlaying = false; };
+    // ✅ Only mutate state if this is still the active element
+    audio.onplay = () => { if (this.audioElement === audio) this.isPlaying = true; };
+    audio.onpause = () => { if (this.audioElement === audio) this.isPlaying = false; };
 
     this.audioElement = audio;
     return audio;
@@ -103,39 +113,46 @@ class BackgroundMusic {
     if (!this.audioElement) return;
     if (this.fadeInterval) clearInterval(this.fadeInterval);
 
-    const startVolume = this.audioElement.volume;
-    const steps = 20;
+    const el = this.audioElement;   // ✅ capture for stale-guard
+    const startVolume = el.volume;
+    const steps = Math.max(1, Math.floor(duration / 30));
     const stepTime = duration / steps;
     const volumeStep = (targetVolume - startVolume) / steps;
     let currentStep = 0;
 
     this.fadeInterval = setInterval(() => {
       currentStep++;
-      if (!this.audioElement) {
+      // ✅ Abort if audio element changed (stale fade)
+      if (!this.audioElement || this.audioElement !== el) {
         clearInterval(this.fadeInterval);
         this.fadeInterval = null;
         return;
       }
       const newVol = Math.max(0, Math.min(1, startVolume + volumeStep * currentStep));
-      this.audioElement.volume = newVol;
+      el.volume = newVol;
 
       if (currentStep >= steps) {
         clearInterval(this.fadeInterval);
         this.fadeInterval = null;
-        this.audioElement.volume = Math.max(0, Math.min(1, targetVolume));
+        el.volume = Math.max(0, Math.min(1, targetVolume));
       }
     }, stepTime);
   }
 
   // ▶️ Start playing music
   start(track = 'lobby') {
-    // Kung muted, huwag mag-play
     if (!this.enabled) {
       this.isPlaying = false;
       return;
     }
 
-    // Kung same track at tumutugtog na — huwag i-restart
+    // ✅ Cancel any pending stop timer from a previous stop() call
+    if (this.stopTimer) {
+      clearTimeout(this.stopTimer);
+      this.stopTimer = null;
+    }
+
+    // Same track already playing — skip restart
     if (this.isPlaying && this.currentTrack === track && this.audioElement && !this.audioElement.paused) {
       return;
     }
@@ -143,7 +160,7 @@ class BackgroundMusic {
     const previousTrack = this.currentTrack;
     this.currentTrack = track;
 
-    // Switch track — pause yung luma
+    // Switch track — pause the old element
     if (previousTrack !== track && this.audioElement) {
       try {
         this.audioElement.pause();
@@ -154,47 +171,94 @@ class BackgroundMusic {
     const audio = this.getAudioElement(track);
     const targetVolume = this.trackVolumes[track] || this.volume;
 
+    // Reset volume for fade-in if starting fresh
+    if (audio.paused || audio.currentTime === 0) {
+      audio.volume = 0;
+    }
+
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
+          // ✅ Stale-guard: only apply if this audio is still the active one
+          if (this.audioElement !== audio) return;
           this.isPlaying = true;
-          this.fadeTo(targetVolume, 1000);   // Fade in over 1s
+          this.fadeTo(targetVolume, 1000);
         })
         .catch((err) => {
           console.warn('[Music] Autoplay blocked:', err.message);
-          this.isPlaying = false;
+          if (this.audioElement === audio) {
+            this.isPlaying = false;
+            // ✅ Remember for retry on first user interaction
+            this.pendingTrack = track;
+          }
         });
     }
   }
 
   // ⏹️ Stop playing (with optional fade out)
   stop(fadeOut = true) {
-    if (!this.audioElement) return;
+    // ✅ Always clear the retry queue
+    this.pendingTrack = null;
 
-    if (fadeOut) {
-      this.fadeTo(0, 600);
-      setTimeout(() => {
-        if (this.audioElement) {
-          try {
-            this.audioElement.pause();
-            this.audioElement.currentTime = 0;
-          } catch (e) { /* ignore */ }
+    // ✅ Cancel any existing stop timer (idempotent)
+    if (this.stopTimer) {
+      clearTimeout(this.stopTimer);
+      this.stopTimer = null;
+    }
+
+    if (!this.audioElement) {
+      this.isPlaying = false;
+      this.currentTrack = null;
+      return;
+    }
+
+    const el = this.audioElement;
+
+    if (fadeOut && this.isPlaying) {
+      this.fadeTo(0, 400);
+      this.stopTimer = setTimeout(() => {
+        this.stopTimer = null;
+        try {
+          if (el) {
+            el.pause();
+            el.currentTime = 0;
+          }
+        } catch (e) { /* ignore */ }
+        // ✅ Only clear state if this element is still active
+        if (this.audioElement === el) {
+          this.isPlaying = false;
+          this.currentTrack = null;
         }
-        this.isPlaying = false;
-      }, 650);
+      }, 450);
     } else {
-      try {
-        this.audioElement.pause();
-        this.audioElement.currentTime = 0;
-      } catch (e) { /* ignore */ }
-
       if (this.fadeInterval) {
         clearInterval(this.fadeInterval);
         this.fadeInterval = null;
       }
+      try {
+        el.pause();
+        el.currentTime = 0;
+      } catch (e) { /* ignore */ }
       this.isPlaying = false;
+      this.currentTrack = null;
     }
+  }
+
+  // ⏸️ NEW: Immediate pause (no fade, no reset) — for temporary mute
+  pause() {
+    if (this.stopTimer) {
+      clearTimeout(this.stopTimer);
+      this.stopTimer = null;
+    }
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+    if (this.audioElement) {
+      try { this.audioElement.pause(); } catch (e) { /* ignore */ }
+    }
+    this.isPlaying = false;
   }
 
   // 🔄 Toggle on/off
@@ -203,8 +267,8 @@ class BackgroundMusic {
     localStorage.setItem('vocaboplay_sound', JSON.stringify(this.enabled));
 
     if (!this.enabled) {
-      this.stop();
-    } else {
+      this.stop(false);
+    } else if (this.currentTrack) {
       this.start(this.currentTrack);
     }
     return this.enabled;
@@ -222,7 +286,6 @@ class BackgroundMusic {
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(1, vol));
     localStorage.setItem('vocaboplay_music_volume', String(this.volume));
-
     if (this.audioElement && this.isPlaying) {
       const trackVol = this.trackVolumes[this.currentTrack] || this.volume;
       this.audioElement.volume = this.volume * trackVol;
@@ -230,32 +293,39 @@ class BackgroundMusic {
   }
 
   // 🎚️ Get current volume
-  getVolume() {
-    return this.volume;
-  }
+  getVolume() { return this.volume; }
 
   // 🔇 Set enabled state
   setEnabled(enabled) {
     this.enabled = !!enabled;
     localStorage.setItem('vocaboplay_sound', JSON.stringify(this.enabled));
-    if (!this.enabled) this.stop();
+    if (!this.enabled) this.stop(false);
   }
 
   // 🔍 Check if music is currently playing
-  getIsPlaying() {
-    return this.isPlaying;
-  }
+  getIsPlaying() { return this.isPlaying; }
 
-  // 🧹 Cleanup
+  // 🧹 Full cleanup
   destroy() {
-    if (this.fadeInterval) clearInterval(this.fadeInterval);
+    this.pendingTrack = null;
+    if (this.stopTimer) {
+      clearTimeout(this.stopTimer);
+      this.stopTimer = null;
+    }
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
     if (this.audioElement) {
       try {
         this.audioElement.pause();
         this.audioElement.src = '';
+        this.audioElement.load();
       } catch (e) { /* ignore */ }
+      this.audioElement = null;
     }
     this.isPlaying = false;
+    this.currentTrack = null;
   }
 }
 
