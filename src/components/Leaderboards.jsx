@@ -1,4 +1,8 @@
 // src/components/Leaderboards.jsx
+// ✅ UPDATED: Removed onSnapshot real-time listener (biggest Firebase read consumer)
+// ✅ NEW: Session cache (2 minutes TTL) — prevents repeated fetches
+// ✅ NEW: Manual refresh button — user can refresh on demand
+// ✅ All existing features preserved: podium, table, profile modal, admin actions, filters
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../pages/firebase';
@@ -8,7 +12,6 @@ import {
   query,
   orderBy,
   limit,
-  onSnapshot,
   doc,
   getDoc
 } from 'firebase/firestore';
@@ -45,6 +48,9 @@ const palette = {
 
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+// ✅ Cache TTL — 2 minutes para hindi ulit-ulit mag-fetch
+const CACHE_TTL_MS = 2 * 60 * 1000;
 
 // ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyText, secondaryColor = `${palette.bodyText}55` }) => {
@@ -91,6 +97,13 @@ const Icon = ({ name, size = 20, color = palette.bodyText, secondaryColor = `${p
     arrowLeft: (
       <path d="M19 12H5M12 19l-7-7 7-7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     ),
+    // ✅ NEW: Refresh icon
+    refresh: (
+      <>
+        <path d="M23 4v6h-6M1 20v-6h6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
     warning: (
       <>
         <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -116,8 +129,7 @@ const getStudentAvatarUrl = (user) => {
 };
 
 // ============================================================
-// ✅ NEW HELPER — Extract last-active timestamp (ms) from user data
-//    Tries common Firestore fields. Returns 0 if none found.
+// ✅ HELPER — Extract last-active timestamp (ms) from user data
 // ============================================================
 const getLastActiveMs = (data) => {
   if (!data) return 0;
@@ -131,7 +143,6 @@ const getLastActiveMs = (data) => {
       if (!isNaN(parsed)) return parsed;
       continue;
     }
-    // Firestore Timestamp
     if (typeof val.toMillis === 'function') return val.toMillis();
     if (typeof val.seconds === 'number') return val.seconds * 1000;
   }
@@ -139,8 +150,7 @@ const getLastActiveMs = (data) => {
 };
 
 // ============================================================
-// ✅ NEW HELPER — Format "Joined" date from various formats
-//    (string / number / Firestore Timestamp / ISO)
+// ✅ HELPER — Format "Joined" date
 // ============================================================
 const formatJoinedDate = (val) => {
   if (!val) return 'Unknown';
@@ -166,7 +176,7 @@ const formatJoinedDate = (val) => {
 };
 
 // ============================================================
-// ✅ NEW HELPER — Format role for display (student → Student)
+// ✅ HELPER — Format role for display
 // ============================================================
 const formatRoleLabel = (role) => {
   if (!role || typeof role !== 'string') return 'Student';
@@ -177,7 +187,7 @@ const formatRoleLabel = (role) => {
 };
 
 // ============================================================
-// ✅ REUSABLE — Face-focused Avatar component
+// ✅ REUSABLE — Face-focused Avatar
 // ============================================================
 const PlayerAvatar = ({ user, size = 36, fontSize = 16, borderRadius = '50%' }) => {
   const [imgError, setImgError] = useState(false);
@@ -216,7 +226,9 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState(null);
-  const unsubscribeRef = useRef(null);
+
+  // ✅ NEW: For showing when the data was last updated
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   // State for profile modal
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -235,6 +247,41 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   });
 
   // ============================================================
+  // ===== CACHE HELPER =====
+  // ============================================================
+  const getCacheKey = useCallback(() => {
+    return `leaderboard_cache_${isAdmin ? 'admin' : 'student'}_${selectedLeaderboard}_${timeFilter}`;
+  }, [isAdmin, selectedLeaderboard, timeFilter]);
+
+  const readCache = useCallback(() => {
+    try {
+      const key = getCacheKey();
+      const cached = sessionStorage.getItem(key);
+      if (!cached) return null;
+      const parsed = JSON.parse(cached);
+      if (!parsed?.timestamp || !Array.isArray(parsed?.data)) return null;
+      const age = Date.now() - parsed.timestamp;
+      if (age > CACHE_TTL_MS) return null; // stale
+      return parsed; // { data, timestamp }
+    } catch (e) {
+      return null;
+    }
+  }, [getCacheKey]);
+
+  const writeCache = useCallback((data) => {
+    try {
+      const key = getCacheKey();
+      sessionStorage.setItem(key, JSON.stringify({
+        data,
+        timestamp: Date.now(),
+      }));
+      setLastUpdated(Date.now());
+    } catch (e) {
+      // ignore
+    }
+  }, [getCacheKey]);
+
+  // ============================================================
   // ===== LOAD USER FROM LOCALSTORAGE =====
   // ============================================================
   useEffect(() => {
@@ -244,7 +291,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       try {
         const user = JSON.parse(savedUser);
         setCurrentUser(user);
-        console.log('✅ Current user from localStorage:', user);
       } catch (e) {
         console.error('Error parsing user:', e);
       }
@@ -252,7 +298,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   }, []);
 
   // ============================================================
-  // ===== GET VALUE BASED ON SELECTED LEADERBOARD =====
+  // ===== GET VALUE / UNIT / SORT FIELD =====
   // ============================================================
   const getValue = useCallback((user) => {
     const stats = user.stats || user.progress || {};
@@ -285,9 +331,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     }
   }, [selectedLeaderboard]);
 
-  // ============================================================
-  // ✅ NEW — Time filter helper. Returns true if user passes filter.
-  // ============================================================
   const passesTimeFilter = useCallback((lastActiveMs) => {
     if (timeFilter === 'all') return true;
     const now = Date.now();
@@ -300,13 +343,10 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
   // ============================================================
   // ===== FETCH USER PROFILE FOR MODAL =====
-  // ✅ UPDATED: Added joinedAt + role for display
   // ============================================================
   const fetchUserProfile = async (userId) => {
     setProfileLoading(true);
     try {
-      console.log('🔍 Fetching profile for user:', userId);
-
       const userRef = doc(db, 'users', userId);
       const userDoc = await getDoc(userRef);
 
@@ -332,7 +372,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
           emailNotifications: data.emailNotifications !== undefined ? data.emailNotifications : true,
           darkMode: data.darkMode || false,
           language: data.language || 'English',
-          // ✅ NEW: Joined date + role for display
           joinedAt: formatJoinedDate(data.createdAt),
           role: data.role || 'student',
           roleLabel: formatRoleLabel(data.role || 'student'),
@@ -369,7 +408,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             emailNotifications: true,
             darkMode: false,
             language: 'English',
-            // ✅ NEW: Joined date + role for local fallback
             joinedAt: 'Unknown',
             role: 'student',
             roleLabel: 'Student',
@@ -405,10 +443,24 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
   };
 
   // ============================================================
-  // ===== FETCH LEADERBOARD - FIXED MERGE LOGIC =====
-  // ✅ Now applies timeFilter to firebase users
+  // ===== FETCH LEADERBOARD (with cache support) =====
+  // ✅ UPDATED: Uses cache unless bypassCache is true
+  // ✅ REMOVED: onSnapshot real-time listener (huge read saver)
   // ============================================================
-  const fetchLeaderboardData = useCallback(async () => {
+  const fetchLeaderboardData = useCallback(async (bypassCache = false) => {
+    // ✅ Try cache first (unless bypass)
+    if (!bypassCache) {
+      const cached = readCache();
+      if (cached) {
+        setLeaderboardData(cached.data);
+        setLastUpdated(cached.timestamp);
+        setLoading(false);
+        setError(null);
+        console.log('📦 Leaderboard loaded from cache');
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
 
@@ -418,7 +470,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       console.log('⏱️ Time filter:', timeFilter);
 
       const usersRef = collection(db, 'users');
-      const limitCount = isAdmin ? 100 : 50;   // ✅ raised limit so time filter has enough pool
+      const limitCount = isAdmin ? 100 : 50;
       const sortField = getSortField();
 
       const q = query(
@@ -429,8 +481,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
       const snapshot = await getDocs(q);
 
-      console.log('📊 Snapshot size:', snapshot.size);
-
       const firebaseUsers = snapshot.docs
         .map((docSnap) => {
           const data = docSnap.data();
@@ -439,10 +489,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
           if (!data.stats || Object.keys(stats).length === 0) return null;
           if (data.removedFromLeaderboard === true) return null;
 
-          // ✅ Compute last-active ms
           const lastActiveMs = getLastActiveMs(data);
-
-          // ✅ NEW: Apply time filter here
           if (!passesTimeFilter(lastActiveMs)) return null;
 
           return {
@@ -470,17 +517,13 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         })
         .filter(user => user !== null);
 
-      // ===== LOCAL DATA =====
       const localData = getLeaderboard();
-      console.log('📊 Local data from localStorage:', localData.length);
-
       const mergedMap = new Map();
 
       firebaseUsers.forEach(user => {
         if (user) mergedMap.set(user.id, { ...user });
       });
 
-      // ✅ Local users: only include in 'all' time filter (they have no timestamp)
       if (timeFilter === 'all') {
         localData.forEach(localUser => {
           const userId = localUser.userId;
@@ -527,6 +570,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       });
 
       setLeaderboardData(mergedData);
+      // ✅ Save to cache
+      writeCache(mergedData);
       console.log('✅ Leaderboard loaded:', mergedData.length, 'players');
 
     } catch (error) {
@@ -562,138 +607,17 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedLeaderboard, isAdmin, currentUserId, getSortField, getValue, timeFilter, passesTimeFilter]);
+  }, [selectedLeaderboard, isAdmin, currentUserId, getSortField, getValue, timeFilter, passesTimeFilter, readCache, writeCache]);
 
+  // ✅ Fetch on mount + when filters change (uses cache)
   useEffect(() => {
-    fetchLeaderboardData();
+    fetchLeaderboardData(false);
   }, [fetchLeaderboardData]);
 
-  // ============================================================
-  // ===== REAL-TIME LISTENER =====
-  // ✅ Now also respects timeFilter
-  // ============================================================
-  useEffect(() => {
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current();
-      unsubscribeRef.current = null;
-    }
-
-    const usersRef = collection(db, 'users');
-
-    const q = query(
-      usersRef,
-      orderBy('stats.totalPoints', 'desc'),
-      limit(100)   // ✅ raised to have enough for time filter
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log('🔄 Real-time update detected!');
-
-      if (!loading) {
-        try {
-          const firebaseUsers = snapshot.docs
-            .map((docSnap) => {
-              const data = docSnap.data();
-              const stats = data.stats || {};
-
-              if (!data.stats || Object.keys(stats).length === 0) return null;
-              if (data.removedFromLeaderboard === true) return null;
-
-              const lastActiveMs = getLastActiveMs(data);
-
-              // ✅ NEW: Apply time filter
-              if (!passesTimeFilter(lastActiveMs)) return null;
-
-              return {
-                id: docSnap.id,
-                rank: 0,
-                displayName: data.displayName || 'Anonymous User',
-                equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
-                email: data.email || 'No email',
-                username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
-                stats: stats,
-                progress: {
-                  totalPoints: stats.totalPoints || 0,
-                  wordsLearned: stats.wordsLearned || 0,
-                  gamesPlayed: stats.gamesPlayed || 0,
-                  longestStreak: stats.longestStreak || 0,
-                  level: stats.level || 1
-                },
-                isLocal: false,
-                _source: 'firebase',
-                _lastActiveMs: lastActiveMs,
-              };
-            })
-            .filter(user => user !== null);
-
-          const localData = getLeaderboard();
-          const mergedMap = new Map();
-
-          firebaseUsers.forEach(user => {
-            if (user) mergedMap.set(user.id, { ...user });
-          });
-
-          if (timeFilter === 'all') {
-            localData.forEach(localUser => {
-              const userId = localUser.userId;
-              if (!mergedMap.has(userId)) {
-                mergedMap.set(userId, {
-                  id: userId,
-                  rank: 0,
-                  displayName: localUser.username || 'Player',
-                  equippedAvatar: localUser.equippedAvatar || DEFAULT_AVATAR_ID,
-                  email: localUser.email || '',
-                  username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
-                  stats: {
-                    totalPoints: localUser.totalPoints || 0,
-                    wordsLearned: localUser.wordsLearned || 0,
-                    gamesPlayed: localUser.gamesPlayed || 0,
-                    longestStreak: localUser.longestStreak || localUser.streak || 0,
-                    level: localUser.level || 1
-                  },
-                  progress: {
-                    totalPoints: localUser.totalPoints || 0,
-                    wordsLearned: localUser.wordsLearned || 0,
-                    gamesPlayed: localUser.gamesPlayed || 0,
-                    longestStreak: localUser.longestStreak || localUser.streak || 0,
-                    level: localUser.level || 1
-                  },
-                  isLocal: true,
-                  _source: 'local',
-                  _lastActiveMs: 0,
-                });
-              }
-            });
-          }
-
-          let mergedData = Array.from(mergedMap.values());
-          mergedData.sort((a, b) => {
-            const aVal = getValue(a);
-            const bVal = getValue(b);
-            return bVal - aVal;
-          });
-          mergedData.forEach((user, index) => user.rank = index + 1);
-
-          setLeaderboardData(mergedData);
-          console.log('✅ Leaderboard updated in real-time:', mergedData.length, 'players');
-        } catch (error) {
-          console.error('Error refreshing real-time data:', error);
-        }
-      }
-    }, (error) => {
-      console.error('❌ Listener error:', error);
-      setError(`Listener error: ${error.message}`);
-    });
-
-    unsubscribeRef.current = unsubscribe;
-
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = null;
-      }
-    };
-  }, [loading, getValue, timeFilter, passesTimeFilter]);
+  // ✅ NEW: Manual refresh handler (bypasses cache)
+  const handleRefresh = () => {
+    fetchLeaderboardData(true);
+  };
 
   // ============================================================
   // ===== ADMIN FUNCTIONS =====
@@ -719,7 +643,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
           if (result.success) {
             alert(`✅ Successfully reset stats for "${userName}"`);
-            await fetchLeaderboardData();
+            // ✅ Bypass cache after admin action
+            await fetchLeaderboardData(true);
           }
         } catch (error) {
           console.error('❌ Reset failed:', error);
@@ -752,7 +677,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
           if (result.success) {
             alert(`✅ "${userName}" removed from leaderboard\nThey will reappear when they log in again.`);
-            await fetchLeaderboardData();
+            // ✅ Bypass cache after admin action
+            await fetchLeaderboardData(true);
           }
         } catch (error) {
           console.error('❌ Remove failed:', error);
@@ -782,7 +708,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
 
           if (result.success) {
             alert(`✅ Successfully reset stats for ALL ${result.totalUsers} users`);
-            await fetchLeaderboardData();
+            // ✅ Bypass cache after admin action
+            await fetchLeaderboardData(true);
           }
         } catch (error) {
           console.error('❌ Reset all failed:', error);
@@ -1004,6 +931,23 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         .leaderboard-table tbody tr {
           transition: background 0.15s ease;
         }
+        .refresh-btn {
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .refresh-btn:hover {
+          transform: translateY(-1px);
+        }
+        .refresh-btn:active {
+          transform: translateY(2px);
+          box-shadow: none !important;
+        }
+        .refresh-btn.spinning svg {
+          animation: spinRefresh 1s linear infinite;
+        }
+        @keyframes spinRefresh {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -1046,6 +990,33 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         </div>
 
         <div className="leaderboard-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {/* ✅ NEW: Refresh button */}
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            className={`refresh-btn ${loading ? 'spinning' : ''}`}
+            title="Refresh leaderboard"
+            style={{
+              padding: '10px 16px',
+              background: palette.white,
+              color: palette.deepNavy,
+              border: `1.5px solid ${palette.border}`,
+              borderRadius: '10px',
+              fontSize: '13px',
+              fontWeight: '800',
+              cursor: loading ? 'wait' : 'pointer',
+              fontFamily: BRAND_FONT_DISPLAY,
+              boxShadow: `0 2px 0 ${palette.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              opacity: loading ? 0.6 : 1,
+            }}
+          >
+            <Icon name="refresh" size={13} color={palette.deepNavy} />
+            Refresh
+          </button>
+
           {isAdmin && (
             <button
               onClick={handleResetAllStats}
@@ -1289,7 +1260,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             </div>
           </div>
           <button
-            onClick={fetchLeaderboardData}
+            onClick={handleRefresh}
             style={{
               padding: '8px 18px',
               background: palette.coral,
@@ -1309,7 +1280,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
       )}
 
       {/* LOADING STATE */}
-      {loading ? (
+      {loading && leaderboardData.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '60px 40px',
@@ -1351,7 +1322,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               border: `1.5px solid ${palette.border}`,
               flexWrap: 'wrap',
             }}>
-              {/* 2nd Place */}
               {leaderboardData[1] && (
                 <div
                   className="podium-item player-clickable"
@@ -1401,7 +1371,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                 </div>
               )}
 
-              {/* 1st Place */}
               {leaderboardData[0] && (
                 <div
                   className="podium-item player-clickable"
@@ -1451,7 +1420,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                 </div>
               )}
 
-              {/* 3rd Place */}
               {leaderboardData[2] && (
                 <div
                   className="podium-item player-clickable"
@@ -1838,7 +1806,9 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                 </span>
               </div>
               <span style={{ color: palette.bodyTextSoft, fontFamily: BRAND_FONT_DISPLAY, fontWeight: '800', fontSize: '11px' }}>
-                Updated just now
+                {lastUpdated
+                  ? `Updated ${Math.max(1, Math.round((Date.now() - lastUpdated) / 60000))} min ago`
+                  : 'Cached • Refresh to update'}
               </span>
             </div>
           )}
@@ -1942,7 +1912,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
               </div>
             ) : selectedProfile && (
               <div style={{ padding: '0 36px 36px 36px' }}>
-                {/* Header */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1979,7 +1948,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   </div>
                 </div>
 
-                {/* Stats Grid */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(4, 1fr)',
@@ -2007,16 +1975,11 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   ))}
                 </div>
 
-                {/* Info sections */}
-                {/* ✅ UPDATED:
-                    - Basic Information: removed Email, added Joined
-                    - Settings: replaced Dark Mode with Account Type
-                */}
                 {[
                   { title: 'Basic Information', items: [
                     ['Display Name', selectedProfile.displayName],
                     ['Username', selectedProfile.username],
-                    ['Joined', selectedProfile.joinedAt],           // ✅ NEW
+                    ['Joined', selectedProfile.joinedAt],
                     ['Bio', selectedProfile.bio],
                   ]},
                   { title: 'Contact Information', items: [
@@ -2031,7 +1994,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   ]},
                   { title: 'Settings', items: [
                     ['Email Notifications', selectedProfile.emailNotifications ? 'Enabled' : 'Disabled'],
-                    ['Account Type', selectedProfile.roleLabel || 'Student'],  // ✅ REPLACED (was Dark Mode)
+                    ['Account Type', selectedProfile.roleLabel || 'Student'],
                     ['Language', selectedProfile.language],
                   ]},
                 ].map((section, sIdx) => (

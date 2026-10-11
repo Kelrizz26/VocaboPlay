@@ -2,9 +2,13 @@
 // ============================================================
 // ✅ TEACHER ACTIVITIES - Create quizzes/exams with auto PIN
 // Teachers can create, edit, delete their own activities
+// ✅ UPDATED: TypableSelect for Activity Type (matches AdminDashboard)
+// ✅ NEW: Supports Quiz, Short Quiz, Long Quiz, Prelim, Midterm, Final
+// ✅ UPDATED: Filter dropdown includes new types
+// ✅ UPDATED: Cards show proper icons/labels/colors for all types
 // ============================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   collection, addDoc, doc, updateDoc, deleteDoc,
 } from 'firebase/firestore';
@@ -21,6 +25,240 @@ import { colors, fontFamily } from '../dashboard/dashboardStyles';
 // ============================================================
 const generatePin = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// ============================================================
+// ✅ ACTIVITY TYPE OPTIONS + NORMALIZER (same as AdminDashboard)
+// ============================================================
+const ACTIVITY_TYPE_SUGGESTIONS = [
+  'Quiz',
+  'Short Quiz',
+  'Long Quiz',
+  'Prelim',
+  'Midterm',
+  'Final',
+];
+
+const ACTIVITY_TYPE_ALIASES = {
+  'quiz': 'quiz',
+  'quiz master': 'quiz',
+  'short quiz': 'short-quiz',
+  'short-quiz': 'short-quiz',
+  'long quiz': 'long-quiz',
+  'long-quiz': 'long-quiz',
+  'prelim': 'prelim',
+  'midterm': 'midterm',
+  'final': 'final',
+  'finals': 'final',
+  'exam': 'exam',
+  'match': 'match',
+  'match game': 'match',
+  'word pics': 'wordpics',
+  'word-pics': 'wordpics',
+  'wordpics': 'wordpics',
+};
+
+const slugifyActivityType = (input) => {
+  if (!input || !input.trim()) return 'quiz';
+  const lower = input.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (ACTIVITY_TYPE_ALIASES[lower]) return ACTIVITY_TYPE_ALIASES[lower];
+  return lower.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+};
+
+const unSlugifyActivityType = (slug) => {
+  if (!slug) return 'Quiz';
+  const map = {
+    'quiz': 'Quiz',
+    'short-quiz': 'Short Quiz',
+    'long-quiz': 'Long Quiz',
+    'prelim': 'Prelim',
+    'midterm': 'Midterm',
+    'final': 'Final',
+    'exam': 'Exam',
+    'match': 'Match Game',
+    'wordpics': 'Word Pics',
+  };
+  if (map[slug]) return map[slug];
+  return slug
+    .split(/[-\s]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
+// ============================================================
+// ✅ TypableSelect — custom dropdown for typable fields
+// (same component as in AdminDashboard.jsx)
+// ============================================================
+const TypableSelect = ({
+  value,
+  onChange,
+  options = [],
+  placeholder = '',
+  inputStyle: customInputStyle,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value || '');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!inputValue || !inputValue.trim()) return options;
+    const q = inputValue.trim().toLowerCase();
+    return options.filter((o) => o.toLowerCase().includes(q));
+  }, [inputValue, options]);
+
+  const handleInputChange = (e) => {
+    const v = e.target.value;
+    setInputValue(v);
+    onChange(v);
+    setIsOpen(true);
+    setHighlightedIndex(-1);
+  };
+
+  const handleSelect = (option) => {
+    setInputValue(option);
+    onChange(option);
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIsOpen(true);
+      setHighlightedIndex((prev) =>
+        prev < filteredOptions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === 'Enter') {
+      if (isOpen && highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
+        e.preventDefault();
+        handleSelect(filteredOptions[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    }
+  };
+
+  const baseInputStyle = customInputStyle || {
+    width: '100%',
+    padding: '11px 40px 11px 14px',
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: '10px',
+    fontSize: '13px',
+    fontFamily,
+    fontWeight: 600,
+    boxSizing: 'border-box',
+    color: colors.textPrimary,
+    outline: 'none',
+    background: colors.surfaceSoft || colors.surface,
+  };
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={() => setIsOpen(true)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        style={baseInputStyle}
+        autoComplete="off"
+      />
+
+      <span
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setIsOpen((prev) => !prev);
+        }}
+        style={{
+          position: 'absolute',
+          right: '12px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          fontSize: '10px',
+          color: colors.textSecondary,
+          cursor: 'pointer',
+          userSelect: 'none',
+          padding: '4px',
+          lineHeight: 1,
+        }}
+      >
+        ▼
+      </span>
+
+      {isOpen && filteredOptions.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: colors.surface,
+            border: `1.5px solid ${colors.border}`,
+            borderRadius: '10px',
+            boxShadow: '0 8px 20px rgba(42, 40, 69, 0.12)',
+            zIndex: 50,
+            maxHeight: '220px',
+            overflowY: 'auto',
+            padding: '4px',
+          }}
+        >
+          {filteredOptions.map((opt, idx) => {
+            const isHighlighted = idx === highlightedIndex;
+            const isSelected = opt === value;
+            return (
+              <div
+                key={opt}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(opt);
+                }}
+                onMouseEnter={() => setHighlightedIndex(idx)}
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontFamily,
+                  fontWeight: isSelected ? 800 : 600,
+                  color: isSelected ? '#E9A075' : colors.textPrimary,
+                  background: isHighlighted
+                    ? 'rgba(233, 160, 117, 0.10)'
+                    : isSelected
+                    ? 'rgba(233, 160, 117, 0.08)'
+                    : 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.1s ease',
+                }}
+              >
+                {opt}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const TeacherActivities = ({
@@ -43,7 +281,7 @@ const TeacherActivities = ({
   const emptyQuestion = { question: '', options: ['', '', '', ''], correctIndex: 0 };
   const [createForm, setCreateForm] = useState({
     title: '',
-    gameType: 'quiz',
+    gameType: 'Quiz',   // ✅ Default human-readable
     category: 'general',
     difficulty: 3,
     questions: [{ ...emptyQuestion }],
@@ -51,7 +289,7 @@ const TeacherActivities = ({
 
   // ===== EDIT FORM STATE =====
   const [editForm, setEditForm] = useState({
-    title: '', gameType: 'quiz', category: '', difficulty: 3, isActive: true,
+    title: '', gameType: 'Quiz', category: '', difficulty: 3, isActive: true,
   });
 
   // ============================================================
@@ -90,7 +328,8 @@ const TeacherActivities = ({
     try {
       const newActivity = {
         title: createForm.title.trim(),
-        gameType: createForm.gameType,
+        // ✅ Slugify the typed activity type for consistent storage
+        gameType: slugifyActivityType(createForm.gameType),
         category: createForm.category.trim() || 'general',
         difficulty: createForm.difficulty,
         isActive: true,
@@ -100,6 +339,7 @@ const TeacherActivities = ({
         hasCustomQuestions: true,
         createdAt: new Date().toISOString(),
         createdBy: teacherId,                   // ✅ link to teacher
+        teacherId: teacherId,                   // ✅ for consistency with admin
         teacherName: teacherName || '',
         questions: validQuestions,
       };
@@ -108,7 +348,7 @@ const TeacherActivities = ({
       setActivities([{ id: ref.id, ...newActivity }, ...activities]);
       setShowCreate(false);
       setCreateForm({
-        title: '', gameType: 'quiz', category: 'general',
+        title: '', gameType: 'Quiz', category: 'general',
         difficulty: 3, questions: [{ ...emptyQuestion }],
       });
       alert(`✅ Activity created!\nGame PIN: ${newActivity.gamePin}`);
@@ -152,7 +392,8 @@ const TeacherActivities = ({
     setEditingActivity(a.id);
     setEditForm({
       title: a.title || '',
-      gameType: a.gameType || 'quiz',
+      // ✅ Pre-fill with human-readable label from stored slug
+      gameType: unSlugifyActivityType(a.gameType || 'quiz'),
       category: a.category || '',
       difficulty: a.difficulty || 3,
       isActive: a.isActive !== false,
@@ -162,16 +403,18 @@ const TeacherActivities = ({
   const saveEdit = async () => {
     if (!editForm.title.trim()) return alert('Title is required');
     try {
-      await updateDoc(doc(db, 'activities', editingActivity), {
+      const updateData = {
         title: editForm.title.trim(),
-        gameType: editForm.gameType,
+        // ✅ Store slugified version for consistency
+        gameType: slugifyActivityType(editForm.gameType),
         category: editForm.category,
         difficulty: editForm.difficulty,
         isActive: editForm.isActive,
-      });
+      };
+      await updateDoc(doc(db, 'activities', editingActivity), updateData);
       setActivities(
         activities.map((a) =>
-          a.id === editingActivity ? { ...a, ...editForm } : a
+          a.id === editingActivity ? { ...a, ...updateData } : a
         )
       );
       setEditingActivity(null);
@@ -275,6 +518,7 @@ const TeacherActivities = ({
             color: colors.textPrimary,
           }}
         />
+        {/* ✅ UPDATED: Filter includes new types */}
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -286,6 +530,11 @@ const TeacherActivities = ({
         >
           <option value="all">All Types</option>
           <option value="quiz">📝 Quiz</option>
+          <option value="short-quiz">⚡ Short Quiz</option>
+          <option value="long-quiz">📋 Long Quiz</option>
+          <option value="prelim">🎓 Prelim</option>
+          <option value="midterm">📖 Midterm</option>
+          <option value="final">🏁 Final</option>
           <option value="match">🎯 Match</option>
           <option value="wordpics">🖼️ Word Pics</option>
         </select>
@@ -336,19 +585,22 @@ const TeacherActivities = ({
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-            <div>
-              <label style={labelStyle}>Game Type</label>
-              <select
-                value={createForm.gameType}
-                onChange={(e) => setCreateForm({ ...createForm, gameType: e.target.value })}
-                style={selectStyle}
-              >
-                <option value="quiz">📝 Quiz Master</option>
-                <option value="match">🎯 Match Game</option>
-                <option value="wordpics">🖼️ Word Pics</option>
-              </select>
+          {/* ✅ UPDATED: TypableSelect for Activity Type */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Activity Type</label>
+            <TypableSelect
+              value={createForm.gameType}
+              onChange={(val) => setCreateForm({ ...createForm, gameType: val })}
+              options={ACTIVITY_TYPE_SUGGESTIONS}
+              placeholder="e.g., Quiz, Short Quiz, Prelim..."
+              inputStyle={{ ...inputStyle, paddingRight: '40px' }}
+            />
+            <div style={{ fontSize: '10px', color: colors.textSecondary, marginTop: '4px', fontFamily, fontWeight: 600 }}>
+              💡 Type any type or pick from suggestions
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '20px' }}>
             <div>
               <label style={labelStyle}>Difficulty</label>
               <select
@@ -475,16 +727,22 @@ const TeacherActivities = ({
               onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
               style={inputStyle} />
           </div>
+
+          {/* ✅ UPDATED: TypableSelect for Activity Type */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>Game Type</label>
-            <select value={editForm.gameType}
-              onChange={(e) => setEditForm({ ...editForm, gameType: e.target.value })}
-              style={selectStyle}>
-              <option value="quiz">📝 Quiz Master</option>
-              <option value="match">🎯 Match Game</option>
-              <option value="wordpics">🖼️ Word Pics</option>
-            </select>
+            <label style={labelStyle}>Activity Type</label>
+            <TypableSelect
+              value={editForm.gameType}
+              onChange={(val) => setEditForm({ ...editForm, gameType: val })}
+              options={ACTIVITY_TYPE_SUGGESTIONS}
+              placeholder="e.g., Quiz, Short Quiz, Prelim..."
+              inputStyle={{ ...inputStyle, paddingRight: '40px' }}
+            />
+            <div style={{ fontSize: '10px', color: colors.textSecondary, marginTop: '4px', fontFamily, fontWeight: 600 }}>
+              💡 Type any type or pick from suggestions
+            </div>
           </div>
+
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>Category</label>
             <input type="text" value={editForm.category}
@@ -556,14 +814,68 @@ const StatCard = ({ label, value, icon, color }) => (
   </div>
 );
 
+// ============================================================
+// ✅ UPDATED: Type maps include new types
+// ============================================================
+const getTypeIcon = (type) => {
+  if (!type) return '❓';
+  const map = {
+    'quiz': '📝',
+    'short-quiz': '⚡',
+    'long-quiz': '📋',
+    'prelim': '🎓',
+    'midterm': '📖',
+    'final': '🏁',
+    'exam': '📄',
+    'match': '🎯',
+    'wordpics': '🖼️',
+  };
+  return map[type] || '📝';
+};
+
+const getTypeLabel = (type) => {
+  if (!type) return 'Activity';
+  const map = {
+    'quiz': 'Quiz',
+    'short-quiz': 'Short Quiz',
+    'long-quiz': 'Long Quiz',
+    'prelim': 'Prelim',
+    'midterm': 'Midterm',
+    'final': 'Final',
+    'exam': 'Exam',
+    'match': 'Match',
+    'wordpics': 'Word Pics',
+  };
+  if (map[type]) return map[type];
+  return type
+    .split(/[-\s]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
+const getTypeColor = (type) => {
+  if (!type) return '#64748b';
+  const map = {
+    'quiz': '#7c6fd6',
+    'short-quiz': '#4F9188',
+    'long-quiz': '#7c6fd6',
+    'prelim': '#B83B5E',
+    'midterm': '#7c6fd6',
+    'final': '#B83B5E',
+    'exam': '#B83B5E',
+    'match': '#B83B5E',
+    'wordpics': '#1F4E5F',
+  };
+  return map[type] || '#7c6fd6';
+};
+
 const ActivityCard = ({
   activity, onHostLive, onShowScores, onEdit, onDelete, onToggleActive,
 }) => {
   const [hovered, setHovered] = useState(false);
-  const typeColors = { quiz: '#7c6fd6', match: '#B83B5E', wordpics: '#1F4E5F' };
-  const typeIcons = { quiz: '📝', match: '🎯', wordpics: '🖼️' };
-  const typeLabels = { quiz: 'Quiz', match: 'Match', wordpics: 'Word Pics' };
-  const accent = typeColors[activity.gameType] || '#64748b';
+  const accent = getTypeColor(activity.gameType);
+  const typeIcon = getTypeIcon(activity.gameType);
+  const typeLabel = getTypeLabel(activity.gameType);
 
   return (
     <div
@@ -589,7 +901,7 @@ const ActivityCard = ({
           background: `${accent}20`, color: accent,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '24px', flexShrink: 0,
-        }}>{typeIcons[activity.gameType] || '❓'}</div>
+        }}>{typeIcon}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 style={{
             fontSize: '16px', fontWeight: '600', color: colors.textPrimary,
@@ -597,7 +909,7 @@ const ActivityCard = ({
             overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{activity.title}</h3>
           <div style={{ fontSize: '12px', color: colors.textSecondary, fontFamily }}>
-            {typeLabels[activity.gameType] || 'Activity'} • {activity.totalQuestions || 0} questions
+            {typeLabel} • {activity.totalQuestions || 0} questions
           </div>
         </div>
         <span style={{

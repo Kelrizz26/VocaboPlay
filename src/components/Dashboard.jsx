@@ -7,6 +7,12 @@
 // ✅ UPDATED: Rotate phone prompt in English
 // ✅ REMOVED: Light Mode toggle from sidebar
 // ✅ UPDATED: Sidebar menu spacing — bigger padding + gap
+// ✅ UPDATED: Recent Activity — shows ONLY teacher's activity title
+// ✅ NEW: Supports new activity types — Short Quiz, Long Quiz,
+//    Prelim, Midterm, Final (with icons/labels)
+// ✅ NEW: Clickable teacher-pin activities → personal Question Breakdown modal
+// ✅ FIXED: completeActivity — participants counter now only increments
+//    on the student's FIRST attempt (prevents inflated counts)
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -145,6 +151,95 @@ const Icon = ({ name, size = 20, color = palette.white, secondaryColor = 'rgba(2
   return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ display: 'block', flexShrink: 0 }}>{icons[name] || icons.grid}</svg>);
 };
 
+// ============================================================
+// ✅ Activity type metadata — images, emojis, labels
+// ============================================================
+const GAME_META = {
+  'quiz':        { image: '/image/quizgame.png',      emoji: '🧠', label: 'Quiz' },
+  'quizmaster':  { image: '/image/quizgame.png',      emoji: '🧠', label: 'Quiz Master' },
+  'match':       { image: '/image/matchgame.png',     emoji: '🃏', label: 'Match Game' },
+  'matchgame':   { image: '/image/matchgame.png',     emoji: '🃏', label: 'Match Game' },
+  'wordpics':    { image: '/image/wordpics.png',      emoji: '🖼️', label: 'SynoQuest' },
+  'synoquest':   { image: '/image/wordpics.png',      emoji: '🖼️', label: 'SynoQuest' },
+  'guesswhat':   { image: '/image/guesswhatgame.png', emoji: '❓', label: 'GuessWhat' },
+  'short-story': { image: '/image/shortstory.png',    emoji: '📖', label: 'Story Quest' },
+  'shortstory':  { image: '/image/shortstory.png',    emoji: '📖', label: 'Story Quest' },
+  'story-quest': { image: '/image/shortstory.png',    emoji: '📖', label: 'Story Quest' },
+  'sentencebuilder': { image: '/image/sentence.png',  emoji: '✍️', label: 'Sentence Builder' },
+  'sentence':    { image: '/image/sentence.png',      emoji: '✍️', label: 'Sentence Builder' },
+  'short-quiz':  { image: '/image/quizgame.png',      emoji: '⚡', label: 'Short Quiz' },
+  'long-quiz':   { image: '/image/quizgame.png',      emoji: '📋', label: 'Long Quiz' },
+  'prelim':      { image: '/image/quizgame.png',      emoji: '🎓', label: 'Prelim' },
+  'midterm':     { image: '/image/quizgame.png',      emoji: '📖', label: 'Midterm' },
+  'final':       { image: '/image/quizgame.png',      emoji: '🏁', label: 'Final' },
+  'exam':        { image: '/image/quizgame.png',      emoji: '📄', label: 'Exam' },
+};
+
+const getGameMeta = (gameType) => {
+  const key = String(gameType || '').toLowerCase();
+  return GAME_META[key] || { image: null, emoji: '🎮', label: 'Game' };
+};
+
+// ============================================================
+// ✅ Answer parser — handles arrays, {Q1: true}, {1: true}, {0: true}
+// ============================================================
+const parseAnswerValue = (val) => {
+  if (val === true || val === 1 || val === 'true' || val === '1') return true;
+  if (val && typeof val === 'object') {
+    if (val.isCorrect === true || val.correct === true || val.is_correct === true) return true;
+  }
+  return false;
+};
+
+const getAnswerForQuestion = (answers, q) => {
+  if (!answers) return false;
+
+  if (Array.isArray(answers)) {
+    return parseAnswerValue(answers[q - 1]);
+  }
+
+  if (typeof answers !== 'object') return false;
+
+  if (Object.prototype.hasOwnProperty.call(answers, `Q${q}`)) {
+    return parseAnswerValue(answers[`Q${q}`]);
+  }
+  if (Object.prototype.hasOwnProperty.call(answers, `q${q}`)) {
+    return parseAnswerValue(answers[`q${q}`]);
+  }
+
+  const hasZeroKey =
+    Object.prototype.hasOwnProperty.call(answers, 0) ||
+    Object.prototype.hasOwnProperty.call(answers, '0');
+
+  if (hasZeroKey) {
+    if (Object.prototype.hasOwnProperty.call(answers, q - 1)) {
+      return parseAnswerValue(answers[q - 1]);
+    }
+    if (Object.prototype.hasOwnProperty.call(answers, String(q - 1))) {
+      return parseAnswerValue(answers[String(q - 1)]);
+    }
+    return false;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(answers, q)) {
+    return parseAnswerValue(answers[q]);
+  }
+  if (Object.prototype.hasOwnProperty.call(answers, String(q))) {
+    return parseAnswerValue(answers[String(q)]);
+  }
+
+  return false;
+};
+
+// ✅ Extract the vocabulary word from a question text like `What is 'happy'?`
+const extractWordFromQuestion = (q) => {
+  if (!q) return '';
+  if (q.word && String(q.word).trim()) return String(q.word).trim();
+  const text = String(q.question || '');
+  const match = text.match(/["'`]([^"'`]+)["'`]/);
+  return match ? match[1] : '';
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('Dashboard');
@@ -184,6 +279,21 @@ const Dashboard = () => {
   const [showLevelUpCard, setShowLevelUpCard] = useState(false);
   const [levelUpCardLevel, setLevelUpCardLevel] = useState(1);
   const [levelUpDiamonds, setLevelUpDiamonds] = useState(0);
+
+  // ✅ NEW: Question Breakdown modal state
+  const [breakdownModal, setBreakdownModal] = useState({
+    open: false,
+    loading: false,
+    error: null,
+    activityTitle: '',
+    questions: [],
+    answers: {},
+    score: 0,
+    correctAnswers: 0,
+    totalQuestions: 0,
+    completedAt: null,
+    filter: 'all', // 'all' | 'correct' | 'wrong'
+  });
 
   const userId = localStorage.getItem('userId');
   const { stats, loading, error } = useUserStats(userId);
@@ -335,11 +445,99 @@ const Dashboard = () => {
 
   const startActivity = async () => {
     if (!selectedActivity) return;
-    const gameMap = { 'quiz': 'quiz', 'match': 'match', 'wordpics': 'wordpics', 'guesswhat': 'guesswhat' };
+    const gameMap = {
+      'quiz': 'quiz',
+      'quizmaster': 'quiz',
+      'short-quiz': 'quiz',
+      'long-quiz': 'quiz',
+      'prelim': 'quiz',
+      'midterm': 'quiz',
+      'final': 'quiz',
+      'exam': 'quiz',
+      'match': 'match',
+      'matchgame': 'match',
+      'wordpics': 'wordpics',
+      'synoquest': 'wordpics',
+      'guesswhat': 'guesswhat',
+    };
     const gameId = gameMap[selectedActivity.gameType] || 'quiz';
     setCurrentGame(gameId);
     setShowActivityModal(false);
     localStorage.setItem('currentActivity', JSON.stringify(selectedActivity));
+  };
+
+  // ✅ NEW: Open Question Breakdown modal
+  const openBreakdown = async (activity) => {
+    // Only teacher-pin activities with an activityId can be reviewed
+    if (!activity || activity.source !== 'teacher-pin' || !activity.activityId) return;
+
+    setBreakdownModal({
+      open: true,
+      loading: true,
+      error: null,
+      activityTitle: activity.activityTitle || 'Activity',
+      questions: [],
+      answers: activity.answers || {},
+      score: activity.score || 0,
+      correctAnswers: activity.correctAnswers || 0,
+      totalQuestions: activity.totalQuestions || 0,
+      completedAt: activity.completedAt || null,
+      filter: 'all',
+    });
+
+    try {
+      const activityRef = doc(db, 'activities', activity.activityId);
+      const activitySnap = await getDoc(activityRef);
+
+      if (!activitySnap.exists()) {
+        setBreakdownModal(prev => ({
+          ...prev,
+          loading: false,
+          error: 'This activity has been removed by the teacher.',
+        }));
+        return;
+      }
+
+      const activityData = activitySnap.data();
+      setBreakdownModal(prev => ({
+        ...prev,
+        loading: false,
+        error: null,
+        activityTitle: activityData.title || activity.activityTitle || 'Activity',
+        questions: activityData.questions || [],
+        answers: activity.answers || prev.answers,
+        score: activity.score ?? prev.score,
+        correctAnswers: activity.correctAnswers ?? prev.correctAnswers,
+        totalQuestions: activity.totalQuestions ?? prev.totalQuestions,
+      }));
+    } catch (err) {
+      console.error('Error loading breakdown:', err);
+      setBreakdownModal(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to load question breakdown.',
+      }));
+    }
+  };
+
+  const closeBreakdown = () => {
+    setBreakdownModal({
+      open: false,
+      loading: false,
+      error: null,
+      activityTitle: '',
+      questions: [],
+      answers: {},
+      score: 0,
+      correctAnswers: 0,
+      totalQuestions: 0,
+      completedAt: null,
+      filter: 'all',
+    });
+  };
+
+  const setBreakdownFilter = (filter) => {
+    setBreakdownModal(prev => ({ ...prev, filter }));
   };
 
   const updateProgress = async (updates) => {
@@ -466,11 +664,21 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ FIXED: completeActivity — participants only increment on FIRST attempt
   const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = []) => {
     try {
       const activityRef = doc(db, 'activities', activityId);
       const activitySnap = await getDoc(activityRef);
       const activityData = activitySnap.exists() ? activitySnap.data() : {};
+
+      // ✅ FIX: Check kung may existing score na yung student para sa activity na ito
+      const existingQuery = query(
+        collection(db, 'scores'),
+        where('activityId', '==', activityId),
+        where('studentId', '==', userId)
+      );
+      const existingSnap = await getDocs(existingQuery);
+      const isFirstAttempt = existingSnap.empty;
 
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
@@ -482,7 +690,8 @@ const Dashboard = () => {
         completedAt: new Date().toISOString()
       });
 
-      if (activitySnap.exists()) {
+      // ✅ FIX: I-increment ang participants count ONLY kung first attempt ng student
+      if (activitySnap.exists() && isFirstAttempt) {
         await updateDoc(activityRef, { participants: (activitySnap.data().participants || 0) + 1 });
       }
       if (updateProgress) {
@@ -523,19 +732,16 @@ const Dashboard = () => {
     window.scrollTo(0, 0);
   };
 
-  // ✅ RETURN TO DASHBOARD MENU
   const exitGame = () => {
     setCurrentGame(null);
     setActiveMenu('Dashboard');
     refreshRecentActivities();
   };
 
-  // ✅ NEW: RETURN TO GAMES SELECTION SCREEN (SynoQuest, MatchGame, etc.)
   const exitToGames = () => {
     setCurrentGame(null);
     setActiveMenu('Games');
     refreshRecentActivities();
-    // Close fullscreen if active
     if (document.fullscreenElement) {
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
@@ -602,6 +808,31 @@ const Dashboard = () => {
     );
   }
 
+  // ✅ Pre-compute breakdown filters/statistics
+  const breakdownQuestions = breakdownModal.questions || [];
+  const breakdownAnswers = breakdownModal.answers || {};
+
+  const breakdownRows = breakdownQuestions.map((q, i) => ({
+    q,
+    index: i,
+    questionNumber: i + 1,
+    isCorrect: getAnswerForQuestion(breakdownAnswers, i + 1),
+  }));
+
+  const breakdownCorrectCount = breakdownRows.filter(r => r.isCorrect).length;
+  const breakdownWrongCount = breakdownRows.length - breakdownCorrectCount;
+
+  const filteredBreakdownRows = breakdownRows.filter((row) => {
+    if (breakdownModal.filter === 'correct') return row.isCorrect;
+    if (breakdownModal.filter === 'wrong') return !row.isCorrect;
+    return true;
+  });
+
+  const wrongWordsForReview = breakdownRows
+    .filter(r => !r.isCorrect)
+    .map(r => extractWordFromQuestion(r.q) || r.q?.correctAnswer || '')
+    .filter(Boolean);
+
   return (
     <>
       <style>{`
@@ -615,8 +846,12 @@ const Dashboard = () => {
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         .profile-menu-item { transition: background 0.15s ease; }
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
-        .recent-activity-item { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .recent-activity-item { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
         .recent-activity-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(42, 40, 69, 0.06); }
+        .recent-activity-item.clickable { cursor: pointer; }
+        .recent-activity-item.clickable:hover { border-color: ${palette.warmOrange}80 !important; }
+        .recent-activity-item.clickable:hover .click-hint { opacity: 1; }
+        .recent-activity-item .click-hint { opacity: 0; transition: opacity 0.15s ease; }
 
         .hamburger-btn {
           display: none;
@@ -732,7 +967,6 @@ const Dashboard = () => {
               <img src="/image/logo.png" alt="VocaboPlay" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
               <span style={{ fontSize: '19px', fontWeight: 700 }}>VocaboPlay</span>
             </div>
-            {/* ✅ X BUTTON: MOBILE ONLY — not shown on web */}
             {isMobile && (
               <button
                 onClick={() => setIsSidebarVisible(false)}
@@ -743,12 +977,10 @@ const Dashboard = () => {
               </button>
             )}
           </div>
-          {/* ✅ UPDATED: Added flex column + gap for consistent spacing */}
           <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {menuItems.map((item) => {
               const isActive = activeMenu === item.name;
               return (
-                /* ✅ UPDATED: Increased padding from 13px to 17px, margin-bottom removed (gap handles it), font-size 15 → 16 */
                 <div key={item.name} className={`menu-item ${isActive ? 'active' : ''}`} onClick={() => changeMenu(item.name)} style={{ padding: '17px 22px', margin: '0 10px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', fontSize: '16px', fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.72)', fontFamily: "'Fredoka', sans-serif", borderRadius: '10px', borderLeft: '3px solid transparent' }}>
                   <Icon name={item.icon} size={21} color={isActive ? palette.warmOrange : 'rgba(255,255,255,0.72)'} secondaryColor={isActive ? `${palette.warmOrange}66` : 'rgba(255,255,255,0.4)'} />
                   <span>{item.name}</span>
@@ -928,27 +1160,31 @@ const Dashboard = () => {
                       const formattedDate = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown date';
                       const formattedTime = date ? date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
                       const gameType = activity.gameType || activity.activityType || 'Game';
-                      const gameTypeLower = String(gameType).toLowerCase();
 
-                      const gameImage = {
-                        'synoquest': '/image/wordpics.png', 'wordpics': '/image/wordpics.png',
-                        'match': '/image/matchgame.png', 'matchgame': '/image/matchgame.png',
-                        'quiz': '/image/quizgame.png', 'quizmaster': '/image/quizgame.png',
-                        'guesswhat': '/image/guesswhatgame.png',
-                        'short-story': '/image/shortstory.png', 'shortstory': '/image/shortstory.png',
-                        'story-quest': '/image/shortstory.png', 'sentencebuilder': '/image/sentence.png',
-                      }[gameTypeLower] || null;
+                      const meta = getGameMeta(gameType);
+                      const gameImage = meta.image;
+                      const gameEmoji = meta.emoji;
+                      const gameLabel = meta.label;
 
-                      const gameEmoji = { 'quiz': '🧠', 'match': '🃏', 'wordpics': '🖼️', 'synoquest': '🖼️', 'guesswhat': '❓', 'short-story': '📖', 'story-quest': '📖' }[gameTypeLower] || '🎮';
-                      const gameLabel = { 'quiz': 'Quiz Master', 'match': 'Match Game', 'synoquest': 'SynoQuest', 'wordpics': 'SynoQuest', 'guesswhat': 'GuessWhat', 'short-story': 'Story Quest', 'story-quest': 'Story Quest' }[gameTypeLower] || 'Game';
-                      const displayTitle = activity.activityTitle ? `${activity.activityTitle} · ${gameLabel}` : gameLabel;
+                      const displayTitle = (activity.activityTitle && activity.activityTitle.trim())
+                        ? activity.activityTitle
+                        : gameLabel;
+
                       const score = activity.score || 0;
                       const correct = activity.correctAnswers || 0;
                       const total = activity.totalQuestions || 0;
                       const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 
+                      const isClickable = activity.source === 'teacher-pin' && !!activity.activityId;
+
                       return (
-                        <div key={activity.id || idx} className="recent-activity-item" style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: palette.creamSoft, borderRadius: '12px', border: `1px solid ${palette.borderSoft}` }}>
+                        <div
+                          key={activity.id || idx}
+                          className={`recent-activity-item ${isClickable ? 'clickable' : ''}`}
+                          onClick={isClickable ? () => openBreakdown(activity) : undefined}
+                          title={isClickable ? 'Click to review your answers' : undefined}
+                          style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: palette.creamSoft, borderRadius: '12px', border: `1px solid ${palette.borderSoft}` }}
+                        >
                           <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: palette.white, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, border: `1.5px solid ${palette.border}`, overflow: 'hidden' }}>
                             {gameImage ? (
                               <img src={gameImage} alt={gameType} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = gameEmoji; }} />
@@ -961,7 +1197,14 @@ const Dashboard = () => {
                                 <span style={{ fontSize: '9px', padding: '2px 6px', flexShrink: 0, background: `${palette.warmOrange}22`, color: palette.warmOrange, borderRadius: '4px', fontWeight: 800 }}>PIN</span>
                               )}
                             </div>
-                            <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px' }}>{formattedDate}{formattedTime ? ` · ${formattedTime}` : ''}</div>
+                            <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span>{formattedDate}{formattedTime ? ` · ${formattedTime}` : ''}</span>
+                              {isClickable && (
+                                <span className="click-hint" style={{ color: palette.warmOrange, fontWeight: 800, fontSize: '10px' }}>
+                                  Tap to review →
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
                             <div style={{ fontSize: '16px', fontWeight: 800, color: palette.warmOrange, fontFamily: "'Fredoka', sans-serif" }}>+{score} pts</div>
@@ -1029,6 +1272,234 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* ============================================================
+          ✅ Question Breakdown Modal
+         ============================================================ */}
+      {breakdownModal.open && (
+        <div
+          className="breakdown-overlay"
+          style={styles.breakdownOverlay}
+          onClick={closeBreakdown}
+        >
+          <div
+            className="breakdown-modal"
+            style={styles.breakdownModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={styles.breakdownHeader}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h3 style={styles.breakdownTitle}>📊 My Question Breakdown</h3>
+                <p style={styles.breakdownSubtitle}>
+                  {breakdownModal.activityTitle}
+                  {breakdownModal.completedAt && (
+                    <span style={{ marginLeft: '6px', opacity: 0.7 }}>
+                      · {new Date(breakdownModal.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={closeBreakdown}
+                aria-label="Close"
+                style={styles.breakdownCloseBtn}
+              >
+                <Icon name="close" size={16} color={palette.deepNavy} />
+              </button>
+            </div>
+
+            {/* Filter pills */}
+            {!breakdownModal.loading && !breakdownModal.error && breakdownRows.length > 0 && (
+              <div style={styles.breakdownFilters}>
+                <button
+                  onClick={() => setBreakdownFilter('all')}
+                  style={{
+                    ...styles.breakdownFilterBtn,
+                    ...(breakdownModal.filter === 'all' ? styles.breakdownFilterBtnActive : {}),
+                  }}
+                >
+                  All ({breakdownRows.length})
+                </button>
+                <button
+                  onClick={() => setBreakdownFilter('correct')}
+                  style={{
+                    ...styles.breakdownFilterBtn,
+                    ...(breakdownModal.filter === 'correct' ? styles.breakdownFilterBtnActive : {}),
+                  }}
+                >
+                  ✅ Correct ({breakdownCorrectCount})
+                </button>
+                <button
+                  onClick={() => setBreakdownFilter('wrong')}
+                  style={{
+                    ...styles.breakdownFilterBtn,
+                    ...(breakdownModal.filter === 'wrong' ? styles.breakdownFilterBtnActive : {}),
+                  }}
+                >
+                  ❌ Wrong ({breakdownWrongCount})
+                </button>
+              </div>
+            )}
+
+            {/* Body */}
+            <div style={styles.breakdownBody}>
+              {breakdownModal.loading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <div style={{ width: '32px', height: '32px', border: `3px solid ${palette.border}`, borderTop: `3px solid ${palette.warmOrange}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+                  <p style={{ fontSize: '13px', color: palette.bodyTextSoft, fontWeight: 600 }}>Loading your answers...</p>
+                </div>
+              ) : breakdownModal.error ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '8px' }}>⚠️</div>
+                  <p style={{ fontSize: '14px', color: palette.coral, fontWeight: 700 }}>{breakdownModal.error}</p>
+                </div>
+              ) : breakdownRows.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '8px' }}>📭</div>
+                  <p style={{ fontSize: '14px', color: palette.bodyTextSoft, fontWeight: 600 }}>No question data available.</p>
+                </div>
+              ) : filteredBreakdownRows.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎯</div>
+                  <p style={{ fontSize: '14px', color: palette.bodyTextSoft, fontWeight: 600 }}>
+                    {breakdownModal.filter === 'correct' ? 'No correct answers yet.' : 'No wrong answers — nice job! 🎉'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {filteredBreakdownRows.map(({ q, questionNumber, isCorrect }) => {
+                    const options = Array.isArray(q.options) ? q.options : [];
+                    const correctAnswer = q.correctAnswer || '';
+                    return (
+                      <div
+                        key={questionNumber}
+                        style={{
+                          background: palette.creamSoft,
+                          borderRadius: '14px',
+                          padding: '14px 16px',
+                          border: `1.5px solid ${isCorrect ? `${palette.softGreen}60` : `${palette.coral}60`}`,
+                          borderLeft: `4px solid ${isCorrect ? palette.softGreen : palette.coral}`,
+                        }}
+                      >
+                        {/* Q header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Fredoka', sans-serif", color: palette.bodyTextSoft, background: palette.white, padding: '3px 10px', borderRadius: '999px', border: `1px solid ${palette.border}` }}>
+                            Q{questionNumber}
+                          </span>
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            fontFamily: "'Fredoka', sans-serif",
+                            color: isCorrect ? palette.softGreen : palette.coral,
+                            background: isCorrect ? `${palette.softGreen}18` : `${palette.coral}18`,
+                            padding: '3px 10px',
+                            borderRadius: '999px',
+                            border: `1px solid ${isCorrect ? `${palette.softGreen}50` : `${palette.coral}50`}`,
+                          }}>
+                            {isCorrect ? '✅ Correct' : '❌ Wrong'}
+                          </span>
+                        </div>
+
+                        {/* Question text */}
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", lineHeight: 1.4, marginBottom: '10px' }}>
+                          {q.question || '(No question text)'}
+                        </div>
+
+                        {/* Options */}
+                        {options.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {options.map((opt, oIdx) => {
+                              const isCorrectOpt = opt === correctAnswer;
+                              return (
+                                <div
+                                  key={oIdx}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    padding: '8px 12px',
+                                    borderRadius: '10px',
+                                    background: isCorrectOpt ? `${palette.softGreen}15` : palette.white,
+                                    border: `1.5px solid ${isCorrectOpt ? `${palette.softGreen}60` : palette.border}`,
+                                  }}
+                                >
+                                  <span style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    borderRadius: '50%',
+                                    background: isCorrectOpt ? palette.softGreen : palette.creamSoft,
+                                    color: isCorrectOpt ? palette.white : palette.bodyText,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    flexShrink: 0,
+                                    fontFamily: "'Fredoka', sans-serif",
+                                  }}>
+                                    {String.fromCharCode(65 + oIdx)}
+                                  </span>
+                                  <span style={{
+                                    flex: 1,
+                                    fontSize: '13px',
+                                    color: isCorrectOpt ? palette.softGreen : palette.deepNavy,
+                                    fontWeight: isCorrectOpt ? 800 : 600,
+                                    fontFamily: "'Nunito', sans-serif",
+                                  }}>
+                                    {opt}
+                                  </span>
+                                  {isCorrectOpt && (
+                                    <span style={{ fontSize: '14px', flexShrink: 0 }}>✅</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Fallback: correct answer text only */}
+                        {options.length === 0 && correctAnswer && (
+                          <div style={{ fontSize: '12px', color: palette.bodyText, fontFamily: "'Nunito', sans-serif", fontWeight: 600 }}>
+                            <span style={{ color: palette.bodyTextSoft }}>Correct answer: </span>
+                            <span style={{ color: palette.softGreen, fontWeight: 800 }}>{correctAnswer}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Summary footer */}
+            {!breakdownModal.loading && !breakdownModal.error && breakdownRows.length > 0 && (
+              <div style={styles.breakdownSummary}>
+                <div style={{ fontSize: '14px', fontWeight: 800, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif" }}>
+                  📌 You got <span style={{ color: palette.warmOrange }}>{breakdownCorrectCount}/{breakdownRows.length}</span>
+                  {' '}({Math.round((breakdownCorrectCount / breakdownRows.length) * 100)}%) correct
+                </div>
+                {wrongWordsForReview.length > 0 && (
+                  <div style={{ fontSize: '12px', color: palette.bodyTextSoft, fontFamily: "'Nunito', sans-serif", fontWeight: 700, marginTop: '6px' }}>
+                    📚 <span style={{ color: palette.bodyText }}>Review:</span> {wrongWordsForReview.slice(0, 8).join(', ')}
+                    {wrongWordsForReview.length > 8 && ` +${wrongWordsForReview.length - 8} more`}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Local responsive styles for the breakdown modal */}
+          <style>{`
+            @media (max-width: 640px) {
+              .breakdown-modal {
+                max-height: 92dvh !important;
+                border-radius: 16px !important;
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
       <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
     </>
   );
@@ -1046,6 +1517,102 @@ const styles = {
   modalActions: { display: 'flex', gap: '10px' },
   cancelBtn: { flex: 1, padding: '12px', background: palette.creamSoft, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer' },
   startBtn: { flex: 2, padding: '12px', ...chunkyButton(palette.softGreen, palette.softGreenShadow), fontSize: '13px' },
+
+  // ✅ Question Breakdown modal styles
+  breakdownOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(42, 40, 69, 0.6)',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '16px',
+  },
+  breakdownModal: {
+    background: palette.white,
+    borderRadius: '20px',
+    width: '100%',
+    maxWidth: '640px',
+    maxHeight: '88vh',
+    display: 'flex',
+    flexDirection: 'column',
+    border: `1.5px solid ${palette.border}`,
+    boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)',
+    overflow: 'hidden',
+  },
+  breakdownHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '12px',
+    padding: '20px 22px 14px',
+    borderBottom: `1.5px solid ${palette.border}`,
+  },
+  breakdownTitle: {
+    fontSize: '18px',
+    fontWeight: 800,
+    color: palette.deepNavy,
+    margin: 0,
+    fontFamily: "'Fredoka', sans-serif",
+    letterSpacing: '-0.2px',
+  },
+  breakdownSubtitle: {
+    fontSize: '12px',
+    color: palette.bodyTextSoft,
+    margin: '4px 0 0 0',
+    fontWeight: 700,
+    fontFamily: "'Nunito', sans-serif",
+  },
+  breakdownCloseBtn: {
+    background: palette.creamSoft,
+    border: `1.5px solid ${palette.border}`,
+    width: '34px',
+    height: '34px',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  breakdownFilters: {
+    display: 'flex',
+    gap: '6px',
+    padding: '12px 22px',
+    borderBottom: `1.5px solid ${palette.borderSoft}`,
+    background: palette.cream,
+    flexWrap: 'wrap',
+  },
+  breakdownFilterBtn: {
+    padding: '6px 14px',
+    borderRadius: '999px',
+    border: `1.5px solid ${palette.border}`,
+    background: palette.white,
+    color: palette.bodyText,
+    fontSize: '11px',
+    fontWeight: 800,
+    cursor: 'pointer',
+    fontFamily: "'Fredoka', sans-serif",
+    transition: 'all 0.15s ease',
+  },
+  breakdownFilterBtnActive: {
+    background: palette.warmOrange,
+    color: palette.white,
+    borderColor: palette.warmOrange,
+    boxShadow: `0 2px 0 ${palette.warmOrangeShadow}`,
+  },
+  breakdownBody: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '16px 20px',
+  },
+  breakdownSummary: {
+    padding: '14px 22px',
+    borderTop: `1.5px solid ${palette.border}`,
+    background: palette.creamSoft,
+  },
 };
 
 export default Dashboard;

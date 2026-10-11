@@ -1,9 +1,10 @@
 // src/components/AdminDashboard.jsx
-// ============================================================
-// ✅ ADMIN DASHBOARD - Updated with Top Navigation Bar
-// ✅ UPDATED: Profile button now matches SuperAdmin dark style
-// ✅ PRESERVED: All other existing code, modals, and logic
-// ============================================================
+// ✅ UPDATED: Optimized Firebase reads
+//   - Replaced full `scores` collection scan with chunked `where('activityId', 'in', [...])`
+//   - Replaced full `users` collection scan with chunked `where(documentId(), 'in', [...])`
+//   - Added session cache (3 min TTL) for dashboard data
+//   - Added cache bypass after create activity / live host exit
+// ✅ PRESERVED: All UI, modals, live host flow, scoreboard, print, profile menu
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +19,8 @@ import {
   query,
   where,
   onSnapshot,
-  deleteDoc
+  deleteDoc,
+  documentId
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 
@@ -63,6 +65,52 @@ const palette = {
 
 const FONT_DISPLAY = "'Fredoka', sans-serif";
 const FONT_BODY = "'Nunito', sans-serif";
+
+// ✅ Cache TTL — 3 minutes
+const DASHBOARD_CACHE_TTL_MS = 3 * 60 * 1000;
+
+// ✅ Firestore `in` query max — Firestore limit is 10
+const FIRESTORE_IN_CHUNK_SIZE = 10;
+
+// ============================================================
+// ✅ CACHE HELPERS (sessionStorage)
+// ============================================================
+const getDashboardCacheKey = (uid) => `admin_dashboard_cache_${uid}`;
+
+const readDashboardCache = (uid) => {
+  try {
+    const cached = sessionStorage.getItem(getDashboardCacheKey(uid));
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    if (!parsed?.timestamp) return null;
+    if (Date.now() - parsed.timestamp > DASHBOARD_CACHE_TTL_MS) return null;
+    return parsed.data;
+  } catch (e) {
+    return null;
+  }
+};
+
+const writeDashboardCache = (uid, data) => {
+  try {
+    sessionStorage.setItem(getDashboardCacheKey(uid), JSON.stringify({
+      data,
+      timestamp: Date.now(),
+    }));
+  } catch (e) {
+    // ignore quota errors — cache is best-effort
+  }
+};
+
+// ============================================================
+// ✅ CHUNK HELPER — splits array into chunks for Firestore `in` queries
+// ============================================================
+const chunkArray = (arr, size) => {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+};
 
 const chunkyButton = (bg, shadowColor) => ({
   background: bg,
@@ -561,47 +609,122 @@ const AdminDashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  const fetchAllData = async () => {
+  // ============================================================
+  // ✅ OPTIMIZED fetchAllData
+  //   - Chunked `where('activityId', 'in', [...])` for scores (only teacher's activities)
+  //   - Chunked `where(documentId(), 'in', [...])` for users (only relevant students)
+  //   - Session cache (3 min TTL) — 0 reads on quick remount
+  //   - bypassCache = true forces fresh fetch (after create activity / live host exit)
+  // ============================================================
+  const fetchAllData = async (bypassCache = false) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // ✅ Try cache first (unless bypass)
+    if (!bypassCache) {
+      const cached = readDashboardCache(user.uid);
+      if (cached) {
+        console.log('📦 AdminDashboard: loaded from cache');
+        setActivities(cached.activities || []);
+        setStudents(cached.students || []);
+        setWords(cached.words || []);
+        setGames(cached.games || []);
+        setLoading({ students: false, games: false, words: false, activities: false });
+        return;
+      }
+    }
+
     try {
-      const user = auth.currentUser;
-      const activitiesSnapshot = await getDocs(query(collection(db, 'activities'), where('teacherId', '==', user.uid)));
+      // ===== 1. Activities — filtered by teacherId (already efficient) =====
+      const activitiesSnapshot = await getDocs(
+        query(collection(db, 'activities'), where('teacherId', '==', user.uid))
+      );
       const activitiesData = [];
       const teacherActivityIds = [];
-      activitiesSnapshot.forEach((doc) => { activitiesData.push({ id: doc.id, ...doc.data() }); teacherActivityIds.push(doc.id); });
+      activitiesSnapshot.forEach((d) => {
+        activitiesData.push({ id: d.id, ...d.data() });
+        teacherActivityIds.push(d.id);
+      });
       setActivities(activitiesData);
       setLoading(prev => ({ ...prev, activities: false }));
 
-      let studentIds = [];
+      // ===== 2. Scores — chunked by activityId (only teacher's activities) =====
+      // ✅ HUGE SAVINGS: dati full `scores` collection scan; ngayon targeted lang
+      const studentIdsSet = new Set();
       if (teacherActivityIds.length > 0) {
-        const scoresSnapshot = await getDocs(collection(db, 'scores'));
-        scoresSnapshot.forEach((doc) => {
-          const scoreData = doc.data();
-          if (teacherActivityIds.includes(scoreData.activityId)) { if (!studentIds.includes(scoreData.studentId)) { studentIds.push(scoreData.studentId); } }
-        });
-      }
-
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const studentsData = usersSnapshot.docs.map(doc => {
-        const data = doc.data();
-        if (data.role === 'student' && studentIds.includes(doc.id)) {
-          return { id: doc.id, ...data, displayName: data.displayName || data.email?.split('@')[0] || 'Unknown', avgScore: calculateAvgScore(data.progress), gamesPlayed: data.progress?.gamesPlayed || 0, joinDate: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : 'Unknown', progress: data.progress || {} };
+        const activityChunks = chunkArray(teacherActivityIds, FIRESTORE_IN_CHUNK_SIZE);
+        for (const chunk of activityChunks) {
+          try {
+            const scoresSnapshot = await getDocs(
+              query(collection(db, 'scores'), where('activityId', 'in', chunk))
+            );
+            scoresSnapshot.forEach((d) => {
+              const s = d.data();
+              if (s.studentId) studentIdsSet.add(s.studentId);
+            });
+          } catch (err) {
+            console.error('Error fetching scores chunk:', err);
+          }
         }
-        return null;
-      }).filter(student => student !== null);
+      }
+      const studentIds = Array.from(studentIdsSet);
+
+      // ===== 3. Users — chunked by documentId (only students who took teacher's activities) =====
+      // ✅ HUGE SAVINGS: dati full `users` collection scan; ngayon targeted lang
+      const studentsData = [];
+      if (studentIds.length > 0) {
+        const studentChunks = chunkArray(studentIds, FIRESTORE_IN_CHUNK_SIZE);
+        for (const chunk of studentChunks) {
+          try {
+            const usersSnapshot = await getDocs(
+              query(collection(db, 'users'), where(documentId(), 'in', chunk))
+            );
+            usersSnapshot.forEach((d) => {
+              const data = d.data();
+              if (data.role === 'student') {
+                studentsData.push({
+                  id: d.id,
+                  ...data,
+                  displayName: data.displayName || data.email?.split('@')[0] || 'Unknown',
+                  avgScore: calculateAvgScore(data.progress),
+                  gamesPlayed: data.progress?.gamesPlayed || 0,
+                  joinDate: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : 'Unknown',
+                  progress: data.progress || {},
+                });
+              }
+            });
+          } catch (err) {
+            console.error('Error fetching users chunk:', err);
+          }
+        }
+      }
       setStudents(studentsData);
       setLoading(prev => ({ ...prev, students: false }));
 
+      // ===== 4. Words — keep as-is (typically small collection) =====
       const wordsSnapshot = await getDocs(collection(db, 'words'));
-      setWords(wordsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const wordsData = wordsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setWords(wordsData);
       setLoading(prev => ({ ...prev, words: false }));
 
-      await initializeGames();
+      // ===== 5. Games — keep as-is (small collection, returns data) =====
+      const gamesData = await initializeGames();
+
+      // ===== ✅ Save to cache =====
+      writeDashboardCache(user.uid, {
+        activities: activitiesData,
+        students: studentsData,
+        words: wordsData,
+        games: gamesData,
+      });
+
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoading({ students: false, games: false, words: false, activities: false });
     }
   };
 
+  // ✅ Updated: returns games data so we can cache it
   const initializeGames = async () => {
     try {
       const gamesSnapshot = await getDocs(collection(db, 'games'));
@@ -613,16 +736,28 @@ const AdminDashboard = () => {
         ];
         for (const game of defaultGames) { await addDoc(collection(db, 'games'), game); }
         setGames(defaultGames);
+        setLoading(prev => ({ ...prev, games: false }));
+        return defaultGames;
       } else {
-        setGames(gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const gamesData = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setGames(gamesData);
+        setLoading(prev => ({ ...prev, games: false }));
+        return gamesData;
       }
-    } catch (error) { console.error('Error initializing games:', error); }
-    finally { setLoading(prev => ({ ...prev, games: false })); }
+    } catch (error) {
+      console.error('Error initializing games:', error);
+      setLoading(prev => ({ ...prev, games: false }));
+      return [];
+    }
   };
 
   const handleLogout = async () => {
     try {
       localStorage.removeItem('adminToken'); localStorage.removeItem('userType'); localStorage.removeItem('userId'); localStorage.removeItem('token'); localStorage.removeItem('userProfile'); localStorage.removeItem('vocaboplay_progress');
+      // ✅ Clear dashboard cache on logout
+      if (auth.currentUser) {
+        try { sessionStorage.removeItem(getDashboardCacheKey(auth.currentUser.uid)); } catch (e) {}
+      }
       await auth.signOut(); navigate('/');
     } catch (error) { console.error('Logout error:', error); navigate('/'); }
   };
@@ -630,8 +765,12 @@ const AdminDashboard = () => {
   const handleHostLive = (activity) => { setLiveActivity(activity); setLiveView('lobby'); };
   const handleLiveStart = (session) => { setLiveSession(session); setLiveView('game'); };
   const handleLiveEnd = (session) => { setLiveSession(session); setLiveView('results'); };
-  const handleLiveExit = () => { setLiveActivity(null); setLiveSession(null); setLiveView(null); fetchAllData(); };
+  // ✅ Bypass cache after live host exit (scores changed)
+  const handleLiveExit = () => { setLiveActivity(null); setLiveSession(null); setLiveView(null); fetchAllData(true); };
   const handleShowScores = (activity) => { setSelectedActivityForScores(activity); setShowScoresModal(true); };
+
+  // ✅ Bypass cache after creating a new activity
+  const handleActivityCreated = () => { fetchAllData(true); };
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -839,7 +978,7 @@ const AdminDashboard = () => {
       </div>
 
       {showCreateActivity && (
-        <CreateActivityModal onClose={() => setShowCreateActivity(false)} onCreated={fetchAllData} />
+        <CreateActivityModal onClose={() => setShowCreateActivity(false)} onCreated={handleActivityCreated} />
       )}
 
       {showScoresModal && selectedActivityForScores && (

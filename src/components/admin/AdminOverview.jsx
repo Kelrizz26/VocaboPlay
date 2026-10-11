@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ ADMIN OVERVIEW — polished to match Super Admin
 // ✅ CONNECTED TO AVATAR SHOP — Shows FACE of character
+// ✅ FIXED: "Active Student(s)" text — template literal interpolation
 // ============================================================
 
 import React, { useState } from 'react';
@@ -506,7 +507,10 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
             fontFamily: FONT_DISPLAY,
             letterSpacing: '-0.2px',
           }}>
-            {students.length > 0 ? `students.lengthActiveStudent{students.length > 1 ? 's' : ''}` : 'No Students Yet'}
+            {/* ✅ FIXED: Proper template literal interpolation */}
+            {students.length > 0
+              ? `${students.length} Active Student${students.length > 1 ? 's' : ''}`
+              : 'No Students Yet'}
           </h3>
           <p style={{
             fontSize: '13px',
@@ -567,5 +571,3 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
 };
 
 export default AdminOverview;
-
-

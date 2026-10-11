@@ -1,11 +1,11 @@
 // src/components/dashboard/MyProgress.jsx
-// ✅ NEW: Clickable stats → Words Learned, Games Played, Total Points
-// ✅ FIXED: Words modal — uses `stats.progress.learnedWords` (correct path)
-// ✅ UPDATED: Removed "Correct Answers", made stat cards into 3 columns
-// ✅ NEW: Game Performance bar resets every 100 games (100/200, 200/300, ... 900/1000)
-// ✅ NEW: Listens to `demo-overrides` window event from the DEV/DEMO PANEL
+// ✅ FIXED: Removed `limit(300)` — ensures 100% correct high scores
+//   - Cache (2 min TTL) still saves reads on repeated modal opens
+//   - statsRef still prevents over-fetching on stats changes
+//   - All UI, features, and behavior preserved
+// ✅ All features preserved: clickable cards, modals, demo panel, responsive styles
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserStats } from '../../hooks/useUserStats';
 import { colors, fontFamily } from './dashboardStyles';
@@ -38,6 +38,9 @@ const palette = {
 
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+// ✅ Cache TTL — 2 minutes
+const CACHE_TTL_MS = 2 * 60 * 1000;
 
 // ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyText, secondaryColor = `${palette.bodyText}55` }) => {
@@ -264,6 +267,15 @@ const MyProgress = () => {
     games: {}, // { synoQuest: '250', matchGame: '', ... }
   });
 
+  // ============================================================
+  // ✅ statsRef — para hindi kailanganin ang `stats` sa dependency
+  //          array ng modal fetch effect. Updated every render.
+  // ============================================================
+  const statsRef = useRef(stats);
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
   // 🧪 Listen sa events galing sa DEV/DEMO PANEL
   useEffect(() => {
     const handler = (e) => {
@@ -329,7 +341,9 @@ const MyProgress = () => {
 
   // ============================================================
   // ✅ Fetch details when modal opens
-  // ✅ FIXED: Words modal — use `stats.progress.learnedWords`
+  //   - Uses statsRef (not stats) → NO refetch on stats changes
+  //   - Cache (2 min TTL) → NO reads on repeated opens
+  //   - No limit on scores query → 100% correct high scores
   // ============================================================
   useEffect(() => {
     const fetchDetails = async () => {
@@ -338,16 +352,40 @@ const MyProgress = () => {
 
       try {
         if (activeModal === 'words') {
-          // ✅ FIXED: Correct path — it's in `stats.progress.learnedWords`
+          // ✅ Words — from stats (NO Firebase read)
+          const currentStats = statsRef.current;
           const words =
-            stats?.progress?.learnedWords ||        // ✅ This is the correct one (nested in progress)
-            stats?.progress?.learnedWordsList ||    // ✅ Alternative
-            stats?.learnedWords ||                   // Fallback (top-level)
+            currentStats?.progress?.learnedWords ||
+            currentStats?.progress?.learnedWordsList ||
+            currentStats?.learnedWords ||
             [];
           console.log('📚 MyProgress: Fetching learned words:', words.length, 'words');
           setLearnedWords(Array.isArray(words) ? words : []);
         } else if (activeModal === 'games' || activeModal === 'points') {
-          // ✅ Fetch game history from the `scores` collection
+          // ✅ Try cache first
+          const cacheKey = `myprogress_modal_${userId}_${activeModal}`;
+          const currentGamesCount = statsRef.current?.gamesPlayed || 0;
+
+          try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              const isFresh = parsed?.timestamp && (Date.now() - parsed.timestamp < CACHE_TTL_MS);
+              const isSameGameCount = parsed?.gamesCount === currentGamesCount;
+              const hasData = Array.isArray(parsed?.data);
+
+              if (hasData && isFresh && isSameGameCount) {
+                console.log('📦 MyProgress modal: loaded from cache');
+                setGameHistory(parsed.data);
+                setLoadingDetails(false);
+                return;
+              }
+            }
+          } catch (e) {
+            /* ignore cache errors */
+          }
+
+          // ✅ Cache miss or stale — fetch fresh (no limit, correct data)
           const scoresQuery = query(
             collection(db, 'scores'),
             where('studentId', '==', userId)
@@ -357,6 +395,17 @@ const MyProgress = () => {
 
           activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
           setGameHistory(activities);
+
+          // ✅ Save to cache (with gamesCount for auto-invalidation)
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              data: activities,
+              timestamp: Date.now(),
+              gamesCount: currentGamesCount,
+            }));
+          } catch (e) {
+            /* ignore quota errors */
+          }
         }
       } catch (err) {
         console.error('Error fetching details:', err);
@@ -366,7 +415,7 @@ const MyProgress = () => {
     };
 
     fetchDetails();
-  }, [activeModal, userId, stats]);
+  }, [activeModal, userId]); // ✅ REMOVED stats — fixes over-fetching
 
   // ============================================================
   // ✅ Compute high scores per game
