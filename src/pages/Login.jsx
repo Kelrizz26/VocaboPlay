@@ -2,26 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "./firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // ===== MUTED GAME UI PALETTE =====
 const palette = {
-  warmOrange: '#E9A075',
-  warmOrangeShadow: '#C27E4F',
-  coral: '#DB7A64',
-  coralShadow: '#A95845',
-  teal: '#4F9188',
-  tealShadow: '#3A6A63',
-  deepNavy: '#2A2845',
-  bodyText: '#6B6880',
-  bodyTextSoft: '#8A8799',
-  cream: '#FDF9F3',
-  creamSoft: '#F5EFE6',
-  white: '#FFFFFF',
-  border: '#EBE2D5',
-  borderSoft: '#F2EBE0',
-  softGreen: '#7FA574',
-  danger: '#DB7A64',
+  warmOrange: '#E9A075', warmOrangeShadow: '#C27E4F', coral: '#DB7A64', coralShadow: '#A95845',
+  teal: '#4F9188', tealShadow: '#3A6A63', deepNavy: '#2A2845', bodyText: '#6B6880', bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3', creamSoft: '#F5EFE6', white: '#FFFFFF', border: '#EBE2D5', softGreen: '#7FA574', danger: '#DB7A64',
 };
 
 const FONT_DISPLAY = "'Fredoka', sans-serif";
@@ -30,55 +17,19 @@ const FONT_BODY = "'Nunito', sans-serif";
 // ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
   const icons = {
-    eye: (
-      <>
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" fill="none"/>
-      </>
-    ),
-    eyeOff: (
-      <>
-        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <line x1="1" y1="1" x2="23" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round"/>
-      </>
-    ),
-    menu: (
-      <path d="M3 12h18M3 6h18M3 18h18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    ),
-    close: (
-      <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    ),
-    check: (
-      <path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    ),
-    warning: (
-      <>
-        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <path d="M12 9v4M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      </>
-    ),
+    menu: (<path d="M3 12h18M3 6h18M3 18h18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
+    close: (<path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
+    check: (<path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
+    warning: (<><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M12 9v4M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></>),
   };
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
-      {icons[name] || icons.eye}
-    </svg>
-  );
+  return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>{icons[name] || icons.check}</svg>);
 };
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
-  const [resetError, setResetError] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
 
   const chunkyButton = (bg, shadowColor, size = 'md') => {
     const sizes = {
@@ -99,15 +50,8 @@ const Login = () => {
   const pressButton = (e, s) => { e.currentTarget.style.transform = 'translateY(3px)'; e.currentTarget.style.boxShadow = 'none'; };
   const releaseButton = (e, s) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 3px 0 ${s}`; };
 
-  // ✅ Helper para i-update yung lastActive timestamp sa Firestore
   const updateLastActive = async (uid) => {
-    try {
-      await updateDoc(doc(db, 'users', uid), {
-        lastActive: new Date().toISOString()
-      });
-    } catch (err) {
-      console.error('Error updating lastActive:', err);
-    }
+    try { await updateDoc(doc(db, 'users', uid), { lastActive: new Date().toISOString() }); } catch (err) { console.error('Error updating lastActive:', err); }
   };
 
   const handleGoogleLogin = async () => {
@@ -118,29 +62,22 @@ const Login = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
       if (userDoc.exists()) {
         const userData = userDoc.data();
         const userRole = userData.role || 'student';
+        
         if (userRole === 'admin' || userRole === 'super_admin') {
-          setError('Please use the Admin Login page.');
-          await auth.signOut(); setLoading(false); return;
+          setError('Please use the Admin Login page.'); await auth.signOut(); setLoading(false); return;
         }
 
-        // ✅ Update lastActive timestamp sa Firestore
         await updateLastActive(user.uid);
 
-        // 🆕 Trigger welcome email para sa mga existing users na hindi pa nakatanggap
         if (!userData.welcomeEmailSent) {
           try {
             const token = await user.getIdToken();
-            fetch('/api/send-welcome', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken: token }),
-            }).catch(err => console.error('Welcome email trigger failed:', err));
-          } catch (err) {
-            console.error('Token retrieval failed for welcome email:', err);
-          }
+            fetch('/api/send-welcome', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: token }) }).catch(err => console.error('Welcome email trigger failed:', err));
+          } catch (err) { console.error('Token retrieval failed for welcome email:', err); }
         }
 
         const userProfile = {
@@ -152,12 +89,14 @@ const Login = () => {
           progress: userData.progress || { wordsLearned: 0, gamesPlayed: 0, totalPoints: 0, level: 1, xp: 0, streak: 0, correctAnswers: 0, totalAnswers: 0 },
           settings: userData.settings || { emailNotifications: true, darkMode: false, language: 'en' }
         };
+        
         const token = await user.getIdToken();
-        if (rememberMe) { localStorage.setItem('rememberMe', 'true'); localStorage.setItem('userProfile', JSON.stringify(userProfile)); }
-        else sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
+        localStorage.setItem('rememberMe', 'true'); 
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
         localStorage.setItem('token', token);
         localStorage.setItem('userType', userRole);
         localStorage.setItem('userId', user.uid);
+        
         if (userData.progress) localStorage.setItem('vocaboplay_progress', JSON.stringify(userData.progress));
         navigate('/dashboard');
       } else {
@@ -170,95 +109,6 @@ const Login = () => {
       else setError('Failed to login with Google. Please try again.');
       setLoading(false);
     }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(''); setLoading(true);
-    if (!email || !password) { setError('Please fill in all fields'); setLoading(false); return; }
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const userRole = userData.role || 'student';
-        if (userRole === 'admin' || userRole === 'super_admin') {
-          setError('Please use the Admin Login page.'); setLoading(false); await auth.signOut(); return;
-        }
-
-        // ✅ Update lastActive timestamp sa Firestore
-        await updateLastActive(user.uid);
-
-        // 🆕 Trigger welcome email para sa mga existing users na hindi pa nakatanggap
-        if (!userData.welcomeEmailSent) {
-          try {
-            const token = await user.getIdToken();
-            fetch('/api/send-welcome', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken: token }),
-            }).catch(err => console.error('Welcome email trigger failed:', err));
-          } catch (err) {
-            console.error('Token retrieval failed for welcome email:', err);
-          }
-        }
-
-        let userProgress = userData.progress || { wordsLearned: 0, gamesPlayed: 0, totalPoints: 0, level: 1, xp: 0, streak: 0 };
-        try {
-          const { getUserProgress } = await import('../services/firebaseService');
-          const firebaseProgress = await getUserProgress(user.uid);
-          if (firebaseProgress) { userProgress = firebaseProgress; localStorage.setItem('vocaboplay_progress', JSON.stringify(firebaseProgress)); }
-          else localStorage.removeItem('vocaboplay_progress');
-        } catch (progressError) { console.error('Error loading progress:', progressError); localStorage.removeItem('vocaboplay_progress'); }
-        const userProfile = {
-          uid: user.uid, email: user.email,
-          displayName: userData.displayName || email.split('@')[0],
-          username: userData.username || email.split('@')[0],
-          avatar: userData.avatar || '👤',
-          role: userRole, progress: userProgress,
-          settings: userData.settings || { emailNotifications: true, darkMode: false, language: 'en' }
-        };
-        const token = await user.getIdToken();
-        if (rememberMe) { localStorage.setItem('rememberMe', 'true'); localStorage.setItem('userProfile', JSON.stringify(userProfile)); }
-        else sessionStorage.setItem('userProfile', JSON.stringify(userProfile));
-        localStorage.setItem('token', token);
-        localStorage.setItem('userType', userRole);
-        localStorage.setItem('userId', user.uid);
-        if (userData.progress) localStorage.setItem('vocaboplay_progress', JSON.stringify(userData.progress));
-        navigate('/dashboard');
-      } else {
-        setError('Account not found. Please contact support.'); setLoading(false);
-      }
-    } catch (error) {
-      switch (error.code) {
-        case 'auth/invalid-email': setError('Invalid email address'); break;
-        case 'auth/user-disabled': setError('This account has been disabled'); break;
-        case 'auth/user-not-found': setError('No account found with this email'); break;
-        case 'auth/wrong-password': setError('Incorrect password'); break;
-        case 'auth/invalid-credential': setError('Invalid email or password'); break;
-        default: setError('Failed to log in. Please try again.');
-      }
-    } finally { setLoading(false); }
-  };
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    setResetError(''); setResetMessage('');
-    if (!resetEmail) { setResetError('Please enter your email address'); return; }
-    setResetLoading(true);
-    try {
-      await sendPasswordResetEmail(auth, resetEmail, { url: window.location.origin + '/login', handleCodeInApp: false });
-      setResetMessage('Password reset email sent! Check your inbox.');
-      setResetEmail('');
-      setTimeout(() => { setShowForgotPassword(false); setResetMessage(''); }, 3000);
-    } catch (error) {
-      switch (error.code) {
-        case 'auth/user-not-found': setResetError('No account found with this email'); break;
-        case 'auth/invalid-email': setResetError('Invalid email address'); break;
-        default: setResetError('Failed to send reset email. Please try again.');
-      }
-    } finally { setResetLoading(false); }
   };
 
   return (
@@ -309,43 +159,17 @@ const Login = () => {
       <div className="login-page-root">
         <div className={`overlay ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
 
-        <nav style={{
-          position: 'fixed', top: 0, left: 0, right: 0,
-          background: 'rgba(253, 249, 243, 0.98)',
-          backdropFilter: 'blur(10px)',
-          borderBottom: `1.5px solid ${palette.border}`,
-          zIndex: 1000, padding: '15px 30px',
-        }}>
+        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(253, 249, 243, 0.98)', backdropFilter: 'blur(10px)', borderBottom: `1.5px solid ${palette.border}`, zIndex: 1000, padding: '15px 30px' }}>
           <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div onClick={() => navigate('/')} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), fontSize: '16px', padding: '8px 18px', userSelect: 'none' }}>
-              VocaboPlay
-            </div>
-
+            <div onClick={() => navigate('/')} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), fontSize: '16px', padding: '8px 18px', userSelect: 'none' }}>VocaboPlay</div>
             <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <button
-                onClick={() => navigate('/signup')}
-                style={{ ...chunkyButton(palette.teal, palette.tealShadow, 'sm'), padding: '10px 28px', fontSize: '14px', whiteSpace: 'nowrap' }}
-                onMouseDown={e => pressButton(e, palette.tealShadow)}
-                onMouseUp={e => releaseButton(e, palette.tealShadow)}
-                onMouseLeave={e => releaseButton(e, palette.tealShadow)}
-              >
-                Sign Up
-              </button>
+              <button onClick={() => navigate('/signup')} style={{ ...chunkyButton(palette.teal, palette.tealShadow, 'sm'), padding: '10px 28px', fontSize: '14px', whiteSpace: 'nowrap' }} onMouseDown={e => pressButton(e, palette.tealShadow)} onMouseUp={e => releaseButton(e, palette.tealShadow)} onMouseLeave={e => releaseButton(e, palette.tealShadow)}>Sign Up</button>
             </div>
-
-            <button className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
-              <Icon name={isMenuOpen ? 'close' : 'menu'} size={24} color={palette.deepNavy} />
-            </button>
-
+            <button className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu"><Icon name={isMenuOpen ? 'close' : 'menu'} size={24} color={palette.deepNavy} /></button>
             <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
               <button onClick={() => { navigate('/'); setIsMenuOpen(false); }}>🏠 Home</button>
               <button onClick={() => { navigate('/signup'); setIsMenuOpen(false); }}>✨ Sign Up</button>
-              <button
-                style={{ marginTop: 20, textAlign: 'center', background: palette.warmOrange, color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 800, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY }}
-                onClick={() => { navigate('/signup'); setIsMenuOpen(false); }}
-              >
-                Sign Up
-              </button>
+              <button style={{ marginTop: 20, textAlign: 'center', background: palette.warmOrange, color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 800, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY }} onClick={() => { navigate('/signup'); setIsMenuOpen(false); }}>Sign Up</button>
             </div>
           </div>
         </nav>
@@ -358,65 +182,11 @@ const Login = () => {
 
               {error && <div style={{ padding: '12px 14px', background: `${palette.coral}12`, border: `1.5px solid ${palette.coral}40`, borderRadius: 10, color: palette.coral, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="warning" size={13} color={palette.coral} />{error}</div>}
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email Address</label>
-                  <input
-                    type="email" placeholder="Enter your email" value={email}
-                    onChange={(e) => setEmail(e.target.value)} required disabled={loading}
-                    style={{ padding: '12px 14px', border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, width: '100%', boxSizing: 'border-box', background: palette.creamSoft, color: palette.deepNavy, outline: 'none' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Password</label>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password}
-                      onChange={(e) => setPassword(e.target.value)} required disabled={loading}
-                      style={{ padding: '12px 14px', paddingRight: 44, border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, width: '100%', boxSizing: 'border-box', background: palette.creamSoft, color: palette.deepNavy, outline: 'none' }}
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={loading}
-                      style={{ position: 'absolute', right: 12, background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
-                      <Icon name={showPassword ? 'eyeOff' : 'eye'} size={16} color={palette.bodyTextSoft} />
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} disabled={loading}
-                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: palette.warmOrange }} />
-                    <span style={{ fontSize: 12, color: palette.bodyText, fontFamily: FONT_BODY, fontWeight: 600 }}>Remember me</span>
-                  </label>
-                  <a href="#" style={{ fontSize: 12, color: palette.warmOrange, textDecoration: 'none', cursor: 'pointer', fontWeight: 700, fontFamily: FONT_BODY }}
-                    onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email || ''); }}>
-                    Forgot Password?
-                  </a>
-                </div>
-
-                <button type="submit" disabled={loading}
-                  style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'lg'), width: '100%', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
-                  onMouseDown={(e) => !loading && pressButton(e, palette.warmOrangeShadow)}
-                  onMouseUp={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
-                  onMouseLeave={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
-                >
-                  {loading ? 'Logging in...' : "Let's go!"}
-                </button>
-              </form>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '20px 0' }}>
-                <span style={{ flex: 1, height: 1.5, background: palette.border, borderRadius: 2 }}></span>
-                <span style={{ fontSize: 11, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>or</span>
-                <span style={{ flex: 1, height: 1.5, background: palette.border, borderRadius: 2 }}></span>
-              </div>
-
               <button onClick={handleGoogleLogin} disabled={loading}
-                style={{ padding: '14px 20px', backgroundColor: palette.white, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: FONT_DISPLAY, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', boxShadow: `0 2px 0 ${palette.border}`, opacity: loading ? 0.7 : 1 }}
-                onMouseOver={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 0 ${palette.border}`; } }}
-                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 2px 0 ${palette.border}`; }}
-              >
-                <svg width="18" height="18" viewBox="0 0 48 48" style={{ marginRight: 10 }}>
+                style={{ padding: '16px 20px', backgroundColor: palette.white, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: FONT_DISPLAY, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', boxShadow: `0 3px 0 ${palette.border}`, opacity: loading ? 0.7 : 1 }}
+                onMouseOver={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 5px 0 ${palette.border}`; } }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`; }}>
+                <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: 12 }}>
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -425,13 +195,13 @@ const Login = () => {
                 {loading ? 'Signing in...' : 'Continue with Google'}
               </button>
 
-              <p style={{ fontSize: 14, color: palette.bodyText, margin: '20px 0 0 0', textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 600 }}>
+              <p style={{ fontSize: 14, color: palette.bodyText, margin: '24px 0 0 0', textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 600 }}>
                 Don't have an account? <a onClick={() => !loading && navigate('/signup')} style={{ color: palette.warmOrange, fontWeight: 800, cursor: 'pointer' }}>Sign Up</a>
               </p>
 
               <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1.5px solid ${palette.border}`, textAlign: 'center' }}>
                 <span style={{ fontSize: 12, color: palette.bodyText, fontFamily: FONT_BODY, fontWeight: 600 }}>
-                  Admin? <a onClick={() => !loading && navigate('/admin')} style={{ color: palette.coral, fontWeight: 800, cursor: 'pointer' }}>Log in here</a>
+                  Teacher? <a onClick={() => !loading && navigate('/admin')} style={{ color: palette.coral, fontWeight: 800, cursor: 'pointer' }}>Log in here</a>
                 </span>
               </div>
             </div>
@@ -474,43 +244,6 @@ const Login = () => {
             </div>
           </div>
         </div>
-
-        {showForgotPassword && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)', padding: 16 }} onClick={() => setShowForgotPassword(false)}>
-            <div style={{ background: palette.white, borderRadius: 20, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 20px 50px rgba(42, 40, 69, 0.25)', border: `1.5px solid ${palette.border}`, boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()}>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: palette.deepNavy, margin: '0 0 8px 0', textAlign: 'center', fontFamily: FONT_DISPLAY }}>Reset Password</h2>
-              <p style={{ fontSize: 13, color: palette.bodyText, margin: '0 0 20px 0', textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 500 }}>Enter your email address and we'll send you a link to reset your password.</p>
-
-              {resetError && <div style={{ padding: '10px 14px', background: `${palette.coral}12`, border: `1.5px solid ${palette.coral}40`, borderRadius: 10, color: palette.coral, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600 }}>{resetError}</div>}
-              {resetMessage && <div style={{ padding: '10px 14px', background: `${palette.softGreen}12`, border: `1.5px solid ${palette.softGreen}40`, borderRadius: 10, color: palette.softGreen, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="check" size={13} color={palette.softGreen} />{resetMessage}</div>}
-
-              <form onSubmit={handleForgotPassword}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-                  <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email Address</label>
-                  <input
-                    type="email" placeholder="Enter your email" value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)} required disabled={resetLoading}
-                    style={{ padding: '12px 14px', border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, width: '100%', boxSizing: 'border-box', background: palette.creamSoft, color: palette.deepNavy, outline: 'none' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button type="button" onClick={() => setShowForgotPassword(false)} disabled={resetLoading}
-                    style={{ flex: 1, padding: 12, background: palette.creamSoft, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: FONT_DISPLAY }}>
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={resetLoading}
-                    style={{ flex: 1, padding: 12, background: palette.warmOrange, color: palette.white, border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, opacity: resetLoading ? 0.7 : 1 }}
-                    onMouseDown={(e) => !resetLoading && pressButton(e, palette.warmOrangeShadow)}
-                    onMouseUp={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}
-                    onMouseLeave={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}>
-                    {resetLoading ? 'Sending...' : 'Reset Password'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

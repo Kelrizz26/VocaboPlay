@@ -1,15 +1,16 @@
 // src/pages/AdminLogin.jsx
 // ============================================================
-// ✅ TEACHER LOGIN - with HIDDEN Super Admin Access
-// ✅ Trigger: Tap the Crown icon 5 times within 3 seconds
+// ✅ TEACHER LOGIN - Google Sign-In ONLY (same as Student Login)
+// ✅ KEPT: HIDDEN Super Admin Access via Crown icon 10x tap
+// ✅ Trigger: Tap the Crown icon 10 times within 3 seconds
 // ✅ Then enter access code: VOCABO2026
-// ✅ Works on BOTH desktop (click) and mobile (tap)
+// ✅ Redirects to: /super-admin-login
 // ============================================================
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from "./firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 // ===== MUTED GAME UI PALETTE =====
@@ -38,8 +39,6 @@ const FONT_BODY = "'Nunito', sans-serif";
 // ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
   const icons = {
-    eye: (<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" fill="none"/></>),
-    eyeOff: (<><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><line x1="1" y1="1" x2="23" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round"/></>),
     menu: (<path d="M3 12h18M3 6h18M3 18h18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
     close: (<path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
     check: (<path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
@@ -56,20 +55,12 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
-  const [resetError, setResetError] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
 
   // ============================================================
-  // ✅ HIDDEN SUPER ADMIN ACCESS - Crown tap 5x + Code modal
+  // ✅ HIDDEN SUPER ADMIN ACCESS - Crown tap 10x + Code modal
   // ============================================================
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [accessCode, setAccessCode] = useState('');
@@ -80,7 +71,7 @@ const AdminLogin = () => {
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef(null);
 
-  // Trigger: Crown tap/click 5 times within 3 seconds
+  // Trigger: Crown tap/click 10 times within 3 seconds
   const handleCrownClick = () => {
     clickCountRef.current += 1;
 
@@ -90,8 +81,8 @@ const AdminLogin = () => {
       clickCountRef.current = 0;
     }, 3000);
 
-    // After 5 taps, show the access code modal
-    if (clickCountRef.current >= 5) {
+    // After 10 taps, show the access code modal
+    if (clickCountRef.current >= 10) {
       clickCountRef.current = 0;
       if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
       setShowCodeModal(true);
@@ -173,26 +164,6 @@ const AdminLogin = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(''); setLoading(true);
-    if (!email || !password) { setError('Please enter both email and password'); setLoading(false); return; }
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      await handleUserLogin(userCredential.user);
-    } catch (error) {
-      setLoading(false);
-      switch (error.code) {
-        case 'auth/invalid-email': setError('Invalid email address'); break;
-        case 'auth/user-disabled': setError('This account has been disabled'); break;
-        case 'auth/user-not-found': setError('No account found with this email'); break;
-        case 'auth/wrong-password': setError('Incorrect password'); break;
-        case 'auth/invalid-credential': setError('Invalid email or password'); break;
-        default: setError('Failed to log in. Please try again.');
-      }
-    }
-  };
-
   const handleGoogleLogin = async () => {
     setError(''); setLoading(true);
     try {
@@ -208,32 +179,15 @@ const AdminLogin = () => {
     }
   };
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    setResetError(''); setResetMessage('');
-    if (!resetEmail) { setResetError('Please enter your email address'); return; }
-    setResetLoading(true);
-    try {
-      await sendPasswordResetEmail(auth, resetEmail, { url: window.location.origin + '/admin' });
-      setResetMessage('Password reset email sent! Check your inbox.');
-      setResetEmail('');
-      setTimeout(() => { setShowForgotPassword(false); setResetMessage(''); }, 3000);
-    } catch (error) {
-      switch (error.code) {
-        case 'auth/user-not-found': setResetError('No account found with this email'); break;
-        case 'auth/invalid-email': setResetError('Invalid email address'); break;
-        default: setResetError('Failed to send reset email. Please try again.');
-      }
-    } finally { setResetLoading(false); }
-  };
-
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { font-family: 'Nunito', sans-serif; background: ${palette.cream}; overflow-x: hidden; width: 100%; max-width: 100vw; }
+        .admin-login-root { width: 100%; overflow-x: hidden; }
         .hamburger { display: none; background: none; border: none; cursor: pointer; color: ${palette.deepNavy}; padding: 8px; z-index: 1001; }
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(42, 40, 69, 0.5); z-index: 999; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(42, 40, 69, 0.5); z-index: 999; backdrop-filter: blur(4px); }
         .overlay.active { display: block; }
         .nav-mobile { display: none !important; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -253,239 +207,158 @@ const AdminLogin = () => {
         .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
         .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
         .animate-scale-in { animation: scaleIn 0.25s ease-out forwards; }
-        .split-container { display: flex; min-height: 100vh; padding-top: 80px; background: ${palette.white}; overflow: hidden; }
+        .split-container { display: flex; min-height: 100vh; padding-top: 80px; background: ${palette.white}; overflow: hidden; width: 100%; }
         .left-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 60px; background: ${palette.cream}; min-height: calc(100vh - 80px); }
         .right-side { flex: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, ${palette.warmOrange} 0%, ${palette.coral} 100%); padding: 40px; position: relative; overflow: hidden; min-height: calc(100vh - 80px); }
+        .card-wrapper { width: 100%; max-width: 380px; background: ${palette.white}; border: 1.5px solid ${palette.border}; border-radius: 20px; box-shadow: 0 10px 30px rgba(42, 40, 69, 0.10); padding: clamp(24px, 3vw, 36px); box-sizing: border-box; }
         @media (max-width: 768px) {
-          .admin-card { padding: 24px 16px !important; max-width: 100% !important; }
-          .hamburger { display: block; }
+          .hamburger { display: block !important; }
           .nav-desktop { display: none !important; }
-          .nav-mobile { display: flex !important; flex-direction: column; position: fixed; top: 0; right: -100%; width: 280px; height: 100vh; background: white; padding: 80px 30px 30px; box-shadow: -10px 0 30px rgba(42, 40, 69, 0.1); transition: right 0.3s ease; z-index: 1000; overflow-y: auto; }
-          .nav-mobile.open { right: 0; }
-          .nav-mobile button { width: 100%; text-align: left; padding: 15px 0; font-size: 16px !important; border-bottom: 1px solid #f0f0f0; background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; color: ${palette.deepNavy}; }
-          .split-container { flex-direction: column !important; padding-top: 70px !important; }
-          .left-side { width: 100% !important; padding: 24px 16px 40px !important; min-height: auto !important; }
-          .right-side { display: none !important; }
+          .nav-mobile { display: flex !important; flex-direction: column; position: fixed; top: 0; right: -100%; width: 280px; max-width: 85vw; height: 100vh; background: white; padding: 80px 30px 30px; box-shadow: -10px 0 30px rgba(42, 40, 69, 0.1); transition: right 0.3s ease; z-index: 1000; overflow-y: auto; }
+          .nav-mobile.open { right: 0 !important; }
+          .nav-mobile button { padding: 15px 0; font-size: 16px !important; border-bottom: 1px solid #f0f0f0; background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; color: ${palette.deepNavy}; text-align: left; width: 100%; }
+          .split-container { flex-direction: column !important; padding-top: 65px !important; }
+          .left-side { width: 100% !important; padding: 16px 14px 24px !important; min-height: auto !important; flex: none !important; }
+          .right-side { display: flex !important; position: relative !important; width: 100% !important; flex: none !important; min-height: auto !important; padding: 24px 16px 36px !important; }
+          .card-wrapper { max-width: 100% !important; width: 100% !important; padding: 22px 18px !important; border-radius: 20px !important; }
         }
         @media (min-width: 769px) { .nav-mobile { display: none !important; } .nav-desktop { display: flex !important; } }
         @media (prefers-reduced-motion: reduce) { .mascot-stage, .mascot-squash, .mascot-ear-left, .mascot-ear-right, .mascot-eyes, .platform-glow { animation: none !important; } }
       `}</style>
 
-      <div className={`overlay ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
+      <div className="admin-login-root">
+        <div className={`overlay ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
 
-      <nav className="admin-nav" style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(253, 249, 243, 0.98)', backdropFilter: 'blur(10px)', borderBottom: `1.5px solid ${palette.border}`, zIndex: 1000, padding: '15px 30px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* ✅ VocaboPlay Logo — normal home navigation */}
-          <div
-            onClick={() => navigate('/')}
-            style={{
-              ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'),
-              fontSize: '16px',
-              padding: '8px 18px',
-              userSelect: 'none',
-            }}
-          >
-            VocaboPlay
-          </div>
-
-          <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <button
-              onClick={() => navigate('/login')}
-              style={{ ...chunkyButton(palette.teal, palette.tealShadow, 'sm'), padding: '10px 28px', fontSize: '14px', whiteSpace: 'nowrap' }}
-              onMouseDown={e => pressButton(e, palette.tealShadow)}
-              onMouseUp={e => releaseButton(e, palette.tealShadow)}
-              onMouseLeave={e => releaseButton(e, palette.tealShadow)}
-            >
-              Student Login
-            </button>
-          </div>
-
-          <button className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
-            <Icon name={isMenuOpen ? 'close' : 'menu'} size={24} color={palette.deepNavy} />
-          </button>
-
-          <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
-            <button onClick={() => { navigate('/'); setIsMenuOpen(false); }}>🏠 Home</button>
-            <button onClick={() => { navigate('/login'); setIsMenuOpen(false); }}>🔑 Student Login</button>
-            <button
-              style={{ marginTop: 20, textAlign: 'center', background: palette.warmOrange, color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 800, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY }}
-              onClick={() => { navigate('/login'); setIsMenuOpen(false); }}
-            >
-              Student Login
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="split-container">
-        <div className="left-side">
-          <div className="admin-card animate-slide-up" style={{ backgroundColor: palette.white, borderRadius: 20, padding: 'clamp(24px, 3vw, 36px)', width: '100%', maxWidth: 400, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.10)', border: `1.5px solid ${palette.border}` }}>
-            {/* ✅ Crown icon — hidden trigger (tap 5x) */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-              <div
-                onClick={handleCrownClick}
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: `${palette.warmOrange}15`,
-                  border: `1.5px solid ${palette.warmOrange}40`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  WebkitTapHighlightColor: 'transparent',
-                  touchAction: 'manipulation',
-                  transition: 'transform 0.1s ease',
-                }}
-                onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
-                onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
-                onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                title=""
-              >
-                <Icon name="crown" size={26} color={palette.warmOrange} />
-              </div>
+        <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(253, 249, 243, 0.98)', backdropFilter: 'blur(10px)', borderBottom: `1.5px solid ${palette.border}`, zIndex: 1000, padding: '15px 30px' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div onClick={() => navigate('/')} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), fontSize: '16px', padding: '8px 18px', userSelect: 'none' }}>VocaboPlay</div>
+            <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <button onClick={() => navigate('/login')} style={{ ...chunkyButton(palette.teal, palette.tealShadow, 'sm'), padding: '10px 28px', fontSize: '14px', whiteSpace: 'nowrap' }} onMouseDown={e => pressButton(e, palette.tealShadow)} onMouseUp={e => releaseButton(e, palette.tealShadow)} onMouseLeave={e => releaseButton(e, palette.tealShadow)}>Student Login</button>
             </div>
+            <button className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu"><Icon name={isMenuOpen ? 'close' : 'menu'} size={24} color={palette.deepNavy} /></button>
+            <div className={`nav-mobile ${isMenuOpen ? 'open' : ''}`}>
+              <button onClick={() => { navigate('/'); setIsMenuOpen(false); }}>🏠 Home</button>
+              <button onClick={() => { navigate('/login'); setIsMenuOpen(false); }}>🔑 Student Login</button>
+              <button style={{ marginTop: 20, textAlign: 'center', background: palette.warmOrange, color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 800, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, fontFamily: FONT_DISPLAY }} onClick={() => { navigate('/login'); setIsMenuOpen(false); }}>Student Login</button>
+            </div>
+          </div>
+        </nav>
 
-            <h1 className="admin-title" style={{ fontSize: 'clamp(22px, 4vw, 26px)', fontWeight: 800, color: palette.deepNavy, margin: '0 0 6px 0', textAlign: 'center', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>Teacher Login</h1>
-            <p className="admin-subtitle" style={{ fontSize: 'clamp(12px, 3vw, 13px)', color: palette.bodyTextSoft, margin: '0 0 clamp(20px, 4vw, 28px) 0', textAlign: 'center', lineHeight: 1.5, fontFamily: FONT_BODY, fontWeight: 600 }}>Access your class dashboard</p>
+        <div className="split-container">
+          <div className="left-side">
+            <div className="card-wrapper animate-slide-up">
 
-            {error && <div style={{ padding: '12px 14px', background: `${palette.coral}12`, border: `1.5px solid ${palette.coral}40`, borderRadius: 10, color: palette.coral, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="warning" size={13} color={palette.coral} />{error}</div>}
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</label>
-                <input
-                  className="admin-input"
-                  type="email" placeholder="Enter your Email" value={email}
-                  onChange={(e) => setEmail(e.target.value)} required disabled={loading}
-                  style={{ padding: '12px 14px', border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, width: '100%', boxSizing: 'border-box', background: palette.creamSoft, color: palette.deepNavy, outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Password</label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <input
-                    className="admin-input"
-                    type={showPassword ? 'text' : 'password'} placeholder="Enter password" value={password}
-                    onChange={(e) => setPassword(e.target.value)} required disabled={loading}
-                    style={{ padding: '12px 14px', paddingRight: 44, border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, width: '100%', boxSizing: 'border-box', background: palette.creamSoft, color: palette.deepNavy, outline: 'none' }}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={loading}
-                    style={{ position: 'absolute', right: 12, background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
-                    <Icon name={showPassword ? 'eyeOff' : 'eye'} size={16} color={palette.bodyTextSoft} />
-                  </button>
+              {/* ✅ Crown icon — hidden trigger (tap 10x for Super Admin) */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                <div
+                  onClick={handleCrownClick}
+                  style={{
+                    width: 52, height: 52, borderRadius: 14,
+                    background: `${palette.warmOrange}15`,
+                    border: `1.5px solid ${palette.warmOrange}40`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', userSelect: 'none',
+                    WebkitUserSelect: 'none', WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation', transition: 'transform 0.1s ease',
+                  }}
+                  onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+                  onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+                  onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  title=""
+                >
+                  <Icon name="crown" size={26} color={palette.warmOrange} />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <a href="#" style={{ fontSize: 12, color: palette.warmOrange, textDecoration: 'none', cursor: 'pointer', fontWeight: 700, fontFamily: FONT_BODY }}
-                  onClick={(e) => { e.preventDefault(); setShowForgotPassword(true); setResetEmail(email || ''); }}>
-                  Forgot Password?
-                </a>
-              </div>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: palette.deepNavy, margin: '0 0 8px 0', textAlign: 'center', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>Teacher Login</h1>
+              <p style={{ fontSize: 14, color: palette.bodyText, margin: '0 0 28px 0', textAlign: 'center', lineHeight: 1.5, fontFamily: FONT_BODY, fontWeight: 500 }}>Access your class dashboard</p>
 
+              {error && <div style={{ padding: '12px 14px', background: `${palette.coral}12`, border: `1.5px solid ${palette.coral}40`, borderRadius: 10, color: palette.coral, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="warning" size={13} color={palette.coral} />{error}</div>}
+
+              {/* ✅ Google Sign-In only (same as Student Login) */}
               <button
-                className="admin-btn"
-                type="submit"
+                onClick={handleGoogleLogin}
                 disabled={loading}
-                style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'lg'), width: '100%', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
-                onMouseDown={(e) => !loading && pressButton(e, palette.warmOrangeShadow)}
-                onMouseUp={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
-                onMouseLeave={(e) => !loading && releaseButton(e, palette.warmOrangeShadow)}
+                style={{
+                  padding: '16px 20px', backgroundColor: palette.white, color: palette.deepNavy,
+                  border: `1.5px solid ${palette.border}`, borderRadius: 12, fontSize: 15,
+                  fontWeight: 700, fontFamily: FONT_DISPLAY,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', width: '100%',
+                  boxShadow: `0 3px 0 ${palette.border}`,
+                  opacity: loading ? 0.7 : 1,
+                }}
+                onMouseOver={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 5px 0 ${palette.border}`; } }}
+                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`; }}
               >
-                {loading ? 'Logging in...' : 'Log in'}
+                <svg width="20" height="20" viewBox="0 0 48 48" style={{ marginRight: 12 }}>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                {loading ? 'Signing in...' : 'Continue with Google'}
               </button>
-            </form>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '16px 0' }}>
-              <span style={{ flex: 1, height: 1.5, background: palette.border, borderRadius: 2 }}></span>
-              <span style={{ fontSize: 11, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>or</span>
-              <span style={{ flex: 1, height: 1.5, background: palette.border, borderRadius: 2 }}></span>
-            </div>
-
-            <button
-              className="admin-btn"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              style={{ padding: '14px 20px', backgroundColor: palette.white, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: 12, fontSize: 14, fontWeight: 700, fontFamily: FONT_DISPLAY, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', boxShadow: `0 2px 0 ${palette.border}`, opacity: loading ? 0.7 : 1 }}
-              onMouseOver={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 0 ${palette.border}`; } }}
-              onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 2px 0 ${palette.border}`; }}
-            >
-              <svg width="18" height="18" viewBox="0 0 48 48" style={{ marginRight: 10 }}>
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              {loading ? 'Signing in...' : 'Continue with Google'}
-            </button>
-
-            <div style={{ marginTop: 12 }}>
-              <p style={{ fontSize: 13, color: palette.bodyText, margin: 0, textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 600 }}>
-                Not a teacher? <a onClick={() => !loading && navigate('/login')} style={{ color: palette.warmOrange, textDecoration: 'none', fontWeight: 800, cursor: 'pointer' }}>Student Login</a>
-              </p>
+              <div style={{ marginTop: 24 }}>
+                <p style={{ fontSize: 14, color: palette.bodyText, margin: 0, textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 600 }}>
+                  Not a teacher? <a onClick={() => !loading && navigate('/login')} style={{ color: palette.warmOrange, fontWeight: 800, cursor: 'pointer' }}>Student Login</a>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="right-side animate-fade-in">
-          <div style={{ position: 'absolute', inset: 0, opacity: 0.08, backgroundImage: `linear-gradient(rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.6) 2px, transparent 2px)`, backgroundSize: '60px 60px' }}></div>
-          <span style={{ position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.9)', width: 6, height: 6, top: '14%', left: '18%' }}></span>
-          <span style={{ position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.9)', width: 4, height: 4, top: '22%', right: '20%' }}></span>
-          <span style={{ position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.9)', width: 5, height: 5, top: '68%', left: '12%' }}></span>
+          <div className="right-side animate-fade-in">
+            <div style={{ position: 'absolute', inset: 0, opacity: 0.08, backgroundImage: `linear-gradient(rgba(255,255,255,0.6) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.6) 2px, transparent 2px)`, backgroundSize: '60px 60px' }}></div>
+            <span style={{ position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.9)', width: 6, height: 6, top: '14%', left: '18%' }}></span>
+            <span style={{ position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.9)', width: 4, height: 4, top: '22%', right: '20%' }}></span>
+            <span style={{ position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.9)', width: 5, height: 5, top: '68%', left: '12%' }}></span>
 
-          <div style={{ textAlign: 'center', color: palette.white, position: 'relative', zIndex: 2, padding: 20, width: '100%', maxWidth: 440 }}>
-            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28, height: 220, justifyContent: 'flex-end' }}>
-              <div className="mascot-stage" style={{ width: 170, height: 170, filter: 'drop-shadow(0 12px 18px rgba(0,0,0,0.18))', zIndex: 2 }}>
-                <div className="mascot-squash">
-                  <svg viewBox="0 0 200 200" width="100%" height="100%">
-                    <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
-                    <path d="M125 55 C 132 30, 140 20, 145 25 C 142 40, 135 52, 125 62 Z" fill="#5b4fa8" />
-                    <g className="mascot-ear-left"><ellipse cx="62" cy="78" rx="14" ry="20" fill="#c9c3ee" /><ellipse cx="62" cy="78" rx="7" ry="12" fill="#e9d9e6" /></g>
-                    <g className="mascot-ear-right"><ellipse cx="138" cy="78" rx="14" ry="20" fill="#c9c3ee" /><ellipse cx="138" cy="78" rx="7" ry="12" fill="#e9d9e6" /></g>
-                    <ellipse cx="100" cy="150" rx="48" ry="34" fill="#c3bdf0" />
-                    <rect x="70" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
-                    <rect x="116" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
-                    <ellipse cx="100" cy="95" rx="42" ry="38" fill="#d6d1f6" />
-                    <ellipse cx="100" cy="112" rx="18" ry="12" fill="#eae5fb" />
-                    <g className="mascot-eyes"><circle cx="84" cy="92" r="9" fill="#2b2b3d" /><circle cx="116" cy="92" r="9" fill="#2b2b3d" /><circle cx="87" cy="89" r="2.5" fill="white" /><circle cx="119" cy="89" r="2.5" fill="white" /></g>
-                    <ellipse cx="74" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
-                    <ellipse cx="126" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
-                    <path d="M92 116 Q100 121 108 116" stroke="#8b7fc7" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-                  </svg>
+            <div style={{ textAlign: 'center', color: palette.white, position: 'relative', zIndex: 2, padding: 20, width: '100%', maxWidth: 440 }}>
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28, height: 220, justifyContent: 'flex-end' }}>
+                <div className="mascot-stage" style={{ width: 170, height: 170, filter: 'drop-shadow(0 12px 18px rgba(0,0,0,0.18))', zIndex: 2 }}>
+                  <div className="mascot-squash">
+                    <svg viewBox="0 0 200 200" width="100%" height="100%">
+                      <path d="M75 55 C 68 30, 60 20, 55 25 C 58 40, 65 52, 75 62 Z" fill="#5b4fa8" />
+                      <path d="M125 55 C 132 30, 140 20, 145 25 C 142 40, 135 52, 125 62 Z" fill="#5b4fa8" />
+                      <g className="mascot-ear-left"><ellipse cx="62" cy="78" rx="14" ry="20" fill="#c9c3ee" /><ellipse cx="62" cy="78" rx="7" ry="12" fill="#e9d9e6" /></g>
+                      <g className="mascot-ear-right"><ellipse cx="138" cy="78" rx="14" ry="20" fill="#c9c3ee" /><ellipse cx="138" cy="78" rx="7" ry="12" fill="#e9d9e6" /></g>
+                      <ellipse cx="100" cy="150" rx="48" ry="34" fill="#c3bdf0" />
+                      <rect x="70" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+                      <rect x="116" y="165" width="14" height="22" rx="7" fill="#a89ce6" />
+                      <ellipse cx="100" cy="95" rx="42" ry="38" fill="#d6d1f6" />
+                      <ellipse cx="100" cy="112" rx="18" ry="12" fill="#eae5fb" />
+                      <g className="mascot-eyes"><circle cx="84" cy="92" r="9" fill="#2b2b3d" /><circle cx="116" cy="92" r="9" fill="#2b2b3d" /><circle cx="87" cy="89" r="2.5" fill="white" /><circle cx="119" cy="89" r="2.5" fill="white" /></g>
+                      <ellipse cx="74" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+                      <ellipse cx="126" cy="104" rx="6" ry="4" fill="#f2b3c9" opacity="0.7" />
+                      <path d="M92 116 Q100 121 108 116" stroke="#8b7fc7" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                </div>
+                <div style={{ position: 'relative', width: 150, height: 30, marginTop: -6 }}>
+                  <div className="platform-glow" style={{ position: 'absolute', left: '50%', top: 4, width: 150, height: 18, background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%)' }}></div>
+                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 8, width: 130, height: 14, borderRadius: '50%', background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)' }}></div>
                 </div>
               </div>
-              <div style={{ position: 'relative', width: 150, height: 30, marginTop: -6 }}>
-                <div className="platform-glow" style={{ position: 'absolute', left: '50%', top: 4, width: 150, height: 18, background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%)' }}></div>
-                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: 8, width: 130, height: 14, borderRadius: '50%', background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)' }}></div>
-              </div>
+              <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4, fontFamily: FONT_DISPLAY, lineHeight: 1.2 }}>Teacher control,</h2>
+              <p style={{ fontSize: 20, fontWeight: 700, opacity: 0.95, fontFamily: FONT_DISPLAY }}>manage your class with ease.</p>
             </div>
-            <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4, fontFamily: FONT_DISPLAY, lineHeight: 1.2 }}>Teacher control,</h2>
-            <p style={{ fontSize: 20, fontWeight: 700, opacity: 0.95, fontFamily: FONT_DISPLAY }}>manage your class with ease.</p>
           </div>
         </div>
       </div>
 
-      {/* ✅ ACCESS CODE MODAL — Lalabas pagka-click ng crown 5x */}
+      {/* ✅ ACCESS CODE MODAL — Lalabas pagka-click ng crown 10x */}
       {showCodeModal && (
         <div
           onClick={() => !codeVerifying && setShowCodeModal(false)}
           style={{
-            position: 'fixed',
-            inset: 0,
+            position: 'fixed', inset: 0,
             background: 'rgba(42, 40, 69, 0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 3000,
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 3000, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
             padding: 16,
           }}
         >
@@ -493,15 +366,11 @@ const AdminLogin = () => {
             onClick={(e) => e.stopPropagation()}
             className="animate-scale-in"
             style={{
-              background: palette.white,
-              borderRadius: 20,
-              padding: 28,
-              maxWidth: 380,
-              width: '100%',
+              background: palette.white, borderRadius: 20, padding: 28,
+              maxWidth: 380, width: '100%',
               boxShadow: '0 20px 60px rgba(42, 40, 69, 0.35)',
               border: `1.5px solid ${palette.border}`,
-              boxSizing: 'border-box',
-              position: 'relative',
+              boxSizing: 'border-box', position: 'relative',
             }}
           >
             {/* Close Button */}
@@ -509,20 +378,12 @@ const AdminLogin = () => {
               onClick={() => !codeVerifying && setShowCodeModal(false)}
               disabled={codeVerifying}
               style={{
-                position: 'absolute',
-                top: 14,
-                right: 14,
-                background: palette.creamSoft,
-                border: `1.5px solid ${palette.border}`,
-                width: 30,
-                height: 30,
-                borderRadius: '50%',
+                position: 'absolute', top: 14, right: 14,
+                background: palette.creamSoft, border: `1.5px solid ${palette.border}`,
+                width: 30, height: 30, borderRadius: '50%',
                 cursor: codeVerifying ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0,
-                opacity: codeVerifying ? 0.5 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 0, opacity: codeVerifying ? 0.5 : 1,
               }}
             >
               <Icon name="close" size={14} color={palette.bodyTextSoft} />
@@ -540,43 +401,20 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            <h2 style={{
-              fontSize: 20,
-              fontWeight: 800,
-              color: palette.deepNavy,
-              margin: '0 0 6px 0',
-              textAlign: 'center',
-              fontFamily: FONT_DISPLAY,
-              letterSpacing: '-0.3px',
-            }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: palette.deepNavy, margin: '0 0 6px 0', textAlign: 'center', fontFamily: FONT_DISPLAY, letterSpacing: '-0.3px' }}>
               🔐 Restricted Access
             </h2>
-            <p style={{
-              fontSize: 12,
-              color: palette.bodyTextSoft,
-              margin: '0 0 20px 0',
-              textAlign: 'center',
-              fontFamily: FONT_BODY,
-              fontWeight: 600,
-              lineHeight: 1.5,
-            }}>
+            <p style={{ fontSize: 12, color: palette.bodyTextSoft, margin: '0 0 20px 0', textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 600, lineHeight: 1.5 }}>
               Enter the access code to continue to Super Admin
             </p>
 
             {codeError && (
               <div style={{
-                padding: '10px 14px',
-                background: `${palette.coral}12`,
-                border: `1.5px solid ${palette.coral}40`,
-                borderRadius: 10,
-                color: palette.coral,
-                fontSize: 12,
-                marginBottom: 14,
-                fontFamily: FONT_BODY,
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
+                padding: '10px 14px', background: `${palette.coral}12`,
+                border: `1.5px solid ${palette.coral}40`, borderRadius: 10,
+                color: palette.coral, fontSize: 12, marginBottom: 14,
+                fontFamily: FONT_BODY, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 8,
               }}>
                 <Icon name="warning" size={13} color={palette.coral} />
                 {codeError}
@@ -585,14 +423,7 @@ const AdminLogin = () => {
 
             <form onSubmit={handleVerifyCode}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-                <label style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  color: palette.bodyTextSoft,
-                  fontFamily: FONT_DISPLAY,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}>
+                <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Access Code
                 </label>
                 <input
@@ -604,19 +435,11 @@ const AdminLogin = () => {
                   required
                   disabled={codeVerifying}
                   style={{
-                    padding: '12px 14px',
-                    border: `1.5px solid ${palette.border}`,
-                    borderRadius: 10,
-                    fontSize: 14,
-                    fontFamily: FONT_BODY,
-                    fontWeight: 700,
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    background: palette.creamSoft,
-                    color: palette.deepNavy,
-                    outline: 'none',
-                    textAlign: 'center',
-                    letterSpacing: '2px',
+                    padding: '12px 14px', border: `1.5px solid ${palette.border}`,
+                    borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY,
+                    fontWeight: 700, width: '100%', boxSizing: 'border-box',
+                    background: palette.creamSoft, color: palette.deepNavy,
+                    outline: 'none', textAlign: 'center', letterSpacing: '2px',
                   }}
                 />
               </div>
@@ -627,17 +450,11 @@ const AdminLogin = () => {
                   onClick={() => setShowCodeModal(false)}
                   disabled={codeVerifying}
                   style={{
-                    flex: 1,
-                    padding: 12,
-                    background: palette.creamSoft,
-                    color: palette.deepNavy,
-                    border: `1.5px solid ${palette.border}`,
-                    borderRadius: 10,
-                    fontSize: 13,
-                    fontWeight: 800,
+                    flex: 1, padding: 12, background: palette.creamSoft,
+                    color: palette.deepNavy, border: `1.5px solid ${palette.border}`,
+                    borderRadius: 10, fontSize: 13, fontWeight: 800,
                     cursor: codeVerifying ? 'not-allowed' : 'pointer',
-                    fontFamily: FONT_DISPLAY,
-                    opacity: codeVerifying ? 0.5 : 1,
+                    fontFamily: FONT_DISPLAY, opacity: codeVerifying ? 0.5 : 1,
                   }}
                 >
                   Cancel
@@ -646,14 +463,9 @@ const AdminLogin = () => {
                   type="submit"
                   disabled={codeVerifying}
                   style={{
-                    flex: 1.5,
-                    padding: 12,
-                    background: palette.warmOrange,
-                    color: palette.white,
-                    border: 'none',
-                    borderRadius: 10,
-                    fontSize: 13,
-                    fontWeight: 800,
+                    flex: 1.5, padding: 12, background: palette.warmOrange,
+                    color: palette.white, border: 'none', borderRadius: 10,
+                    fontSize: 13, fontWeight: 800,
                     cursor: codeVerifying ? 'not-allowed' : 'pointer',
                     fontFamily: FONT_DISPLAY,
                     boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
@@ -665,43 +477,6 @@ const AdminLogin = () => {
                   onMouseLeave={(e) => !codeVerifying && releaseButton(e, palette.warmOrangeShadow)}
                 >
                   {codeVerifying ? 'Verifying...' : 'Verify Code'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showForgotPassword && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)', padding: 16 }} onClick={() => setShowForgotPassword(false)}>
-          <div style={{ background: palette.white, borderRadius: 20, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 20px 50px rgba(42, 40, 69, 0.25)', border: `1.5px solid ${palette.border}`, boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: palette.deepNavy, margin: '0 0 8px 0', textAlign: 'center', fontFamily: FONT_DISPLAY }}>Reset Password</h2>
-            <p style={{ fontSize: 13, color: palette.bodyText, margin: '0 0 20px 0', textAlign: 'center', fontFamily: FONT_BODY, fontWeight: 500 }}>Enter your email address and we'll send you a link to reset your password.</p>
-
-            {resetError && <div style={{ padding: '10px 14px', background: `${palette.coral}12`, border: `1.5px solid ${palette.coral}40`, borderRadius: 10, color: palette.coral, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600 }}>{resetError}</div>}
-            {resetMessage && <div style={{ padding: '10px 14px', background: `${palette.softGreen}12`, border: `1.5px solid ${palette.softGreen}40`, borderRadius: 10, color: palette.softGreen, fontSize: 12, marginBottom: 16, fontFamily: FONT_BODY, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}><Icon name="check" size={13} color={palette.softGreen} />{resetMessage}</div>}
-
-            <form onSubmit={handleForgotPassword}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, color: palette.bodyTextSoft, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email Address</label>
-                <input
-                  type="email" placeholder="Enter your email" value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)} required disabled={resetLoading}
-                  style={{ padding: '12px 14px', border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, width: '100%', boxSizing: 'border-box', background: palette.creamSoft, color: palette.deepNavy, outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" onClick={() => setShowForgotPassword(false)} disabled={resetLoading}
-                  style={{ flex: 1, padding: 12, background: palette.creamSoft, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: FONT_DISPLAY }}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={resetLoading}
-                  style={{ flex: 1, padding: 12, background: palette.warmOrange, color: palette.white, border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: FONT_DISPLAY, boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`, opacity: resetLoading ? 0.7 : 1 }}
-                  onMouseDown={(e) => !resetLoading && pressButton(e, palette.warmOrangeShadow)}
-                  onMouseUp={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}
-                  onMouseLeave={(e) => !resetLoading && releaseButton(e, palette.warmOrangeShadow)}>
-                  {resetLoading ? 'Sending...' : 'Reset Password'}
                 </button>
               </div>
             </form>
