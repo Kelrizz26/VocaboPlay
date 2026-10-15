@@ -1,6 +1,6 @@
 // src/pages/SuperAdminLogin.jsx
 // ============================================================
-// ✅ SUPER ADMIN LOGIN - with Back Button
+// ✅ SUPER ADMIN LOGIN - Fully Responsive Mobile Version
 // ============================================================
 
 import React, { useState } from 'react';
@@ -108,89 +108,215 @@ const SuperAdminLogin = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: palette.cream,
-      padding: 'clamp(12px, 3vw, 40px)',
-      boxSizing: 'border-box',
-      fontFamily: FONT_BODY,
-      position: 'relative',
-    }}>
+    <div className="sal-page">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ============ PAGE ============ */
+        .sal-page {
+          min-height: 100vh;
+          min-height: 100dvh; /* modern mobile browsers */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: ${palette.cream};
+          padding: clamp(16px, 4vw, 40px);
+          padding-top: max(clamp(16px, 4vw, 40px), env(safe-area-inset-top));
+          padding-bottom: max(clamp(16px, 4vw, 40px), env(safe-area-inset-bottom));
+          padding-left: max(clamp(16px, 4vw, 40px), env(safe-area-inset-left));
+          padding-right: max(clamp(16px, 4vw, 40px), env(safe-area-inset-right));
+          box-sizing: border-box;
+          font-family: ${FONT_BODY};
+          position: relative;
+          overflow-x: hidden;
+        }
+
+        /* ============ BACK BUTTON ============ */
+        .sal-back {
+          position: fixed;
+          top: max(16px, env(safe-area-inset-top));
+          left: max(16px, env(safe-area-inset-left));
+          padding: 10px 16px;
+          background: ${palette.white};
+          color: ${palette.deepNavy};
+          border: 1.5px solid ${palette.border};
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+          font-family: ${FONT_DISPLAY};
+          box-shadow: 0 3px 0 ${palette.border};
+          transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease, color 0.15s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          z-index: 100;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+        .sal-back:hover { border-color: ${palette.warmOrange}; color: ${palette.warmOrange}; }
+        .sal-back:active {
+          transform: translateY(3px);
+          box-shadow: none;
+        }
+
+        /* ============ CARD ============ */
+        .sal-card {
+          background: ${palette.white};
+          border-radius: 20px;
+          padding: clamp(24px, 6vw, 36px);
+          max-width: 420px;
+          width: 100%;
+          box-shadow: 0 10px 40px rgba(42, 40, 69, 0.10), 0 2px 0 ${palette.border};
+          box-sizing: border-box;
+          border: 1.5px solid ${palette.border};
+          animation: fadeIn 0.4s ease-out;
+        }
+
+        /* ============ INPUTS ============ */
+        .sal-input {
+          width: 100%;
+          padding: 13px 14px;
+          border: 1.5px solid ${palette.border};
+          border-radius: 10px;
+          font-size: 16px; /* ✅ prevents iOS auto-zoom on focus */
+          font-family: ${FONT_BODY};
+          font-weight: 600;
+          box-sizing: border-box;
+          outline: none;
+          background-color: ${palette.creamSoft};
+          color: ${palette.deepNavy};
+          transition: border-color 0.15s ease, background-color 0.15s ease;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        .sal-input:focus {
+          border-color: ${palette.warmOrange};
+          background-color: ${palette.white};
+        }
+        .sal-input:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .sal-input::placeholder {
+          color: ${palette.bodyTextSoft};
+          font-weight: 500;
+        }
+
+        /* ============ SUBMIT BUTTON ============ */
+        .sal-submit {
+          width: 100%;
+          padding: 14px;
+          min-height: 48px; /* ✅ touch-friendly */
+          background: ${palette.warmOrange};
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 800;
+          cursor: pointer;
+          transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.15s ease;
+          font-family: ${FONT_DISPLAY};
+          box-sizing: border-box;
+          box-shadow: 0 3px 0 ${palette.warmOrangeShadow};
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+        .sal-submit:not(:disabled):active {
+          transform: translateY(3px);
+          box-shadow: none;
+        }
+        .sal-submit:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        /* ============ PASSWORD TOGGLE ============ */
+        .sal-toggle {
+          position: absolute;
+          right: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 8px; /* ✅ bigger tap target */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+          border-radius: 8px;
+          transition: background-color 0.15s ease;
+        }
+        .sal-toggle:hover { background-color: ${palette.creamSoft}; }
+        .sal-toggle:disabled { cursor: not-allowed; }
+
+        /* ============ MOBILE TWEAKS ============ */
+        @media (max-width: 480px) {
+          .sal-page {
+            align-items: flex-start;
+            padding-top: 80px; /* space for back button */
+          }
+          .sal-back {
+            padding: 8px 12px;
+            font-size: 12px;
+            gap: 6px;
+          }
+          .sal-card {
+            border-radius: 16px;
+          }
+        }
+
+        /* ============ TINY PHONES ============ */
+        @media (max-width: 360px) {
+          .sal-page {
+            padding-left: 14px;
+            padding-right: 14px;
+          }
+          .sal-back {
+            padding: 7px 10px;
+            font-size: 11px;
+          }
+        }
+
+        /* ============ LANDSCAPE MOBILE ============ */
+        @media (max-height: 500px) and (orientation: landscape) {
+          .sal-page {
+            align-items: flex-start;
+            padding-top: 70px;
+            padding-bottom: 24px;
+          }
+          .sal-card {
+            max-width: 460px;
+          }
+        }
+
+        /* ============ REDUCED MOTION ============ */
+        @media (prefers-reduced-motion: reduce) {
+          .sal-card { animation: none; }
+        }
       `}</style>
 
-      {/* ✅ BACK BUTTON — nasa taas-kaliwa ng page */}
+      {/* ✅ BACK BUTTON */}
       <button
+        className="sal-back"
         onClick={() => navigate('/admin')}
-        style={{
-          position: 'fixed',
-          top: '24px',
-          left: '24px',
-          padding: '10px 18px',
-          background: palette.white,
-          color: palette.deepNavy,
-          border: `1.5px solid ${palette.border}`,
-          borderRadius: '12px',
-          fontSize: '13px',
-          fontWeight: 800,
-          cursor: 'pointer',
-          fontFamily: FONT_DISPLAY,
-          boxShadow: `0 3px 0 ${palette.border}`,
-          transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          zIndex: 100,
-        }}
-        onMouseDown={(e) => {
-          e.currentTarget.style.transform = 'translateY(3px)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-        onMouseUp={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = `0 3px 0 ${palette.border}`;
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.borderColor = palette.warmOrange;
-          e.currentTarget.style.color = palette.warmOrange;
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.borderColor = palette.border;
-          e.currentTarget.style.color = palette.deepNavy;
-        }}
+        aria-label="Go back"
       >
         <Icon name="arrowLeft" size={16} color="currentColor" />
         Back
       </button>
 
-      <div style={{
-        background: palette.white,
-        borderRadius: '20px',
-        padding: 'clamp(24px, 5vw, 36px)',
-        maxWidth: '400px',
-        width: '100%',
-        boxShadow: `0 10px 40px rgba(42, 40, 69, 0.10), 0 2px 0 ${palette.border}`,
-        boxSizing: 'border-box',
-        border: `1.5px solid ${palette.border}`,
-        animation: 'fadeIn 0.4s ease-out',
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: '16px',
-        }}>
+      <div className="sal-card">
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
           <div style={{
             width: 56, height: 56, borderRadius: 16,
             background: `${palette.warmOrange}15`,
@@ -202,10 +328,10 @@ const SuperAdminLogin = () => {
         </div>
 
         <h1 style={{
-          fontSize: 'clamp(22px, 5vw, 26px)',
+          fontSize: 'clamp(22px, 5.5vw, 26px)',
           fontWeight: '800',
           textAlign: 'center',
-          marginBottom: '6px',
+          margin: '0 0 6px',
           color: palette.deepNavy,
           fontFamily: FONT_DISPLAY,
           letterSpacing: '-0.5px',
@@ -213,10 +339,10 @@ const SuperAdminLogin = () => {
           Super Admin
         </h1>
         <p style={{
-          fontSize: 'clamp(12px, 3vw, 13px)',
+          fontSize: 'clamp(12px, 3.2vw, 13px)',
           color: palette.bodyTextSoft,
           textAlign: 'center',
-          marginBottom: 'clamp(20px, 4vw, 28px)',
+          margin: '0 0 clamp(20px, 5vw, 28px)',
           fontFamily: FONT_BODY,
           fontWeight: '600',
         }}>
@@ -224,75 +350,83 @@ const SuperAdminLogin = () => {
         </p>
 
         {error && (
-          <div style={{
-            padding: '12px 14px',
-            background: `${palette.coral}12`,
-            border: `1.5px solid ${palette.coral}40`,
-            borderRadius: '10px',
-            color: palette.coral,
-            marginBottom: '16px',
-            fontSize: '12px',
-            fontFamily: FONT_BODY,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <Icon name="warning" size={14} color={palette.coral} />
-            {error}
+          <div
+            role="alert"
+            style={{
+              padding: '12px 14px',
+              background: `${palette.coral}12`,
+              border: `1.5px solid ${palette.coral}40`,
+              borderRadius: '10px',
+              color: palette.coral,
+              marginBottom: '16px',
+              fontSize: '12.5px',
+              fontFamily: FONT_BODY,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              lineHeight: 1.4,
+            }}
+          >
+            <Icon name="warning" size={16} color={palette.coral} />
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div style={{ marginBottom: '14px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '11px',
-              fontWeight: '800',
-              marginBottom: '6px',
-              color: palette.bodyTextSoft,
-              fontFamily: FONT_DISPLAY,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}>Email</label>
+            <label
+              htmlFor="sa-email"
+              style={{
+                display: 'block',
+                fontSize: '11px',
+                fontWeight: '800',
+                marginBottom: '6px',
+                color: palette.bodyTextSoft,
+                fontFamily: FONT_DISPLAY,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Email
+            </label>
             <input
+              id="sa-email"
+              className="sal-input"
               type="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
               placeholder="Super Admin Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: `1.5px solid ${palette.border}`,
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontFamily: FONT_BODY,
-                fontWeight: 600,
-                boxSizing: 'border-box',
-                outline: 'none',
-                backgroundColor: palette.creamSoft,
-                color: palette.deepNavy,
-                transition: 'border-color 0.15s ease',
-              }}
             />
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '11px',
-              fontWeight: '800',
-              marginBottom: '6px',
-              color: palette.bodyTextSoft,
-              fontFamily: FONT_DISPLAY,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}>Password</label>
+            <label
+              htmlFor="sa-password"
+              style={{
+                display: 'block',
+                fontSize: '11px',
+                fontWeight: '800',
+                marginBottom: '6px',
+                color: palette.bodyTextSoft,
+                fontFamily: FONT_DISPLAY,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Password
+            </label>
             <div style={{ position: 'relative' }}>
               <input
+                id="sa-password"
+                className="sal-input"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 value={password}
@@ -300,83 +434,25 @@ const SuperAdminLogin = () => {
                 autoComplete="current-password"
                 required
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  paddingRight: '44px',
-                  border: `1.5px solid ${palette.border}`,
-                  borderRadius: '10px',
-                  fontSize: '14px',
-                  fontFamily: FONT_BODY,
-                  fontWeight: 600,
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                  backgroundColor: palette.creamSoft,
-                  color: palette.deepNavy,
-                }}
+                style={{ paddingRight: '48px' }}
               />
               <button
                 type="button"
+                className="sal-toggle"
                 onClick={() => !loading && setShowPassword(!showPassword)}
                 disabled={loading}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
               >
-                <Icon name={showPassword ? 'eyeOff' : 'eye'} size={16} color={palette.bodyTextSoft} />
+                <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={palette.bodyTextSoft} />
               </button>
             </div>
           </div>
 
           <button
             type="submit"
+            className="sal-submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '13px',
-              background: palette.warmOrange,
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '800',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-              fontFamily: FONT_DISPLAY,
-              boxSizing: 'border-box',
-              opacity: loading ? 0.7 : 1,
-              boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-            }}
-            onMouseDown={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'translateY(3px)';
-                e.currentTarget.style.boxShadow = 'none';
-              }
-            }}
-            onMouseUp={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = `0 3px 0 ${palette.warmOrangeShadow}`;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = `0 3px 0 ${palette.warmOrangeShadow}`;
-              }
-            }}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
