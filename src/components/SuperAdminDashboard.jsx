@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ SUPER ADMIN DASHBOARD - Full Analytics & Management
 // ✅ UPDATED: Profile dropdown with Settings & Logout
+// ✅ UPDATED: Fully Responsive Mobile Layout
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -500,7 +501,8 @@ const SuperAdminDashboard = () => {
     teachers.forEach(t => { if (t.createdAt) recentEvents.push({ type: 'teacher', icon: 'user', color: palette.warmOrange, title: `New teacher: ${t.displayName || t.email?.split('@')[0]}`, time: t.createdAt }); });
     students.forEach(s => { if (s.createdAt) recentEvents.push({ type: 'student', icon: 'graduation', color: palette.softGreen, title: `New student: ${s.displayName || s.email?.split('@')[0]}`, time: s.createdAt }); });
     activities.forEach(a => { if (a.createdAt) recentEvents.push({ type: 'activity', icon: 'clipboard', color: palette.teal, title: `New activity: "${a.title}" (PIN ${a.gamePin})`, time: a.createdAt }); });
-    scores.forEach(s => { if (s.completedAt) recentEvents.push({ type: 'score', icon: 'trophy', color: palette.coral, title: `${s.studentName} scored s.scorein"{s.activityTitle || 'Activity'}"`, time: s.completedAt }); });
+    // ✅ Fixed broken template string
+    scores.forEach(s => { if (s.completedAt) recentEvents.push({ type: 'score', icon: 'trophy', color: palette.coral, title: `${s.studentName} scored ${s.score} in "${s.activityTitle || 'Activity'}"`, time: s.completedAt }); });
     recentEvents.sort((a, b) => new Date(b.time) - new Date(a.time));
     const recentTop = recentEvents.slice(0, 15);
 
@@ -509,7 +511,7 @@ const SuperAdminDashboard = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: palette.cream, fontFamily: FONT_BODY }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', background: palette.cream, fontFamily: FONT_BODY }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');`}</style>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '44px', height: '44px', border: `3px solid ${palette.border}`, borderTop: `3px solid ${palette.warmOrange}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 18px' }} />
@@ -521,7 +523,7 @@ const SuperAdminDashboard = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: palette.cream, fontFamily: FONT_BODY }}>
+    <div className="sad-root" style={{ minHeight: '100dvh', background: palette.cream, fontFamily: FONT_BODY }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Nunito', sans-serif; background: ${palette.cream}; }
@@ -538,10 +540,46 @@ const SuperAdminDashboard = () => {
         .super-admin-nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         .profile-menu-item { transition: background 0.15s ease; }
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
+
+        /* ============ RESPONSIVE HELPERS ============ */
+        .sad-table-wrap { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+        .sad-table-wrap::-webkit-scrollbar { height: 6px; }
+        .sad-table-wrap::-webkit-scrollbar-track { background: ${palette.creamSoft}; border-radius: 6px; }
+        .sad-table-wrap::-webkit-scrollbar-thumb { background: ${palette.border}; border-radius: 6px; }
+
+        /* ============ TABLET & BELOW ============ */
+        @media (max-width: 768px) {
+          .sad-topbar { padding: 10px 14px !important; gap: 10px !important; }
+          .sad-topbar-title { font-size: 15px !important; }
+          .sad-profile-info { display: none !important; }
+          .sad-profile-btn { padding: 4px 8px !important; gap: 6px !important; }
+          .sad-content { padding: 16px 14px 32px !important; }
+          .sad-panel { padding: 18px !important; }
+          .sad-panel-header { gap: 10px !important; }
+          .sad-search-wrap { flex: 1 1 100% !important; }
+          .sad-search-input { width: 100% !important; box-sizing: border-box; }
+          .sad-filter-bar { width: 100%; }
+          .sad-filter-bar > select { flex: 1 1 auto; min-width: 0; }
+        }
+
+        /* ============ SMALL PHONES ============ */
+        @media (max-width: 480px) {
+          .sad-topbar { padding: 8px 10px !important; gap: 8px !important; }
+          .sad-topbar-title { font-size: 13px !important; gap: 6px !important; }
+          .sad-topbar-title svg { width: 15px !important; height: 15px !important; }
+          .sad-nav-btn { padding: 6px 10px !important; font-size: 11px !important; gap: 5px !important; }
+          .sad-nav-btn svg { width: 12px !important; height: 12px !important; }
+          .sad-content { padding: 12px 10px 28px !important; }
+          .sad-panel { padding: 14px !important; border-radius: 14px !important; }
+          .sad-panel-title { font-size: 15px !important; }
+          .sad-stats-grid { gap: 10px !important; }
+          .sad-modal { padding: 12px !important; }
+          .sad-profile-menu { min-width: 220px !important; max-width: calc(100vw - 24px) !important; }
+        }
       `}</style>
 
       {/* ===== TOP BAR ===== */}
-      <div style={{
+      <div className="sad-topbar" style={{
         background: `linear-gradient(135deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
         color: 'white',
         padding: '12px 24px',
@@ -551,7 +589,7 @@ const SuperAdminDashboard = () => {
         gap: '16px',
         flexWrap: 'wrap',
       }}>
-        <h1 style={{
+        <h1 className="sad-topbar-title" style={{
           fontSize: '18px',
           fontWeight: '800',
           margin: 0,
@@ -585,6 +623,7 @@ const SuperAdminDashboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveSection(tab.id)}
+                className="sad-nav-btn"
                 style={{
                   padding: '7px 14px',
                   background: isActive ? palette.warmOrange : 'rgba(255,255,255,0.08)',
@@ -615,6 +654,7 @@ const SuperAdminDashboard = () => {
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="sad-profile-btn"
             style={{
               padding: '5px 12px 5px 6px',
               background: 'rgba(255,255,255,0.08)',
@@ -644,7 +684,7 @@ const SuperAdminDashboard = () => {
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+            <div className="sad-profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
               <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap' }}>
                 {profile.displayName}
               </span>
@@ -658,7 +698,7 @@ const SuperAdminDashboard = () => {
           {showProfileMenu && (
             <>
               <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-              <div style={{
+              <div className="sad-profile-menu" style={{
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
                 right: 0,
@@ -739,18 +779,18 @@ const SuperAdminDashboard = () => {
       </div>
 
       {/* ===== CONTENT ===== */}
-      <div style={{ padding: '24px 40px 40px' }}>
+      <div className="sad-content" style={{ padding: '24px 40px 40px' }}>
         {/* STATISTICS */}
         {activeSection === 'statistics' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{
+            <div className="sad-panel" style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               flexWrap: 'wrap', gap: '12px', padding: '16px 20px',
               background: palette.white, borderRadius: '14px',
               border: `1.5px solid ${palette.border}`, boxShadow: `0 2px 0 ${palette.border}`,
             }}>
               <div>
-                <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 className="sad-panel-title" style={{ margin: 0, fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Icon name="trend" size={18} color={palette.warmOrange} />
                   Platform Statistics
                 </h2>
@@ -768,7 +808,7 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+            <div className="sad-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
               {[
                 { value: stats.teachersThisMonth, label: 'Teachers This Month', color: palette.warmOrange, icon: 'user' },
                 { value: stats.teachersThisYear, label: `Teachers in ${statsYear}`, color: palette.warmOrange, icon: 'user' },
@@ -790,8 +830,8 @@ const SuperAdminDashboard = () => {
               ))}
             </div>
 
-            <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-              <h3 style={{ margin: '0 0 20px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+              <h3 className="sad-panel-title" style={{ margin: '0 0 20px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Icon name="chart" size={16} color={palette.teal} />
                 Monthly Joins & Activity Creation ({statsYear})
               </h3>
@@ -803,7 +843,7 @@ const SuperAdminDashboard = () => {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', height: '220px', padding: '16px 8px', background: palette.creamSoft, borderRadius: '12px', border: `1.5px solid ${palette.border}`, overflowX: 'auto' }}>
+              <div className="sad-table-wrap" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', height: '220px', padding: '16px 8px', background: palette.creamSoft, borderRadius: '12px', border: `1.5px solid ${palette.border}`, overflowX: 'auto' }}>
                 {MONTH_NAMES.map((month, idx) => {
                   const maxVal = Math.max(...stats.monthlyTeachers, ...stats.monthlyStudents, ...stats.monthlyActivities, 1);
                   const tHeight = (stats.monthlyTeachers[idx] / maxVal) * 100;
@@ -824,8 +864,8 @@ const SuperAdminDashboard = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-              <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-                <h3 style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+                <h3 className="sad-panel-title" style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Icon name="trend" size={15} color={palette.warmOrange} />
                   Yearly Growth
                 </h3>
@@ -858,8 +898,8 @@ const SuperAdminDashboard = () => {
                 )}
               </div>
 
-              <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-                <h3 style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+                <h3 className="sad-panel-title" style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Icon name="book" size={15} color={palette.gold} />
                   Vocabulary Breakdown ({words.length} total)
                 </h3>
@@ -902,12 +942,12 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
 
-            <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-              <h3 style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+              <h3 className="sad-panel-title" style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Icon name="star" size={16} color={palette.coral} />
                 Activity Performance (Top 10)
               </h3>
-              <div style={{ overflowX: 'auto' }}>
+              <div className="sad-table-wrap" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT_BODY, minWidth: '600px' }}>
                   <thead>
                     <tr style={{ borderBottom: `1.5px solid ${palette.border}` }}>
@@ -943,8 +983,8 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
 
-            <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-              <h3 style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+              <h3 className="sad-panel-title" style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Icon name="activity" size={16} color={palette.teal} />
                 Recent System Activities
               </h3>
@@ -976,7 +1016,7 @@ const SuperAdminDashboard = () => {
         {/* TEACHERS */}
         {activeSection === 'teachers' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            <div className="sad-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
               <div style={summaryCardStyle(palette.warmOrange)}>
                 <div style={summaryIconStyle(palette.warmOrange)}><Icon name="user" size={14} color={palette.warmOrange} /></div>
                 <div style={summaryLabelStyle}>Total Teachers</div>
@@ -999,18 +1039,18 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
 
-            <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
-                <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
+            <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+              <div className="sad-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+                <h2 className="sad-panel-title" style={{ margin: 0, fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
                   <Icon name="user" size={18} color={palette.warmOrange} />
                   All Teachers
                   <span style={{ fontSize: '12px', fontWeight: 800, color: palette.warmOrange, background: `${palette.warmOrange}15`, padding: '3px 10px', borderRadius: '999px', border: `1px solid ${palette.warmOrange}40`, fontFamily: FONT_DISPLAY, marginLeft: '4px' }}>
                     {filteredTeachers.length}
                   </span>
                 </h2>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <div style={{ position: 'relative' }}>
-                    <input type="text" placeholder="Search name or email..." value={teacherSearch} onChange={(e) => setTeacherSearch(e.target.value)} style={{ padding: '9px 12px 9px 32px', border: `1.5px solid ${palette.border}`, borderRadius: '10px', fontSize: '13px', fontFamily: FONT_BODY, fontWeight: 600, background: palette.creamSoft, color: palette.deepNavy, outline: 'none', width: '200px' }} />
+                <div className="sad-filter-bar" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div className="sad-search-wrap" style={{ position: 'relative' }}>
+                    <input type="text" placeholder="Search name or email..." value={teacherSearch} onChange={(e) => setTeacherSearch(e.target.value)} className="sad-search-input" style={{ padding: '9px 12px 9px 32px', border: `1.5px solid ${palette.border}`, borderRadius: '10px', fontSize: '13px', fontFamily: FONT_BODY, fontWeight: 600, background: palette.creamSoft, color: palette.deepNavy, outline: 'none', width: '200px' }} />
                     <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={13} color={palette.bodyTextSoft} /></div>
                   </div>
                   <select value={teacherDateFilter} onChange={(e) => setTeacherDateFilter(e.target.value)} style={selectFilterStyle}>
@@ -1030,7 +1070,7 @@ const SuperAdminDashboard = () => {
                   </select>
                 </div>
               </div>
-              <div style={{ overflowX: 'auto' }}>
+              <div className="sad-table-wrap" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT_BODY, minWidth: '750px' }}>
                   <thead>
                     <tr style={{ borderBottom: `1.5px solid ${palette.border}` }}>
@@ -1079,7 +1119,7 @@ const SuperAdminDashboard = () => {
         {/* STUDENTS */}
         {activeSection === 'students' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            <div className="sad-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
               <div style={summaryCardStyle(palette.softGreen)}>
                 <div style={summaryIconStyle(palette.softGreen)}><Icon name="graduation" size={14} color={palette.softGreen} /></div>
                 <div style={summaryLabelStyle}>Total Students</div>
@@ -1102,18 +1142,18 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
 
-            <div style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
-                <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
+            <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
+              <div className="sad-panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+                <h2 className="sad-panel-title" style={{ margin: 0, fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
                   <Icon name="graduation" size={18} color={palette.softGreen} />
                   All Students
                   <span style={{ fontSize: '12px', fontWeight: 800, color: palette.softGreen, background: `${palette.softGreen}15`, padding: '3px 10px', borderRadius: '999px', border: `1px solid ${palette.softGreen}40`, fontFamily: FONT_DISPLAY, marginLeft: '4px' }}>
                     {filteredStudents.length}
                   </span>
                 </h2>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <div style={{ position: 'relative' }}>
-                    <input type="text" placeholder="Search name or email..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} style={{ padding: '9px 12px 9px 32px', border: `1.5px solid ${palette.border}`, borderRadius: '10px', fontSize: '13px', fontFamily: FONT_BODY, fontWeight: 600, background: palette.creamSoft, color: palette.deepNavy, outline: 'none', width: '200px' }} />
+                <div className="sad-filter-bar" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div className="sad-search-wrap" style={{ position: 'relative' }}>
+                    <input type="text" placeholder="Search name or email..." value={studentSearch} onChange={(e) => setStudentSearch(e.target.value)} className="sad-search-input" style={{ padding: '9px 12px 9px 32px', border: `1.5px solid ${palette.border}`, borderRadius: '10px', fontSize: '13px', fontFamily: FONT_BODY, fontWeight: 600, background: palette.creamSoft, color: palette.deepNavy, outline: 'none', width: '200px' }} />
                     <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={13} color={palette.bodyTextSoft} /></div>
                   </div>
                   <select value={studentDateFilter} onChange={(e) => setStudentDateFilter(e.target.value)} style={selectFilterStyle}>
@@ -1135,7 +1175,7 @@ const SuperAdminDashboard = () => {
                   </select>
                 </div>
               </div>
-              <div style={{ overflowX: 'auto' }}>
+              <div className="sad-table-wrap" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT_BODY, minWidth: '900px' }}>
                   <thead>
                     <tr style={{ borderBottom: `1.5px solid ${palette.border}` }}>
@@ -1174,9 +1214,10 @@ const SuperAdminDashboard = () => {
                         <td style={{ padding: '12px', textAlign: 'center' }}><span style={countBadgeStyle(palette.teal, student._gamesPlayed > 0)}>{student._gamesPlayed}</span></td>
                         <td style={{ padding: '12px', textAlign: 'center' }}><span style={countBadgeStyle(palette.softGreen, student._wordsLearned > 0)}>{student._wordsLearned}</span></td>
                         <td style={{ padding: '12px', textAlign: 'center' }}>
+                          {/* ✅ Fixed: proper template strings + _accuracy reference */}
                           <span style={{
                             display: 'inline-block', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 800, fontFamily: FONT_DISPLAY,
-                            background: student._accuracy >= 70 ? `palette.softGreen15`:student.accuracy>=40?`{palette.gold}15` : student._accuracy > 0 ? `${palette.danger}15` : palette.creamSoft,
+                            background: student._accuracy >= 70 ? `${palette.softGreen}15` : student._accuracy >= 40 ? `${palette.gold}15` : student._accuracy > 0 ? `${palette.danger}15` : palette.creamSoft,
                             color: student._accuracy >= 70 ? palette.softGreen : student._accuracy >= 40 ? palette.gold : student._accuracy > 0 ? palette.danger : palette.bodyTextSoft,
                             border: `1px solid ${student._accuracy >= 70 ? palette.softGreen + '40' : student._accuracy >= 40 ? palette.gold + '40' : student._accuracy > 0 ? palette.danger + '40' : palette.border}`,
                           }}>{student._accuracy}%</span>
@@ -1208,6 +1249,7 @@ const SuperAdminDashboard = () => {
       {/* ✅ SETTINGS MODAL */}
       {showSettingsModal && (
         <div
+          className="sad-modal"
           onClick={() => setShowSettingsModal(false)}
           style={{
             position: 'fixed', inset: 0, background: 'rgba(42, 40, 69, 0.55)',
@@ -1253,7 +1295,7 @@ const SuperAdminDashboard = () => {
                 onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
                 style={{
                   width: '100%', padding: '11px 14px', border: `1.5px solid ${palette.border}`,
-                  borderRadius: '10px', fontSize: '13px', fontFamily: FONT_BODY,
+                  borderRadius: '10px', fontSize: '16px', fontFamily: FONT_BODY,
                   fontWeight: 600, background: palette.creamSoft, color: palette.deepNavy, outline: 'none',
                   boxSizing: 'border-box',
                 }}
@@ -1270,7 +1312,7 @@ const SuperAdminDashboard = () => {
                 disabled
                 style={{
                   width: '100%', padding: '11px 14px', border: `1.5px solid ${palette.border}`,
-                  borderRadius: '10px', fontSize: '13px', fontFamily: FONT_BODY,
+                  borderRadius: '10px', fontSize: '16px', fontFamily: FONT_BODY,
                   fontWeight: 600, background: palette.creamSoft, color: palette.bodyTextSoft,
                   outline: 'none', boxSizing: 'border-box', cursor: 'not-allowed',
                 }}
@@ -1383,4 +1425,3 @@ const menuItemStyle = {
 };
 
 export default SuperAdminDashboard;
-
