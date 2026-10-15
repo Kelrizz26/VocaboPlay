@@ -3,6 +3,7 @@
 // ✅ SUPER ADMIN DASHBOARD - Full Analytics & Management
 // ✅ UPDATED: Profile dropdown with Settings & Logout
 // ✅ UPDATED: Fully Responsive Mobile Layout
+// ✅ UPDATED: Top bar split into 2 rows (title+profile / nav tabs)
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -535,9 +536,6 @@ const SuperAdminDashboard = () => {
         .stat-bar:hover { filter: brightness(1.1); }
         .timeline-item { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .timeline-item:hover { transform: translateX(3px); box-shadow: 0 4px 12px ${palette.shadowMd}; }
-        .super-admin-nav-scroll::-webkit-scrollbar { height: 4px; }
-        .super-admin-nav-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
-        .super-admin-nav-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
         .profile-menu-item { transition: background 0.15s ease; }
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
 
@@ -547,9 +545,32 @@ const SuperAdminDashboard = () => {
         .sad-table-wrap::-webkit-scrollbar-track { background: ${palette.creamSoft}; border-radius: 6px; }
         .sad-table-wrap::-webkit-scrollbar-thumb { background: ${palette.border}; border-radius: 6px; }
 
+        /* ✅ Top bar 2-row layout */
+        .sad-topbar-row1 {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          width: 100%;
+          min-width: 0;
+        }
+        .sad-nav-bar {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          width: 100%;
+          overflow-x: auto;
+          padding-bottom: 2px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: thin;
+        }
+        .sad-nav-bar::-webkit-scrollbar { height: 4px; }
+        .sad-nav-bar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+        .sad-nav-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
         /* ============ TABLET & BELOW ============ */
         @media (max-width: 768px) {
-          .sad-topbar { padding: 10px 14px !important; gap: 10px !important; }
+          .sad-topbar { padding: 10px 14px !important; gap: 8px !important; }
           .sad-topbar-title { font-size: 15px !important; }
           .sad-profile-info { display: none !important; }
           .sad-profile-btn { padding: 4px 8px !important; gap: 6px !important; }
@@ -564,7 +585,7 @@ const SuperAdminDashboard = () => {
 
         /* ============ SMALL PHONES ============ */
         @media (max-width: 480px) {
-          .sad-topbar { padding: 8px 10px !important; gap: 8px !important; }
+          .sad-topbar { padding: 8px 10px !important; gap: 6px !important; }
           .sad-topbar-title { font-size: 13px !important; gap: 6px !important; }
           .sad-topbar-title svg { width: 15px !important; height: 15px !important; }
           .sad-nav-btn { padding: 6px 10px !important; font-size: 11px !important; gap: 5px !important; }
@@ -578,39 +599,167 @@ const SuperAdminDashboard = () => {
         }
       `}</style>
 
-      {/* ===== TOP BAR ===== */}
+      {/* ===== TOP BAR (2 rows) ===== */}
       <div className="sad-topbar" style={{
         background: `linear-gradient(135deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
         color: 'white',
         padding: '12px 24px',
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: '10px',
         borderBottom: `1px solid rgba(233, 160, 117, 0.15)`,
-        gap: '16px',
-        flexWrap: 'wrap',
       }}>
-        <h1 className="sad-topbar-title" style={{
-          fontSize: '18px',
-          fontWeight: '800',
-          margin: 0,
-          fontFamily: FONT_DISPLAY,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          letterSpacing: '-0.3px',
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-        }}>
-          <Icon name="crown" size={18} color={palette.warmOrange} />
-          Super Admin Dashboard
-        </h1>
+        {/* ===== ROW 1: Title (left) + Profile (right) ===== */}
+        <div className="sad-topbar-row1">
+          <h1 className="sad-topbar-title" style={{
+            fontSize: '18px',
+            fontWeight: '800',
+            margin: 0,
+            fontFamily: FONT_DISPLAY,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            letterSpacing: '-0.3px',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            <Icon name="crown" size={18} color={palette.warmOrange} />
+            Super Admin Dashboard
+          </h1>
 
-        {/* CENTER: Nav Tabs */}
-        <div className="super-admin-nav-scroll" style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          flex: 1, justifyContent: 'center', minWidth: 0,
-          overflowX: 'auto', paddingBottom: '2px',
-        }}>
+          {/* PROFILE DROPDOWN */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="sad-profile-btn"
+              style={{
+                padding: '5px 12px 5px 6px',
+                background: 'rgba(255,255,255,0.08)',
+                color: palette.white,
+                border: `1.5px solid rgba(255,255,255,0.15)`,
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontFamily: FONT_DISPLAY,
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div style={{
+                width: '30px', height: '30px', borderRadius: '50%',
+                background: profile.gender === 'male' ? '#6B8ACB' : palette.coral,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', flexShrink: 0,
+                border: '1.5px solid rgba(255,255,255,0.2)',
+              }}>
+                {profile.avatar ? (
+                  <img src={profile.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: FONT_DISPLAY }}>
+                    {profile.displayName?.charAt(0)?.toUpperCase() || 'S'}
+                  </span>
+                )}
+              </div>
+              <div className="sad-profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap' }}>
+                  {profile.displayName}
+                </span>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                  Super Admin
+                </span>
+              </div>
+              <Icon name="chevronDown" size={12} color="rgba(255,255,255,0.6)" />
+            </button>
+
+            {showProfileMenu && (
+              <>
+                <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+                <div className="sad-profile-menu" style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  background: palette.white,
+                  borderRadius: '14px',
+                  zIndex: 1000,
+                  minWidth: '250px',
+                  overflow: 'hidden',
+                  border: `1.5px solid ${palette.border}`,
+                  boxShadow: '0 10px 30px rgba(42, 40, 69, 0.15)',
+                }}>
+                  <div style={{
+                    padding: '12px 14px',
+                    background: palette.creamSoft,
+                    borderBottom: `1.5px solid ${palette.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                  }}>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '50%',
+                      background: profile.gender === 'male' ? '#6B8ACB' : palette.coral,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      overflow: 'hidden', flexShrink: 0,
+                    }}>
+                      {profile.avatar ? (
+                        <img src={profile.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ color: 'white', fontWeight: 800, fontSize: '16px', fontFamily: FONT_DISPLAY }}>
+                          {profile.displayName?.charAt(0)?.toUpperCase() || 'S'}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: palette.deepNavy, fontFamily: FONT_DISPLAY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {profile.displayName}
+                      </div>
+                      <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {profile.email || 'No email on file'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '6px' }}>
+                    <button
+                      onClick={() => { setShowProfileMenu(false); setShowSettingsModal(true); }}
+                      className="profile-menu-item"
+                      style={menuItemStyle}
+                    >
+                      <Icon name="settings" size={14} color={palette.bodyText} />
+                      <span>Settings</span>
+                    </button>
+                    <button
+                      onClick={() => { setShowProfileMenu(false); navigate('/super-admin-dashboard?tab=profile'); }}
+                      className="profile-menu-item"
+                      style={menuItemStyle}
+                    >
+                      <Icon name="shield" size={14} color={palette.bodyText} />
+                      <span>Account Security</span>
+                    </button>
+                    <div style={{ height: '1px', background: palette.borderSoft, margin: '6px 0' }} />
+                    <button
+                      onClick={handleLogout}
+                      className="profile-menu-item"
+                      style={{
+                        ...menuItemStyle,
+                        color: palette.danger,
+                      }}
+                    >
+                      <Icon name="logout" size={14} color={palette.danger} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ===== ROW 2: NAV TABS (full width scrollable) ===== */}
+        <div className="sad-nav-bar">
           {[
             { id: 'statistics', label: 'Statistics', icon: 'trend' },
             { id: 'teachers', label: 'Teachers', icon: 'user' },
@@ -648,133 +797,6 @@ const SuperAdminDashboard = () => {
               </button>
             );
           })}
-        </div>
-
-        {/* RIGHT: PROFILE DROPDOWN */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="sad-profile-btn"
-            style={{
-              padding: '5px 12px 5px 6px',
-              background: 'rgba(255,255,255,0.08)',
-              color: palette.white,
-              border: `1.5px solid rgba(255,255,255,0.15)`,
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontFamily: FONT_DISPLAY,
-              transition: 'all 0.15s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <div style={{
-              width: '30px', height: '30px', borderRadius: '50%',
-              background: profile.gender === 'male' ? '#6B8ACB' : palette.coral,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              overflow: 'hidden', flexShrink: 0,
-              border: '1.5px solid rgba(255,255,255,0.2)',
-            }}>
-              {profile.avatar ? (
-                <img src={profile.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: FONT_DISPLAY }}>
-                  {profile.displayName?.charAt(0)?.toUpperCase() || 'S'}
-                </span>
-              )}
-            </div>
-            <div className="sad-profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap' }}>
-                {profile.displayName}
-              </span>
-              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
-                Super Admin
-              </span>
-            </div>
-            <Icon name="chevronDown" size={12} color="rgba(255,255,255,0.6)" />
-          </button>
-
-          {showProfileMenu && (
-            <>
-              <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-              <div className="sad-profile-menu" style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                background: palette.white,
-                borderRadius: '14px',
-                zIndex: 1000,
-                minWidth: '250px',
-                overflow: 'hidden',
-                border: `1.5px solid ${palette.border}`,
-                boxShadow: '0 10px 30px rgba(42, 40, 69, 0.15)',
-              }}>
-                <div style={{
-                  padding: '12px 14px',
-                  background: palette.creamSoft,
-                  borderBottom: `1.5px solid ${palette.border}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                }}>
-                  <div style={{
-                    width: '40px', height: '40px', borderRadius: '50%',
-                    background: profile.gender === 'male' ? '#6B8ACB' : palette.coral,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    overflow: 'hidden', flexShrink: 0,
-                  }}>
-                    {profile.avatar ? (
-                      <img src={profile.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span style={{ color: 'white', fontWeight: 800, fontSize: '16px', fontFamily: FONT_DISPLAY }}>
-                        {profile.displayName?.charAt(0)?.toUpperCase() || 'S'}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: palette.deepNavy, fontFamily: FONT_DISPLAY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {profile.displayName}
-                    </div>
-                    <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {profile.email || 'No email on file'}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ padding: '6px' }}>
-                  <button
-                    onClick={() => { setShowProfileMenu(false); setShowSettingsModal(true); }}
-                    className="profile-menu-item"
-                    style={menuItemStyle}
-                  >
-                    <Icon name="settings" size={14} color={palette.bodyText} />
-                    <span>Settings</span>
-                  </button>
-                  <button
-                    onClick={() => { setShowProfileMenu(false); navigate('/super-admin-dashboard?tab=profile'); }}
-                    className="profile-menu-item"
-                    style={menuItemStyle}
-                  >
-                    <Icon name="shield" size={14} color={palette.bodyText} />
-                    <span>Account Security</span>
-                  </button>
-                  <div style={{ height: '1px', background: palette.borderSoft, margin: '6px 0' }} />
-                  <button
-                    onClick={handleLogout}
-                    className="profile-menu-item"
-                    style={{
-                      ...menuItemStyle,
-                      color: palette.danger,
-                    }}
-                  >
-                    <Icon name="logout" size={14} color={palette.danger} />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
