@@ -4,6 +4,7 @@
 // ✅ UPDATED: Profile dropdown with Settings & Logout
 // ✅ UPDATED: Fully Responsive Mobile Layout
 // ✅ UPDATED: Top bar split into 2 rows (title+profile / nav tabs)
+// ✅ UPDATED: Sticky topbar + prevent horizontal body scroll
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -527,7 +528,30 @@ const SuperAdminDashboard = () => {
     <div className="sad-root" style={{ minHeight: '100dvh', background: palette.cream, fontFamily: FONT_BODY }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+
+        /* ============ ✅ GLOBAL — prevent horizontal body scroll ============ */
+        html, body {
+          overflow-x: hidden !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          overscroll-behavior-x: none !important;
+        }
         body { font-family: 'Nunito', sans-serif; background: ${palette.cream}; }
+
+        /* ✅ Root container — no horizontal overflow */
+        .sad-root {
+          overflow-x: hidden !important;
+          max-width: 100vw !important;
+          width: 100% !important;
+          box-sizing: border-box;
+        }
+
+        /* ✅ Content wrapper safety */
+        .sad-content, .sad-panel {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+
         .super-admin-stat { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
         .super-admin-stat:hover { transform: translateY(-3px); border-color: ${palette.warmOrange}40 !important; box-shadow: 0 8px 22px ${palette.shadowMd} !important; }
         .super-admin-row { transition: background 0.15s ease; }
@@ -539,8 +563,21 @@ const SuperAdminDashboard = () => {
         .profile-menu-item { transition: background 0.15s ease; }
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
 
+        /* ============ ✅ STICKY TOP BAR ============ */
+        .sad-topbar {
+          position: sticky !important;
+          position: -webkit-sticky !important;
+          top: 0 !important;
+          z-index: 100 !important;
+        }
+
         /* ============ RESPONSIVE HELPERS ============ */
-        .sad-table-wrap { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+        .sad-table-wrap {
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain; /* ✅ pigilan ang page bounce kapag nag-swipe sa table */
+          touch-action: pan-x pan-y;       /* ✅ payagan horizontal swipe sa table lang */
+          scrollbar-width: thin;
+        }
         .sad-table-wrap::-webkit-scrollbar { height: 6px; }
         .sad-table-wrap::-webkit-scrollbar-track { background: ${palette.creamSoft}; border-radius: 6px; }
         .sad-table-wrap::-webkit-scrollbar-thumb { background: ${palette.border}; border-radius: 6px; }
@@ -554,12 +591,16 @@ const SuperAdminDashboard = () => {
           width: 100%;
           min-width: 0;
         }
+
+        /* ✅ Nav bar — horizontal scroll, pero hindi nag-trigger ng page swipe */
         .sad-nav-bar {
           display: flex;
           align-items: center;
           gap: 6px;
           width: 100%;
           overflow-x: auto;
+          overscroll-behavior-x: contain; /* ✅ pigilan ang page bounce */
+          touch-action: pan-x pan-y;       /* ✅ payagan horizontal swipe dito lang */
           padding-bottom: 2px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
