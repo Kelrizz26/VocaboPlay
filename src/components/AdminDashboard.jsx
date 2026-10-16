@@ -5,7 +5,7 @@
 //   - Added session cache (3 min TTL) for dashboard data
 //   - Added cache bypass after create activity / live host exit
 // ✅ PRESERVED: All UI, modals, live host flow, scoreboard, print, profile menu
-// ✅ UPDATED: Fully Responsive Mobile Layout (2-row topbar, sticky, no body h-scroll)
+// ✅ UPDATED: Responsive topbar — 1 row on desktop, 2 rows on mobile
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -610,16 +610,11 @@ const AdminDashboard = () => {
 
   // ============================================================
   // ✅ OPTIMIZED fetchAllData
-  //   - Chunked `where('activityId', 'in', [...])` for scores (only teacher's activities)
-  //   - Chunked `where(documentId(), 'in', [...])` for users (only relevant students)
-  //   - Session cache (3 min TTL) — 0 reads on quick remount
-  //   - bypassCache = true forces fresh fetch (after create activity / live host exit)
   // ============================================================
   const fetchAllData = async (bypassCache = false) => {
     const user = auth.currentUser;
     if (!user) return;
 
-    // ✅ Try cache first (unless bypass)
     if (!bypassCache) {
       const cached = readDashboardCache(user.uid);
       if (cached) {
@@ -634,7 +629,6 @@ const AdminDashboard = () => {
     }
 
     try {
-      // ===== 1. Activities — filtered by teacherId (already efficient) =====
       const activitiesSnapshot = await getDocs(
         query(collection(db, 'activities'), where('teacherId', '==', user.uid))
       );
@@ -647,7 +641,6 @@ const AdminDashboard = () => {
       setActivities(activitiesData);
       setLoading(prev => ({ ...prev, activities: false }));
 
-      // ===== 2. Scores — chunked by activityId (only teacher's activities) =====
       const studentIdsSet = new Set();
       if (teacherActivityIds.length > 0) {
         const activityChunks = chunkArray(teacherActivityIds, FIRESTORE_IN_CHUNK_SIZE);
@@ -667,7 +660,6 @@ const AdminDashboard = () => {
       }
       const studentIds = Array.from(studentIdsSet);
 
-      // ===== 3. Users — chunked by documentId =====
       const studentsData = [];
       if (studentIds.length > 0) {
         const studentChunks = chunkArray(studentIds, FIRESTORE_IN_CHUNK_SIZE);
@@ -698,16 +690,13 @@ const AdminDashboard = () => {
       setStudents(studentsData);
       setLoading(prev => ({ ...prev, students: false }));
 
-      // ===== 4. Words =====
       const wordsSnapshot = await getDocs(collection(db, 'words'));
       const wordsData = wordsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setWords(wordsData);
       setLoading(prev => ({ ...prev, words: false }));
 
-      // ===== 5. Games =====
       const gamesData = await initializeGames();
 
-      // ===== ✅ Save to cache =====
       writeDashboardCache(user.uid, {
         activities: activitiesData,
         students: studentsData,
@@ -810,27 +799,20 @@ const AdminDashboard = () => {
           width: 100% !important;
         }
 
-        /* ============ ✅ TOP NAV (sticky + 2-row) ============ */
+        /* ============ ✅ TOP NAV ============ */
+        /* Desktop default: 1 row — Logo | Nav Links (center) | Profile */
         .admin-top-nav {
           background: ${palette.deepNavy};
           padding: 12px 24px;
           display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 10px;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
           position: sticky;
           top: 0;
           z-index: 1000;
           box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .admin-top-nav-row1 {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          width: 100%;
-          min-width: 0;
         }
 
         .admin-logo {
@@ -841,9 +823,7 @@ const AdminDashboard = () => {
           font-family: ${FONT_DISPLAY};
           font-weight: 800;
           font-size: 16px;
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          flex-shrink: 0;
           white-space: nowrap;
         }
 
@@ -851,10 +831,10 @@ const AdminDashboard = () => {
           display: flex;
           gap: 8px;
           align-items: center;
-          width: 100%;
+          justify-content: center;
+          flex: 1;
+          min-width: 0;
           overflow-x: auto;
-          overscroll-behavior-x: contain;
-          touch-action: pan-x pan-y;
           padding-bottom: 2px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
@@ -894,6 +874,10 @@ const AdminDashboard = () => {
           box-shadow: 0 2px 0 ${palette.warmOrangeShadow};
         }
 
+        .admin-profile-wrapper {
+          flex-shrink: 0;
+        }
+
         /* Profile button hover */
         .profile-menu-btn {
           transition: background 0.15s ease, border-color 0.15s ease;
@@ -922,10 +906,30 @@ const AdminDashboard = () => {
           box-sizing: border-box !important;
         }
 
-        /* ============ ✅ TABLET & BELOW ============ */
+        /* ============ ✅ TABLET & BELOW — switch to 2-row topbar ============ */
         @media (max-width: 768px) {
-          .admin-top-nav { padding: 10px 14px; gap: 8px; }
-          .admin-logo { font-size: 14px; }
+          .admin-top-nav {
+            flex-wrap: wrap;
+            padding: 10px 14px;
+            gap: 8px;
+          }
+          .admin-logo {
+            order: 1;
+            font-size: 14px;
+          }
+          .admin-profile-wrapper {
+            order: 2;
+            margin-left: auto;
+          }
+          .admin-nav-links {
+            order: 3;
+            flex: 1 1 100%;
+            width: 100%;
+            justify-content: flex-start;
+            gap: 6px;
+            overscroll-behavior-x: contain;
+            touch-action: pan-x pan-y;
+          }
           .admin-nav-link { padding: 6px 12px; font-size: 12px; }
           .admin-main-content { padding: 16px 14px 32px !important; }
           .admin-modal-content { padding: 20px !important; max-height: 90vh !important; }
@@ -946,89 +950,15 @@ const AdminDashboard = () => {
 
       <div className="admin-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: palette.cream, fontFamily: FONT_BODY }}>
 
-        {/* ✅ TOP NAVIGATION BAR (2 ROWS) */}
+        {/* ✅ TOP NAVIGATION BAR — Responsive (1 row desktop, 2 rows mobile) */}
         <nav className="admin-top-nav">
-          {/* ROW 1: Logo (left) + Profile (right) */}
-          <div className="admin-top-nav-row1">
-            <div className="admin-logo">
-              <Icon name="trophy" size={20} color={palette.warmOrange} />
-              Admin Dashboard
-            </div>
-
-            {/* RIGHT: Profile Menu */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button
-                className="profile-menu-btn"
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                style={{
-                  padding: '5px 12px 5px 6px',
-                  background: 'rgba(255,255,255,0.08)',
-                  color: palette.white,
-                  border: `1.5px solid rgba(255,255,255,0.15)`,
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontFamily: FONT_DISPLAY,
-                  transition: 'all 0.15s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <div style={{
-                  width: '30px', height: '30px', borderRadius: '50%',
-                  background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  overflow: 'hidden', flexShrink: 0,
-                  border: '1.5px solid rgba(255,255,255,0.2)',
-                }}>
-                  {teacher?.avatar && teacher?.avatar !== '' ? (
-                    <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: FONT_DISPLAY }}>
-                      {teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}
-                    </span>
-                  )}
-                </div>
-                <div className="admin-profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1, minWidth: 0 }}>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
-                    {teacher?.displayName || 'Admin'}
-                  </span>
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
-                    {teacher?.role || 'Admin'}
-                  </span>
-                </div>
-                <Icon name="chevronDown" size={12} color="rgba(255,255,255,0.6)" />
-              </button>
-
-              {showProfileMenu && (
-                <>
-                  <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-                  <div className="admin-profile-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '250px', maxWidth: 'calc(100vw - 24px)', overflow: 'hidden', border: `1.5px solid ${palette.border}`, fontFamily: FONT_BODY, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.15)' }}>
-                    <div style={{ padding: '12px 14px', background: palette.creamSoft, borderBottom: `1.5px solid ${palette.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral, flexShrink: 0 }}>
-                        {teacher?.avatar && teacher?.avatar !== '' ? (
-                          <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <span style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>{teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}</span>
-                        )}
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>{teacher?.displayName || 'Admin'}</div>
-                        <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher?.email || 'No email on file'}</div>
-                      </div>
-                    </div>
-                    <div style={{ padding: '6px' }}>
-                      <button onClick={handleLogout} style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: palette.danger, fontFamily: FONT_BODY, fontWeight: 700, transition: 'background 0.15s ease' }} onMouseOver={e => e.currentTarget.style.background = `${palette.danger}10`} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                        <Icon name="logout" size={14} color={palette.danger} /> Logout
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+          {/* LOGO */}
+          <div className="admin-logo">
+            <Icon name="trophy" size={20} color={palette.warmOrange} />
+            Admin Dashboard
           </div>
 
-          {/* ROW 2: Nav Links (full width scrollable) */}
+          {/* NAV LINKS */}
           <div className="admin-nav-links">
             {menuItems.map(item => (
               <button
@@ -1040,6 +970,78 @@ const AdminDashboard = () => {
                 {item.name}
               </button>
             ))}
+          </div>
+
+          {/* PROFILE MENU */}
+          <div className="admin-profile-wrapper" style={{ position: 'relative' }}>
+            <button
+              className="profile-menu-btn"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              style={{
+                padding: '5px 12px 5px 6px',
+                background: 'rgba(255,255,255,0.08)',
+                color: palette.white,
+                border: `1.5px solid rgba(255,255,255,0.15)`,
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontFamily: FONT_DISPLAY,
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div style={{
+                width: '30px', height: '30px', borderRadius: '50%',
+                background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', flexShrink: 0,
+                border: '1.5px solid rgba(255,255,255,0.2)',
+              }}>
+                {teacher?.avatar && teacher?.avatar !== '' ? (
+                  <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: FONT_DISPLAY }}>
+                    {teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}
+                  </span>
+                )}
+              </div>
+              <div className="admin-profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1, minWidth: 0 }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
+                  {teacher?.displayName || 'Admin'}
+                </span>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                  {teacher?.role || 'Admin'}
+                </span>
+              </div>
+              <Icon name="chevronDown" size={12} color="rgba(255,255,255,0.6)" />
+            </button>
+
+            {showProfileMenu && (
+              <>
+                <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+                <div className="admin-profile-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '250px', maxWidth: 'calc(100vw - 24px)', overflow: 'hidden', border: `1.5px solid ${palette.border}`, fontFamily: FONT_BODY, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.15)' }}>
+                  <div style={{ padding: '12px 14px', background: palette.creamSoft, borderBottom: `1.5px solid ${palette.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral, flexShrink: 0 }}>
+                      {teacher?.avatar && teacher?.avatar !== '' ? (
+                        <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>{teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}</span>
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>{teacher?.displayName || 'Admin'}</div>
+                      <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher?.email || 'No email on file'}</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '6px' }}>
+                    <button onClick={handleLogout} style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', color: palette.danger, fontFamily: FONT_BODY, fontWeight: 700, transition: 'background 0.15s ease' }} onMouseOver={e => e.currentTarget.style.background = `${palette.danger}10`} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                      <Icon name="logout" size={14} color={palette.danger} /> Logout
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </nav>
 
