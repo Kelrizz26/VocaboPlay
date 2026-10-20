@@ -1,6 +1,7 @@
 // src/components/dashboard/LiveJoinModal.jsx
 // ============================================================
 // ✅ JOIN LIVE GAME MODAL - FULL SIZE
+// ✅ UPDATED: Glassmorphism Container + Full Body Avatar Fix
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -192,6 +193,7 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
 
             {error && <div style={styles.errorMsg}>{error}</div>}
 
+            {/* ✅ BAGONG FULL BODY AVATAR CONTAINER */}
             <div style={styles.avatarPreview}>
               {avatarImage ? (
                 <img
@@ -261,7 +263,7 @@ const styles = {
   modalOverlay: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(42, 40, 69, 0.55)',
+    background: 'rgba(42, 40, 69, 0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -271,7 +273,9 @@ const styles = {
     padding: 'clamp(16px, 3vw, 40px)',
   },
   modalContent: {
-    background: palette.white,
+    background: 'rgba(255, 255, 255, 0.92)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
     borderRadius: '28px',
     padding: 'clamp(28px, 4vw, 56px)',
     width: '100%',
@@ -279,9 +283,9 @@ const styles = {
     minHeight: 'min(620px, calc(100vh - 80px))',
     color: palette.deepNavy,
     position: 'relative',
-    boxShadow: `0 25px 60px rgba(42, 40, 69, 0.35), 0 2px 0 ${palette.border}`,
+    boxShadow: `0 25px 60px rgba(42, 40, 69, 0.3)`,
     fontFamily: BRAND_FONT_BODY,
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid rgba(255, 255, 255, 0.8)`,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -297,9 +301,9 @@ const styles = {
     position: 'absolute',
     top: '18px',
     right: '22px',
-    background: palette.creamSoft,
-    border: `1.5px solid ${palette.border}`,
-    color: palette.bodyText,
+    background: 'rgba(255, 255, 255, 0.6)',
+    border: `1.5px solid rgba(0, 0, 0, 0.05)`,
+    color: palette.deepNavy,
     width: '40px',
     height: '40px',
     borderRadius: '50%',
@@ -307,7 +311,7 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 800,
     zIndex: 10,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.1)`,
     fontFamily: BRAND_FONT_DISPLAY,
   },
   iconHeader: {
@@ -327,14 +331,14 @@ const styles = {
   },
   subtitle: {
     fontSize: 'clamp(14px, 1.4vw, 17px)',
-    color: palette.bodyTextSoft,
+    color: palette.bodyText,
     margin: '0 0 28px 0',
     textAlign: 'center',
     fontWeight: 600,
   },
   errorMsg: {
-    background: `${palette.coral}15`,
-    border: `1.5px solid ${palette.coral}66`,
+    background: `rgba(219, 122, 100, 0.15)`,
+    border: `1.5px solid ${palette.coral}`,
     color: palette.coral,
     padding: '12px 16px',
     borderRadius: '12px',
@@ -360,32 +364,30 @@ const styles = {
   input: {
     width: '100%',
     padding: '16px 20px',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid rgba(0, 0, 0, 0.08)`,
     borderRadius: '14px',
     fontSize: '17px',
-    background: palette.creamSoft,
+    background: 'rgba(255, 255, 255, 0.6)',
     color: palette.deepNavy,
     fontFamily: BRAND_FONT_BODY,
     fontWeight: 700,
     boxSizing: 'border-box',
     outline: 'none',
-    boxShadow: `inset 0 1px 2px ${palette.shadow}`,
   },
   pinInput: {
     width: '100%',
     padding: '24px 20px',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid rgba(0, 0, 0, 0.08)`,
     borderRadius: '16px',
     fontSize: 'clamp(32px, 5vw, 44px)',
     fontWeight: '800',
-    background: palette.creamSoft,
+    background: 'rgba(255, 255, 255, 0.6)',
     color: palette.deepNavy,
     fontFamily: BRAND_FONT_DISPLAY,
     boxSizing: 'border-box',
     outline: 'none',
     textAlign: 'center',
     letterSpacing: '10px',
-    boxShadow: `inset 0 1px 2px ${palette.shadow}`,
   },
   primaryBtn: {
     width: '100%',
@@ -403,43 +405,39 @@ const styles = {
     letterSpacing: '0.5px',
     transition: 'all 0.15s ease',
   },
+  
+  // ✅ BAGONG FULL BODY AVATAR PREVIEW
   avatarPreview: {
-    width: 'clamp(140px, 20vw, 180px)',
-    height: 'clamp(140px, 20vw, 180px)',
+    width: 'clamp(140px, 20vw, 160px)',
+    height: 'clamp(170px, 24vw, 200px)', // Mas mataas kaysa lapad
     margin: '0 auto 24px',
-    borderRadius: '50%',
+    borderRadius: '24px', // Rounded rectangle imbes na circle
     background: palette.creamSoft,
-    border: `3px solid ${palette.warmOrange}80`,
+    border: `3px solid ${palette.warmOrange}`,
     overflow: 'hidden',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: `0 8px 24px ${palette.shadowMd}`,
-    position: 'relative',
+    boxShadow: `0 8px 24px rgba(42, 40, 69, 0.15)`,
   },
   avatarImg: {
     width: '100%',
-    height: '130%',
-    objectFit: 'cover',
-    objectPosition: 'center 15%',
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    height: '100%',
+    objectFit: 'contain', // ✅ ITO ANG MAGPAPAKITA NG BUONG KATAWAN
+    padding: '8px', // Konting espasyo sa gilid
   },
+  
   avatarEmoji: {
     fontSize: 'clamp(52px, 8vw, 72px)',
-    marginTop: '24px',
   },
   infoBox: {
-    background: palette.creamSoft,
+    background: 'rgba(255, 255, 255, 0.5)',
     borderRadius: '14px',
     padding: '14px 18px',
     display: 'flex',
     gap: '14px',
     marginBottom: '20px',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid rgba(0, 0, 0, 0.05)`,
   },
   infoIcon: {
     fontSize: '26px',
@@ -453,7 +451,7 @@ const styles = {
   },
   infoText: {
     fontSize: '13px',
-    color: palette.bodyTextSoft,
+    color: palette.bodyText,
     lineHeight: 1.4,
     fontWeight: 600,
   },
@@ -465,16 +463,16 @@ const styles = {
   backBtn: {
     flex: 1,
     padding: '18px 24px',
-    background: palette.white,
+    background: 'rgba(255, 255, 255, 0.6)',
     color: palette.deepNavy,
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid rgba(0, 0, 0, 0.08)`,
     borderRadius: '16px',
     fontSize: '15px',
     fontWeight: '800',
     cursor: 'pointer',
     fontFamily: BRAND_FONT_DISPLAY,
     letterSpacing: '0.5px',
-    boxShadow: `0 4px 0 ${palette.border}`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.05)`,
   },
 };
 

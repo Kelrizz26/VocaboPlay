@@ -1,10 +1,7 @@
 // src/components/dashboard/LivePlayerGame.jsx
 // ============================================================
 // ✅ STUDENT LIVE GAME - FULL SIZE
-// ✅ NEW: Accepts completeActivity prop to save to Recent Activities
-// ✅ FIXED: 1 correct = 1 point (All displays: score bar, waiting screen)
-// ✅ FIXED: Now contributes per-question answers (Q1, Q2, etc.) to completeActivity
-// ✅ UPDATED: Options layout — 2x2 grid (A/B top, C/D bottom)
+// ✅ UPDATED: Solid Dark Navy Containers (matches dashboard theme)
 // ============================================================
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -38,9 +35,6 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
-// ============================================================
-// ✅ UPDATED: Has completeActivity prop
-// ============================================================
 const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, completeActivity }) => {
   const [session, setSession] = useState(initialSession);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -51,10 +45,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const [isWaiting, setIsWaiting] = useState(false);
   const questionStartRef = useRef(null);
 
-  // ✅ NEW: Ref to ensure it's saved only once
   const sessionSavedRef = useRef(false);
-
-  // ✅ NEW: Ref to track each answer (Q1: true, Q2: false, etc.)
   const answersRef = useRef({});
 
   useEffect(() => {
@@ -64,35 +55,16 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       setSession(data);
 
       if (data.status === 'ended') {
-        // ✅ NEW: Save to scores collection before game end
         if (completeActivity && !sessionSavedRef.current) {
           sessionSavedRef.current = true;
 
-          // Get the latest player data
           const myPlayer = data.players?.find(p => p.userId === playerId);
           const myCorrect = myPlayer?.correctAnswers || myPlayer?.correct || 0;
           const totalQ = data.totalQuestions || 0;
-
-          // ✅ 1 correct = 1 point (so it's equal to solo games)
           const pointsForRecent = myCorrect;
-
-          // ✅ Get the activityId and activityTitle from the session
           const activityId = data.activityId || initialSession?.activityId || null;
-          const gameType = data.gameType || 'quiz';
-
-          console.log('📌 LivePlayerGame: Saving activity to scores...', {
-            activityId,
-            gameType,
-            score: pointsForRecent,
-            correct: myCorrect,
-            total: totalQ,
-            answers: answersRef.current // ✅ Log so we can see it
-          });
-
+          
           if (activityId) {
-            // ✅ From teacher PIN → completeActivity
-            // ✅ Use pointsForRecent (1 correct = 1 point) NOT the live score
-            // ✅ ALSO PASS answersRef.current (5th argument)
             completeActivity(
               activityId,
               pointsForRecent,
@@ -100,14 +72,8 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
               totalQ,
               answersRef.current 
             );
-          } else {
-            // ✅ Fallback: If there's no activityId, just log it
-            if (typeof window !== 'undefined') {
-              console.warn('⚠️ LivePlayerGame: No activityId in session — using fallback');
-            }
           }
         }
-
         onGameEnd(data);
       }
     });
@@ -149,8 +115,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     if (hasAnswered) return;
     setHasAnswered(true);
     setFeedback({ isCorrect: false, points: 0, timeout: true });
-
-    // ✅ NEW: Record timeout as false in answers ref
     answersRef.current[`Q${currentQuestionIndex + 1}`] = false;
 
     try {
@@ -186,7 +150,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
         correctAnswer: result.correctAnswer
       });
 
-      // ✅ NEW: Record the answer in answers ref
       answersRef.current[`Q${currentQuestionIndex + 1}`] = result.isCorrect;
 
       setTimeout(() => {
@@ -196,8 +159,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     } catch (error) {
       console.error('Error submitting answer:', error);
       setFeedback({ isCorrect: false, points: 0, error: true });
-
-      // ✅ NEW: Record as false if there's an error
       answersRef.current[`Q${currentQuestionIndex + 1}`] = false;
 
       setTimeout(() => {
@@ -221,9 +182,8 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const currentQuestion = session?.questions?.[currentQuestionIndex];
   const myPlayer = session?.players?.find(p => p.userId === playerId);
 
-  // ✅ FIXED: Use the correct count (1 correct = 1 point) NOT live game score
   const myCorrectCount = myPlayer?.correctAnswers || myPlayer?.correct || 0;
-  const myScore = myCorrectCount;  // ✅ 1 correct = 1 point
+  const myScore = myCorrectCount;
 
   const sortedPlayers = [...(session?.players || [])].sort((a, b) => {
     const aScore = a.correctAnswers || a.correct || 0;
@@ -232,32 +192,20 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   });
   const myRank = sortedPlayers.findIndex(p => p.userId === playerId) + 1;
 
-  // ============================================================
-  // ✅ WAITING SCREEN (Last question done) - FULL SIZE
-  // ============================================================
   if (isWaiting) {
     return (
       <div style={styles.container}>
         <div style={styles.waitingContainer}>
           <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0]
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
+            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             style={styles.waitingEmoji}
           >
             🎉
           </motion.div>
 
           <h1 style={styles.waitingTitle}>All done!</h1>
-          <p style={styles.waitingSubtitle}>
-            Waiting for other players to finish...
-          </p>
+          <p style={styles.waitingSubtitle}>Waiting for other players to finish...</p>
 
           <div style={styles.waitingStats}>
             <div style={styles.waitingStatItem}>
@@ -285,21 +233,15 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     );
   }
 
-  // ============================================================
-  // ✅ LOADING
-  // ============================================================
   if (!currentQuestion) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
-        <p style={{ fontWeight: 700, fontFamily: BRAND_FONT_DISPLAY, fontSize: '18px', color: palette.deepNavy }}>Loading question...</p>
+        <p style={{ fontWeight: 700, fontFamily: BRAND_FONT_DISPLAY, fontSize: '18px', color: palette.white }}>Loading question...</p>
       </div>
     );
   }
 
-  // ============================================================
-  // ✅ MAIN GAME SCREEN - FULL SIZE
-  // ============================================================
   return (
     <div style={styles.container}>
       <div style={styles.gameInner}>
@@ -319,7 +261,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           </div>
         </div>
 
-        {/* My Score Bar */}
+        {/* My Score Bar - DARK NAVY */}
         <div style={styles.scoreBar}>
           <div style={styles.scoreItem}>
             <span style={styles.scoreLabelSmall}>Score</span>
@@ -336,14 +278,12 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
         <div style={styles.progressBar}>
           <motion.div
             style={styles.progressFill}
-            animate={{
-              width: `${((currentQuestionIndex + 1) / session.totalQuestions) * 100}%`
-            }}
+            animate={{ width: `${((currentQuestionIndex + 1) / session.totalQuestions) * 100}%` }}
             transition={{ duration: 0.5 }}
           />
         </div>
 
-        {/* Question */}
+        {/* Question - DARK NAVY */}
         <motion.div
           key={currentQuestionIndex}
           initial={{ opacity: 0, y: -20 }}
@@ -353,7 +293,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* ✅ UPDATED: Options — 2x2 grid (A/B top, C/D bottom) */}
+        {/* Options - DARK NAVY */}
         <div className="live-options-grid" style={styles.optionsGrid}>
           {currentQuestion.options?.map((option, index) => {
             const isSelected = selectedAnswer === option;
@@ -364,7 +304,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
             return (
               <motion.button
                 key={index}
-                whileHover={!hasAnswered ? { scale: 1.02 } : {}}
+                whileHover={!hasAnswered ? { scale: 1.02, backgroundColor: palette.deepNavyLight } : {}}
                 whileTap={!hasAnswered ? { scale: 0.98 } : {}}
                 onClick={() => handleSelectAnswer(option)}
                 disabled={hasAnswered}
@@ -376,7 +316,11 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
                   cursor: hasAnswered ? 'default' : 'pointer',
                 }}
               >
-                <div style={styles.optionLabel}>
+                <div style={{
+                  ...styles.optionLabel,
+                  ...(showCorrect ? styles.optionLabelCorrect : {}),
+                  ...(showWrong ? styles.optionLabelWrong : {}),
+                }}>
                   {String.fromCharCode(65 + index)}
                 </div>
                 <div style={styles.optionText}>{option}</div>
@@ -387,7 +331,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           })}
         </div>
 
-        {/* Feedback */}
+        {/* Feedback - DARK NAVY */}
         <AnimatePresence>
           {feedback && (
             <motion.div
@@ -397,37 +341,33 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
               style={{
                 ...styles.feedbackBox,
                 background: feedback.isCorrect
-                  ? `${palette.softGreen}18`
+                  ? `rgba(127, 165, 116, 0.95)` // softGreen
                   : feedback.timeout
-                    ? `${palette.warmOrange}18`
-                    : `${palette.coral}18`,
-                borderColor: feedback.isCorrect
-                  ? `${palette.softGreen}80`
-                  : feedback.timeout
-                    ? `${palette.warmOrange}80`
-                    : `${palette.coral}80`
+                    ? `rgba(233, 160, 117, 0.95)` // warmOrange
+                    : `rgba(219, 122, 100, 0.95)`, // coral
+                borderColor: 'rgba(255, 255, 255, 0.5)'
               }}
             >
               {feedback.isCorrect ? (
                 <>
                   <div style={styles.feedbackIcon}>🎉</div>
-                  <div style={styles.feedbackTitle}>Correct!</div>
-                  <div style={styles.feedbackPoints}>+1 pt</div>
+                  <div style={{...styles.feedbackTitle, color: palette.white}}>Correct!</div>
+                  <div style={{...styles.feedbackPoints, color: palette.white}}>+1 pt</div>
                 </>
               ) : feedback.timeout ? (
                 <>
                   <div style={styles.feedbackIcon}>⏰</div>
-                  <div style={styles.feedbackTitle}>Time's up!</div>
-                  <div style={styles.feedbackPoints}>+0 pts</div>
+                  <div style={{...styles.feedbackTitle, color: palette.white}}>Time's up!</div>
+                  <div style={{...styles.feedbackPoints, color: palette.white}}>+0 pts</div>
                 </>
               ) : (
                 <>
                   <div style={styles.feedbackIcon}>😢</div>
-                  <div style={styles.feedbackTitle}>Wrong answer</div>
-                  <div style={styles.feedbackPoints}>+0 pts</div>
+                  <div style={{...styles.feedbackTitle, color: palette.white}}>Wrong answer</div>
+                  <div style={{...styles.feedbackPoints, color: palette.white}}>+0 pts</div>
                 </>
               )}
-              <div style={styles.feedbackWait}>
+              <div style={{...styles.feedbackWait, color: 'rgba(255,255,255,0.8)'}}>
                 {currentQuestionIndex + 1 >= session.totalQuestions
                   ? 'Finishing up...'
                   : 'Next question coming...'}
@@ -444,10 +384,14 @@ const styles = {
   container: {
     minHeight: '100vh',
     width: '100vw',
-    background: palette.cream,
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
     padding: 'clamp(16px, 3vw, 40px)',
     fontFamily: BRAND_FONT_BODY,
-    color: palette.deepNavy,
+    color: palette.white, 
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -470,13 +414,17 @@ const styles = {
     justifyContent: 'center',
     minHeight: '100vh',
     width: '100vw',
-    background: palette.cream,
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
   },
   spinner: {
     width: '56px',
     height: '56px',
-    border: `4px solid ${palette.border}`,
-    borderTop: `4px solid ${palette.warmOrange}`,
+    border: `4px solid rgba(255,255,255,0.3)`,
+    borderTop: `4px solid ${palette.white}`,
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '20px',
@@ -492,7 +440,8 @@ const styles = {
   },
   questionCounter: {
     fontSize: 'clamp(14px, 1.6vw, 20px)',
-    color: palette.bodyText,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
     margin: 0,
     fontWeight: 800,
     fontFamily: BRAND_FONT_DISPLAY,
@@ -505,8 +454,8 @@ const styles = {
     padding: 'clamp(10px, 1.4vw, 16px) clamp(16px, 2vw, 24px)',
     borderRadius: '16px',
     transition: 'background 0.3s',
-    boxShadow: `0 3px 0 ${palette.shadowMd}`,
-    border: `2px solid ${palette.white}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.15)`, 
+    border: `2px solid rgba(255,255,255,0.8)`,
     color: palette.white,
   },
   timerIcon: {
@@ -517,15 +466,16 @@ const styles = {
     fontWeight: '800',
     fontFamily: BRAND_FONT_DISPLAY,
   },
+  // ✅ SOLID DARK NAVY SCORE BAR
   scoreBar: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '18px',
     padding: 'clamp(12px, 1.8vw, 20px) clamp(20px, 3vw, 40px)',
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 6px 16px ${palette.shadow}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
   },
   scoreItem: {
     display: 'flex',
@@ -534,7 +484,7 @@ const styles = {
   },
   scoreLabelSmall: {
     fontSize: 'clamp(11px, 1.2vw, 14px)',
-    color: palette.bodyTextSoft,
+    color: palette.bodyTextSoft, // Mas light na text para sa label
     fontWeight: 800,
     textTransform: 'uppercase',
     letterSpacing: '1.5px',
@@ -545,34 +495,36 @@ const styles = {
     fontWeight: '800',
     marginTop: '4px',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white, 
   },
   divider: {
     width: '2px',
     height: 'clamp(30px, 4vw, 44px)',
-    background: palette.border,
+    background: palette.deepNavyLight,
   },
   progressBar: {
     width: '100%',
     height: 'clamp(8px, 1vw, 12px)',
-    background: palette.creamSoft,
+    background: palette.deepNavy,
     borderRadius: '6px',
     overflow: 'hidden',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 2px 4px rgba(0,0,0,0.2)`,
   },
   progressFill: {
     height: '100%',
     background: `linear-gradient(90deg, ${palette.softGreen}, ${palette.teal})`,
     borderRadius: '6px',
   },
+  // ✅ SOLID DARK NAVY QUESTION CARD
   questionCard: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '22px',
     padding: 'clamp(20px, 3vw, 40px)',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
     borderTop: `6px solid ${palette.teal}`,
     textAlign: 'center',
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
   },
   questionText: {
     fontSize: 'clamp(20px, 2.6vw, 32px)',
@@ -580,53 +532,53 @@ const styles = {
     margin: 0,
     lineHeight: 1.4,
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
     letterSpacing: '-0.3px',
   },
-  // ✅ UPDATED: 2x2 grid (A/B top, C/D bottom)
   optionsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
     gridAutoFlow: 'row',
     gap: 'clamp(10px, 1.6vw, 16px)',
   },
+  // ✅ SOLID DARK NAVY OPTIONS
   optionBtn: {
-    background: palette.white,
+    background: palette.deepNavy,
     padding: 'clamp(14px, 1.8vw, 22px) clamp(16px, 2vw, 26px)',
     borderRadius: '16px',
     display: 'flex',
     alignItems: 'center',
     gap: 'clamp(12px, 1.6vw, 18px)',
-    border: `1.5px solid ${palette.border}`,
-    color: palette.deepNavy,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    color: palette.white,
     textAlign: 'left',
     fontFamily: BRAND_FONT_BODY,
     fontSize: 'clamp(14px, 1.5vw, 18px)',
     fontWeight: '700',
     transition: 'all 0.2s',
-    boxShadow: `0 2px 0 ${palette.border}`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.2)`,
     minHeight: 'clamp(60px, 8vh, 90px)',
   },
   optionSelected: {
-    background: palette.creamSoft,
-    border: `2px solid ${palette.warmOrange}80`,
-    boxShadow: `0 2px 0 ${palette.warmOrange}40`,
+    background: palette.deepNavyLight,
+    border: `2px solid ${palette.warmOrange}`,
+    boxShadow: `0 4px 16px ${palette.warmOrange}40`,
   },
   optionCorrect: {
-    background: `${palette.softGreen}18`,
-    border: `2px solid ${palette.softGreen}80`,
-    boxShadow: `0 2px 0 ${palette.softGreen}40`,
+    background: `rgba(127, 165, 116, 0.3)`,
+    border: `2px solid ${palette.softGreen}`,
+    boxShadow: `0 4px 12px ${palette.softGreen}20`,
   },
   optionWrong: {
-    background: `${palette.coral}18`,
-    border: `2px solid ${palette.coral}80`,
-    boxShadow: `0 2px 0 ${palette.coral}40`,
+    background: `rgba(219, 122, 100, 0.3)`,
+    border: `2px solid ${palette.coral}`,
+    boxShadow: `0 4px 12px ${palette.coral}20`,
   },
   optionLabel: {
     width: 'clamp(36px, 4vw, 52px)',
     height: 'clamp(36px, 4vw, 52px)',
     borderRadius: '50%',
-    background: palette.creamSoft,
+    background: palette.deepNavyLight,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -634,8 +586,19 @@ const styles = {
     fontWeight: '800',
     flexShrink: 0,
     fontFamily: BRAND_FONT_DISPLAY,
-    border: `1.5px solid ${palette.border}`,
-    color: palette.deepNavy,
+    border: `1.5px solid #4A476B`,
+    color: palette.white,
+    transition: 'all 0.2s',
+  },
+  optionLabelCorrect: {
+    background: palette.softGreen,
+    color: palette.white,
+    border: `1.5px solid ${palette.softGreen}`,
+  },
+  optionLabelWrong: {
+    background: palette.coral,
+    color: palette.white,
+    border: `1.5px solid ${palette.coral}`,
   },
   optionText: {
     flex: 1,
@@ -643,32 +606,34 @@ const styles = {
   resultIcon: {
     fontSize: 'clamp(20px, 2.4vw, 28px)',
   },
+  // ✅ SOLID DARK NAVY FEEDBACK BOX
   feedbackBox: {
     borderRadius: '18px',
     padding: 'clamp(16px, 2vw, 24px)',
     textAlign: 'center',
     border: '2px solid',
+    boxShadow: `0 12px 32px rgba(0,0,0,0.3)`,
   },
   feedbackIcon: {
     fontSize: 'clamp(36px, 5vw, 52px)',
     marginBottom: '6px',
+    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
   },
   feedbackTitle: {
     fontSize: 'clamp(18px, 2.2vw, 26px)',
     fontWeight: '800',
     marginBottom: '4px',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   feedbackPoints: {
     fontSize: 'clamp(22px, 2.8vw, 32px)',
     fontWeight: '800',
-    color: palette.gold,
     fontFamily: BRAND_FONT_DISPLAY,
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   feedbackWait: {
     fontSize: 'clamp(12px, 1.2vw, 14px)',
-    color: palette.bodyTextSoft,
     marginTop: '8px',
     fontWeight: 700,
   },
@@ -693,25 +658,28 @@ const styles = {
     fontWeight: '800',
     margin: '0 0 12px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
     letterSpacing: '-0.5px',
   },
   waitingSubtitle: {
     fontSize: 'clamp(15px, 1.8vw, 22px)',
-    color: palette.bodyText,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
     margin: '0 0 40px 0',
     fontWeight: 600,
   },
+  // ✅ SOLID DARK NAVY WAITING STATS
   waitingStats: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '24px',
     padding: 'clamp(24px, 3vw, 44px) clamp(40px, 6vw, 80px)',
     display: 'flex',
     alignItems: 'center',
     gap: 'clamp(32px, 5vw, 64px)',
     marginBottom: '40px',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.3)`,
   },
   waitingStatItem: {
     textAlign: 'center',
@@ -734,7 +702,7 @@ const styles = {
   waitingStatDivider: {
     width: '2px',
     height: 'clamp(50px, 6vw, 80px)',
-    background: palette.border,
+    background: palette.deepNavyLight,
   },
   waitingSpinner: {
     display: 'flex',
@@ -746,7 +714,7 @@ const styles = {
     width: '16px',
     height: '16px',
     borderRadius: '50%',
-    background: palette.warmOrange,
+    background: palette.white,
     animation: 'pulse 1s ease-in-out infinite',
   },
 };
@@ -763,7 +731,6 @@ if (typeof document !== 'undefined' && !document.querySelector('#liveplayer-styl
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.3); opacity: 0.5; }
     }
-    /* ✅ UPDATED: Mobile fallback — stack options in single column */
     @media (max-width: 560px) {
       .live-options-grid {
         grid-template-columns: 1fr !important;

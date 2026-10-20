@@ -1,11 +1,6 @@
 // src/components/admin/LiveHostResults.jsx
 // ============================================================
-// ✅ TEACHER RESULTS - FIXED: Avatar faces visible in podium
-// ✅ FIXED: 1 correct = 1 point (not live game score)
-// ✅ UPDATED: Added Matrix Table, Summary Stats, Print Layout
-// ✅ FIXED: Robust per-question answers parsing (Q1, Q2...)
-// ✅ FIXED: Index-shift bug — now properly detects 0-indexed vs 1-indexed
-//           objects so the matrix matches the correct count
+// ✅ TEACHER RESULTS - FIXED PODIUM TEXT CLARITY + FULL BODY AVATARS
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -48,17 +43,10 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
-// ============================================================
-// ✅ Helper: Get the correct count (1 correct = 1 point)
-// ============================================================
 const getPoints = (player) => {
   return player?.correctAnswers || player?.correct || 0;
 };
 
-// ============================================================
-// ✅ Helper: Parse a single answer value into boolean
-// Handles: true, 1, "true", "1", { isCorrect: true }, { correct: true }
-// ============================================================
 const parseAnswerValue = (val) => {
   if (val === true || val === 1 || val === 'true' || val === '1') return true;
   if (val && typeof val === 'object') {
@@ -67,66 +55,25 @@ const parseAnswerValue = (val) => {
   return false;
 };
 
-// ============================================================
-// ✅ Helper: Get answer for a specific question number (q = 1, 2, 3...)
-//
-// ✅ FIX: Removed the ambiguous `q - 1` / `String(q - 1)` fallbacks
-//    that were causing an index-shift when the answers object was
-//    0-indexed (e.g., {0: false, 1: false, ..., 4: true}).
-//
-//    New strategy:
-//      1. Explicit Q-prefixed keys win first ({Q1: true, q1: true})
-//      2. Detect indexing style via presence of key "0"
-//         - Has "0" key → 0-indexed → look up q-1
-//         - No "0" key → 1-indexed → look up q
-//
-// Handles:
-//   - Arrays:                    [true, false, true, ...]
-//   - 1-indexed objects:         {Q1: true}, {q1: true}, {1: true}, {1: "true"}
-//   - 0-indexed objects:         {0: true, 1: false, ...}
-// ============================================================
 const getAnswerForQuestion = (answers, q) => {
   if (!answers) return false;
-
-  // -------- Format 1: Array of booleans (0-indexed) --------
-  if (Array.isArray(answers)) {
-    return parseAnswerValue(answers[q - 1]);
-  }
-
+  if (Array.isArray(answers)) return parseAnswerValue(answers[q - 1]);
   if (typeof answers !== 'object') return false;
+  if (Object.prototype.hasOwnProperty.call(answers, `Q${q}`)) return parseAnswerValue(answers[`Q${q}`]);
+  if (Object.prototype.hasOwnProperty.call(answers, `q${q}`)) return parseAnswerValue(answers[`q${q}`]);
 
-  // -------- Format 2a: Explicit Q-prefixed keys (unambiguous) --------
-  if (Object.prototype.hasOwnProperty.call(answers, `Q${q}`)) {
-    return parseAnswerValue(answers[`Q${q}`]);
-  }
-  if (Object.prototype.hasOwnProperty.call(answers, `q${q}`)) {
-    return parseAnswerValue(answers[`q${q}`]);
-  }
-
-  // -------- Format 2b: Detect 0-indexed vs 1-indexed numeric keys --------
   const hasZeroKey =
     Object.prototype.hasOwnProperty.call(answers, 0) ||
     Object.prototype.hasOwnProperty.call(answers, '0');
 
   if (hasZeroKey) {
-    // 0-indexed object: {0: ..., 1: ..., 2: ..., 3: ..., 4: ...}
-    if (Object.prototype.hasOwnProperty.call(answers, q - 1)) {
-      return parseAnswerValue(answers[q - 1]);
-    }
-    if (Object.prototype.hasOwnProperty.call(answers, String(q - 1))) {
-      return parseAnswerValue(answers[String(q - 1)]);
-    }
+    if (Object.prototype.hasOwnProperty.call(answers, q - 1)) return parseAnswerValue(answers[q - 1]);
+    if (Object.prototype.hasOwnProperty.call(answers, String(q - 1))) return parseAnswerValue(answers[String(q - 1)]);
     return false;
   }
 
-  // 1-indexed numeric keys: {1: ..., 2: ..., 3: ..., 4: ..., 5: ...}
-  if (Object.prototype.hasOwnProperty.call(answers, q)) {
-    return parseAnswerValue(answers[q]);
-  }
-  if (Object.prototype.hasOwnProperty.call(answers, String(q))) {
-    return parseAnswerValue(answers[String(q)]);
-  }
-
+  if (Object.prototype.hasOwnProperty.call(answers, q)) return parseAnswerValue(answers[q]);
+  if (Object.prototype.hasOwnProperty.call(answers, String(q))) return parseAnswerValue(answers[String(q)]);
   return false;
 };
 
@@ -148,9 +95,6 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
   const podiumPlayers = rankedPlayers.slice(0, 3);
   const otherPlayers = rankedPlayers.slice(3);
 
-  // ============================================================
-  // ✅ SUMMARY STATS (Average, Highest, Lowest)
-  // ============================================================
   const summaryStats = React.useMemo(() => {
     if (players.length === 0) return { average: 0, highest: 0, lowest: 0 };
     const scores = players.map(p => getPoints(p));
@@ -173,15 +117,11 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
     window.print();
   };
 
-  // Generate array for Q1 to Q20 (or however many total questions)
   const questionNumbers = Array.from({ length: totalQ }, (_, i) => i + 1);
-
-  // ✅ Check if at least one player has answers data (for warning banner)
   const hasAnyAnswersData = players.some(p => p?.answers && Object.keys(p.answers || {}).length > 0);
 
   return (
     <div style={styles.container}>
-      {/* ✅ PRINT CSS - This will adjust the layout when Print is clicked */}
       <style>
         {`
           @media print {
@@ -200,10 +140,8 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
         `}
       </style>
 
-      {/* Confetti background */}
       <div style={styles.confettiBg} className="no-print"></div>
 
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -214,9 +152,6 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
         <p style={styles.subtitle}>{session?.activityTitle}</p>
       </motion.div>
 
-      {/* ============================================================
-          PRINT HEADER (Only visible when printing)
-          ============================================================ */}
       <div className="print-only" style={{ display: 'none', marginBottom: '20px' }}>
         <h1 style={{ fontSize: '24px', margin: '0 0 10px 0' }}>Quiz Report: {session?.activityTitle}</h1>
         <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
@@ -229,11 +164,7 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
         </div>
       </div>
 
-      {/* ============================================================
-          ON-SCREEN PODIUM & LEADERBOARD (Hidden when printing)
-          ============================================================ */}
-      <div className="no-print">
-        {/* Podium */}
+      <div style={styles.contentWrapper} className="no-print">
         <div style={styles.podiumSection}>
           {podiumPlayers[1] && (
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} style={{ ...styles.podiumCard, ...styles.podium2nd }}>
@@ -267,7 +198,6 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
           )}
         </div>
 
-        {/* Leaderboard */}
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} style={styles.leaderboardSection}>
           <h2 style={styles.leaderboardTitle}>📊 Full Leaderboard</h2>
           <div style={styles.leaderboardList}>
@@ -288,26 +218,12 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
         </motion.div>
       </div>
 
-      {/* ============================================================
-          MATRIX TABLE (This is what appears in Print)
-          ============================================================ */}
       {totalQ > 0 && (
         <div style={styles.matrixSection} className="print-only">
           <h2 style={styles.matrixTitle} className="no-print">📋 Question Breakdown (Matrix)</h2>
 
-          {/* ✅ Warning if no per-question answers data */}
           {!hasAnyAnswersData && (
-            <div style={{
-              marginBottom: '12px',
-              padding: '10px 14px',
-              background: palette.dangerSoft,
-              border: `1.5px solid ${palette.danger}40`,
-              borderRadius: '10px',
-              color: palette.danger,
-              fontSize: '12px',
-              fontWeight: 700,
-              fontFamily: BRAND_FONT_BODY,
-            }}>
+            <div style={{ marginBottom: '12px', padding: '10px 14px', background: `rgba(224, 91, 91, 0.15)`, border: `1.5px solid ${palette.danger}`, borderRadius: '10px', color: palette.danger, fontSize: '12px', fontWeight: 700, fontFamily: BRAND_FONT_BODY }}>
               ⚠️ Warning: No per-question answers data found for this session. The matrix will show all as incorrect. Please ensure the game saves each player's answers during the quiz.
             </div>
           )}
@@ -319,9 +235,7 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
                   <th style={styles.th}>Rank</th>
                   <th style={{...styles.th, textAlign: 'left'}}>Student Name</th>
                   <th style={styles.th}>Score</th>
-                  {questionNumbers.map(q => (
-                    <th key={`Q${q}`} style={styles.th}>Q{q}</th>
-                  ))}
+                  {questionNumbers.map(q => <th key={`Q${q}`} style={styles.th}>Q{q}</th>)}
                   <th style={styles.th}>Correct</th>
                   <th style={styles.th}>Incorrect</th>
                 </tr>
@@ -330,7 +244,6 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
                 {rankedPlayers.map((player, index) => {
                   const correct = getPoints(player);
                   const incorrect = totalQ - correct;
-                  // ✅ Look up original player from `players` array to get the freshest answers data
                   const originalPlayer = players.find(p => p.userId === player.userId);
                   const answersSource = originalPlayer?.answers || player?.answers;
 
@@ -340,7 +253,6 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
                       <td style={{...styles.td, textAlign: 'left', fontWeight: 'bold'}}>{player.name}</td>
                       <td style={styles.td}>{correct}/{totalQ}</td>
                       {questionNumbers.map(q => {
-                        // ✅ FIX: Use flexible parser that handles arrays, {Q1: true}, {1: true}, {0: true}, etc.
                         const isCorrect = getAnswerForQuestion(answersSource, q);
                         return (
                           <td key={`Q${q}`} style={styles.td}>
@@ -359,14 +271,9 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
         </div>
       )}
 
-      {/* Actions */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} style={styles.actions} className="no-print">
-        <button onClick={handlePrint} style={styles.printBtn}>
-          🖨️ Print Scores
-        </button>
-        <button onClick={handleBackToDashboard} style={styles.backBtn}>
-          🏠 Back to Dashboard
-        </button>
+        <button onClick={handlePrint} style={styles.printBtn}>🖨️ Print Scores</button>
+        <button onClick={handleBackToDashboard} style={styles.backBtn}>🏠 Back to Dashboard</button>
       </motion.div>
     </div>
   );
@@ -374,61 +281,113 @@ const LiveHostResults = ({ session: initialSession, onPlayAgain, onBackToDashboa
 
 const styles = {
   container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '24px',
-    fontFamily: BRAND_FONT_BODY,
+    width: '100vw',
     minHeight: '100vh',
-    background: palette.cream,
-    color: palette.deepNavy,
+    padding: '24px clamp(16px, 3vw, 40px)',
+    fontFamily: BRAND_FONT_BODY,
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
+    color: palette.white, 
     position: 'relative',
-    overflow: 'hidden',
+    overflowX: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center', 
   },
   confettiBg: {
     position: 'absolute',
     inset: 0,
-    background: `radial-gradient(circle at 20% 30%, ${palette.warmOrange}10 0%, transparent 50%), radial-gradient(circle at 80% 70%, ${palette.teal}10 0%, transparent 50%)`,
+    background: `radial-gradient(circle at 20% 30%, ${palette.warmOrange}05 0%, transparent 50%), radial-gradient(circle at 80% 70%, ${palette.teal}05 0%, transparent 50%)`,
     pointerEvents: 'none',
   },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: '1200px',
+    display: 'flex',
+    flexDirection: 'column',
+  },
   header: { textAlign: 'center', marginBottom: '40px', position: 'relative', zIndex: 1 },
-  title: { fontSize: '48px', fontWeight: '800', margin: '0 0 8px 0', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy, letterSpacing: '-0.5px' },
-  subtitle: { fontSize: '18px', color: palette.bodyTextSoft, margin: 0, fontWeight: 600 },
-  podiumSection: { display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: '20px', marginBottom: '40px', position: 'relative', zIndex: 1, flexWrap: 'wrap' },
-  podiumCard: { background: palette.white, border: `1.5px solid ${palette.border}`, borderRadius: '24px', padding: '24px 20px', textAlign: 'center', minWidth: '180px', boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}` },
-  podium1st: { padding: '32px 24px', background: `${palette.gold}12`, borderColor: `${palette.gold}66`, boxShadow: `0 2px 0 ${palette.gold}40, 0 12px 32px ${palette.shadowMd}` },
-  podium2nd: { background: `${palette.silver}12`, borderColor: `${palette.silver}66` },
-  podium3rd: { background: `${palette.bronze}12`, borderColor: `${palette.bronze}66` },
+  title: { fontSize: '48px', fontWeight: '800', margin: '0 0 8px 0', fontFamily: BRAND_FONT_DISPLAY, color: palette.white, letterSpacing: '-0.5px', textShadow: '0 4px 12px rgba(0,0,0,0.3)' },
+  subtitle: { fontSize: '18px', color: palette.white, margin: 0, fontWeight: 600, textShadow: '0 2px 6px rgba(0,0,0,0.3)' },
+  
+  podiumSection: { display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: '20px', marginBottom: '40px', position: 'relative', zIndex: 1, flexWrap: 'wrap', width: '100%' },
+  podiumCard: { background: palette.deepNavy, border: `1.5px solid ${palette.deepNavyLight}`, borderRadius: '24px', padding: '24px 20px', textAlign: 'center', minWidth: '180px', boxShadow: `0 12px 32px rgba(0,0,0,0.3)` },
+  podium1st: { padding: '32px 24px', borderColor: `${palette.gold}`, borderWidth: '3px', boxShadow: `0 12px 32px rgba(0,0,0,0.4)` },
+  podium2nd: { borderColor: `${palette.silver}`, borderWidth: '3px' },
+  podium3rd: { borderColor: `${palette.bronze}`, borderWidth: '3px' },
+  
   podiumRank: { fontSize: '48px', marginBottom: '12px' },
-  podiumAvatar: { width: '80px', height: '80px', borderRadius: '50%', background: palette.creamSoft, overflow: 'hidden', margin: '0 auto 12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', position: 'relative', border: `1.5px solid ${palette.border}` },
-  podiumAvatarImg: { width: '100%', height: '130%', objectFit: 'cover', objectPosition: 'center 15%', position: 'absolute', top: '0', left: '50%', transform: 'translateX(-50%)' },
-  podiumAvatarEmoji: { fontSize: '40px', marginTop: '16px' },
-  podiumName: { fontSize: '18px', fontWeight: '800', marginBottom: '4px', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy },
-  podiumScore: { fontSize: '20px', fontWeight: '800', color: palette.gold, fontFamily: BRAND_FONT_DISPLAY },
-  leaderboardSection: { background: palette.white, borderRadius: '20px', padding: '24px', marginBottom: '24px', border: `1.5px solid ${palette.border}`, boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`, position: 'relative', zIndex: 1 },
-  leaderboardTitle: { fontSize: '20px', fontWeight: '800', margin: '0 0 20px 0', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy, letterSpacing: '-0.3px' },
+  
+  // ✅ FULL BODY AVATAR (PODIUM)
+  podiumAvatar: { 
+    width: '90px', 
+    height: '120px', 
+    borderRadius: '16px', 
+    background: palette.creamSoft, 
+    overflow: 'hidden', 
+    margin: '0 auto 12px', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    border: `1.5px solid ${palette.warmOrange}80` 
+  },
+  podiumAvatarImg: { 
+    width: '100%', 
+    height: '100%', 
+    objectFit: 'contain', 
+    padding: '4px' 
+  },
+  
+  podiumAvatarEmoji: { fontSize: '40px' },
+  podiumName: { fontSize: '18px', fontWeight: '800', marginBottom: '4px', fontFamily: BRAND_FONT_DISPLAY, color: palette.white },
+  podiumScore: { fontSize: '20px', fontWeight: '800', color: palette.white, fontFamily: BRAND_FONT_DISPLAY, textShadow: '0 2px 4px rgba(0,0,0,0.3)' },
+  
+  leaderboardSection: { background: palette.deepNavy, borderRadius: '20px', padding: '24px', marginBottom: '24px', border: `1.5px solid ${palette.deepNavyLight}`, boxShadow: `0 12px 32px rgba(0,0,0,0.3)`, position: 'relative', zIndex: 1, width: '100%' },
+  leaderboardTitle: { fontSize: '20px', fontWeight: '800', margin: '0 0 20px 0', fontFamily: BRAND_FONT_DISPLAY, color: palette.white, letterSpacing: '-0.3px' },
   leaderboardList: { display: 'flex', flexDirection: 'column', gap: '10px' },
-  leaderboardItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: palette.creamSoft, borderRadius: '12px', border: `1.5px solid ${palette.border}`, boxShadow: `0 2px 0 ${palette.border}` },
-  rankBadge: { fontSize: '18px', fontWeight: '800', width: '40px', textAlign: 'center', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy },
-  playerAvatarSmall: { width: '40px', height: '40px', borderRadius: '50%', background: palette.white, overflow: 'hidden', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flexShrink: 0, position: 'relative', border: `1.5px solid ${palette.border}` },
-  avatarImgSmall: { width: '100%', height: '130%', objectFit: 'cover', objectPosition: 'center 15%', position: 'absolute', top: '0', left: '50%', transform: 'translateX(-50%)' },
-  avatarEmojiSmall: { fontSize: '20px', marginTop: '8px' },
-  playerName: { flex: 1, fontSize: '15px', fontWeight: '700', fontFamily: BRAND_FONT_BODY, color: palette.deepNavy },
+  leaderboardItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: palette.deepNavyLight, borderRadius: '12px', border: `1.5px solid #4A476B`, boxShadow: `0 4px 12px rgba(0,0,0,0.2)` },
+  rankBadge: { fontSize: '18px', fontWeight: '800', width: '40px', textAlign: 'center', fontFamily: BRAND_FONT_DISPLAY, color: palette.white },
+  
+  // ✅ FULL BODY AVATAR (LEADERBOARD)
+  playerAvatarSmall: { 
+    width: '36px', 
+    height: '48px', 
+    borderRadius: '8px', 
+    background: palette.creamSoft, 
+    overflow: 'hidden', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    flexShrink: 0, 
+    border: `1.5px solid ${palette.warmOrange}80` 
+  },
+  avatarImgSmall: { 
+    width: '100%', 
+    height: '100%', 
+    objectFit: 'contain', 
+    padding: '2px' 
+  },
+  
+  avatarEmojiSmall: { fontSize: '20px' },
+  playerName: { flex: 1, fontSize: '15px', fontWeight: '700', fontFamily: BRAND_FONT_BODY, color: palette.white },
   playerStats: { display: 'flex', gap: '16px', alignItems: 'center' },
   statItem: { fontSize: '13px', color: palette.bodyTextSoft, fontWeight: 600 },
   statPoints: { fontSize: '16px', fontWeight: '800', color: palette.gold, fontFamily: BRAND_FONT_DISPLAY },
 
-  // MATRIX STYLES
-  matrixSection: { background: palette.white, borderRadius: '20px', padding: '24px', marginBottom: '24px', border: `1.5px solid ${palette.border}`, boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`, position: 'relative', zIndex: 1 },
-  matrixTitle: { fontSize: '20px', fontWeight: '800', margin: '0 0 20px 0', fontFamily: BRAND_FONT_DISPLAY, color: palette.deepNavy, letterSpacing: '-0.3px' },
+  matrixSection: { background: palette.deepNavy, borderRadius: '20px', padding: '24px', marginBottom: '24px', border: `1.5px solid ${palette.deepNavyLight}`, boxShadow: `0 12px 32px rgba(0,0,0,0.3)`, position: 'relative', zIndex: 1, width: '100%', maxWidth: '1200px' },
+  matrixTitle: { fontSize: '20px', fontWeight: '800', margin: '0 0 20px 0', fontFamily: BRAND_FONT_DISPLAY, color: palette.white, letterSpacing: '-0.3px' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: BRAND_FONT_BODY },
-  th: { background: palette.creamSoft, color: palette.deepNavy, padding: '10px 8px', border: `1.5px solid ${palette.border}`, fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' },
-  td: { padding: '8px', border: `1.5px solid ${palette.border}`, textAlign: 'center', color: palette.deepNavy },
-  trEven: { background: palette.white },
-  trOdd: { background: palette.cream },
+  th: { background: palette.deepNavyLight, color: palette.white, padding: '10px 8px', border: `1.5px solid #4A476B`, fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' },
+  td: { padding: '8px', border: `1.5px solid #4A476B`, textAlign: 'center', color: palette.white },
+  trEven: { background: 'transparent' },
+  trOdd: { background: 'rgba(255,255,255,0.03)' },
 
   actions: { display: 'flex', justifyContent: 'center', gap: '16px', position: 'relative', zIndex: 1 },
-  printBtn: { padding: '16px 40px', background: palette.teal, color: palette.white, border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', fontFamily: BRAND_FONT_DISPLAY, transition: 'all 0.15s ease', boxShadow: `0 4px 0 ${palette.tealShadow}`, letterSpacing: '0.04em', textTransform: 'uppercase' },
-  backBtn: { padding: '16px 40px', background: palette.warmOrange, color: palette.white, border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', fontFamily: BRAND_FONT_DISPLAY, transition: 'all 0.15s ease', boxShadow: `0 4px 0 ${palette.warmOrangeShadow}`, letterSpacing: '0.04em', textTransform: 'uppercase' },
+  printBtn: { padding: '16px 40px', background: palette.teal, color: palette.white, border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', fontFamily: BRAND_FONT_DISPLAY, transition: 'all 0.15s ease', boxShadow: `0 4px 0 ${palette.tealShadow}, 0 8px 24px rgba(0,0,0,0.2)`, letterSpacing: '0.04em', textTransform: 'uppercase' },
+  backBtn: { padding: '16px 40px', background: palette.warmOrange, color: palette.white, border: 'none', borderRadius: '16px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', fontFamily: BRAND_FONT_DISPLAY, transition: 'all 0.15s ease', boxShadow: `0 4px 0 ${palette.warmOrangeShadow}, 0 8px 24px rgba(0,0,0,0.2)`, letterSpacing: '0.04em', textTransform: 'uppercase' },
 };
 
 export default LiveHostResults;

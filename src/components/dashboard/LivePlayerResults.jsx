@@ -1,7 +1,7 @@
 // src/components/dashboard/LivePlayerResults.jsx
 // ============================================================
 // ✅ STUDENT RESULTS - FULL SIZE
-// ✅ FIXED: 1 correct = 1 point (not live game score)
+// ✅ UPDATED: Solid Dark Navy Containers + Full Body Avatars
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -78,7 +78,7 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        {/* My Result Card - FULL WIDTH */}
+        {/* My Result Card - DARK NAVY */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -89,6 +89,7 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
           <h1 style={styles.rankMessage}>{getRankMessage(myRank, totalPlayers)}</h1>
           <p style={styles.rankText}>You ranked #{myRank} out of {totalPlayers}</p>
 
+          {/* ✅ FULL BODY AVATAR (MAIN CARD) */}
           <div style={styles.myAvatarWrapper}>
             {myPlayer?.avatarImage ? (
               <img
@@ -105,7 +106,6 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
 
           <div style={styles.myStats}>
             <div style={styles.statBox}>
-              {/* ✅ FIXED: 1 correct = 1 point */}
               <div style={styles.statValue}>{getCorrectCount(myPlayer)}</div>
               <div style={styles.statLabel}>Points</div>
             </div>
@@ -126,7 +126,7 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
           </div>
         </motion.div>
 
-        {/* Top 3 - FULL WIDTH */}
+        {/* Leaderboard - DARK NAVY */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -144,6 +144,8 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
                 }}
               >
                 <div style={styles.topRank}>{getMedal(player.rank)}</div>
+                
+                {/* ✅ FULL BODY AVATAR (LEADERBOARD LIST) */}
                 <div style={styles.topAvatarWrapper}>
                   {player.avatarImage ? (
                     <img
@@ -155,12 +157,12 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
                     <span style={styles.topAvatarEmoji}>👤</span>
                   )}
                 </div>
+
                 <div style={styles.topName}>
                   {player.name}
                   {player.userId === playerId && <span style={styles.youTag}> (You)</span>}
                 </div>
                 <div style={styles.topScore}>
-                  {/* ✅ FIXED: 1 correct = 1 point */}
                   {getCorrectCount(player)} pts
                 </div>
               </div>
@@ -189,10 +191,14 @@ const styles = {
   container: {
     minHeight: '100vh',
     width: '100vw',
-    background: palette.cream,
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
     padding: 'clamp(16px, 3vw, 40px)',
     fontFamily: BRAND_FONT_BODY,
-    color: palette.deepNavy,
+    color: palette.white,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -206,69 +212,66 @@ const styles = {
     gap: 'clamp(16px, 2vw, 28px)',
   },
   myResultCard: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '28px',
     padding: 'clamp(28px, 4vw, 56px) clamp(20px, 4vw, 60px)',
     textAlign: 'center',
     width: '100%',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
     borderTop: `6px solid ${palette.warmOrange}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 12px 32px ${palette.shadow}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
   },
   medalBig: {
     fontSize: 'clamp(64px, 9vw, 110px)',
     marginBottom: '12px',
-    filter: 'drop-shadow(0 4px 12px rgba(42, 40, 69, 0.25))',
+    filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))',
   },
   rankMessage: {
     fontSize: 'clamp(26px, 3.6vw, 44px)',
     fontWeight: '800',
     margin: '0 0 8px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
     letterSpacing: '-0.5px',
   },
   rankText: {
     fontSize: 'clamp(14px, 1.6vw, 20px)',
-    color: palette.bodyText,
+    color: palette.bodyTextSoft,
     margin: '0 0 28px 0',
     fontWeight: 700,
     fontFamily: BRAND_FONT_BODY,
   },
+  
+  // ✅ BAGONG FULL BODY AVATAR (MAIN)
   myAvatarWrapper: {
-    width: 'clamp(110px, 15vw, 160px)',
-    height: 'clamp(110px, 15vw, 160px)',
-    borderRadius: '50%',
+    width: 'clamp(110px, 15vw, 140px)', // Mas maliit ng konti sa lapad
+    height: 'clamp(130px, 18vw, 170px)', // Mas mataas para magkasya buong katawan
+    borderRadius: '24px', // Rounded rectangle
     background: palette.creamSoft,
     overflow: 'hidden',
     margin: '0 auto 16px',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center', // Center alignment
     justifyContent: 'center',
     border: `3px solid ${palette.warmOrange}80`,
-    position: 'relative',
-    boxShadow: `0 8px 24px ${palette.shadowMd}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.3)`,
   },
   myAvatarImg: {
     width: '100%',
-    height: '130%',
-    objectFit: 'cover',
-    objectPosition: 'center 15%',
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    height: '100%',
+    objectFit: 'contain', // ✅ ITO ANG NAGPAPAKITA NG BUONG KATAWAN
+    padding: '8px',
   },
   myAvatarEmoji: {
     fontSize: 'clamp(52px, 7vw, 80px)',
-    marginTop: '20px',
   },
+  
   myName: {
     fontSize: 'clamp(22px, 2.6vw, 32px)',
     fontWeight: '800',
     margin: '0 0 24px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
   myStats: {
     display: 'grid',
@@ -276,11 +279,11 @@ const styles = {
     gap: 'clamp(10px, 1.6vw, 20px)',
   },
   statBox: {
-    background: palette.creamSoft,
+    background: palette.deepNavyLight,
     borderRadius: '16px',
     padding: 'clamp(14px, 1.8vw, 22px) clamp(10px, 1.5vw, 18px)',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.2)`,
   },
   statValue: {
     fontSize: 'clamp(22px, 2.8vw, 34px)',
@@ -298,19 +301,19 @@ const styles = {
     marginTop: '4px',
   },
   topSection: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '24px',
     padding: 'clamp(20px, 3vw, 36px)',
     width: '100%',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
   },
   sectionTitle: {
     fontSize: 'clamp(16px, 1.8vw, 24px)',
     fontWeight: '800',
     margin: '0 0 18px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
     letterSpacing: '-0.3px',
   },
   topList: {
@@ -323,15 +326,15 @@ const styles = {
     alignItems: 'center',
     gap: 'clamp(10px, 1.5vw, 18px)',
     padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 24px)',
-    background: palette.creamSoft,
+    background: palette.deepNavyLight,
     borderRadius: '16px',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 2px 8px rgba(0,0,0,0.2)`,
   },
   topItemMe: {
-    background: `${palette.softGreen}15`,
-    border: `2px solid ${palette.softGreen}80`,
-    boxShadow: `0 2px 0 ${palette.softGreen}40`,
+    background: `rgba(127, 165, 116, 0.2)`,
+    border: `2px solid ${palette.softGreen}`,
+    boxShadow: `0 2px 12px ${palette.softGreen}40`,
   },
   topRank: {
     fontSize: 'clamp(20px, 2.4vw, 30px)',
@@ -339,41 +342,38 @@ const styles = {
     width: 'clamp(36px, 4vw, 56px)',
     textAlign: 'center',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
+  
+  // ✅ BAGONG FULL BODY AVATAR (LEADERBOARD LIST)
   topAvatarWrapper: {
-    width: 'clamp(40px, 5vw, 60px)',
-    height: 'clamp(40px, 5vw, 60px)',
-    borderRadius: '50%',
+    width: 'clamp(36px, 4.5vw, 48px)', // Mas maliit ng konti sa lapad
+    height: 'clamp(44px, 5.5vw, 60px)', // Mas mataas
+    borderRadius: '10px', // Rounded rectangle
     background: palette.creamSoft,
     overflow: 'hidden',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    position: 'relative',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.warmOrange}80`,
   },
   topAvatarImg: {
     width: '100%',
-    height: '130%',
-    objectFit: 'cover',
-    objectPosition: 'center 15%',
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    height: '100%',
+    objectFit: 'contain', // ✅ ITO ANG NAGPAPAKITA NG BUONG KATAWAN
+    padding: '2px',
   },
   topAvatarEmoji: {
     fontSize: 'clamp(20px, 2.4vw, 30px)',
-    marginTop: '8px',
   },
+  
   topName: {
     flex: 1,
     fontSize: 'clamp(14px, 1.5vw, 18px)',
     fontWeight: '700',
     fontFamily: BRAND_FONT_BODY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
   youTag: {
     color: palette.softGreen,
@@ -397,7 +397,7 @@ const styles = {
     cursor: 'pointer',
     fontFamily: BRAND_FONT_DISPLAY,
     transition: 'all 0.2s',
-    boxShadow: `0 4px 0 ${palette.warmOrangeShadow}`,
+    boxShadow: `0 4px 0 ${palette.warmOrangeShadow}, 0 8px 24px rgba(0,0,0,0.2)`,
     letterSpacing: '0.5px',
     alignSelf: 'center',
     width: '100%',

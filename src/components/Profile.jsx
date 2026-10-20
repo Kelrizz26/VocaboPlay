@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../pages/firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, linkWithCredential, sendPasswordResetEmail } from 'firebase/auth';
 import sound from '../utils/soundEffects';
 import { colors, fontFamily } from './dashboard/dashboardStyles';
 import { AVATAR_SHOP_ITEMS, RARITY_CONFIG, DEFAULT_AVATAR_ID } from '../data/avatarShop';
@@ -115,11 +114,8 @@ const Profile = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
-  const [hasPassword, setHasPassword] = useState(false);
-
   const [equippedAvatarId, setEquippedAvatarId] = useState(DEFAULT_AVATAR_ID);
   const [ownedAvatars, setOwnedAvatars] = useState([]);
   const [pendingEquipId, setPendingEquipId] = useState(null);
@@ -127,11 +123,13 @@ const Profile = ({ onBack }) => {
   const [formData, setFormData] = useState({
     displayName: '', username: '', bio: '', email: '', phone: '', location: '', website: '',
     socialLinks: { twitter: '', instagram: '', linkedin: '' },
-    settings: { emailNotifications: true, darkMode: false, language: 'en' }
-  });
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '', newPassword: '', confirmPassword: ''
+    settings: { 
+      emailNotifications: true, 
+      soundEffects: true, // ✅ Pinalitan ang darkMode
+      language: 'en',
+      dailyGoal: 10,
+      studyReminder: false
+    }
   });
 
   useEffect(() => { loadUserProfile(); }, []);
@@ -162,11 +160,6 @@ const Profile = ({ onBack }) => {
         return;
       }
 
-      // ✅ MAS TAMANG PARAAN PARA I-CHECK KUNG MAY PASSWORD
-      const providers = user.providerData.map(p => p.providerId);
-      const userHasPassword = providers.includes('password');
-      setHasPassword(userHasPassword);
-
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
 
@@ -181,8 +174,22 @@ const Profile = ({ onBack }) => {
         const allOwned = [...new Set([...owned, ...freeAvatarIds])];
         setOwnedAvatars(allOwned);
 
-        const updatedProfile = { ...firestoreData, uid: user.uid, email: user.email };
+        // ✅ KUNIN ANG MGA STATS MULA SA LOCALSTORAGE PARA GUMANA ANG STREAK
+        const savedProgress = localStorage.getItem('vocaboplay_progress');
+        const progress = savedProgress ? JSON.parse(savedProgress) : {};
+
+        const updatedProfile = { 
+          ...firestoreData, 
+          uid: user.uid, 
+          email: user.email,
+          wordsLearned: progress.wordsLearned || 0,
+          gamesPlayed: progress.gamesPlayed || 0,
+          streak: progress.streak || 0,
+          totalPoints: progress.totalPoints || 0,
+          level: progress.level || 1
+        };
         setUserProfile(updatedProfile);
+        
         setFormData({
           displayName: firestoreData.displayName || '',
           username: firestoreData.username || '',
@@ -192,7 +199,13 @@ const Profile = ({ onBack }) => {
           location: firestoreData.location || '',
           website: firestoreData.website || '',
           socialLinks: firestoreData.socialLinks || { twitter: '', instagram: '', linkedin: '' },
-          settings: firestoreData.settings || { emailNotifications: true, darkMode: false, language: 'en' }
+          settings: { 
+            emailNotifications: firestoreData.settings?.emailNotifications ?? true,
+            soundEffects: firestoreData.settings?.soundEffects ?? true, // ✅ Pinalitan ang darkMode
+            language: firestoreData.settings?.language ?? 'en',
+            dailyGoal: firestoreData.settings?.dailyGoal ?? 10,
+            studyReminder: firestoreData.settings?.studyReminder ?? false
+          }
         });
 
         localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
@@ -209,59 +222,6 @@ const Profile = ({ onBack }) => {
   const handleInputChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   const handleSocialChange = (platform, value) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, [platform]: value } }));
   const handleSettingChange = (setting, value) => setFormData(prev => ({ ...prev, settings: { ...prev.settings, [setting]: value } }));
-  const handlePasswordChange = (e) => setPasswordData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
-  // ✅ BAGONG UPDATE PASSWORD HANDLER NA MAY DETALYADONG ERROR
-  const updatePasswordHandler = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage({ type: 'error', text: 'New passwords do not match' });
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
-      return;
-    }
-    if (hasPassword && !passwordData.currentPassword) {
-      setMessage({ type: 'error', text: 'Please enter your current password.' });
-      return;
-    }
-
-    setSaving(true);
-    setMessage({ type: '', text: '' });
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('No user logged in');
-
-      if (hasPassword) {
-        // === EMAIL/PASSWORD USER ===
-        const credential = EmailAuthProvider.credential(user.email, passwordData.currentPassword);
-        await reauthenticateWithCredential(user, credential);
-        await updatePassword(user, passwordData.newPassword);
-        setMessage({ type: 'success', text: 'Password updated successfully' });
-      } else {
-        // === GOOGLE USER NA WALANG PASSWORD ===
-        const credential = EmailAuthProvider.credential(user.email, passwordData.newPassword);
-        await linkWithCredential(user, credential);
-        setHasPassword(true);
-        setMessage({ type: 'success', text: 'Password set successfully! You can now log in using your email and password.' });
-      }
-      setShowPasswordChange(false);
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error) {
-      console.error('Error updating password:', error);
-      if (error.code === 'auth/requires-recent-login') {
-        setMessage({ type: 'error', text: 'Please log out and log in again before changing your password.' });
-      } else if (error.code === 'auth/too-many-requests') {
-        setMessage({ type: 'error', text: 'Too many attempts. Please wait 30 minutes and try again.' });
-      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        setMessage({ type: 'error', text: 'Incorrect current password. If you forgot it, use the "Forgot Password?" link on the login page.' });
-      } else {
-        setMessage({ type: 'error', text: 'Failed to update password. Please try again.' });
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleSelectAvatar = (avatarId) => {
     if (!ownedAvatars.includes(avatarId)) {
@@ -523,57 +483,75 @@ const Profile = ({ onBack }) => {
               <label style={styles.label}>Email Notifications</label>
               {editMode ? <label style={styles.checkboxLabel}><input type="checkbox" checked={formData.settings.emailNotifications} onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)} style={{ accentColor: palette.warmOrange, width: 16, height: 16 }} /> Receive notifications</label> : <p style={{ ...styles.infoValue, ...(formData.settings.emailNotifications ? styles.pillOn : styles.pillOff) }}>{formData.settings.emailNotifications ? 'Enabled' : 'Disabled'}</p>}
             </div>
+            
+            {/* ✅ PINALITAN NA ANG DARK MODE NG SOUND EFFECTS */}
             <div style={styles.infoRow}>
-              <label style={styles.label}>Dark Mode</label>
-              {editMode ? <label style={styles.checkboxLabel}><input type="checkbox" checked={formData.settings.darkMode} onChange={(e) => handleSettingChange('darkMode', e.target.checked)} style={{ accentColor: palette.warmOrange, width: 16, height: 16 }} /> Enable dark mode</label> : <p style={{ ...styles.infoValue, ...(formData.settings.darkMode ? styles.pillOn : styles.pillOff) }}>{formData.settings.darkMode ? 'Enabled' : 'Disabled'}</p>}
+              <label style={styles.label}>Sound Effects</label>
+              {editMode ? 
+                <label style={styles.checkboxLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.settings.soundEffects} 
+                    onChange={(e) => handleSettingChange('soundEffects', e.target.checked)} 
+                    style={{ accentColor: palette.warmOrange, width: 16, height: 16 }} 
+                  /> 
+                  Play game sounds
+                </label> 
+                : 
+                <p style={{ ...styles.infoValue, ...(formData.settings.soundEffects ? styles.pillOn : styles.pillOff) }}>
+                  {formData.settings.soundEffects ? 'Enabled' : 'Disabled'}
+                </p>
+              }
             </div>
+
             <div style={{ ...styles.infoRow, marginBottom: 0 }}>
               <label style={styles.label}>Language</label>
               {editMode ? <select value={formData.settings.language} onChange={(e) => handleSettingChange('language', e.target.value)} style={styles.select}><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option></select> : <p style={styles.infoValue}>{formData.settings.language === 'en' ? 'English' : formData.settings.language === 'es' ? 'Español' : formData.settings.language === 'fr' ? 'Français' : formData.settings.language === 'de' ? 'Deutsch' : formData.settings.language}</p>}
             </div>
           </div>
 
-          {!editMode && (
-            <div className="profile-info-card" style={styles.infoCard}>
-              <div style={styles.passwordHeader}>
-                <h2 style={{ ...styles.sectionTitle, marginBottom: 0 }}><span style={styles.sectionEyebrow}>05</span> Password</h2>
-                <button className="profile-change-password-btn" onClick={() => setShowPasswordChange(!showPasswordChange)} style={styles.changePasswordButton}>
-                  {showPasswordChange ? 'Cancel' : (hasPassword ? 'Change Password' : 'Set Password')}
-                </button>
-              </div>
-              {showPasswordChange && (
-                <div className="profile-password-form" style={styles.passwordForm}>
-                  
-                  {/* ✅ KUNG MAY PASSWORD NA, IPAKITA ANG CURRENT PASSWORD FIELD */}
-                  {hasPassword && (
-                    <div style={styles.infoRow}>
-                      <label style={styles.label}>Current Password</label>
-                      <input type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} style={styles.input} placeholder="Enter current password" />
-                    </div>
-                  )}
-                  
-                  {/* ✅ KUNG GOOGLE USER PA LANG, IPAKITA ANG PAALALA */}
-                  {!hasPassword && (
-                    <div style={{ padding: '10px 12px', background: `${palette.warmOrange}12`, border: `1.5px solid ${palette.warmOrange}40`, borderRadius: '10px', marginBottom: '14px', fontSize: '12px', color: palette.bodyText, fontWeight: 600, fontFamily: FONT_BODY }}>
-                      You signed up with Google. Set a password below so you can also log in using your email and password.
-                    </div>
-                  )}
-
-                  <div style={styles.infoRow}>
-                    <label style={styles.label}>New Password</label>
-                    <input type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} style={styles.input} placeholder="Enter new password" />
-                  </div>
-                  <div style={{ ...styles.infoRow, marginBottom: 0 }}>
-                    <label style={styles.label}>Confirm Password</label>
-                    <input type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} style={styles.input} placeholder="Confirm new password" />
-                  </div>
-                  <button onClick={updatePasswordHandler} style={styles.updatePasswordButton} disabled={saving}>
-                    {saving ? 'Saving...' : (hasPassword ? 'Update Password' : 'Set Password')}
-                  </button>
-                </div>
+          <div className="profile-info-card" style={styles.infoCard}>
+            <h2 style={styles.sectionTitle}><span style={styles.sectionEyebrow}>05</span> Learning Goals</h2>
+            
+            <div style={styles.infoRow}>
+              <label style={styles.label}>Daily Word Goal</label>
+              {editMode ? (
+                <select 
+                  value={formData.settings.dailyGoal || 10} 
+                  onChange={(e) => handleSettingChange('dailyGoal', parseInt(e.target.value))} 
+                  style={styles.select}
+                >
+                  <option value={5}>5 words / day (Casual)</option>
+                  <option value={10}>10 words / day (Regular)</option>
+                  <option value={20}>20 words / day (Serious)</option>
+                  <option value={50}>50 words / day (Insane)</option>
+                </select>
+              ) : (
+                <p style={styles.infoValue}>
+                  {formData.settings.dailyGoal || 10} words per day
+                </p>
               )}
             </div>
-          )}
+
+            <div style={{ ...styles.infoRow, marginBottom: 0 }}>
+              <label style={styles.label}>Daily Study Reminder</label>
+              {editMode ? (
+                <label style={styles.checkboxLabel}>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.settings.studyReminder || false} 
+                    onChange={(e) => handleSettingChange('studyReminder', e.target.checked)} 
+                    style={{ accentColor: palette.warmOrange, width: 16, height: 16 }} 
+                  /> 
+                  Remind me to study every day
+                </label>
+              ) : (
+                <p style={{ ...styles.infoValue, ...(formData.settings.studyReminder ? styles.pillOn : styles.pillOff) }}>
+                  {formData.settings.studyReminder ? 'Enabled' : 'Disabled'}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -650,10 +628,6 @@ const styles = {
   textarea: { width: '100%', padding: '10px 12px', border: `1.5px solid ${palette.border}`, borderRadius: '10px', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: FONT_BODY, fontWeight: 600, background: palette.creamSoft, color: palette.deepNavy },
   select: { width: '100%', padding: '10px 12px', border: `1.5px solid ${palette.border}`, borderRadius: '10px', fontSize: '13px', backgroundColor: palette.creamSoft, color: palette.deepNavy, outline: 'none', fontFamily: FONT_BODY, fontWeight: 600, cursor: 'pointer' },
   checkboxLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: palette.bodyText, cursor: 'pointer', fontWeight: 600, fontFamily: FONT_BODY },
-  passwordHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '8px' },
-  changePasswordButton: { padding: '6px 14px', background: palette.white, color: palette.warmOrange, border: `1.5px solid ${palette.warmOrange}`, borderRadius: '10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.15s ease', fontFamily: FONT_DISPLAY },
-  passwordForm: { marginTop: '16px', padding: '16px', background: palette.creamSoft, borderRadius: '12px', border: `1.5px solid ${palette.border}` },
-  updatePasswordButton: { width: '100%', padding: '12px', ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow), fontSize: '13px', marginTop: '10px' },
   editProfileButton: { width: '100%', padding: '12px', ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow), fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' },
   editActions: { display: 'flex', gap: '8px' },
   cancelButton: { flex: 1, padding: '12px', background: palette.white, border: `1.5px solid ${palette.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', color: palette.deepNavy, fontWeight: '800', fontFamily: FONT_DISPLAY, boxShadow: `0 2px 0 ${palette.border}` },

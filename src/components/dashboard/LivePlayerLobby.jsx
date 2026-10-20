@@ -1,6 +1,7 @@
 // src/components/dashboard/LivePlayerLobby.jsx
 // ============================================================
 // ✅ STUDENT LOBBY - FULL SIZE
+// ✅ UPDATED: Solid Dark Navy Containers + Full Body Avatars
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -98,6 +99,7 @@ const LivePlayerLobby = ({ session: initialSession, playerId, onGameStart, onCan
           >
             <div style={styles.myCardLabel}>You're in! 🎉</div>
 
+            {/* ✅ FULL BODY AVATAR CONTAINER */}
             <div style={styles.myAvatarWrapper}>
               {myPlayer?.avatarImage ? (
                 <img
@@ -147,6 +149,7 @@ const LivePlayerLobby = ({ session: initialSession, playerId, onGameStart, onCan
                         ...(isMe ? styles.playerItemMe : {})
                       }}
                     >
+                      {/* ✅ FULL BODY AVATAR FOR LIST */}
                       <div style={styles.playerAvatarWrapper}>
                         {player.avatarImage ? (
                           <img
@@ -199,10 +202,14 @@ const styles = {
   container: {
     minHeight: '100vh',
     width: '100vw',
-    background: palette.cream,
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
     padding: 'clamp(16px, 3vw, 40px)',
     fontFamily: BRAND_FONT_BODY,
-    color: palette.deepNavy,
+    color: palette.white,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -223,8 +230,8 @@ const styles = {
     flexWrap: 'wrap',
   },
   pinBox: {
-    background: palette.white,
-    border: `1.5px solid ${palette.border}`,
+    background: palette.deepNavy,
+    border: `1.5px solid ${palette.deepNavyLight}`,
     borderLeft: `5px solid ${palette.warmOrange}`,
     borderRadius: '18px',
     padding: 'clamp(12px, 1.6vw, 18px) clamp(20px, 2.5vw, 32px)',
@@ -232,7 +239,7 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '4px',
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 20px ${palette.shadow}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
   },
   pinLabel: {
     fontSize: 'clamp(10px, 1.1vw, 12px)',
@@ -246,17 +253,17 @@ const styles = {
     fontWeight: '800',
     fontFamily: BRAND_FONT_DISPLAY,
     letterSpacing: '6px',
-    color: palette.deepNavy,
+    color: palette.white,
   },
   statusBox: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    background: palette.white,
+    background: palette.deepNavy,
     padding: 'clamp(10px, 1.4vw, 16px) clamp(16px, 2vw, 24px)',
     borderRadius: '999px',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
   },
   statusDot: {
     width: '12px',
@@ -269,7 +276,7 @@ const styles = {
     fontSize: 'clamp(13px, 1.4vw, 16px)',
     fontWeight: 800,
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.bodyText,
+    color: palette.white,
     letterSpacing: '0.02em',
   },
   mainGrid: {
@@ -278,13 +285,13 @@ const styles = {
     gap: 'clamp(16px, 2vw, 24px)',
   },
   myCard: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '28px',
     padding: 'clamp(28px, 3.5vw, 44px)',
     textAlign: 'center',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
     borderTop: `6px solid ${palette.warmOrange}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 12px 32px ${palette.shadow}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -298,40 +305,37 @@ const styles = {
     fontFamily: BRAND_FONT_DISPLAY,
     letterSpacing: '0.02em',
   },
+  
+  // ✅ BAGONG FULL BODY AVATAR STYLE
   myAvatarWrapper: {
     width: 'clamp(140px, 18vw, 200px)',
-    height: 'clamp(140px, 18vw, 200px)',
-    borderRadius: '50%',
-    background: palette.creamSoft,
+    height: 'clamp(160px, 20vw, 220px)', // Mas mataas kaysa sa lapad
+    borderRadius: '24px', // Rounded rectangle
+    background: palette.creamSoft, // Light background para kita ang avatar
     overflow: 'hidden',
     marginBottom: '20px',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
     border: `4px solid ${palette.warmOrange}80`,
-    position: 'relative',
-    boxShadow: `0 8px 24px ${palette.shadowMd}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.3)`,
   },
   myAvatarImg: {
     width: '100%',
-    height: '130%',
-    objectFit: 'cover',
-    objectPosition: 'center 15%',
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    height: '100%',
+    objectFit: 'contain', // ✅ ITO ANG MAGPAPAKITA NG BUONG KATAWAN
+    padding: '10px',
   },
   myAvatarEmoji: {
     fontSize: 'clamp(64px, 9vw, 100px)',
-    marginTop: '28px',
   },
+  
   myName: {
     fontSize: 'clamp(22px, 2.8vw, 34px)',
     fontWeight: '800',
     margin: '0 0 8px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
   myHint: {
     fontSize: 'clamp(13px, 1.4vw, 16px)',
@@ -341,11 +345,11 @@ const styles = {
     fontFamily: BRAND_FONT_BODY,
   },
   playersCard: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '28px',
     padding: 'clamp(20px, 3vw, 32px)',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
     display: 'flex',
     flexDirection: 'column',
     maxHeight: 'min(560px, 70vh)',
@@ -356,25 +360,25 @@ const styles = {
     alignItems: 'center',
     marginBottom: '16px',
     paddingBottom: '16px',
-    borderBottom: `1.5px solid ${palette.borderSoft}`,
+    borderBottom: `1.5px solid ${palette.deepNavyLight}`,
   },
   playersTitle: {
     fontSize: 'clamp(16px, 1.8vw, 22px)',
     fontWeight: '800',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
     letterSpacing: '-0.3px',
   },
   playersCount: {
     fontSize: 'clamp(16px, 1.8vw, 22px)',
     fontWeight: '800',
-    background: palette.creamSoft,
-    color: palette.deepNavy,
+    background: palette.deepNavyLight,
+    color: palette.white,
     padding: '4px 14px',
     borderRadius: '999px',
     fontFamily: BRAND_FONT_DISPLAY,
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 2px 4px rgba(0,0,0,0.2)`,
     minWidth: '42px',
     textAlign: 'center',
   },
@@ -390,50 +394,47 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: 'clamp(10px, 1.4vw, 16px) clamp(14px, 1.8vw, 20px)',
-    background: palette.creamSoft,
+    padding: 'clamp(8px, 1vw, 12px) clamp(14px, 1.8vw, 20px)',
+    background: palette.deepNavyLight,
     borderRadius: '16px',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 2px 4px rgba(0,0,0,0.2)`,
   },
   playerItemMe: {
-    background: `${palette.softGreen}15`,
-    border: `2px solid ${palette.softGreen}80`,
-    boxShadow: `0 2px 0 ${palette.softGreen}40`,
+    background: `rgba(127, 165, 116, 0.2)`,
+    border: `2px solid ${palette.softGreen}`,
+    boxShadow: `0 2px 8px ${palette.softGreen}40`,
   },
+  
+  // ✅ FULL BODY AVATAR SA LIST
   playerAvatarWrapper: {
-    width: 'clamp(40px, 5vw, 56px)',
-    height: 'clamp(40px, 5vw, 56px)',
-    borderRadius: '50%',
-    background: palette.white,
+    width: 'clamp(36px, 4.5vw, 48px)',
+    height: 'clamp(44px, 5.5vw, 60px)', // Mas mataas kaysa lapad
+    borderRadius: '10px', // Rounded rectangle
+    background: palette.creamSoft,
     overflow: 'hidden',
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    position: 'relative',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.warmOrange}80`,
   },
   playerAvatarImg: {
     width: '100%',
-    height: '130%',
-    objectFit: 'cover',
-    objectPosition: 'center 15%',
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    height: '100%',
+    objectFit: 'contain', // ✅ BUONG KATAWAN DIN DITO
+    padding: '2px',
   },
   playerAvatarEmoji: {
     fontSize: 'clamp(20px, 2.4vw, 28px)',
-    marginTop: '8px',
   },
+  
   playerName: {
     flex: 1,
     fontSize: 'clamp(14px, 1.5vw, 18px)',
     fontWeight: '700',
     fontFamily: BRAND_FONT_BODY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
   youTag: {
     color: palette.softGreen,
@@ -467,16 +468,16 @@ const styles = {
   },
   cancelBtn: {
     padding: 'clamp(14px, 1.8vw, 20px) clamp(30px, 4vw, 60px)',
-    background: palette.white,
+    background: palette.deepNavy,
     color: palette.coral,
-    border: `2px solid ${palette.coral}66`,
+    border: `2px solid ${palette.coral}80`,
     borderRadius: '16px',
     fontSize: 'clamp(15px, 1.6vw, 20px)',
     fontWeight: '800',
     cursor: 'pointer',
     fontFamily: BRAND_FONT_DISPLAY,
     transition: 'all 0.2s',
-    boxShadow: `0 4px 0 ${palette.coralShadow}40`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.25)`,
     letterSpacing: '0.5px',
     alignSelf: 'center',
     width: '100%',

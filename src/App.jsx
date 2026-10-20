@@ -1,6 +1,12 @@
+// src/App.jsx (o kung ano man ang filename nito)
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { ThemeProvider } from './context/ThemeContext';
+
+// ✅ IMPORT FIREBASE AUTH
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from './pages/firebase'; // <-- Siguraduhin na tama ang path na ito
 
 const LandingPage = lazy(() => import("./components/LandingPage"));
 const Login = lazy(() => import("./pages/Login"));
@@ -33,6 +39,24 @@ const PageLoader = () => (
 );
 
 function App() {
+  // ✅ STATE PARA SA AUTH CHECKER
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  useEffect(() => {
+    // ✅ MAG-ANTay HANGGANG MATAPOS MAG-CHECK SI FIREBASE
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      setIsAuthReady(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ✅ HABANG NAGHIHINTAY, IPAKITA MUNA YUNG LOADER
+  if (!isAuthReady) {
+    return <PageLoader />;
+  }
+
+  // ✅ KAPAG TAPOS NA MAG-CHECK, DITO NA IPAPASOK YUNG ROUTES
   return (
     <ThemeProvider>
       <BrowserRouter>
@@ -61,4 +85,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

@@ -1,6 +1,7 @@
 // src/components/admin/LiveHostLobby.jsx
 // ✅ NEW: Saves activityId, gameType, and activityTitle in the session document
-//          so it appears in the student's Recent Activities after the game
+// ✅ UPDATED: Solid Dark Navy Containers + Fullscreen Fix + Full Body Avatars
+// ============================================================
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,15 +61,12 @@ const LiveHostLobby = ({ activity, onStart, onCancel }) => {
           return;
         }
 
-        // ✅ Step 1: Create a new live session
         const newSession = await createLiveSession(
           activity.id,
           user.uid,
           user.displayName || 'Teacher'
         );
 
-        // ✅ Step 2: Also save the activity info to the session document
-        //          So that it definitely has activityId, gameType, activityTitle
         if (newSession?.sessionId) {
           try {
             const sessionRef = doc(db, 'liveSessions', newSession.sessionId);
@@ -76,11 +74,6 @@ const LiveHostLobby = ({ activity, onStart, onCancel }) => {
               activityId: activity.id,
               gameType: activity.gameType || 'quiz',
               activityTitle: activity.title || 'Quiz',
-            });
-            console.log('✅ LiveHostLobby: Saved activity info to session', {
-              activityId: activity.id,
-              gameType: activity.gameType,
-              activityTitle: activity.title,
             });
           } catch (updateErr) {
             console.warn('⚠️ LiveHostLobby: Could not save activity info:', updateErr);
@@ -153,123 +146,141 @@ const LiveHostLobby = ({ activity, onStart, onCancel }) => {
   const players = session?.players || [];
 
   return (
+    // ✅ FULLSCREEN CONTAINER
     <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>🎮 {session?.activityTitle || 'Live Game'}</h1>
-          <p style={styles.subtitle}>Waiting for players to join...</p>
-        </div>
-        <button onClick={handleCancel} style={styles.closeBtn}>✕</button>
-      </div>
-
-      {/* PIN Display */}
-      <div style={styles.pinSection}>
-        <p style={styles.pinLabel}>GAME PIN</p>
-        <motion.div
-          style={styles.pinCode}
-          animate={{ scale: [1, 1.04, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          {session?.gamePin}
-        </motion.div>
-        <p style={styles.pinHint}>Share this PIN with your students</p>
-      </div>
-
-      {/* Players Grid */}
-      <div style={styles.playersSection}>
-        <div style={styles.playersHeader}>
-          <h2 style={styles.playersTitle}>
-            👥 Players Joined
-          </h2>
-          <div style={styles.playerCount}>
-            {players.length} player{players.length !== 1 ? 's' : ''}
+      {/* ✅ CONTENT WRAPPER PARA HINDI SUMAGAD SA GILID */}
+      <div style={styles.contentWrapper}>
+        {/* Header */}
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>🎮 {session?.activityTitle || 'Live Game'}</h1>
+            <p style={styles.subtitle}>Waiting for players to join...</p>
           </div>
+          <button onClick={handleCancel} style={styles.closeBtn}>✕</button>
         </div>
 
-        {players.length === 0 ? (
-          <div style={styles.emptyState}>
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              style={styles.emptyIcon}
-            >
-              👋
-            </motion.div>
-            <p style={styles.emptyText}>Waiting for players to join...</p>
-            <p style={styles.emptyHint}>Players will appear here once they enter the PIN</p>
+        {/* PIN Display - DARK NAVY */}
+        <div style={styles.pinSection}>
+          <p style={styles.pinLabel}>GAME PIN</p>
+          <motion.div
+            style={styles.pinCode}
+            animate={{ scale: [1, 1.04, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {session?.gamePin}
+          </motion.div>
+          <p style={styles.pinHint}>Share this PIN with your students</p>
+        </div>
+
+        {/* Players Grid - DARK NAVY */}
+        <div style={styles.playersSection}>
+          <div style={styles.playersHeader}>
+            <h2 style={styles.playersTitle}>
+              👥 Players Joined
+            </h2>
+            <div style={styles.playerCount}>
+              {players.length} player{players.length !== 1 ? 's' : ''}
+            </div>
           </div>
-        ) : (
-          <div style={styles.playersGrid}>
-            <AnimatePresence>
-              {players.map((player, index) => {
-                const avatarData = getAvatarById(player.avatarId);
-                return (
-                  <motion.div
-                    key={player.userId}
-                    initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    transition={{ delay: index * 0.05 }}
-                    style={styles.playerCard}
-                  >
-                    <div style={styles.playerAvatar}>
-                      {player.avatarImage ? (
-                        <img
-                          src={player.avatarImage}
-                          alt={player.name}
-                          style={styles.avatarImg}
-                        />
+
+          {players.length === 0 ? (
+            <div style={styles.emptyState}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                style={styles.emptyIcon}
+              >
+                👋
+              </motion.div>
+              <p style={styles.emptyText}>Waiting for players to join...</p>
+              <p style={styles.emptyHint}>Players will appear here once they enter the PIN</p>
+            </div>
+          ) : (
+            <div style={styles.playersGrid}>
+              <AnimatePresence>
+                {players.map((player, index) => {
+                  const avatarData = getAvatarById(player.avatarId);
+                  return (
+                    <motion.div
+                      key={player.userId}
+                      initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{ delay: index * 0.05 }}
+                      style={styles.playerCard}
+                    >
+                      {/* ✅ FULL BODY AVATAR CONTAINER */}
+                      <div style={styles.playerAvatar}>
+                        {player.avatarImage ? (
+                          <img
+                            src={player.avatarImage}
+                            alt={player.name}
+                            style={styles.avatarImg}
+                          />
+                        ) : (
+                          <span style={styles.avatarEmoji}>👤</span>
+                        )}
+                      </div>
+                      <div style={styles.playerName}>{player.name}</div>
+                      {player.isConnected ? (
+                        <div style={styles.onlineDot}></div>
                       ) : (
-                        <span style={styles.avatarEmoji}>👤</span>
+                        <div style={styles.offlineDot}></div>
                       )}
-                    </div>
-                    <div style={styles.playerName}>{player.name}</div>
-                    {player.isConnected ? (
-                      <div style={styles.onlineDot}></div>
-                    ) : (
-                      <div style={styles.offlineDot}></div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
 
-      {/* Error */}
-      {error && <div style={styles.errorMsg}>{error}</div>}
+        {/* Error */}
+        {error && <div style={styles.errorMsg}>{error}</div>}
 
-      {/* Start Button */}
-      <div style={styles.footer}>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleStartGame}
-          disabled={players.length === 0 || starting}
-          style={{
-            ...styles.startBtn,
-            opacity: players.length === 0 || starting ? 0.5 : 1,
-            cursor: players.length === 0 || starting ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {starting ? 'Starting...' : `🚀 Start Game (${players.length} player${players.length !== 1 ? 's' : ''})`}
-        </motion.button>
+        {/* Start Button */}
+        <div style={styles.footer}>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleStartGame}
+            disabled={players.length === 0 || starting}
+            style={{
+              ...styles.startBtn,
+              opacity: players.length === 0 || starting ? 0.5 : 1,
+              cursor: players.length === 0 || starting ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {starting ? 'Starting...' : `🚀 Start Game (${players.length} player${players.length !== 1 ? 's' : ''})`}
+          </motion.button>
+        </div>
       </div>
     </div>
   );
 };
 
 const styles = {
+  // ✅ FULLSCREEN CONTAINER
   container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '24px',
-    fontFamily: BRAND_FONT_BODY,
+    width: '100vw',
     minHeight: '100vh',
-    background: palette.cream,
-    color: palette.deepNavy,
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
+    fontFamily: BRAND_FONT_BODY,
+    color: palette.white,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center', 
+  },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: '1200px',
+    padding: '24px',
+    display: 'flex',
+    flexDirection: 'column',
   },
   loadingContainer: {
     display: 'flex',
@@ -277,14 +288,19 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    background: palette.cream,
-    color: palette.deepNavy,
+    width: '100vw',
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
+    color: palette.white,
   },
   spinner: {
     width: '50px',
     height: '50px',
-    border: `4px solid ${palette.border}`,
-    borderTop: `4px solid ${palette.warmOrange}`,
+    border: `4px solid rgba(255,255,255,0.3)`,
+    borderTop: `4px solid ${palette.white}`,
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '20px',
@@ -293,7 +309,8 @@ const styles = {
     fontSize: '16px',
     fontWeight: '800',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.bodyText,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
     letterSpacing: '0.02em',
   },
   header: {
@@ -308,19 +325,21 @@ const styles = {
     fontWeight: '800',
     margin: '0 0 4px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
     letterSpacing: '-0.4px',
   },
   subtitle: {
     fontSize: '14px',
-    color: palette.bodyTextSoft,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
     margin: 0,
     fontWeight: 600,
   },
   closeBtn: {
-    background: palette.white,
-    border: `1.5px solid ${palette.border}`,
-    color: palette.bodyText,
+    background: palette.deepNavy,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    color: palette.white,
     width: '40px',
     height: '40px',
     borderRadius: '50%',
@@ -328,18 +347,18 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 800,
     fontFamily: BRAND_FONT_DISPLAY,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
     flexShrink: 0,
   },
   pinSection: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '20px',
     padding: '30px',
     textAlign: 'center',
     marginBottom: '24px',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
     borderTop: `6px solid ${palette.warmOrange}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
   },
   pinLabel: {
     fontSize: '12px',
@@ -356,7 +375,7 @@ const styles = {
     letterSpacing: '8px',
     margin: '0 0 8px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
   pinHint: {
     fontSize: '13px',
@@ -365,12 +384,12 @@ const styles = {
     fontWeight: 600,
   },
   playersSection: {
-    background: palette.white,
+    background: palette.deepNavy,
     borderRadius: '20px',
     padding: '24px',
     marginBottom: '24px',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}, 0 8px 24px ${palette.shadow}`,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
     minHeight: '300px',
   },
   playersHeader: {
@@ -379,26 +398,26 @@ const styles = {
     alignItems: 'center',
     marginBottom: '20px',
     paddingBottom: '16px',
-    borderBottom: `1.5px solid ${palette.borderSoft}`,
+    borderBottom: `1.5px solid ${palette.deepNavyLight}`,
   },
   playersTitle: {
     fontSize: '18px',
     fontWeight: '800',
     margin: 0,
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
     letterSpacing: '-0.2px',
   },
   playerCount: {
-    background: palette.creamSoft,
-    color: palette.deepNavy,
+    background: palette.deepNavyLight,
+    color: palette.white,
     padding: '6px 16px',
     borderRadius: '999px',
     fontSize: '13px',
     fontWeight: '800',
     fontFamily: BRAND_FONT_DISPLAY,
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 2px 4px rgba(0,0,0,0.2)`,
   },
   emptyState: {
     display: 'flex',
@@ -417,7 +436,7 @@ const styles = {
     fontWeight: '800',
     margin: '0 0 8px 0',
     fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.deepNavy,
+    color: palette.white,
   },
   emptyHint: {
     fontSize: '14px',
@@ -431,48 +450,46 @@ const styles = {
     gap: '16px',
   },
   playerCard: {
-    background: palette.creamSoft,
+    background: palette.deepNavyLight,
     borderRadius: '16px',
     padding: '16px 12px',
     textAlign: 'center',
-    border: `1.5px solid ${palette.border}`,
-    boxShadow: `0 2px 0 ${palette.border}`,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.2)`,
     position: 'relative',
   },
+  
+  // ✅ BAGONG FULL BODY AVATAR STYLE DITO SA TEACHER LOBBY
   playerAvatar: {
-    width: '60px',
-    height: '60px',
-    margin: '0 auto 8px',
-    borderRadius: '50%',
-    background: palette.white,
+    width: 'clamp(60px, 8vw, 80px)',
+    height: 'clamp(80px, 10vw, 100px)', // Mas mataas kaysa lapad
+    margin: '0 auto 12px',
+    borderRadius: '12px', // Rounded rectangle
+    background: palette.creamSoft,
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
-    border: `1.5px solid ${palette.border}`,
+    border: `1.5px solid ${palette.warmOrange}80`,
   },
   avatarImg: {
     width: '100%',
-    height: '130%',
-    objectFit: 'cover',
-    objectPosition: 'center 15%',
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    height: '100%',
+    objectFit: 'contain', // ✅ ITO ANG MAGPAPAKITA NG BUONG KATAWAN
+    padding: '4px',
   },
   avatarEmoji: {
     fontSize: '30px',
-    marginTop: '12px',
   },
+  
   playerName: {
     fontSize: '13px',
     fontWeight: '700',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    color: palette.deepNavy,
+    color: palette.white,
     fontFamily: BRAND_FONT_BODY,
   },
   onlineDot: {
@@ -495,8 +512,8 @@ const styles = {
     background: palette.coral,
   },
   errorMsg: {
-    background: `${palette.coral}15`,
-    border: `1.5px solid ${palette.coral}66`,
+    background: `${palette.coral}20`,
+    border: `1.5px solid ${palette.coral}80`,
     color: palette.coral,
     padding: '12px 20px',
     borderRadius: '12px',
@@ -517,7 +534,7 @@ const styles = {
     fontSize: '18px',
     fontWeight: '800',
     cursor: 'pointer',
-    boxShadow: `0 4px 0 ${palette.softGreenShadow}`,
+    boxShadow: `0 4px 0 ${palette.softGreenShadow}, 0 8px 24px rgba(0,0,0,0.2)`,
     fontFamily: BRAND_FONT_DISPLAY,
     transition: 'all 0.15s ease',
     letterSpacing: '0.04em',
