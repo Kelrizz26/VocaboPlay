@@ -6,6 +6,7 @@
 // ✅ NEW: Supports Quiz, Short Quiz, Long Quiz, Prelim, Midterm, Final
 // ✅ UPDATED: Filter dropdown includes new types
 // ✅ UPDATED: Cards show proper icons/labels/colors for all types
+// ✅ ADDED: Time Limit & Max Attempts settings
 // ============================================================
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -87,7 +88,6 @@ const unSlugifyActivityType = (slug) => {
 
 // ============================================================
 // ✅ TypableSelect — custom dropdown for typable fields
-// (same component as in AdminDashboard.jsx)
 // ============================================================
 const TypableSelect = ({
   value,
@@ -281,15 +281,19 @@ const TeacherActivities = ({
   const emptyQuestion = { question: '', options: ['', '', '', ''], correctIndex: 0 };
   const [createForm, setCreateForm] = useState({
     title: '',
-    gameType: 'Quiz',   // ✅ Default human-readable
+    gameType: 'Quiz',
     category: 'general',
     difficulty: 3,
+    timeLimit: 0,       // ✅ NEW: Default no limit
+    maxAttempts: 1,     // ✅ NEW: Default 1 attempt
     questions: [{ ...emptyQuestion }],
   });
 
   // ===== EDIT FORM STATE =====
   const [editForm, setEditForm] = useState({
     title: '', gameType: 'Quiz', category: '', difficulty: 3, isActive: true,
+    timeLimit: 0,       // ✅ NEW
+    maxAttempts: 1,     // ✅ NEW
   });
 
   // ============================================================
@@ -328,18 +332,19 @@ const TeacherActivities = ({
     try {
       const newActivity = {
         title: createForm.title.trim(),
-        // ✅ Slugify the typed activity type for consistent storage
         gameType: slugifyActivityType(createForm.gameType),
         category: createForm.category.trim() || 'general',
         difficulty: createForm.difficulty,
+        timeLimit: createForm.timeLimit,       // ✅ Save Time Limit
+        maxAttempts: createForm.maxAttempts,   // ✅ Save Max Attempts
         isActive: true,
-        gamePin: generatePin(),                // ✅ AUTO PIN
+        gamePin: generatePin(),
         totalQuestions: validQuestions.length,
         participants: 0,
         hasCustomQuestions: true,
         createdAt: new Date().toISOString(),
-        createdBy: teacherId,                   // ✅ link to teacher
-        teacherId: teacherId,                   // ✅ for consistency with admin
+        createdBy: teacherId,
+        teacherId: teacherId,
         teacherName: teacherName || '',
         questions: validQuestions,
       };
@@ -349,7 +354,8 @@ const TeacherActivities = ({
       setShowCreate(false);
       setCreateForm({
         title: '', gameType: 'Quiz', category: 'general',
-        difficulty: 3, questions: [{ ...emptyQuestion }],
+        difficulty: 3, timeLimit: 0, maxAttempts: 1,
+        questions: [{ ...emptyQuestion }],
       });
       alert(`✅ Activity created!\nGame PIN: ${newActivity.gamePin}`);
     } catch (err) {
@@ -392,10 +398,11 @@ const TeacherActivities = ({
     setEditingActivity(a.id);
     setEditForm({
       title: a.title || '',
-      // ✅ Pre-fill with human-readable label from stored slug
       gameType: unSlugifyActivityType(a.gameType || 'quiz'),
       category: a.category || '',
       difficulty: a.difficulty || 3,
+      timeLimit: a.timeLimit || 0,          // ✅ Load existing
+      maxAttempts: a.maxAttempts || 1,      // ✅ Load existing
       isActive: a.isActive !== false,
     });
   };
@@ -405,10 +412,11 @@ const TeacherActivities = ({
     try {
       const updateData = {
         title: editForm.title.trim(),
-        // ✅ Store slugified version for consistency
         gameType: slugifyActivityType(editForm.gameType),
         category: editForm.category,
         difficulty: editForm.difficulty,
+        timeLimit: editForm.timeLimit,          // ✅ Save to Firebase
+        maxAttempts: editForm.maxAttempts,      // ✅ Save to Firebase
         isActive: editForm.isActive,
       };
       await updateDoc(doc(db, 'activities', editingActivity), updateData);
@@ -518,7 +526,6 @@ const TeacherActivities = ({
             color: colors.textPrimary,
           }}
         />
-        {/* ✅ UPDATED: Filter includes new types */}
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -585,7 +592,6 @@ const TeacherActivities = ({
             />
           </div>
 
-          {/* ✅ UPDATED: TypableSelect for Activity Type */}
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>Activity Type</label>
             <TypableSelect
@@ -613,6 +619,37 @@ const TeacherActivities = ({
                 <option value={3}>⭐⭐⭐ Intermediate</option>
                 <option value={4}>⭐⭐⭐⭐ Advanced</option>
                 <option value={5}>⭐⭐⭐⭐⭐ Expert</option>
+              </select>
+            </div>
+          </div>
+
+          {/* ✅ NEW: Time Limit & Attempts */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            <div>
+              <label style={labelStyle}>Time Limit</label>
+              <select
+                value={createForm.timeLimit}
+                onChange={(e) => setCreateForm({ ...createForm, timeLimit: Number(e.target.value) })}
+                style={selectStyle}
+              >
+                <option value={0}>No Time Limit</option>
+                <option value={15}>15 Minutes</option>
+                <option value={30}>30 Minutes</option>
+                <option value={60}>1 Hour</option>
+                <option value={120}>2 Hours</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Allowed Attempts</label>
+              <select
+                value={createForm.maxAttempts}
+                onChange={(e) => setCreateForm({ ...createForm, maxAttempts: Number(e.target.value) })}
+                style={selectStyle}
+              >
+                <option value={1}>1 Attempt (Strict)</option>
+                <option value={2}>2 Attempts</option>
+                <option value={3}>3 Attempts</option>
+                <option value={999}>Unlimited Attempts</option>
               </select>
             </div>
           </div>
@@ -728,7 +765,6 @@ const TeacherActivities = ({
               style={inputStyle} />
           </div>
 
-          {/* ✅ UPDATED: TypableSelect for Activity Type */}
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>Activity Type</label>
             <TypableSelect
@@ -761,6 +797,38 @@ const TeacherActivities = ({
               <option value={5}>⭐⭐⭐⭐⭐ Expert</option>
             </select>
           </div>
+
+          {/* ✅ NEW: Time Limit & Attempts in Edit Modal */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            <div>
+              <label style={labelStyle}>Time Limit</label>
+              <select
+                value={editForm.timeLimit}
+                onChange={(e) => setEditForm({ ...editForm, timeLimit: Number(e.target.value) })}
+                style={selectStyle}
+              >
+                <option value={0}>No Time Limit</option>
+                <option value={15}>15 Minutes</option>
+                <option value={30}>30 Minutes</option>
+                <option value={60}>1 Hour</option>
+                <option value={120}>2 Hours</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Allowed Attempts</label>
+              <select
+                value={editForm.maxAttempts}
+                onChange={(e) => setEditForm({ ...editForm, maxAttempts: Number(e.target.value) })}
+                style={selectStyle}
+              >
+                <option value={1}>1 Attempt (Strict)</option>
+                <option value={2}>2 Attempts</option>
+                <option value={3}>3 Attempts</option>
+                <option value={999}>Unlimited Attempts</option>
+              </select>
+            </div>
+          </div>
+
           <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <input type="checkbox" id="tIsActive" checked={editForm.isActive}
               onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
@@ -814,9 +882,6 @@ const StatCard = ({ label, value, icon, color }) => (
   </div>
 );
 
-// ============================================================
-// ✅ UPDATED: Type maps include new types
-// ============================================================
 const getTypeIcon = (type) => {
   if (!type) return '❓';
   const map = {
@@ -940,6 +1005,8 @@ const ActivityCard = ({
           <Chip>{activity.category || 'General'}</Chip>
           <Chip>⭐ {activity.difficulty || 3}/5</Chip>
         </div>
+        
+        {/* Mini Stats */}
         <div style={{
           display: 'flex', padding: '12px', background: colors.bg,
           borderRadius: '10px', marginBottom: '14px',
@@ -947,6 +1014,16 @@ const ActivityCard = ({
           <MiniStat label="Questions" value={activity.totalQuestions || 0} />
           <div style={{ width: '1px', background: colors.border }} />
           <MiniStat label="Participants" value={activity.participants || 0} />
+        </div>
+
+        {/* ✅ NEW: Time Limit & Attempts display */}
+        <div style={{
+          display: 'flex', padding: '12px', background: colors.bg,
+          borderRadius: '10px', marginBottom: '14px',
+        }}>
+          <MiniStat label="Time Limit" value={activity.timeLimit ? `${activity.timeLimit}m` : 'None'} />
+          <div style={{ width: '1px', background: colors.border }} />
+          <MiniStat label="Attempts" value={activity.maxAttempts === 999 ? '∞' : activity.maxAttempts || 1} />
         </div>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>

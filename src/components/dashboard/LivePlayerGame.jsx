@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ STUDENT LIVE GAME - FULL SIZE
 // ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
+// ✅ UPDATED: Added Global Time Limit (Auto-close kapag naubos ang oras)
 // ============================================================
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -25,11 +26,19 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
+// ✅ Helper: Format seconds to MM:SS
+const formatTime = (seconds) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+};
+
 const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, completeActivity }) => {
   const [session, setSession] = useState(initialSession);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
+  const [globalTimeLeft, setGlobalTimeLeft] = useState(null); // ✅ NEW: State for global time
   const [feedback, setFeedback] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false); 
@@ -38,6 +47,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const sessionSavedRef = useRef(false);
   const answersRef = useRef({});
 
+  // ✅ Effect 1: Subscribe to Session Updates
   useEffect(() => {
     if (!initialSession?.sessionId) return;
 
@@ -65,6 +75,30 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     return () => unsubscribe();
   }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId, isFinished]);
 
+  // ✅ Effect 2: Global Time Limit Countdown
+  useEffect(() => {
+    if (session?.status !== 'playing' || !session?.timeLimit || isFinished) return;
+
+    const startTime = new Date(session.startedAt).getTime();
+    const limitMs = session.timeLimit * 60 * 1000;
+    const endTime = startTime + limitMs;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+      setGlobalTimeLeft(remaining);
+
+      if (remaining === 0) {
+        clearInterval(interval);
+        // 🚨 AUTO-CLOSE: Force finish kapag naubos ang time limit
+        setIsFinished(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [session?.status, session?.timeLimit, session?.startedAt, isFinished]);
+
+  // ✅ Effect 3: Reset state per question
   useEffect(() => {
     if (session?.status !== 'playing') return;
     setSelectedAnswer(null);
@@ -74,10 +108,11 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     questionStartRef.current = Date.now();
   }, [currentQuestionIndex, session?.status]);
 
+  // ✅ Effect 4: Per-question timer
   useEffect(() => {
     if (session?.status !== 'playing') return;
     if (hasAnswered) return;
-    if (isFinished) return;
+    if (isFinished) return; // ✅ Don't run if global time ran out
 
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - questionStartRef.current) / 1000);
@@ -94,11 +129,10 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   }, [currentQuestionIndex, hasAnswered, isFinished, session?.status]);
 
   const handleTimeout = async () => {
-    if (hasAnswered) return;
+    if (hasAnswered || isFinished) return;
     setHasAnswered(true);
     setFeedback({ isCorrect: false, points: 0, timeout: true });
     
-    // ✅ I-save sa ref base sa ACTUAL question index
     const myPlayer = session?.players?.find(p => p.userId === playerId);
     const actualQIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
     answersRef.current[`Q${actualQIndex + 1}`] = false;
@@ -113,7 +147,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   };
 
   const handleSelectAnswer = async (option) => {
-    if (hasAnswered || timeLeft === 0) return;
+    if (hasAnswered || timeLeft === 0 || isFinished) return;
 
     setSelectedAnswer(option);
     setHasAnswered(true);
@@ -144,6 +178,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   };
 
   const moveToNextQuestion = () => {
+    if (isFinished) return; // ✅ Stop if global time ran out
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex >= session.totalQuestions) {
       setIsFinished(true);
@@ -154,12 +189,9 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   };
 
   const myPlayer = session?.players?.find(p => p.userId === playerId);
-  
-  // ✅ GAMITIN ANG questionOrder PARA SA RANDOMIZED QUESTIONS
   const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
   const currentQuestion = session?.questions?.[actualQuestionIndex];
   
-  // ✅ I-SHUFFLE DIN ANG OPTIONS PARA HINDI MAKOPYA
   const shuffledOptions = useMemo(() => {
     if (!currentQuestion || !currentQuestion.options) return [];
     const opts = [...currentQuestion.options];
@@ -180,6 +212,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   });
   const myRank = sortedPlayers.findIndex(p => p.userId === playerId) + 1;
 
+  // ✅ RENDER RESULTS KAPAG TAPOS NA O NAUBOS ANG GLOBAL TIME
   if (isFinished) {
     return <LivePlayerResults session={session} playerId={playerId} onExit={() => onGameEnd(session)} />;
   }
@@ -203,12 +236,28 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
               Question {currentQuestionIndex + 1} of {session.totalQuestions}
             </p>
           </div>
-          <div style={{
-            ...styles.timerBox,
-            background: timeLeft <= 5 ? palette.coral : timeLeft <= 10 ? palette.warmOrange : palette.softGreen
-          }}>
-            <span style={styles.timerIcon}>⏱️</span>
-            <span style={styles.timerText}>{timeLeft}s</span>
+          
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {/* ✅ GLOBAL TIME LIMIT DISPLAY */}
+            {session?.timeLimit > 0 && globalTimeLeft !== null && (
+              <div style={{
+                ...styles.timerBox,
+                background: globalTimeLeft <= 60 ? palette.coral : palette.deepNavy,
+                borderColor: globalTimeLeft <= 60 ? 'rgba(255,255,255,0.5)' : palette.deepNavyLight
+              }}>
+                <span style={styles.timerIcon}>⏳</span>
+                <span style={styles.timerText}>{formatTime(globalTimeLeft)}</span>
+              </div>
+            )}
+
+            {/* PER-QUESTION TIMER */}
+            <div style={{
+              ...styles.timerBox,
+              background: timeLeft <= 5 ? palette.coral : timeLeft <= 10 ? palette.warmOrange : palette.softGreen
+            }}>
+              <span style={styles.timerIcon}>⏱️</span>
+              <span style={styles.timerText}>{timeLeft}s</span>
+            </div>
           </div>
         </div>
 
@@ -244,7 +293,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* Options (Gamit ang shuffledOptions) */}
+        {/* Options */}
         <div className="live-options-grid" style={styles.optionsGrid}>
           {shuffledOptions.map((option, index) => {
             const isSelected = selectedAnswer === option;
@@ -319,7 +368,7 @@ const styles = {
   gameInner: { width: '100%', maxWidth: 'min(1200px, 100%)', display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 1.8vw, 20px)', flex: 1, justifyContent: 'center' },
   loadingContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100vw', backgroundImage: `url('/image/quiz-bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' },
   spinner: { width: '56px', height: '56px', border: `4px solid rgba(255,255,255,0.3)`, borderTop: `4px solid ${palette.white}`, borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '20px' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' },
   headerLeft: { flex: 1 },
   questionCounter: { fontSize: 'clamp(14px, 1.6vw, 20px)', color: palette.white, textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0, fontWeight: 800, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.02em' },
   timerBox: { display: 'flex', alignItems: 'center', gap: '8px', padding: 'clamp(10px, 1.4vw, 16px) clamp(16px, 2vw, 24px)', borderRadius: '16px', transition: 'background 0.3s', boxShadow: `0 8px 24px rgba(0,0,0,0.15)`, border: `2px solid rgba(255,255,255,0.8)`, color: palette.white },

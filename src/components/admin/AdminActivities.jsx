@@ -3,6 +3,7 @@
 // ✅ ADMIN ACTIVITIES - Polished to match Super Admin
 // ✅ PRESERVED: TypableSelect + Activity Type field (from your version)
 // ✅ PRESERVED: All Firebase logic, Edit Modal, Delete, Host Live
+// ✅ UPDATED: Added Time Limit & Max Attempts in Edit Modal & Card
 // ============================================================
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -212,6 +213,20 @@ const Icon = ({ name, size = 18, color = palette.bodyTextSoft }) => {
         <rect x="8" y="2" width="8" height="4" rx="1" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </>
     ),
+    clock: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M12 6v6l4 2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    repeat: (
+      <>
+        <path d="M17 1l4 4-4 4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M7 23l-4-4 4-4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
@@ -343,12 +358,16 @@ const AdminActivities = ({
   const [editQuestions, setEditQuestions] = useState([]);
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  
+  // ✅ BAGONG DAGDAG: timeLimit at maxAttempts sa editForm state
   const [editForm, setEditForm] = useState({
     title: '',
     gameType: 'Quiz',
     category: '',
     difficulty: 3,
     isActive: true,
+    timeLimit: 0,
+    maxAttempts: 1,
   });
 
   const filteredActivities = useMemo(() => {
@@ -427,6 +446,8 @@ const AdminActivities = ({
       category: activity.category || '',
       difficulty: activity.difficulty || 3,
       isActive: activity.isActive !== false,
+      timeLimit: activity.timeLimit || 0,       // ✅ Load existing or default to 0
+      maxAttempts: activity.maxAttempts || 1,   // ✅ Load existing or default to 1
     });
     const qs = (activity.questions || []).map((q, idx) => ({
       ...q,
@@ -521,6 +542,8 @@ const AdminActivities = ({
         category: editForm.category,
         difficulty: editForm.difficulty,
         isActive: editForm.isActive,
+        timeLimit: editForm.timeLimit,       // ✅ Save to Firebase
+        maxAttempts: editForm.maxAttempts,   // ✅ Save to Firebase
         questions: editQuestions,
         totalQuestions: editQuestions.length,
       };
@@ -841,6 +864,37 @@ const AdminActivities = ({
             />
             <div style={{ fontSize: '10px', color: palette.bodyTextSoft, marginTop: '4px', fontFamily: FONT_BODY, fontWeight: 600 }}>
               💡 Type any type or pick from suggestions
+            </div>
+          </div>
+
+          {/* ✅ NEW: Time Limit & Attempts Settings */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            <div>
+              <label style={labelStyle}>Time Limit</label>
+              <select
+                value={editForm.timeLimit}
+                onChange={(e) => setEditForm({ ...editForm, timeLimit: Number(e.target.value) })}
+                style={inputStyle}
+              >
+                <option value={0}>No Time Limit</option>
+                <option value={15}>15 Minutes</option>
+                <option value={30}>30 Minutes</option>
+                <option value={60}>1 Hour</option>
+                <option value={120}>2 Hours</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Allowed Attempts</label>
+              <select
+                value={editForm.maxAttempts}
+                onChange={(e) => setEditForm({ ...editForm, maxAttempts: Number(e.target.value) })}
+                style={inputStyle}
+              >
+                <option value={1}>1 Attempt (Strict)</option>
+                <option value={2}>2 Attempts</option>
+                <option value={3}>3 Attempts</option>
+                <option value={999}>Unlimited Attempts</option>
+              </select>
             </div>
           </div>
 
@@ -1306,6 +1360,21 @@ const ActivityCard = ({
           <MiniStat label="Created" value={formatDate(activity.createdAt)} small />
         </div>
 
+        {/* ✅ NEW: Show Time Limit and Attempts */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '12px',
+          background: palette.creamSoft,
+          borderRadius: '10px',
+          border: `1.5px solid ${palette.border}`,
+          marginBottom: '14px',
+        }}>
+          <MiniStat label="Time Limit" value={activity.timeLimit ? `${activity.timeLimit}m` : 'None'} small icon="clock" />
+          <div style={{ width: '1px', background: palette.border }} />
+          <MiniStat label="Attempts" value={activity.maxAttempts === 999 ? '∞' : activity.maxAttempts || 1} small icon="repeat" />
+        </div>
+
         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
           <button
             onClick={() => onHostLive && onHostLive(activity)}
@@ -1460,7 +1529,7 @@ const Chip = ({ children, icon, style }) => (
   </span>
 );
 
-const MiniStat = ({ label, value, small }) => (
+const MiniStat = ({ label, value, small, icon }) => (
   <div style={{ textAlign: 'center', flex: 1 }}>
     <div style={{
       fontSize: small ? '11px' : '16px',
@@ -1468,7 +1537,14 @@ const MiniStat = ({ label, value, small }) => (
       color: palette.deepNavy,
       fontFamily: FONT_DISPLAY,
       lineHeight: 1.1,
-    }}>{value}</div>
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '4px',
+    }}>
+      {icon && <Icon name={icon} size={10} color={palette.bodyTextSoft} />}
+      {value}
+    </div>
     <div style={{
       fontSize: '10px',
       color: palette.bodyTextSoft,

@@ -3,6 +3,7 @@
 // ✅ LIVE GAME SERVICE - Real-time Firebase Logic
 // WAYGROUND/QUIZIZZ STYLE - Auto-paced per student
 // ✅ UPDATED: Added questionOrder randomization & hasFinished lock
+// ✅ UPDATED: Added timeLimit support & maxAttempts retake logic
 // ============================================================
 
 import { 
@@ -70,6 +71,8 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
       questions: activityData.questions || [],
       totalQuestions: activityData.totalQuestions || 0,
       questionTime: QUESTION_TIME,
+      timeLimit: activityData.timeLimit || 0,       // ✅ NEW: Save time limit (0 = no limit)
+      maxAttempts: activityData.maxAttempts || 1,   // ✅ NEW: Save max attempts (default 1)
       status: 'lobby',
       currentQuestion: 0,
       players: [],
@@ -90,7 +93,7 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
 };
 
 // ============================================================
-// ✅ JOIN LIVE SESSION (Student) - WITH RE-ENTRY LOCK
+// ✅ JOIN LIVE SESSION (Student) - WITH RETAKES & RE-ENTRY LOCK
 // ============================================================
 export const joinLiveSession = async (gamePin, playerData) => {
   try {
@@ -110,30 +113,58 @@ export const joinLiveSession = async (gamePin, playerData) => {
     const sessionDoc = sessionsSnap.docs[0];
     const sessionData = sessionDoc.data();
     const sessionRef = doc(db, 'liveSessions', sessionDoc.id);
+    const maxAttempts = sessionData.maxAttempts || 1;
 
-    // ✅ CHECK: Existing Player Logic (Re-connection vs. Already Finished)
+    // ✅ CHECK: Existing Player Logic
     const existingPlayerIndex = sessionData.players?.findIndex(p => p.userId === playerData.userId);
     
     if (existingPlayerIndex !== -1 && existingPlayerIndex !== undefined) {
       const existingPlayer = sessionData.players[existingPlayerIndex];
+      const currentAttempts = existingPlayer.attemptsMade || 1;
 
-      // ❌ BLOCK: Kung tapos na siya, hindi na pwede bumalik
-      if (existingPlayer.hasFinished) {
-        throw new Error('You have already completed this quiz. You cannot re-join.');
+      // ❌ BLOCK: Kung tapos na siya AT naubos na ang attempts
+      if (existingPlayer.hasFinished && currentAttempts >= maxAttempts) {
+        throw new Error(`You have already used all ${maxAttempts} attempt(s) for this quiz.`);
       }
 
-      // ✅ ALLOW: Re-connection (nag-refresh lang or nadisconnect)
-      const updatedPlayers = [...sessionData.players];
-      updatedPlayers[existingPlayerIndex] = { ...existingPlayer, isConnected: true };
-      
-      await updateDoc(sessionRef, { players: updatedPlayers });
-      
-      console.log('✅ Player reconnected:', playerData.userId);
-      return {
-        sessionId: sessionDoc.id,
-        ...sessionData,
-        players: updatedPlayers
-      };
+      // ✅ ALLOW RETRY: Kung tapos na pero may natitira pang attempts
+      if (existingPlayer.hasFinished && currentAttempts < maxAttempts) {
+        const updatedPlayers = [...sessionData.players];
+        updatedPlayers[existingPlayerIndex] = {
+          ...existingPlayer,
+          score: 0,                 // Reset score
+          correctAnswers: 0,        // Reset correct count
+          answers: {},              // Clear previous answers
+          currentQuestionIndex: 0,  // Back to Q1
+          hasFinished: false,       // Unlock player
+          attemptsMade: currentAttempts + 1, // Increment attempt counter
+          questionOrder: shuffleArray(Array.from({ length: sessionData.totalQuestions }, (_, i) => i)), // New random order
+          isConnected: true,
+        };
+        
+        await updateDoc(sessionRef, { players: updatedPlayers });
+        console.log(`✅ Player retaking quiz (Attempt ${currentAttempts + 1}):`, playerData.userId);
+        
+        return {
+          sessionId: sessionDoc.id,
+          ...sessionData,
+          players: updatedPlayers
+        };
+      }
+
+      // ✅ ALLOW: Re-connection (nag-refresh lang or nadisconnect, hindi pa tapos)
+      if (!existingPlayer.hasFinished) {
+        const updatedPlayers = [...sessionData.players];
+        updatedPlayers[existingPlayerIndex] = { ...existingPlayer, isConnected: true };
+        
+        await updateDoc(sessionRef, { players: updatedPlayers });
+        console.log('✅ Player reconnected:', playerData.userId);
+        return {
+          sessionId: sessionDoc.id,
+          ...sessionData,
+          players: updatedPlayers
+        };
+      }
     }
 
     // Check if session is in lobby (no late join for new players)
@@ -161,8 +192,9 @@ export const joinLiveSession = async (gamePin, playerData) => {
       correctAnswers: 0,
       answers: {},
       currentQuestionIndex: 0,
-      hasFinished: false, // ✅ NEW FLAG
-      questionOrder,      // ✅ NEW RANDOMIZED ORDER
+      hasFinished: false, 
+      attemptsMade: 1,          // ✅ NEW: Initialize attempt to 1
+      questionOrder,      
       isConnected: true,
       joinedAt: new Date().toISOString(),
       rank: sessionData.players?.length + 1 || 1
