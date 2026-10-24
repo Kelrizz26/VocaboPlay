@@ -8,11 +8,11 @@
 // ✅ REMOVED: Light Mode toggle from sidebar
 // ✅ UPDATED: Sidebar menu spacing — bigger padding + gap
 // ✅ UPDATED: Recent Activity — shows ONLY teacher's activity title
-// ✅ NEW: Supports new activity types — Short Quiz, Long Quiz,
-//    Prelim, Midterm, Final (with icons/labels)
+// ✅ NEW: Supports new activity types — Short Quiz, Long Quiz, Prelim, Midterm, Final
 // ✅ NEW: Clickable teacher-pin activities → personal Question Breakdown modal
-// ✅ FIXED: completeActivity — participants counter now only increments
-//    on the student's FIRST attempt (prevents inflated counts)
+// ✅ FIXED: completeActivity — participants counter now only increments on FIRST attempt
+// ✅ UPDATED: REMOVED "ENTER CODE" button. Fixed maxAttempts logic in handleJoinActivity.
+// ✅ FIXED: Join Live button color changed to Orange.
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -151,9 +151,6 @@ const Icon = ({ name, size = 20, color = palette.white, secondaryColor = 'rgba(2
   return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ display: 'block', flexShrink: 0 }}>{icons[name] || icons.grid}</svg>);
 };
 
-// ============================================================
-// ✅ Activity type metadata — images, emojis, labels
-// ============================================================
 const GAME_META = {
   'quiz':        { image: '/image/quizgame.png',      emoji: '🧠', label: 'Quiz' },
   'quizmaster':  { image: '/image/quizgame.png',      emoji: '🧠', label: 'Quiz Master' },
@@ -180,9 +177,6 @@ const getGameMeta = (gameType) => {
   return GAME_META[key] || { image: null, emoji: '🎮', label: 'Game' };
 };
 
-// ============================================================
-// ✅ Answer parser — handles arrays, {Q1: true}, {1: true}, {0: true}
-// ============================================================
 const parseAnswerValue = (val) => {
   if (val === true || val === 1 || val === 'true' || val === '1') return true;
   if (val && typeof val === 'object') {
@@ -231,7 +225,6 @@ const getAnswerForQuestion = (answers, q) => {
   return false;
 };
 
-// ✅ Extract the vocabulary word from a question text like `What is 'happy'?`
 const extractWordFromQuestion = (q) => {
   if (!q) return '';
   if (q.word && String(q.word).trim()) return String(q.word).trim();
@@ -280,7 +273,6 @@ const Dashboard = () => {
   const [levelUpCardLevel, setLevelUpCardLevel] = useState(1);
   const [levelUpDiamonds, setLevelUpDiamonds] = useState(0);
 
-  // ✅ NEW: Question Breakdown modal state
   const [breakdownModal, setBreakdownModal] = useState({
     open: false,
     loading: false,
@@ -292,7 +284,7 @@ const Dashboard = () => {
     correctAnswers: 0,
     totalQuestions: 0,
     completedAt: null,
-    filter: 'all', // 'all' | 'correct' | 'wrong'
+    filter: 'all',
   });
 
   const userId = localStorage.getItem('userId');
@@ -300,7 +292,6 @@ const Dashboard = () => {
 
   const isInGame = currentGame !== null;
 
-  // ✅ FIXED: Resize handler
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -327,7 +318,6 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ FULLSCREEN API: Auto-fullscreen when entering a game
   useEffect(() => {
     if (currentGame) {
       setIsSidebarVisible(false);
@@ -429,14 +419,18 @@ const Dashboard = () => {
       if (activitiesSnap.empty) { setJoinError('❌ No active activity found with this PIN'); setJoinLoading(false); return; }
       const activityDoc = activitiesSnap.docs[0];
       const activityData = { id: activityDoc.id, ...activityDoc.data() };
+      
+      const maxAttempts = activityData.maxAttempts || 1;
       const scoresQuery = query(collection(db, 'scores'), where('activityId', '==', activityDoc.id), where('studentId', '==', userId));
       const scoresSnap = await getDocs(scoresQuery);
-      if (!scoresSnap.empty) {
-        setJoinError('✅ You have already completed this activity!');
+      
+      if (scoresSnap.size >= maxAttempts) {
+        setJoinError(`✅ You have used all ${maxAttempts} attempt(s) for this activity!`);
         setJoinLoading(false);
         setTimeout(() => { setJoinPin(''); setShowJoinModal(false); setJoinError(''); }, 2000);
         return;
       }
+      
       setSelectedActivity(activityData); setShowActivityModal(true);
       setJoinPin(''); setShowJoinModal(false); setJoinError('');
     } catch (error) { setJoinError('Failed to join activity.'); }
@@ -466,9 +460,7 @@ const Dashboard = () => {
     localStorage.setItem('currentActivity', JSON.stringify(selectedActivity));
   };
 
-  // ✅ NEW: Open Question Breakdown modal
   const openBreakdown = async (activity) => {
-    // Only teacher-pin activities with an activityId can be reviewed
     if (!activity || activity.source !== 'teacher-pin' || !activity.activityId) return;
 
     setBreakdownModal({
@@ -664,14 +656,12 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ FIXED: completeActivity — participants only increment on FIRST attempt
   const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = []) => {
     try {
       const activityRef = doc(db, 'activities', activityId);
       const activitySnap = await getDoc(activityRef);
       const activityData = activitySnap.exists() ? activitySnap.data() : {};
 
-      // ✅ FIX: Check kung may existing score na yung student para sa activity na ito
       const existingQuery = query(
         collection(db, 'scores'),
         where('activityId', '==', activityId),
@@ -690,7 +680,6 @@ const Dashboard = () => {
         completedAt: new Date().toISOString()
       });
 
-      // ✅ FIX: I-increment ang participants count ONLY kung first attempt ng student
       if (activitySnap.exists() && isFirstAttempt) {
         await updateDoc(activityRef, { participants: (activitySnap.data().participants || 0) + 1 });
       }
@@ -808,7 +797,6 @@ const Dashboard = () => {
     );
   }
 
-  // ✅ Pre-compute breakdown filters/statistics
   const breakdownQuestions = breakdownModal.questions || [];
   const breakdownAnswers = breakdownModal.answers || {};
 
@@ -1119,10 +1107,8 @@ const Dashboard = () => {
                     <ExpBar xp={displayProgress.xp} xpToNext={displayProgress.xpToNext} level={displayProgress.level} isMaxLevel={displayProgress.isMaxLevel} color={palette.warmOrange} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <button onClick={() => setShowJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Icon name="key" size={14} color={palette.white} /> Enter Code
-                    </button>
-                    <button onClick={() => setShowLiveJoinModal(true)} style={{ ...chunkyButton(palette.softGreen, palette.softGreenShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* ✅ UPDATED: Color changed to Orange and text to Join Live */}
+                    <button onClick={() => setShowLiveJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Icon name="play" size={14} color={palette.white} /> Join Live
                     </button>
                     <button onClick={() => changeMenu('Games')} style={{ background: 'transparent', color: 'white', border: `1.5px solid rgba(255,255,255,0.35)`, padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1272,9 +1258,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ============================================================
-          ✅ Question Breakdown Modal
-         ============================================================ */}
       {breakdownModal.open && (
         <div
           className="breakdown-overlay"
@@ -1286,7 +1269,6 @@ const Dashboard = () => {
             style={styles.breakdownModal}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div style={styles.breakdownHeader}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <h3 style={styles.breakdownTitle}>📊 My Question Breakdown</h3>
@@ -1308,7 +1290,6 @@ const Dashboard = () => {
               </button>
             </div>
 
-            {/* Filter pills */}
             {!breakdownModal.loading && !breakdownModal.error && breakdownRows.length > 0 && (
               <div style={styles.breakdownFilters}>
                 <button
@@ -1341,7 +1322,6 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Body */}
             <div style={styles.breakdownBody}>
               {breakdownModal.loading ? (
                 <div style={{ textAlign: 'center', padding: '40px 0' }}>
@@ -1381,7 +1361,6 @@ const Dashboard = () => {
                           borderLeft: `4px solid ${isCorrect ? palette.softGreen : palette.coral}`,
                         }}
                       >
-                        {/* Q header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px' }}>
                           <span style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Fredoka', sans-serif", color: palette.bodyTextSoft, background: palette.white, padding: '3px 10px', borderRadius: '999px', border: `1px solid ${palette.border}` }}>
                             Q{questionNumber}
@@ -1400,12 +1379,10 @@ const Dashboard = () => {
                           </span>
                         </div>
 
-                        {/* Question text */}
                         <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", lineHeight: 1.4, marginBottom: '10px' }}>
                           {q.question || '(No question text)'}
                         </div>
 
-                        {/* Options */}
                         {options.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {options.map((opt, oIdx) => {
@@ -1457,7 +1434,6 @@ const Dashboard = () => {
                           </div>
                         )}
 
-                        {/* Fallback: correct answer text only */}
                         {options.length === 0 && correctAnswer && (
                           <div style={{ fontSize: '12px', color: palette.bodyText, fontFamily: "'Nunito', sans-serif", fontWeight: 600 }}>
                             <span style={{ color: palette.bodyTextSoft }}>Correct answer: </span>
@@ -1471,7 +1447,6 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Summary footer */}
             {!breakdownModal.loading && !breakdownModal.error && breakdownRows.length > 0 && (
               <div style={styles.breakdownSummary}>
                 <div style={{ fontSize: '14px', fontWeight: 800, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif" }}>
@@ -1488,7 +1463,6 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Local responsive styles for the breakdown modal */}
           <style>{`
             @media (max-width: 640px) {
               .breakdown-modal {
@@ -1518,7 +1492,6 @@ const styles = {
   cancelBtn: { flex: 1, padding: '12px', background: palette.creamSoft, color: palette.deepNavy, border: `1.5px solid ${palette.border}`, borderRadius: '12px', cursor: 'pointer' },
   startBtn: { flex: 2, padding: '12px', ...chunkyButton(palette.softGreen, palette.softGreenShadow), fontSize: '13px' },
 
-  // ✅ Question Breakdown modal styles
   breakdownOverlay: {
     position: 'fixed',
     inset: 0,
