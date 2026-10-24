@@ -12,13 +12,14 @@
 // ✅ NEW: Clickable teacher-pin activities → personal Question Breakdown modal
 // ✅ FIXED: completeActivity — participants counter now only increments on FIRST attempt
 // ✅ UPDATED: REMOVED "ENTER CODE" button. Fixed maxAttempts logic in handleJoinActivity.
-// ✅ FIXED: Join Live button color changed to Orange.
+// ✅ FIXED: Join Live button color changed to Orange & text fixed.
+// ✅ FIXED: setDoc with merge: true in updateProgress to ensure new students are saved to Admin Dashboard.
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../pages/firebase';
 import {
-  doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc
+  doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs, addDoc
 } from 'firebase/firestore';
 import { useUserStats } from '../hooks/useUserStats';
 import Profile from './Profile';
@@ -625,13 +626,17 @@ const Dashboard = () => {
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
       const updateData = {
+        uid: userId, // ✅ Siguraduhing may UID
+        role: 'student', // ✅ Siguraduhing student role
+        displayName: userProfile.displayName || 'Student', // ✅ Siguraduhing may pangalan
         totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
         currentStreak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
         learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats,
         totalDiamonds: newDiamonds, lastActive: new Date().toISOString()
       };
 
-      await updateDoc(userRef, updateData);
+      // ✅ ITO ANG FIX: setDoc na may merge:true para kung wala pa yung user, magagawa siya
+      await setDoc(userRef, updateData, { merge: true });
 
       const newProgress = {
         totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
@@ -1107,9 +1112,9 @@ const Dashboard = () => {
                     <ExpBar xp={displayProgress.xp} xpToNext={displayProgress.xpToNext} level={displayProgress.level} isMaxLevel={displayProgress.isMaxLevel} color={palette.warmOrange} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {/* ✅ UPDATED: Color changed to Orange and text to Join Live */}
+                    {/* ✅ UPDATED: Text changed to Join Live, Color set to Orange */}
                     <button onClick={() => setShowLiveJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Icon name="play" size={14} color={palette.white} /> Enter Code
+                      <Icon name="play" size={14} color={palette.white} /> Join Live
                     </button>
                     <button onClick={() => changeMenu('Games')} style={{ background: 'transparent', color: 'white', border: `1.5px solid rgba(255,255,255,0.35)`, padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Icon name="target" size={14} color={palette.white} secondaryColor="rgba(255,255,255,0.5)" /> Play Games

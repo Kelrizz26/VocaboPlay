@@ -3,10 +3,13 @@
 // ✅ STUDENT LIVE GAME - FULL SIZE
 // ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
 // ✅ UPDATED: Added Global Time Limit (Auto-close kapag naubos ang oras)
+// ✅ FIXED: Auto-save score agad pagka-tapos ng student (hindi na kailangan hintayin teacher)
 // ============================================================
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { doc, getDoc } from 'firebase/firestore'; // ✅ Added for auto-save
+import { db } from '../../pages/firebase'; // ✅ Added for auto-save
 import { subscribeToSession, submitAnswer, updatePlayerProgress, QUESTION_TIME } from '../../services/LiveGameService';
 import LivePlayerResults from './LivePlayerResults';
 
@@ -38,7 +41,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
-  const [globalTimeLeft, setGlobalTimeLeft] = useState(null); // ✅ NEW: State for global time
+  const [globalTimeLeft, setGlobalTimeLeft] = useState(null); 
   const [feedback, setFeedback] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false); 
@@ -46,6 +49,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
 
   const sessionSavedRef = useRef(false);
   const answersRef = useRef({});
+  const savedScoreRef = useRef(false); // ✅ NEW: Prevent double saving
 
   // ✅ Effect 1: Subscribe to Session Updates
   useEffect(() => {
@@ -55,8 +59,11 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       setSession(data);
 
       if (data.status === 'ended') {
-        if (completeActivity && !sessionSavedRef.current) {
+        // Fallback: Save score if teacher ends the game before student finishes
+        if (completeActivity && !sessionSavedRef.current && !savedScoreRef.current) {
           sessionSavedRef.current = true;
+          savedScoreRef.current = true; 
+          
           const myPlayer = data.players?.find(p => p.userId === playerId);
           const myCorrect = myPlayer?.correctAnswers || myPlayer?.correct || 0;
           const totalQ = data.totalQuestions || 0;
@@ -90,8 +97,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
 
       if (remaining === 0) {
         clearInterval(interval);
-        // 🚨 AUTO-CLOSE: Force finish kapag naubos ang time limit
-        setIsFinished(true);
+        setIsFinished(true); 
       }
     }, 1000);
 
@@ -112,7 +118,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   useEffect(() => {
     if (session?.status !== 'playing') return;
     if (hasAnswered) return;
-    if (isFinished) return; // ✅ Don't run if global time ran out
+    if (isFinished) return; 
 
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - questionStartRef.current) / 1000);
@@ -178,11 +184,43 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   };
 
   const moveToNextQuestion = () => {
-    if (isFinished) return; // ✅ Stop if global time ran out
+    if (isFinished) return; 
     const nextIndex = currentQuestionIndex + 1;
+    
     if (nextIndex >= session.totalQuestions) {
       setIsFinished(true);
       setFeedback(null);
+      
+      // ✅ AUTO-SAVE: Save score to database when student finishes
+      if (!savedScoreRef.current && completeActivity) {
+        savedScoreRef.current = true;
+        
+        const saveFinalScore = async () => {
+          try {
+            const sessionRef = doc(db, 'liveSessions', session.sessionId);
+            const snap = await getDoc(sessionRef);
+            
+            if (snap.exists()) {
+              const data = snap.data();
+              const myPlayer = data.players?.find(p => p.userId === playerId);
+              
+              if (myPlayer) {
+                completeActivity(
+                  data.activityId,
+                  myPlayer.correctAnswers || 0,
+                  myPlayer.correctAnswers || 0,
+                  data.totalQuestions || 0,
+                  myPlayer.answers || {}
+                );
+              }
+            }
+          } catch (err) {
+            console.error("Error auto-saving score:", err);
+          }
+        };
+        
+        saveFinalScore();
+      }
       return;
     }
     setCurrentQuestionIndex(nextIndex);
@@ -362,7 +400,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   );
 };
 
-// ... (I-keep ang styles object nang eksaktong katulad ng dati mong code) ...
 const styles = {
   container: { minHeight: '100vh', width: '100vw', backgroundImage: `url('/image/quiz-bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat', padding: 'clamp(16px, 3vw, 40px)', fontFamily: BRAND_FONT_BODY, color: palette.white, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' },
   gameInner: { width: '100%', maxWidth: 'min(1200px, 100%)', display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 1.8vw, 20px)', flex: 1, justifyContent: 'center' },
