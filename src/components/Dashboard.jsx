@@ -1109,7 +1109,7 @@ const Dashboard = () => {
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {/* ✅ UPDATED: Color changed to Orange and text to Join Live */}
                     <button onClick={() => setShowLiveJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Icon name="play" size={14} color={palette.white} /> Join Live
+                      <Icon name="play" size={14} color={palette.white} /> Enter Code
                     </button>
                     <button onClick={() => changeMenu('Games')} style={{ background: 'transparent', color: 'white', border: `1.5px solid rgba(255,255,255,0.35)`, padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Icon name="target" size={14} color={palette.white} secondaryColor="rgba(255,255,255,0.5)" /> Play Games
