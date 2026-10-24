@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ LIVE GAME SERVICE - Real-time Firebase Logic
 // WAYGROUND/QUIZIZZ STYLE - Auto-paced per student
+// ✅ UPDATED: Added questionOrder randomization & hasFinished lock
 // ============================================================
 
 import { 
@@ -32,11 +33,22 @@ export const TIME_PENALTY = 20; // points deducted per second
 export const MAX_PLAYERS = 50;
 
 // ============================================================
+// ✅ HELPER: Shuffle Array (Fisher-Yates)
+// ============================================================
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+// ============================================================
 // ✅ CREATE LIVE SESSION (Teacher)
 // ============================================================
 export const createLiveSession = async (activityId, teacherId, teacherName) => {
   try {
-    // Get activity data
     const activityRef = doc(db, 'activities', activityId);
     const activitySnap = await getDoc(activityRef);
     
@@ -45,11 +57,8 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
     }
 
     const activityData = activitySnap.data();
-    
-    // Generate unique session ID
     const sessionId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Create live session
     const sessionData = {
       sessionId,
       activityId,
@@ -60,13 +69,10 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
       gamePin: activityData.gamePin,
       questions: activityData.questions || [],
       totalQuestions: activityData.totalQuestions || 0,
-      questionTime: QUESTION_TIME, // ✅ 15 seconds per question
-      
-      status: 'lobby', // 'lobby' | 'playing' | 'ended'
+      questionTime: QUESTION_TIME,
+      status: 'lobby',
       currentQuestion: 0,
-      
       players: [],
-      
       createdAt: serverTimestamp(),
       startedAt: null,
       endedAt: null
@@ -76,11 +82,7 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
     await setDoc(sessionRef, sessionData);
 
     console.log('✅ Live session created:', sessionId);
-    
-    return {
-      sessionId,
-      ...sessionData
-    };
+    return { sessionId, ...sessionData };
   } catch (error) {
     console.error('❌ Error creating live session:', error);
     throw error;
@@ -88,7 +90,7 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
 };
 
 // ============================================================
-// ✅ JOIN LIVE SESSION (Student)
+// ✅ JOIN LIVE SESSION (Student) - WITH RE-ENTRY LOCK
 // ============================================================
 export const joinLiveSession = async (gamePin, playerData) => {
   try {
@@ -109,15 +111,34 @@ export const joinLiveSession = async (gamePin, playerData) => {
     const sessionData = sessionDoc.data();
     const sessionRef = doc(db, 'liveSessions', sessionDoc.id);
 
-    // Check if session is in lobby (no late join)
-    if (sessionData.status !== 'lobby') {
-      throw new Error('Game already started. Cannot join now.');
+    // ✅ CHECK: Existing Player Logic (Re-connection vs. Already Finished)
+    const existingPlayerIndex = sessionData.players?.findIndex(p => p.userId === playerData.userId);
+    
+    if (existingPlayerIndex !== -1 && existingPlayerIndex !== undefined) {
+      const existingPlayer = sessionData.players[existingPlayerIndex];
+
+      // ❌ BLOCK: Kung tapos na siya, hindi na pwede bumalik
+      if (existingPlayer.hasFinished) {
+        throw new Error('You have already completed this quiz. You cannot re-join.');
+      }
+
+      // ✅ ALLOW: Re-connection (nag-refresh lang or nadisconnect)
+      const updatedPlayers = [...sessionData.players];
+      updatedPlayers[existingPlayerIndex] = { ...existingPlayer, isConnected: true };
+      
+      await updateDoc(sessionRef, { players: updatedPlayers });
+      
+      console.log('✅ Player reconnected:', playerData.userId);
+      return {
+        sessionId: sessionDoc.id,
+        ...sessionData,
+        players: updatedPlayers
+      };
     }
 
-    // Check if already joined
-    const existingPlayer = sessionData.players?.find(p => p.userId === playerData.userId);
-    if (existingPlayer) {
-      throw new Error('You are already in this session');
+    // Check if session is in lobby (no late join for new players)
+    if (sessionData.status !== 'lobby') {
+      throw new Error('Game already started. Cannot join now.');
     }
 
     // Check max players
@@ -125,7 +146,12 @@ export const joinLiveSession = async (gamePin, playerData) => {
       throw new Error('Session is full');
     }
 
-    // Add player with currentQuestionIndex = 0
+    // ✅ GENERATE RANDOMIZED QUESTION ORDER FOR THIS STUDENT
+    const questionOrder = shuffleArray(
+      Array.from({ length: sessionData.totalQuestions }, (_, i) => i)
+    );
+
+    // Add player
     const newPlayer = {
       userId: playerData.userId,
       name: playerData.name,
@@ -134,7 +160,9 @@ export const joinLiveSession = async (gamePin, playerData) => {
       score: 0,
       correctAnswers: 0,
       answers: {},
-      currentQuestionIndex: 0, // ✅ TRACK STUDENT'S CURRENT QUESTION
+      currentQuestionIndex: 0,
+      hasFinished: false, // ✅ NEW FLAG
+      questionOrder,      // ✅ NEW RANDOMIZED ORDER
       isConnected: true,
       joinedAt: new Date().toISOString(),
       rank: sessionData.players?.length + 1 || 1
@@ -145,7 +173,6 @@ export const joinLiveSession = async (gamePin, playerData) => {
     });
 
     console.log('✅ Joined session:', sessionDoc.id);
-    
     return {
       sessionId: sessionDoc.id,
       ...sessionData,
@@ -176,12 +203,10 @@ export const subscribeToSession = (sessionId, callback) => {
 export const startGame = async (sessionId) => {
   try {
     const sessionRef = doc(db, 'liveSessions', sessionId);
-    
     await updateDoc(sessionRef, {
       status: 'playing',
       startedAt: new Date().toISOString()
     });
-
     console.log('✅ Game started');
     return true;
   } catch (error) {
@@ -191,7 +216,7 @@ export const startGame = async (sessionId) => {
 };
 
 // ============================================================
-// ✅ SUBMIT ANSWER (Student) - AUTO-ADVANCE PER STUDENT
+// ✅ SUBMIT ANSWER (Student) - WITH RANDOMIZED ORDER
 // ============================================================
 export const submitAnswer = async (sessionId, playerId, questionIndex, answer, timeSpent) => {
   try {
@@ -203,21 +228,6 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
     }
 
     const sessionData = sessionSnap.data();
-    const question = sessionData.questions[questionIndex];
-    
-    if (!question) {
-      throw new Error('Question not found');
-    }
-
-    const isCorrect = answer === question.correctAnswer;
-    
-    // Calculate points
-    let points = 0;
-    if (isCorrect) {
-      points = Math.max(100, BASE_POINTS - Math.floor(timeSpent * TIME_PENALTY));
-    }
-
-    // Update player
     const players = sessionData.players || [];
     const playerIndex = players.findIndex(p => p.userId === playerId);
     
@@ -225,14 +235,38 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
       throw new Error('Player not found');
     }
 
+    const player = players[playerIndex];
+    
+    // ✅ USE questionOrder TO FIND ACTUAL QUESTION
+    const actualQuestionIndex = player.questionOrder 
+      ? player.questionOrder[questionIndex] 
+      : questionIndex;
+      
+    const question = sessionData.questions[actualQuestionIndex];
+    
+    if (!question) {
+      throw new Error('Question not found');
+    }
+
+    const isCorrect = answer === question.correctAnswer;
+    
+    let points = 0;
+    if (isCorrect) {
+      points = Math.max(100, BASE_POINTS - Math.floor(timeSpent * TIME_PENALTY));
+    }
+
+    const nextQuestionIndex = questionIndex + 1;
+    const hasFinished = nextQuestionIndex >= sessionData.totalQuestions;
+
     const updatedPlayer = {
-      ...players[playerIndex],
-      score: players[playerIndex].score + points,
-      correctAnswers: players[playerIndex].correctAnswers + (isCorrect ? 1 : 0),
-      currentQuestionIndex: questionIndex + 1, // ✅ AUTO-ADVANCE PER STUDENT!
+      ...player,
+      score: player.score + points,
+      correctAnswers: player.correctAnswers + (isCorrect ? 1 : 0),
+      currentQuestionIndex: nextQuestionIndex,
+      hasFinished: hasFinished, // ✅ MARK AS FINISHED
       answers: {
-        ...players[playerIndex].answers,
-        [questionIndex]: {
+        ...player.answers,
+        [actualQuestionIndex]: { // ✅ SAVE BY ACTUAL INDEX
           answer,
           isCorrect,
           timeSpent,
@@ -255,11 +289,11 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
       players: updatedPlayers
     });
 
-    // Also save to liveAnswers collection for analytics
+    // Save to liveAnswers collection for analytics
     await addDoc(collection(db, 'liveAnswers'), {
       sessionId,
       playerId,
-      questionIndex,
+      questionIndex: actualQuestionIndex,
       answer,
       isCorrect,
       timeSpent,
@@ -267,13 +301,13 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
       answeredAt: serverTimestamp()
     });
 
-    console.log('✅ Answer submitted:', { isCorrect, points, nextQuestion: questionIndex + 1 });
+    console.log('✅ Answer submitted:', { isCorrect, points, nextQuestion: nextQuestionIndex, hasFinished });
     
     return {
       isCorrect,
       points,
       correctAnswer: question.correctAnswer,
-      nextQuestionIndex: questionIndex + 1
+      nextQuestionIndex
     };
   } catch (error) {
     console.error('❌ Error submitting answer:', error);
@@ -297,10 +331,31 @@ export const updatePlayerProgress = async (sessionId, playerId, questionIndex) =
     
     if (playerIndex === -1) return;
 
-    // Just advance the question index without adding score
+    const player = players[playerIndex];
+    
+    // ✅ USE questionOrder TO FIND ACTUAL QUESTION
+    const actualQuestionIndex = player.questionOrder 
+      ? player.questionOrder[questionIndex] 
+      : questionIndex;
+
+    const nextQuestionIndex = questionIndex + 1;
+    const hasFinished = nextQuestionIndex >= sessionData.totalQuestions;
+
     const updatedPlayer = {
-      ...players[playerIndex],
-      currentQuestionIndex: questionIndex + 1
+      ...player,
+      currentQuestionIndex: nextQuestionIndex,
+      hasFinished: hasFinished, // ✅ MARK AS FINISHED
+      answers: {
+        ...player.answers,
+        [actualQuestionIndex]: { // ✅ RECORD TIMEOUT AS WRONG
+          answer: null,
+          isCorrect: false,
+          timeSpent: QUESTION_TIME,
+          points: 0,
+          answeredAt: new Date().toISOString(),
+          timeout: true
+        }
+      }
     };
 
     const updatedPlayers = [...players];
@@ -310,7 +365,7 @@ export const updatePlayerProgress = async (sessionId, playerId, questionIndex) =
       players: updatedPlayers
     });
 
-    console.log('✅ Player progress updated to question:', questionIndex + 1);
+    console.log('✅ Player progress updated to question:', nextQuestionIndex, 'hasFinished:', hasFinished);
   } catch (error) {
     console.error('❌ Error updating player progress:', error);
   }
@@ -322,12 +377,10 @@ export const updatePlayerProgress = async (sessionId, playerId, questionIndex) =
 export const endGame = async (sessionId) => {
   try {
     const sessionRef = doc(db, 'liveSessions', sessionId);
-    
     await updateDoc(sessionRef, {
       status: 'ended',
       endedAt: new Date().toISOString()
     });
-
     console.log('✅ Game ended');
     return true;
   } catch (error) {
@@ -352,17 +405,11 @@ export const removePlayer = async (sessionId, playerId) => {
     
     if (!player) return;
 
-    // Mark as disconnected (retain score)
     const updatedPlayers = players.map(p => 
-      p.userId === playerId 
-        ? { ...p, isConnected: false }
-        : p
+      p.userId === playerId ? { ...p, isConnected: false } : p
     );
 
-    await updateDoc(sessionRef, {
-      players: updatedPlayers
-    });
-
+    await updateDoc(sessionRef, { players: updatedPlayers });
     console.log('✅ Player removed:', playerId);
   } catch (error) {
     console.error('❌ Error removing player:', error);
@@ -376,11 +423,7 @@ export const getSessionById = async (sessionId) => {
   try {
     const sessionRef = doc(db, 'liveSessions', sessionId);
     const sessionSnap = await getDoc(sessionRef);
-    
-    if (!sessionSnap.exists()) {
-      return null;
-    }
-
+    if (!sessionSnap.exists()) return null;
     return { id: sessionSnap.id, ...sessionSnap.data() };
   } catch (error) {
     console.error('❌ Error getting session:', error);
@@ -407,7 +450,6 @@ export const deleteSession = async (sessionId) => {
 // ============================================================
 export const calculateRankings = (players) => {
   const sorted = [...players].sort((a, b) => b.score - a.score);
-  
   return sorted.map((player, index) => ({
     ...player,
     rank: index + 1,
@@ -420,11 +462,7 @@ export const calculateRankings = (players) => {
 // ============================================================
 export const checkAllPlayersCompleted = (players, totalQuestions) => {
   if (!players || players.length === 0) return false;
-  
-  return players.every(p => {
-    const answered = Object.keys(p.answers || {}).length;
-    return answered >= totalQuestions;
-  });
+  return players.every(p => p.hasFinished || Object.keys(p.answers || {}).length >= totalQuestions);
 };
 
 // ============================================================
@@ -433,12 +471,11 @@ export const checkAllPlayersCompleted = (players, totalQuestions) => {
 export const getPlayerProgress = (player, totalQuestions) => {
   const answered = Object.keys(player.answers || {}).length;
   const percentage = totalQuestions > 0 ? Math.round((answered / totalQuestions) * 100) : 0;
-  
   return {
     answered,
     total: totalQuestions,
     percentage,
-    isCompleted: answered >= totalQuestions
+    isCompleted: player.hasFinished || answered >= totalQuestions
   };
 };
 

@@ -1,35 +1,25 @@
 // src/components/dashboard/LivePlayerGame.jsx
 // ============================================================
 // ✅ STUDENT LIVE GAME - FULL SIZE
-// ✅ UPDATED: Solid Dark Navy Containers (matches dashboard theme)
+// ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
 // ============================================================
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { subscribeToSession, submitAnswer, updatePlayerProgress, QUESTION_TIME } from '../../services/LiveGameService';
+import LivePlayerResults from './LivePlayerResults';
 
-// ===== MUTED DASHBOARD PALETTE (matches Avatar Shop) =====
+// ===== MUTED DASHBOARD PALETTE =====
 const palette = {
-  warmOrange: '#E9A075',
-  warmOrangeShadow: '#C27E4F',
-  coral: '#DB7A64',
-  coralShadow: '#A95845',
-  teal: '#4F9188',
-  tealShadow: '#3A6A63',
-  deepNavy: '#2A2845',
-  deepNavyLight: '#3A3757',
-  bodyText: '#6B6880',
-  bodyTextSoft: '#8A8799',
-  cream: '#FDF9F3',
-  creamSoft: '#F5EFE6',
-  white: '#FFFFFF',
-  border: '#EBE2D5',
-  borderSoft: '#F2EBE0',
-  softGreen: '#7FA574',
-  softGreenShadow: '#5E7F55',
-  gold: '#C9A227',
-  shadow: 'rgba(42, 40, 69, 0.06)',
-  shadowMd: 'rgba(42, 40, 69, 0.10)',
+  warmOrange: '#E9A075', warmOrangeShadow: '#C27E4F',
+  coral: '#DB7A64', coralShadow: '#A95845',
+  teal: '#4F9188', tealShadow: '#3A6A63',
+  deepNavy: '#2A2845', deepNavyLight: '#3A3757',
+  bodyText: '#6B6880', bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3', creamSoft: '#F5EFE6',
+  white: '#FFFFFF', border: '#EBE2D5', borderSoft: '#F2EBE0',
+  softGreen: '#7FA574', softGreenShadow: '#5E7F55',
+  gold: '#C9A227', shadow: 'rgba(42, 40, 69, 0.06)', shadowMd: 'rgba(42, 40, 69, 0.10)',
 };
 
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
@@ -42,7 +32,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [feedback, setFeedback] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [isWaiting, setIsWaiting] = useState(false);
+  const [isFinished, setIsFinished] = useState(false); 
   const questionStartRef = useRef(null);
 
   const sessionSavedRef = useRef(false);
@@ -57,45 +47,37 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       if (data.status === 'ended') {
         if (completeActivity && !sessionSavedRef.current) {
           sessionSavedRef.current = true;
-
           const myPlayer = data.players?.find(p => p.userId === playerId);
           const myCorrect = myPlayer?.correctAnswers || myPlayer?.correct || 0;
           const totalQ = data.totalQuestions || 0;
-          const pointsForRecent = myCorrect;
           const activityId = data.activityId || initialSession?.activityId || null;
           
           if (activityId) {
-            completeActivity(
-              activityId,
-              pointsForRecent,
-              myCorrect,
-              totalQ,
-              answersRef.current 
-            );
+            completeActivity(activityId, myCorrect, myCorrect, totalQ, answersRef.current);
           }
         }
-        onGameEnd(data);
+        if (!isFinished) {
+           onGameEnd(data);
+        }
       }
     });
 
     return () => unsubscribe();
-  }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId]);
+  }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId, isFinished]);
 
   useEffect(() => {
     if (session?.status !== 'playing') return;
-
     setSelectedAnswer(null);
     setHasAnswered(false);
     setFeedback(null);
     setTimeLeft(QUESTION_TIME);
-    setIsWaiting(false);
     questionStartRef.current = Date.now();
   }, [currentQuestionIndex, session?.status]);
 
   useEffect(() => {
     if (session?.status !== 'playing') return;
     if (hasAnswered) return;
-    if (isWaiting) return;
+    if (isFinished) return;
 
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - questionStartRef.current) / 1000);
@@ -109,13 +91,17 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     }, 100);
 
     return () => clearInterval(interval);
-  }, [currentQuestionIndex, hasAnswered, isWaiting, session?.status]);
+  }, [currentQuestionIndex, hasAnswered, isFinished, session?.status]);
 
   const handleTimeout = async () => {
     if (hasAnswered) return;
     setHasAnswered(true);
     setFeedback({ isCorrect: false, points: 0, timeout: true });
-    answersRef.current[`Q${currentQuestionIndex + 1}`] = false;
+    
+    // ✅ I-save sa ref base sa ACTUAL question index
+    const myPlayer = session?.players?.find(p => p.userId === playerId);
+    const actualQIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
+    answersRef.current[`Q${actualQIndex + 1}`] = false;
 
     try {
       await updatePlayerProgress(session.sessionId, playerId, currentQuestionIndex);
@@ -123,9 +109,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       console.error('Error updating progress:', error);
     }
 
-    setTimeout(() => {
-      moveToNextQuestion();
-    }, 1500);
+    setTimeout(() => { moveToNextQuestion(); }, 1500);
   };
 
   const handleSelectAnswer = async (option) => {
@@ -137,11 +121,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     try {
       const timeSpent = (Date.now() - questionStartRef.current) / 1000;
       const result = await submitAnswer(
-        session.sessionId,
-        playerId,
-        currentQuestionIndex,
-        option,
-        timeSpent
+        session.sessionId, playerId, currentQuestionIndex, option, timeSpent
       );
 
       setFeedback({
@@ -150,37 +130,45 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
         correctAnswer: result.correctAnswer
       });
 
-      answersRef.current[`Q${currentQuestionIndex + 1}`] = result.isCorrect;
+      const myPlayer = session?.players?.find(p => p.userId === playerId);
+      const actualQIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
+      answersRef.current[`Q${actualQIndex + 1}`] = result.isCorrect;
 
-      setTimeout(() => {
-        moveToNextQuestion();
-      }, 1500);
+      setTimeout(() => { moveToNextQuestion(); }, 1500);
 
     } catch (error) {
       console.error('Error submitting answer:', error);
       setFeedback({ isCorrect: false, points: 0, error: true });
-      answersRef.current[`Q${currentQuestionIndex + 1}`] = false;
-
-      setTimeout(() => {
-        moveToNextQuestion();
-      }, 1500);
+      setTimeout(() => { moveToNextQuestion(); }, 1500);
     }
   };
 
   const moveToNextQuestion = () => {
     const nextIndex = currentQuestionIndex + 1;
-
     if (nextIndex >= session.totalQuestions) {
-      setIsWaiting(true);
+      setIsFinished(true);
       setFeedback(null);
       return;
     }
-
     setCurrentQuestionIndex(nextIndex);
   };
 
-  const currentQuestion = session?.questions?.[currentQuestionIndex];
   const myPlayer = session?.players?.find(p => p.userId === playerId);
+  
+  // ✅ GAMITIN ANG questionOrder PARA SA RANDOMIZED QUESTIONS
+  const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
+  const currentQuestion = session?.questions?.[actualQuestionIndex];
+  
+  // ✅ I-SHUFFLE DIN ANG OPTIONS PARA HINDI MAKOPYA
+  const shuffledOptions = useMemo(() => {
+    if (!currentQuestion || !currentQuestion.options) return [];
+    const opts = [...currentQuestion.options];
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    return opts;
+  }, [actualQuestionIndex, currentQuestion?.options]);
 
   const myCorrectCount = myPlayer?.correctAnswers || myPlayer?.correct || 0;
   const myScore = myCorrectCount;
@@ -192,45 +180,8 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   });
   const myRank = sortedPlayers.findIndex(p => p.userId === playerId) + 1;
 
-  if (isWaiting) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.waitingContainer}>
-          <motion.div
-            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            style={styles.waitingEmoji}
-          >
-            🎉
-          </motion.div>
-
-          <h1 style={styles.waitingTitle}>All done!</h1>
-          <p style={styles.waitingSubtitle}>Waiting for other players to finish...</p>
-
-          <div style={styles.waitingStats}>
-            <div style={styles.waitingStatItem}>
-              <div style={styles.waitingStatLabel}>Score</div>
-              <div style={styles.waitingStatValue}>{myScore}</div>
-            </div>
-            <div style={styles.waitingStatDivider} />
-            <div style={styles.waitingStatItem}>
-              <div style={styles.waitingStatLabel}>Rank</div>
-              <div style={styles.waitingStatValue}>#{myRank}</div>
-            </div>
-          </div>
-
-          <motion.div
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            style={styles.waitingSpinner}
-          >
-            <div style={styles.spinnerDot} />
-            <div style={{ ...styles.spinnerDot, animationDelay: '0.2s' }} />
-            <div style={{ ...styles.spinnerDot, animationDelay: '0.4s' }} />
-          </motion.div>
-        </div>
-      </div>
-    );
+  if (isFinished) {
+    return <LivePlayerResults session={session} playerId={playerId} onExit={() => onGameEnd(session)} />;
   }
 
   if (!currentQuestion) {
@@ -261,7 +212,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           </div>
         </div>
 
-        {/* My Score Bar - DARK NAVY */}
+        {/* My Score Bar */}
         <div style={styles.scoreBar}>
           <div style={styles.scoreItem}>
             <span style={styles.scoreLabelSmall}>Score</span>
@@ -283,7 +234,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           />
         </div>
 
-        {/* Question - DARK NAVY */}
+        {/* Question */}
         <motion.div
           key={currentQuestionIndex}
           initial={{ opacity: 0, y: -20 }}
@@ -293,9 +244,9 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* Options - DARK NAVY */}
+        {/* Options (Gamit ang shuffledOptions) */}
         <div className="live-options-grid" style={styles.optionsGrid}>
-          {currentQuestion.options?.map((option, index) => {
+          {shuffledOptions.map((option, index) => {
             const isSelected = selectedAnswer === option;
             const isCorrectAnswer = option === currentQuestion.correctAnswer;
             const showCorrect = hasAnswered && isCorrectAnswer;
@@ -331,7 +282,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           })}
         </div>
 
-        {/* Feedback - DARK NAVY */}
+        {/* Feedback */}
         <AnimatePresence>
           {feedback && (
             <motion.div
@@ -340,37 +291,19 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
               exit={{ opacity: 0 }}
               style={{
                 ...styles.feedbackBox,
-                background: feedback.isCorrect
-                  ? `rgba(127, 165, 116, 0.95)` // softGreen
-                  : feedback.timeout
-                    ? `rgba(233, 160, 117, 0.95)` // warmOrange
-                    : `rgba(219, 122, 100, 0.95)`, // coral
+                background: feedback.isCorrect ? `rgba(127, 165, 116, 0.95)` : feedback.timeout ? `rgba(233, 160, 117, 0.95)` : `rgba(219, 122, 100, 0.95)`, 
                 borderColor: 'rgba(255, 255, 255, 0.5)'
               }}
             >
               {feedback.isCorrect ? (
-                <>
-                  <div style={styles.feedbackIcon}>🎉</div>
-                  <div style={{...styles.feedbackTitle, color: palette.white}}>Correct!</div>
-                  <div style={{...styles.feedbackPoints, color: palette.white}}>+1 pt</div>
-                </>
+                <><div style={styles.feedbackIcon}>🎉</div><div style={{...styles.feedbackTitle, color: palette.white}}>Correct!</div><div style={{...styles.feedbackPoints, color: palette.white}}>+1 pt</div></>
               ) : feedback.timeout ? (
-                <>
-                  <div style={styles.feedbackIcon}>⏰</div>
-                  <div style={{...styles.feedbackTitle, color: palette.white}}>Time's up!</div>
-                  <div style={{...styles.feedbackPoints, color: palette.white}}>+0 pts</div>
-                </>
+                <><div style={styles.feedbackIcon}>⏰</div><div style={{...styles.feedbackTitle, color: palette.white}}>Time's up!</div><div style={{...styles.feedbackPoints, color: palette.white}}>+0 pts</div></>
               ) : (
-                <>
-                  <div style={styles.feedbackIcon}>😢</div>
-                  <div style={{...styles.feedbackTitle, color: palette.white}}>Wrong answer</div>
-                  <div style={{...styles.feedbackPoints, color: palette.white}}>+0 pts</div>
-                </>
+                <><div style={styles.feedbackIcon}>😢</div><div style={{...styles.feedbackTitle, color: palette.white}}>Wrong answer</div><div style={{...styles.feedbackPoints, color: palette.white}}>+0 pts</div></>
               )}
               <div style={{...styles.feedbackWait, color: 'rgba(255,255,255,0.8)'}}>
-                {currentQuestionIndex + 1 >= session.totalQuestions
-                  ? 'Finishing up...'
-                  : 'Next question coming...'}
+                {currentQuestionIndex + 1 >= session.totalQuestions ? 'Showing results...' : 'Next question coming...'}
               </div>
             </motion.div>
           )}
@@ -380,362 +313,50 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   );
 };
 
+// ... (I-keep ang styles object nang eksaktong katulad ng dati mong code) ...
 const styles = {
-  container: {
-    minHeight: '100vh',
-    width: '100vw',
-    backgroundImage: `url('/image/quiz-bg.png')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-    backgroundRepeat: 'no-repeat',
-    padding: 'clamp(16px, 3vw, 40px)',
-    fontFamily: BRAND_FONT_BODY,
-    color: palette.white, 
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxSizing: 'border-box',
-  },
-  gameInner: {
-    width: '100%',
-    maxWidth: 'min(1200px, 100%)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 'clamp(12px, 1.8vw, 20px)',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    width: '100vw',
-    backgroundImage: `url('/image/quiz-bg.png')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-    backgroundRepeat: 'no-repeat',
-  },
-  spinner: {
-    width: '56px',
-    height: '56px',
-    border: `4px solid rgba(255,255,255,0.3)`,
-    borderTop: `4px solid ${palette.white}`,
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginBottom: '20px',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  questionCounter: {
-    fontSize: 'clamp(14px, 1.6vw, 20px)',
-    color: palette.white,
-    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-    margin: 0,
-    fontWeight: 800,
-    fontFamily: BRAND_FONT_DISPLAY,
-    letterSpacing: '0.02em',
-  },
-  timerBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: 'clamp(10px, 1.4vw, 16px) clamp(16px, 2vw, 24px)',
-    borderRadius: '16px',
-    transition: 'background 0.3s',
-    boxShadow: `0 8px 24px rgba(0,0,0,0.15)`, 
-    border: `2px solid rgba(255,255,255,0.8)`,
-    color: palette.white,
-  },
-  timerIcon: {
-    fontSize: 'clamp(18px, 2vw, 24px)',
-  },
-  timerText: {
-    fontSize: 'clamp(20px, 2.4vw, 30px)',
-    fontWeight: '800',
-    fontFamily: BRAND_FONT_DISPLAY,
-  },
-  // ✅ SOLID DARK NAVY SCORE BAR
-  scoreBar: {
-    background: palette.deepNavy,
-    borderRadius: '18px',
-    padding: 'clamp(12px, 1.8vw, 20px) clamp(20px, 3vw, 40px)',
-    display: 'flex',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    border: `1.5px solid ${palette.deepNavyLight}`,
-    boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
-  },
-  scoreItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  scoreLabelSmall: {
-    fontSize: 'clamp(11px, 1.2vw, 14px)',
-    color: palette.bodyTextSoft, // Mas light na text para sa label
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '1.5px',
-    fontFamily: BRAND_FONT_DISPLAY,
-  },
-  scoreValueSmall: {
-    fontSize: 'clamp(22px, 3vw, 34px)',
-    fontWeight: '800',
-    marginTop: '4px',
-    fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.white, 
-  },
-  divider: {
-    width: '2px',
-    height: 'clamp(30px, 4vw, 44px)',
-    background: palette.deepNavyLight,
-  },
-  progressBar: {
-    width: '100%',
-    height: 'clamp(8px, 1vw, 12px)',
-    background: palette.deepNavy,
-    borderRadius: '6px',
-    overflow: 'hidden',
-    border: `1.5px solid ${palette.deepNavyLight}`,
-    boxShadow: `0 2px 4px rgba(0,0,0,0.2)`,
-  },
-  progressFill: {
-    height: '100%',
-    background: `linear-gradient(90deg, ${palette.softGreen}, ${palette.teal})`,
-    borderRadius: '6px',
-  },
-  // ✅ SOLID DARK NAVY QUESTION CARD
-  questionCard: {
-    background: palette.deepNavy,
-    borderRadius: '22px',
-    padding: 'clamp(20px, 3vw, 40px)',
-    border: `1.5px solid ${palette.deepNavyLight}`,
-    borderTop: `6px solid ${palette.teal}`,
-    textAlign: 'center',
-    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
-  },
-  questionText: {
-    fontSize: 'clamp(20px, 2.6vw, 32px)',
-    fontWeight: '800',
-    margin: 0,
-    lineHeight: 1.4,
-    fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.white,
-    letterSpacing: '-0.3px',
-  },
-  optionsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gridAutoFlow: 'row',
-    gap: 'clamp(10px, 1.6vw, 16px)',
-  },
-  // ✅ SOLID DARK NAVY OPTIONS
-  optionBtn: {
-    background: palette.deepNavy,
-    padding: 'clamp(14px, 1.8vw, 22px) clamp(16px, 2vw, 26px)',
-    borderRadius: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'clamp(12px, 1.6vw, 18px)',
-    border: `1.5px solid ${palette.deepNavyLight}`,
-    color: palette.white,
-    textAlign: 'left',
-    fontFamily: BRAND_FONT_BODY,
-    fontSize: 'clamp(14px, 1.5vw, 18px)',
-    fontWeight: '700',
-    transition: 'all 0.2s',
-    boxShadow: `0 4px 12px rgba(0,0,0,0.2)`,
-    minHeight: 'clamp(60px, 8vh, 90px)',
-  },
-  optionSelected: {
-    background: palette.deepNavyLight,
-    border: `2px solid ${palette.warmOrange}`,
-    boxShadow: `0 4px 16px ${palette.warmOrange}40`,
-  },
-  optionCorrect: {
-    background: `rgba(127, 165, 116, 0.3)`,
-    border: `2px solid ${palette.softGreen}`,
-    boxShadow: `0 4px 12px ${palette.softGreen}20`,
-  },
-  optionWrong: {
-    background: `rgba(219, 122, 100, 0.3)`,
-    border: `2px solid ${palette.coral}`,
-    boxShadow: `0 4px 12px ${palette.coral}20`,
-  },
-  optionLabel: {
-    width: 'clamp(36px, 4vw, 52px)',
-    height: 'clamp(36px, 4vw, 52px)',
-    borderRadius: '50%',
-    background: palette.deepNavyLight,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 'clamp(16px, 1.8vw, 22px)',
-    fontWeight: '800',
-    flexShrink: 0,
-    fontFamily: BRAND_FONT_DISPLAY,
-    border: `1.5px solid #4A476B`,
-    color: palette.white,
-    transition: 'all 0.2s',
-  },
-  optionLabelCorrect: {
-    background: palette.softGreen,
-    color: palette.white,
-    border: `1.5px solid ${palette.softGreen}`,
-  },
-  optionLabelWrong: {
-    background: palette.coral,
-    color: palette.white,
-    border: `1.5px solid ${palette.coral}`,
-  },
-  optionText: {
-    flex: 1,
-  },
-  resultIcon: {
-    fontSize: 'clamp(20px, 2.4vw, 28px)',
-  },
-  // ✅ SOLID DARK NAVY FEEDBACK BOX
-  feedbackBox: {
-    borderRadius: '18px',
-    padding: 'clamp(16px, 2vw, 24px)',
-    textAlign: 'center',
-    border: '2px solid',
-    boxShadow: `0 12px 32px rgba(0,0,0,0.3)`,
-  },
-  feedbackIcon: {
-    fontSize: 'clamp(36px, 5vw, 52px)',
-    marginBottom: '6px',
-    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
-  },
-  feedbackTitle: {
-    fontSize: 'clamp(18px, 2.2vw, 26px)',
-    fontWeight: '800',
-    marginBottom: '4px',
-    fontFamily: BRAND_FONT_DISPLAY,
-    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  feedbackPoints: {
-    fontSize: 'clamp(22px, 2.8vw, 32px)',
-    fontWeight: '800',
-    fontFamily: BRAND_FONT_DISPLAY,
-    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  feedbackWait: {
-    fontSize: 'clamp(12px, 1.2vw, 14px)',
-    marginTop: '8px',
-    fontWeight: 700,
-  },
-  // Waiting screen
-  waitingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    width: '100%',
-    textAlign: 'center',
-    padding: 'clamp(20px, 4vw, 60px)',
-  },
-  waitingEmoji: {
-    fontSize: 'clamp(72px, 10vw, 120px)',
-    marginBottom: '24px',
-    filter: 'drop-shadow(0 6px 16px rgba(42, 40, 69, 0.2))',
-  },
-  waitingTitle: {
-    fontSize: 'clamp(30px, 4vw, 52px)',
-    fontWeight: '800',
-    margin: '0 0 12px 0',
-    fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.white,
-    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-    letterSpacing: '-0.5px',
-  },
-  waitingSubtitle: {
-    fontSize: 'clamp(15px, 1.8vw, 22px)',
-    color: palette.white,
-    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-    margin: '0 0 40px 0',
-    fontWeight: 600,
-  },
-  // ✅ SOLID DARK NAVY WAITING STATS
-  waitingStats: {
-    background: palette.deepNavy,
-    borderRadius: '24px',
-    padding: 'clamp(24px, 3vw, 44px) clamp(40px, 6vw, 80px)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'clamp(32px, 5vw, 64px)',
-    marginBottom: '40px',
-    border: `1.5px solid ${palette.deepNavyLight}`,
-    boxShadow: `0 12px 32px rgba(0,0,0,0.3)`,
-  },
-  waitingStatItem: {
-    textAlign: 'center',
-  },
-  waitingStatLabel: {
-    fontSize: 'clamp(12px, 1.3vw, 15px)',
-    color: palette.bodyTextSoft,
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '1.5px',
-    marginBottom: '6px',
-    fontFamily: BRAND_FONT_DISPLAY,
-  },
-  waitingStatValue: {
-    fontSize: 'clamp(32px, 4vw, 52px)',
-    fontWeight: '800',
-    color: palette.gold,
-    fontFamily: BRAND_FONT_DISPLAY,
-  },
-  waitingStatDivider: {
-    width: '2px',
-    height: 'clamp(50px, 6vw, 80px)',
-    background: palette.deepNavyLight,
-  },
-  waitingSpinner: {
-    display: 'flex',
-    gap: '12px',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  spinnerDot: {
-    width: '16px',
-    height: '16px',
-    borderRadius: '50%',
-    background: palette.white,
-    animation: 'pulse 1s ease-in-out infinite',
-  },
+  container: { minHeight: '100vh', width: '100vw', backgroundImage: `url('/image/quiz-bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat', padding: 'clamp(16px, 3vw, 40px)', fontFamily: BRAND_FONT_BODY, color: palette.white, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' },
+  gameInner: { width: '100%', maxWidth: 'min(1200px, 100%)', display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 1.8vw, 20px)', flex: 1, justifyContent: 'center' },
+  loadingContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', width: '100vw', backgroundImage: `url('/image/quiz-bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' },
+  spinner: { width: '56px', height: '56px', border: `4px solid rgba(255,255,255,0.3)`, borderTop: `4px solid ${palette.white}`, borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '20px' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' },
+  headerLeft: { flex: 1 },
+  questionCounter: { fontSize: 'clamp(14px, 1.6vw, 20px)', color: palette.white, textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0, fontWeight: 800, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.02em' },
+  timerBox: { display: 'flex', alignItems: 'center', gap: '8px', padding: 'clamp(10px, 1.4vw, 16px) clamp(16px, 2vw, 24px)', borderRadius: '16px', transition: 'background 0.3s', boxShadow: `0 8px 24px rgba(0,0,0,0.15)`, border: `2px solid rgba(255,255,255,0.8)`, color: palette.white },
+  timerIcon: { fontSize: 'clamp(18px, 2vw, 24px)' },
+  timerText: { fontSize: 'clamp(20px, 2.4vw, 30px)', fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY },
+  scoreBar: { background: palette.deepNavy, borderRadius: '18px', padding: 'clamp(12px, 1.8vw, 20px) clamp(20px, 3vw, 40px)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', border: `1.5px solid ${palette.deepNavyLight}`, boxShadow: `0 8px 24px rgba(0,0,0,0.25)` },
+  scoreItem: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  scoreLabelSmall: { fontSize: 'clamp(11px, 1.2vw, 14px)', color: palette.bodyTextSoft, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: BRAND_FONT_DISPLAY },
+  scoreValueSmall: { fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: '800', marginTop: '4px', fontFamily: BRAND_FONT_DISPLAY, color: palette.white },
+  divider: { width: '2px', height: 'clamp(30px, 4vw, 44px)', background: palette.deepNavyLight },
+  progressBar: { width: '100%', height: 'clamp(8px, 1vw, 12px)', background: palette.deepNavy, borderRadius: '6px', overflow: 'hidden', border: `1.5px solid ${palette.deepNavyLight}`, boxShadow: `0 2px 4px rgba(0,0,0,0.2)` },
+  progressFill: { height: '100%', background: `linear-gradient(90deg, ${palette.softGreen}, ${palette.teal})`, borderRadius: '6px' },
+  questionCard: { background: palette.deepNavy, borderRadius: '22px', padding: 'clamp(20px, 3vw, 40px)', border: `1.5px solid ${palette.deepNavyLight}`, borderTop: `6px solid ${palette.teal}`, textAlign: 'center', boxShadow: `0 12px 32px rgba(0,0,0,0.25)` },
+  questionText: { fontSize: 'clamp(20px, 2.6vw, 32px)', fontWeight: '800', margin: 0, lineHeight: 1.4, fontFamily: BRAND_FONT_DISPLAY, color: palette.white, letterSpacing: '-0.3px' },
+  optionsGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gridAutoFlow: 'row', gap: 'clamp(10px, 1.6vw, 16px)' },
+  optionBtn: { background: palette.deepNavy, padding: 'clamp(14px, 1.8vw, 22px) clamp(16px, 2vw, 26px)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: 'clamp(12px, 1.6vw, 18px)', border: `1.5px solid ${palette.deepNavyLight}`, color: palette.white, textAlign: 'left', fontFamily: BRAND_FONT_BODY, fontSize: 'clamp(14px, 1.5vw, 18px)', fontWeight: '700', transition: 'all 0.2s', boxShadow: `0 4px 12px rgba(0,0,0,0.2)`, minHeight: 'clamp(60px, 8vh, 90px)' },
+  optionSelected: { background: palette.deepNavyLight, border: `2px solid ${palette.warmOrange}`, boxShadow: `0 4px 16px ${palette.warmOrange}40` },
+  optionCorrect: { background: `rgba(127, 165, 116, 0.3)`, border: `2px solid ${palette.softGreen}`, boxShadow: `0 4px 12px ${palette.softGreen}20` },
+  optionWrong: { background: `rgba(219, 122, 100, 0.3)`, border: `2px solid ${palette.coral}`, boxShadow: `0 4px 12px ${palette.coral}20` },
+  optionLabel: { width: 'clamp(36px, 4vw, 52px)', height: 'clamp(36px, 4vw, 52px)', borderRadius: '50%', background: palette.deepNavyLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(16px, 1.8vw, 22px)', fontWeight: '800', flexShrink: 0, fontFamily: BRAND_FONT_DISPLAY, border: `1.5px solid #4A476B`, color: palette.white, transition: 'all 0.2s' },
+  optionLabelCorrect: { background: palette.softGreen, color: palette.white, border: `1.5px solid ${palette.softGreen}` },
+  optionLabelWrong: { background: palette.coral, color: palette.white, border: `1.5px solid ${palette.coral}` },
+  optionText: { flex: 1 },
+  resultIcon: { fontSize: 'clamp(20px, 2.4vw, 28px)' },
+  feedbackBox: { borderRadius: '18px', padding: 'clamp(16px, 2vw, 24px)', textAlign: 'center', border: '2px solid', boxShadow: `0 12px 32px rgba(0,0,0,0.3)` },
+  feedbackIcon: { fontSize: 'clamp(36px, 5vw, 52px)', marginBottom: '6px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' },
+  feedbackTitle: { fontSize: 'clamp(18px, 2.2vw, 26px)', fontWeight: '800', marginBottom: '4px', fontFamily: BRAND_FONT_DISPLAY, textShadow: '0 2px 4px rgba(0,0,0,0.1)' },
+  feedbackPoints: { fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: '800', fontFamily: BRAND_FONT_DISPLAY, textShadow: '0 2px 4px rgba(0,0,0,0.1)' },
+  feedbackWait: { fontSize: 'clamp(12px, 1.2vw, 14px)', marginTop: '8px', fontWeight: 700 },
 };
 
 if (typeof document !== 'undefined' && !document.querySelector('#liveplayer-styles')) {
   const style = document.createElement('style');
   style.id = 'liveplayer-styles';
   style.textContent = `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.5; }
-    }
-    @media (max-width: 560px) {
-      .live-options-grid {
-        grid-template-columns: 1fr !important;
-      }
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @media (max-width: 560px) { .live-options-grid { grid-template-columns: 1fr !important; } }
   `;
   document.head.appendChild(style);
 }

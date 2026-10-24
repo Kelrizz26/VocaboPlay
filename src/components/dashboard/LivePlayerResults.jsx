@@ -1,14 +1,13 @@
 // src/components/dashboard/LivePlayerResults.jsx
 // ============================================================
 // ✅ STUDENT RESULTS - FULL SIZE
-// ✅ UPDATED: Solid Dark Navy Containers + Full Body Avatars
+// ✅ UPDATED: Sariling result lang, may Exit Button agad
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { subscribeToSession, calculateRankings } from '../../services/LiveGameService';
 
-// ===== MUTED DASHBOARD PALETTE (matches Avatar Shop) =====
 const palette = {
   warmOrange: '#E9A075',
   warmOrangeShadow: '#C27E4F',
@@ -36,9 +35,6 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
-// ============================================================
-// ✅ Helper: Get the correct points (1 correct = 1 point)
-// ============================================================
 const getCorrectCount = (player) => {
   return player?.correctAnswers || player?.correct || 0;
 };
@@ -78,6 +74,21 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
+        
+        {/* ✅ BAGONG DAGDAG: Malinaw na tapos na si student */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ textAlign: 'center', marginBottom: '10px' }}
+        >
+          <h2 style={{ color: palette.white, fontFamily: BRAND_FONT_DISPLAY, fontSize: 'clamp(20px, 2.5vw, 28px)', textShadow: '0 2px 4px rgba(0,0,0,0.3)', margin: 0 }}>
+            You have completed the quiz!
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.8)', fontFamily: BRAND_FONT_BODY, fontSize: 'clamp(14px, 1.5vw, 18px)', marginTop: '8px' }}>
+            You may now exit or wait for the teacher.
+          </p>
+        </motion.div>
+
         {/* My Result Card - DARK NAVY */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -89,7 +100,7 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
           <h1 style={styles.rankMessage}>{getRankMessage(myRank, totalPlayers)}</h1>
           <p style={styles.rankText}>You ranked #{myRank} out of {totalPlayers}</p>
 
-          {/* ✅ FULL BODY AVATAR (MAIN CARD) */}
+          {/* FULL BODY AVATAR */}
           <div style={styles.myAvatarWrapper}>
             {myPlayer?.avatarImage ? (
               <img
@@ -126,55 +137,11 @@ const LivePlayerResults = ({ session: initialSession, playerId, onExit }) => {
           </div>
         </motion.div>
 
-        {/* Leaderboard - DARK NAVY */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          style={styles.topSection}
-        >
-          <h2 style={styles.sectionTitle}>🏆 Full Leaderboard</h2>
-          <div style={styles.topList}>
-            {rankedPlayers.map((player, index) => (
-              <div
-                key={player.userId}
-                style={{
-                  ...styles.topItem,
-                  ...(player.userId === playerId ? styles.topItemMe : {})
-                }}
-              >
-                <div style={styles.topRank}>{getMedal(player.rank)}</div>
-                
-                {/* ✅ FULL BODY AVATAR (LEADERBOARD LIST) */}
-                <div style={styles.topAvatarWrapper}>
-                  {player.avatarImage ? (
-                    <img
-                      src={player.avatarImage}
-                      alt={player.name}
-                      style={styles.topAvatarImg}
-                    />
-                  ) : (
-                    <span style={styles.topAvatarEmoji}>👤</span>
-                  )}
-                </div>
-
-                <div style={styles.topName}>
-                  {player.name}
-                  {player.userId === playerId && <span style={styles.youTag}> (You)</span>}
-                </div>
-                <div style={styles.topScore}>
-                  {getCorrectCount(player)} pts
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
         {/* Exit Button */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.3 }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onExit}
@@ -206,7 +173,7 @@ const styles = {
   },
   content: {
     width: '100%',
-    maxWidth: 'min(1100px, 100%)',
+    maxWidth: 'min(800px, 100%)', 
     display: 'flex',
     flexDirection: 'column',
     gap: 'clamp(16px, 2vw, 28px)',
@@ -241,17 +208,15 @@ const styles = {
     fontWeight: 700,
     fontFamily: BRAND_FONT_BODY,
   },
-  
-  // ✅ BAGONG FULL BODY AVATAR (MAIN)
   myAvatarWrapper: {
-    width: 'clamp(110px, 15vw, 140px)', // Mas maliit ng konti sa lapad
-    height: 'clamp(130px, 18vw, 170px)', // Mas mataas para magkasya buong katawan
-    borderRadius: '24px', // Rounded rectangle
+    width: 'clamp(110px, 15vw, 140px)',
+    height: 'clamp(130px, 18vw, 170px)',
+    borderRadius: '24px',
     background: palette.creamSoft,
     overflow: 'hidden',
     margin: '0 auto 16px',
     display: 'flex',
-    alignItems: 'center', // Center alignment
+    alignItems: 'center',
     justifyContent: 'center',
     border: `3px solid ${palette.warmOrange}80`,
     boxShadow: `0 8px 24px rgba(0,0,0,0.3)`,
@@ -259,13 +224,12 @@ const styles = {
   myAvatarImg: {
     width: '100%',
     height: '100%',
-    objectFit: 'contain', // ✅ ITO ANG NAGPAPAKITA NG BUONG KATAWAN
+    objectFit: 'contain',
     padding: '8px',
   },
   myAvatarEmoji: {
     fontSize: 'clamp(52px, 7vw, 80px)',
   },
-  
   myName: {
     fontSize: 'clamp(22px, 2.6vw, 32px)',
     fontWeight: '800',
@@ -299,92 +263,6 @@ const styles = {
     letterSpacing: '1px',
     fontFamily: BRAND_FONT_DISPLAY,
     marginTop: '4px',
-  },
-  topSection: {
-    background: palette.deepNavy,
-    borderRadius: '24px',
-    padding: 'clamp(20px, 3vw, 36px)',
-    width: '100%',
-    border: `1.5px solid ${palette.deepNavyLight}`,
-    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
-  },
-  sectionTitle: {
-    fontSize: 'clamp(16px, 1.8vw, 24px)',
-    fontWeight: '800',
-    margin: '0 0 18px 0',
-    fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.white,
-    letterSpacing: '-0.3px',
-  },
-  topList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 'clamp(8px, 1.2vw, 14px)',
-  },
-  topItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'clamp(10px, 1.5vw, 18px)',
-    padding: 'clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 24px)',
-    background: palette.deepNavyLight,
-    borderRadius: '16px',
-    border: `1.5px solid #4A476B`,
-    boxShadow: `0 2px 8px rgba(0,0,0,0.2)`,
-  },
-  topItemMe: {
-    background: `rgba(127, 165, 116, 0.2)`,
-    border: `2px solid ${palette.softGreen}`,
-    boxShadow: `0 2px 12px ${palette.softGreen}40`,
-  },
-  topRank: {
-    fontSize: 'clamp(20px, 2.4vw, 30px)',
-    fontWeight: '800',
-    width: 'clamp(36px, 4vw, 56px)',
-    textAlign: 'center',
-    fontFamily: BRAND_FONT_DISPLAY,
-    color: palette.white,
-  },
-  
-  // ✅ BAGONG FULL BODY AVATAR (LEADERBOARD LIST)
-  topAvatarWrapper: {
-    width: 'clamp(36px, 4.5vw, 48px)', // Mas maliit ng konti sa lapad
-    height: 'clamp(44px, 5.5vw, 60px)', // Mas mataas
-    borderRadius: '10px', // Rounded rectangle
-    background: palette.creamSoft,
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    border: `1.5px solid ${palette.warmOrange}80`,
-  },
-  topAvatarImg: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain', // ✅ ITO ANG NAGPAPAKITA NG BUONG KATAWAN
-    padding: '2px',
-  },
-  topAvatarEmoji: {
-    fontSize: 'clamp(20px, 2.4vw, 30px)',
-  },
-  
-  topName: {
-    flex: 1,
-    fontSize: 'clamp(14px, 1.5vw, 18px)',
-    fontWeight: '700',
-    fontFamily: BRAND_FONT_BODY,
-    color: palette.white,
-  },
-  youTag: {
-    color: palette.softGreen,
-    fontSize: 'clamp(11px, 1.2vw, 14px)',
-    fontWeight: 800,
-  },
-  topScore: {
-    fontSize: 'clamp(16px, 1.8vw, 22px)',
-    fontWeight: '800',
-    color: palette.gold,
-    fontFamily: BRAND_FONT_DISPLAY,
   },
   exitBtn: {
     padding: 'clamp(14px, 1.8vw, 20px) clamp(30px, 4vw, 60px)',
