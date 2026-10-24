@@ -2,14 +2,14 @@
 // ============================================================
 // ✅ STUDENT LIVE GAME - FULL SIZE
 // ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
-// ✅ UPDATED: Added Global Time Limit (Auto-close kapag naubos ang oras)
 // ✅ FIXED: Auto-save score agad pagka-tapos ng student (hindi na kailangan hintayin teacher)
+// ✅ REMOVED: Global Time Limit (Teacher na lang ang mag-e-end ng game)
 // ============================================================
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, getDoc } from 'firebase/firestore'; // ✅ Added for auto-save
-import { db } from '../../pages/firebase'; // ✅ Added for auto-save
+import { doc, getDoc } from 'firebase/firestore'; 
+import { db } from '../../pages/firebase'; 
 import { subscribeToSession, submitAnswer, updatePlayerProgress, QUESTION_TIME } from '../../services/LiveGameService';
 import LivePlayerResults from './LivePlayerResults';
 
@@ -29,19 +29,11 @@ const palette = {
 const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
 const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
-// ✅ Helper: Format seconds to MM:SS
-const formatTime = (seconds) => {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s < 10 ? '0' : ''}${s}`;
-};
-
 const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, completeActivity }) => {
   const [session, setSession] = useState(initialSession);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
-  const [globalTimeLeft, setGlobalTimeLeft] = useState(null); 
   const [feedback, setFeedback] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false); 
@@ -49,7 +41,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
 
   const sessionSavedRef = useRef(false);
   const answersRef = useRef({});
-  const savedScoreRef = useRef(false); // ✅ NEW: Prevent double saving
+  const savedScoreRef = useRef(false); 
 
   // ✅ Effect 1: Subscribe to Session Updates
   useEffect(() => {
@@ -82,29 +74,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     return () => unsubscribe();
   }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId, isFinished]);
 
-  // ✅ Effect 2: Global Time Limit Countdown
-  useEffect(() => {
-    if (session?.status !== 'playing' || !session?.timeLimit || isFinished) return;
-
-    const startTime = new Date(session.startedAt).getTime();
-    const limitMs = session.timeLimit * 60 * 1000;
-    const endTime = startTime + limitMs;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-      setGlobalTimeLeft(remaining);
-
-      if (remaining === 0) {
-        clearInterval(interval);
-        setIsFinished(true); 
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [session?.status, session?.timeLimit, session?.startedAt, isFinished]);
-
-  // ✅ Effect 3: Reset state per question
+  // ✅ Effect 2: Reset state per question
   useEffect(() => {
     if (session?.status !== 'playing') return;
     setSelectedAnswer(null);
@@ -114,7 +84,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     questionStartRef.current = Date.now();
   }, [currentQuestionIndex, session?.status]);
 
-  // ✅ Effect 4: Per-question timer
+  // ✅ Effect 3: Per-question timer
   useEffect(() => {
     if (session?.status !== 'playing') return;
     if (hasAnswered) return;
@@ -250,7 +220,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   });
   const myRank = sortedPlayers.findIndex(p => p.userId === playerId) + 1;
 
-  // ✅ RENDER RESULTS KAPAG TAPOS NA O NAUBOS ANG GLOBAL TIME
+  // ✅ RENDER RESULTS KAPAG TAPOS NA
   if (isFinished) {
     return <LivePlayerResults session={session} playerId={playerId} onExit={() => onGameEnd(session)} />;
   }
@@ -276,19 +246,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           </div>
           
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {/* ✅ GLOBAL TIME LIMIT DISPLAY */}
-            {session?.timeLimit > 0 && globalTimeLeft !== null && (
-              <div style={{
-                ...styles.timerBox,
-                background: globalTimeLeft <= 60 ? palette.coral : palette.deepNavy,
-                borderColor: globalTimeLeft <= 60 ? 'rgba(255,255,255,0.5)' : palette.deepNavyLight
-              }}>
-                <span style={styles.timerIcon}>⏳</span>
-                <span style={styles.timerText}>{formatTime(globalTimeLeft)}</span>
-              </div>
-            )}
-
-            {/* PER-QUESTION TIMER */}
+            {/* ✅ PER-QUESTION TIMER (Global timer removed) */}
             <div style={{
               ...styles.timerBox,
               background: timeLeft <= 5 ? palette.coral : timeLeft <= 10 ? palette.warmOrange : palette.softGreen

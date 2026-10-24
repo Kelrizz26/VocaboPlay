@@ -3,7 +3,8 @@
 // ✅ LIVE GAME SERVICE - Real-time Firebase Logic
 // WAYGROUND/QUIZIZZ STYLE - Auto-paced per student
 // ✅ UPDATED: Added questionOrder randomization & hasFinished lock
-// ✅ UPDATED: Added timeLimit support & maxAttempts retake logic
+// ✅ UPDATED: Added maxAttempts retake logic
+// ✅ UPDATED: Removed timeLimit logic
 // ============================================================
 
 import { 
@@ -71,8 +72,7 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
       questions: activityData.questions || [],
       totalQuestions: activityData.totalQuestions || 0,
       questionTime: QUESTION_TIME,
-      timeLimit: activityData.timeLimit || 0,       // ✅ NEW: Save time limit (0 = no limit)
-      maxAttempts: activityData.maxAttempts || 1,   // ✅ NEW: Save max attempts (default 1)
+      maxAttempts: activityData.maxAttempts || 1,   // ✅ Naiwan ang Max Attempts
       status: 'lobby',
       currentQuestion: 0,
       players: [],
@@ -193,7 +193,7 @@ export const joinLiveSession = async (gamePin, playerData) => {
       answers: {},
       currentQuestionIndex: 0,
       hasFinished: false, 
-      attemptsMade: 1,          // ✅ NEW: Initialize attempt to 1
+      attemptsMade: 1,          // ✅ Initialize attempt to 1
       questionOrder,      
       isConnected: true,
       joinedAt: new Date().toISOString(),

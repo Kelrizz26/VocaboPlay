@@ -6,7 +6,7 @@
 // ✅ NEW: Supports Quiz, Short Quiz, Long Quiz, Prelim, Midterm, Final
 // ✅ UPDATED: Filter dropdown includes new types
 // ✅ UPDATED: Cards show proper icons/labels/colors for all types
-// ✅ ADDED: Time Limit & Max Attempts settings
+// ✅ UPDATED: REMOVED Time Limit. Kept Max Attempts.
 // ============================================================
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -262,10 +262,10 @@ const TypableSelect = ({
 };
 
 const TeacherActivities = ({
-  activities,           // filtered to current teacher only
+  activities,
   setActivities,
   loading,
-  teacherId,            // uid of logged-in teacher
+  teacherId,
   teacherName,
   onHostLive,
   onShowScores,
@@ -279,21 +279,22 @@ const TeacherActivities = ({
 
   // ===== CREATE FORM STATE =====
   const emptyQuestion = { question: '', options: ['', '', '', ''], correctIndex: 0 };
+  
+  // ✅ Time limit removed
   const [createForm, setCreateForm] = useState({
     title: '',
     gameType: 'Quiz',
     category: 'general',
     difficulty: 3,
-    timeLimit: 0,       // ✅ NEW: Default no limit
-    maxAttempts: 1,     // ✅ NEW: Default 1 attempt
+    maxAttempts: 1,
     questions: [{ ...emptyQuestion }],
   });
 
   // ===== EDIT FORM STATE =====
+  // ✅ Time limit removed
   const [editForm, setEditForm] = useState({
     title: '', gameType: 'Quiz', category: '', difficulty: 3, isActive: true,
-    timeLimit: 0,       // ✅ NEW
-    maxAttempts: 1,     // ✅ NEW
+    maxAttempts: 1,
   });
 
   // ============================================================
@@ -335,8 +336,7 @@ const TeacherActivities = ({
         gameType: slugifyActivityType(createForm.gameType),
         category: createForm.category.trim() || 'general',
         difficulty: createForm.difficulty,
-        timeLimit: createForm.timeLimit,       // ✅ Save Time Limit
-        maxAttempts: createForm.maxAttempts,   // ✅ Save Max Attempts
+        maxAttempts: createForm.maxAttempts, // ✅ Kept Attempts
         isActive: true,
         gamePin: generatePin(),
         totalQuestions: validQuestions.length,
@@ -352,9 +352,11 @@ const TeacherActivities = ({
       const ref = await addDoc(collection(db, 'activities'), newActivity);
       setActivities([{ id: ref.id, ...newActivity }, ...activities]);
       setShowCreate(false);
+      
+      // ✅ Reset state without Time Limit
       setCreateForm({
         title: '', gameType: 'Quiz', category: 'general',
-        difficulty: 3, timeLimit: 0, maxAttempts: 1,
+        difficulty: 3, maxAttempts: 1,
         questions: [{ ...emptyQuestion }],
       });
       alert(`✅ Activity created!\nGame PIN: ${newActivity.gamePin}`);
@@ -401,8 +403,7 @@ const TeacherActivities = ({
       gameType: unSlugifyActivityType(a.gameType || 'quiz'),
       category: a.category || '',
       difficulty: a.difficulty || 3,
-      timeLimit: a.timeLimit || 0,          // ✅ Load existing
-      maxAttempts: a.maxAttempts || 1,      // ✅ Load existing
+      maxAttempts: a.maxAttempts || 1, // ✅ Kept Attempts
       isActive: a.isActive !== false,
     });
   };
@@ -415,8 +416,7 @@ const TeacherActivities = ({
         gameType: slugifyActivityType(editForm.gameType),
         category: editForm.category,
         difficulty: editForm.difficulty,
-        timeLimit: editForm.timeLimit,          // ✅ Save to Firebase
-        maxAttempts: editForm.maxAttempts,      // ✅ Save to Firebase
+        maxAttempts: editForm.maxAttempts, // ✅ Kept Attempts
         isActive: editForm.isActive,
       };
       await updateDoc(doc(db, 'activities', editingActivity), updateData);
@@ -623,22 +623,8 @@ const TeacherActivities = ({
             </div>
           </div>
 
-          {/* ✅ NEW: Time Limit & Attempts */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-            <div>
-              <label style={labelStyle}>Time Limit</label>
-              <select
-                value={createForm.timeLimit}
-                onChange={(e) => setCreateForm({ ...createForm, timeLimit: Number(e.target.value) })}
-                style={selectStyle}
-              >
-                <option value={0}>No Time Limit</option>
-                <option value={15}>15 Minutes</option>
-                <option value={30}>30 Minutes</option>
-                <option value={60}>1 Hour</option>
-                <option value={120}>2 Hours</option>
-              </select>
-            </div>
+          {/* ✅ REMOVED: Time Limit - Now only Attempts */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '20px' }}>
             <div>
               <label style={labelStyle}>Allowed Attempts</label>
               <select
@@ -798,22 +784,8 @@ const TeacherActivities = ({
             </select>
           </div>
 
-          {/* ✅ NEW: Time Limit & Attempts in Edit Modal */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-            <div>
-              <label style={labelStyle}>Time Limit</label>
-              <select
-                value={editForm.timeLimit}
-                onChange={(e) => setEditForm({ ...editForm, timeLimit: Number(e.target.value) })}
-                style={selectStyle}
-              >
-                <option value={0}>No Time Limit</option>
-                <option value={15}>15 Minutes</option>
-                <option value={30}>30 Minutes</option>
-                <option value={60}>1 Hour</option>
-                <option value={120}>2 Hours</option>
-              </select>
-            </div>
+          {/* ✅ REMOVED: Time Limit - Now only Attempts */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '20px' }}>
             <div>
               <label style={labelStyle}>Allowed Attempts</label>
               <select
@@ -1016,13 +988,11 @@ const ActivityCard = ({
           <MiniStat label="Participants" value={activity.participants || 0} />
         </div>
 
-        {/* ✅ NEW: Time Limit & Attempts display */}
+        {/* ✅ REMOVED: Time Limit Display. Now only Attempts */}
         <div style={{
           display: 'flex', padding: '12px', background: colors.bg,
           borderRadius: '10px', marginBottom: '14px',
         }}>
-          <MiniStat label="Time Limit" value={activity.timeLimit ? `${activity.timeLimit}m` : 'None'} />
-          <div style={{ width: '1px', background: colors.border }} />
           <MiniStat label="Attempts" value={activity.maxAttempts === 999 ? '∞' : activity.maxAttempts || 1} />
         </div>
 
