@@ -1,5 +1,5 @@
 // src/components/Dashboard.jsx
-// ✅ FIXED: DisplayName now prioritizes Username if DisplayName is just "User" or "Student".
+// ✅ FIXED: updateProgress and completeActivity now save the resolved Name (Username if DisplayName is generic).
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -612,10 +612,16 @@ const Dashboard = () => {
 
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
+      // ✅ FIX: Use resolvedName instead of userProfile.displayName to avoid overwriting with "User"
+      const rawDisplayName = userProfile.displayName || 'User';
+      const resolvedName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
+        ? userProfile.username 
+        : rawDisplayName;
+
       const updateData = {
         uid: userId,
         role: 'student',
-        displayName: userProfile.displayName || 'Student',
+        displayName: resolvedName, // ✅ Use resolved name
         totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
         currentStreak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
         learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats,
@@ -661,9 +667,15 @@ const Dashboard = () => {
       const existingSnap = await getDocs(existingQuery);
       const isFirstAttempt = existingSnap.empty;
 
+      // ✅ FIX: Resolve name for fallback just in case overrideName is null
+      const rawDisplayName = userProfile.displayName || 'User';
+      const fallbackName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
+        ? userProfile.username 
+        : rawDisplayName;
+
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
-        studentName: overrideName || userProfile.displayName || 'Student',
+        studentName: overrideName || fallbackName || 'Student', // ✅ Use overrideName or fallback
         score, correctAnswers, totalQuestions,
         gameType: activityData.gameType || 'quiz',
         activityTitle: activityData.title || '',
@@ -684,9 +696,14 @@ const Dashboard = () => {
   const recordSoloGame = async (gameType, score, correctAnswers, totalQuestions, wordsList = []) => {
     if (!userId) return;
     try {
+      const rawDisplayName = userProfile.displayName || 'User';
+      const fallbackName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
+        ? userProfile.username 
+        : rawDisplayName;
+
       await addDoc(collection(db, 'scores'), {
         studentId: userId,
-        studentName: userProfile.displayName || 'Student',
+        studentName: fallbackName || 'Student',
         score: score || 0, correctAnswers: correctAnswers || 0, totalQuestions: totalQuestions || 0,
         gameType, source: 'solo', wordsList,
         completedAt: new Date().toISOString()

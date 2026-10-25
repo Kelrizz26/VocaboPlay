@@ -2,7 +2,7 @@
 // ============================================================
 // ✅ ADMIN OVERVIEW — polished to match Super Admin
 // ✅ CONNECTED TO AVATAR SHOP — Shows FACE of character
-// ✅ FIXED: "Active Student(s)" text — template literal interpolation
+// ✅ FIXED: Recent Activity now shows Username if DisplayName is generic (User/Student).
 // ============================================================
 
 import React, { useState } from 'react';
@@ -172,6 +172,22 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
 
   const totalActivities = activities.length;
 
+  // ✅ BAGONG HELPER: Sinisiguro nating totoong pangalan o username ang lalabas
+  const getStudentDisplayName = (student) => {
+    const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
+    
+    // 1. Kung may displayName at hindi generic, gamitin ito
+    if (student.displayName && !invalidNames.includes(student.displayName.trim())) {
+      return student.displayName;
+    }
+    // 2. Kung "User" lang, gamitin ang username
+    if (student.username) {
+      return student.username;
+    }
+    // 3. Kung wala pa rin, gamitin ang email prefix (bago ang @)
+    return student.email?.split('@')[0] || 'Unknown Student';
+  };
+
   const recentStudents = [...students]
     .sort((a, b) => {
       const dateA = new Date(a.lastActive || a.createdAt || 0);
@@ -331,67 +347,72 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
             </h3>
             {recentStudents.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {recentStudents.map((st, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '10px 12px',
-                      background: palette.creamSoft,
-                      borderRadius: '12px',
-                      border: `1.5px solid ${palette.border}`,
-                    }}
-                  >
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      background: palette.creamSoft,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      border: `1.5px solid ${palette.border}`,
-                    }}>
-                      <StudentAvatarImage student={st} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                {recentStudents.map((st, i) => {
+                  // ✅ GINAGAMIT NA NATIN YUNG HELPER FUNCTION DITO
+                  const displayName = getStudentDisplayName(st);
+
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '10px 12px',
+                        background: palette.creamSoft,
+                        borderRadius: '12px',
+                        border: `1.5px solid ${palette.border}`,
+                      }}
+                    >
                       <div style={{
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        color: palette.deepNavy,
-                        fontFamily: FONT_BODY,
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        background: palette.creamSoft,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        border: `1.5px solid ${palette.border}`,
                       }}>
-                        <strong style={{ fontWeight: 800 }}>{st.displayName}</strong> joined
+                        <StudentAvatarImage student={st} />
                       </div>
-                      <div style={{
-                        fontSize: '11px',
-                        color: palette.bodyTextSoft,
-                        fontWeight: 600,
-                        marginTop: '2px',
-                      }}>
-                        {st.joinDate || 'Recently'}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: palette.deepNavy,
+                          fontFamily: FONT_BODY,
+                        }}>
+                          <strong style={{ fontWeight: 800 }}>{displayName}</strong> joined
+                        </div>
+                        <div style={{
+                          fontSize: '11px',
+                          color: palette.bodyTextSoft,
+                          fontWeight: 600,
+                          marginTop: '2px',
+                        }}>
+                          {st.joinDate || 'Recently'}
+                        </div>
                       </div>
+                      {st.createdAt && new Date(st.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                        <span style={{
+                          fontSize: '10px',
+                          background: `${palette.softGreen}15`,
+                          color: palette.softGreen,
+                          padding: '3px 8px',
+                          borderRadius: '999px',
+                          fontWeight: 800,
+                          border: `1px solid ${palette.softGreen}40`,
+                          fontFamily: FONT_DISPLAY,
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                        }}>New</span>
+                      )}
                     </div>
-                    {st.createdAt && new Date(st.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
-                      <span style={{
-                        fontSize: '10px',
-                        background: `${palette.softGreen}15`,
-                        color: palette.softGreen,
-                        padding: '3px 8px',
-                        borderRadius: '999px',
-                        fontWeight: 800,
-                        border: `1px solid ${palette.softGreen}40`,
-                        fontFamily: FONT_DISPLAY,
-                        letterSpacing: '0.04em',
-                        textTransform: 'uppercase',
-                      }}>New</span>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div style={{

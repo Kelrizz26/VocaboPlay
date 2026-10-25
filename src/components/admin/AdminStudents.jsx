@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ ADMIN STUDENTS - Polished to match Super Admin
 // ✅ CONNECTED TO AVATAR SHOP — FACE FOCUS
+// ✅ FIXED: Display name now prioritizes Username if DisplayName is generic (User/Student).
 // ============================================================
 
 import React, { useState, useMemo } from 'react';
@@ -209,10 +210,25 @@ const getStudentAvatar = (student) => {
   return found?.image || AVATAR_SHOP_ITEMS[0]?.image || '';
 };
 
+// ✅ BAGONG HELPER: Smart display name resolution
+const getStudentDisplayName = (student) => {
+  if (!student) return 'Unknown';
+  const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
+  
+  if (student.displayName && !invalidNames.includes(student.displayName.trim())) {
+    return student.displayName;
+  }
+  if (student.username && !invalidNames.includes(student.username.trim())) {
+    return student.username;
+  }
+  return student.email?.split('@')[0] || 'Unknown Student';
+};
+
 // ✅ REUSABLE — StudentAvatar (FACE FOCUS)
 const StudentAvatar = ({ student, fontSize = 14 }) => {
   const [imgError, setImgError] = useState(false);
   const avatarSrc = getStudentAvatar(student);
+  const displayName = getStudentDisplayName(student); // ✅ Gamitin ang resolved name
 
   if (!imgError && avatarSrc) {
     return (
@@ -228,14 +244,14 @@ const StudentAvatar = ({ student, fontSize = 14 }) => {
           display: 'block'
         }}
         onError={() => setImgError(true)}
-        aria-label={student.displayName}
+        aria-label={displayName}
       />
     );
   }
 
   return (
     <span style={{ color: palette.white, fontWeight: '800', fontSize, fontFamily: FONT_DISPLAY }}>
-      {student.displayName?.charAt(0)?.toUpperCase() || '?'}
+      {displayName.charAt(0).toUpperCase() || '?'}
     </span>
   );
 };
@@ -289,7 +305,8 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
     let result = students.filter(s => {
       const q = searchTerm.toLowerCase();
       if (searchTerm) {
-        const matchName = s.displayName?.toLowerCase().includes(q);
+        const resolvedName = getStudentDisplayName(s).toLowerCase(); // ✅ Include username in search
+        const matchName = s.displayName?.toLowerCase().includes(q) || resolvedName.includes(q);
         const matchEmail = s.email?.toLowerCase().includes(q);
         if (!matchName && !matchEmail) return false;
       }
@@ -307,8 +324,8 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
       case 'accuracy': result.sort((a, b) => (b.avgScore || 0) - (a.avgScore || 0)); break;
       case 'newest': result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); break;
       case 'oldest': result.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)); break;
-      case 'nameAZ': result.sort((a, b) => (a.displayName || a.email || '').toLowerCase().localeCompare((b.displayName || b.email || '').toLowerCase())); break;
-      case 'nameZA': result.sort((a, b) => (b.displayName || b.email || '').toLowerCase().localeCompare((a.displayName || a.email || '').toLowerCase())); break;
+      case 'nameAZ': result.sort((a, b) => getStudentDisplayName(a).toLowerCase().localeCompare(getStudentDisplayName(b).toLowerCase())); break;
+      case 'nameZA': result.sort((a, b) => getStudentDisplayName(b).toLowerCase().localeCompare(getStudentDisplayName(a).toLowerCase())); break;
       default: break;
     }
 
@@ -688,168 +705,172 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(student => (
-                  <tr
-                    key={student.id}
-                    style={{
-                      borderBottom: `1.5px solid ${palette.borderSoft}`,
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseOver={e => e.currentTarget.style.background = palette.creamSoft}
-                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <td style={{ padding: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          overflow: 'hidden',
-                          background: palette.creamSoft,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          border: `1.5px solid ${palette.border}`,
-                        }}>
-                          <StudentAvatar student={student} fontSize={14} />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
+                {filtered.map(student => {
+                  const displayName = getStudentDisplayName(student); // ✅ ITO ANG FIX
+
+                  return (
+                    <tr
+                      key={student.id}
+                      style={{
+                        borderBottom: `1.5px solid ${palette.borderSoft}`,
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = palette.creamSoft}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{
-                            fontSize: '13px',
-                            fontWeight: 800,
-                            color: palette.deepNavy,
-                            fontFamily: FONT_DISPLAY,
-                          }}>{student.displayName}</div>
-                          <div style={{
-                            fontSize: '11px',
-                            color: palette.bodyTextSoft,
-                            fontWeight: 600,
-                            marginTop: '2px',
-                          }}>Level {student.progress?.level || 1}</div>
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            background: palette.creamSoft,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            border: `1.5px solid ${palette.border}`,
+                          }}>
+                            <StudentAvatar student={student} fontSize={14} />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              color: palette.deepNavy,
+                              fontFamily: FONT_DISPLAY,
+                            }}>{displayName}</div>
+                            <div style={{
+                              fontSize: '11px',
+                              color: palette.bodyTextSoft,
+                              fontWeight: 600,
+                              marginTop: '2px',
+                            }}>Level {student.progress?.level || 1}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td style={{
-                      padding: '12px',
-                      fontSize: '13px',
-                      color: palette.bodyText,
-                      fontWeight: 600,
-                    }}>{student.email}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <span style={countBadgeStyle(
-                        student.avgScore >= 80 ? palette.softGreen : student.avgScore >= 40 ? palette.gold : palette.danger,
-                        student.avgScore > 0
-                      )}>
-                        {student.avgScore}%
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <span style={countBadgeStyle(palette.teal, (student.progress?.gamesPlayed || 0) > 0)}>
-                        {student.progress?.gamesPlayed || 0}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <span style={countBadgeStyle(palette.softGreen, (student.progress?.wordsLearned || 0) > 0)}>
-                        {student.progress?.wordsLearned || 0}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
+                      </td>
+                      <td style={{
+                        padding: '12px',
                         fontSize: '13px',
-                        fontWeight: 800,
-                        fontFamily: FONT_DISPLAY,
-                        color: (student.progress?.streak || 0) > 0 ? palette.gold : palette.bodyTextSoft,
-                      }}>
-                        <Icon name="flame" size={12} color={(student.progress?.streak || 0) > 0 ? palette.gold : palette.bodyTextSoft} />
-                        {student.progress?.streak || 0}
-                      </span>
-                    </td>
-                    <td style={{
-                      padding: '12px',
-                      textAlign: 'right',
-                      fontSize: '11px',
-                      color: palette.bodyTextSoft,
-                      fontWeight: 600,
-                    }}>{student.joinDate}</td>
-                    <td style={{ padding: '12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <button
-                        onClick={() => { setSelected(student); setEditForm({ displayName: student.displayName, email: student.email }); setIsEditing(true); }}
-                        style={{
-                          padding: '6px 12px',
-                          background: palette.white,
-                          border: `1.5px solid ${palette.border}`,
-                          borderRadius: '8px',
-                          fontSize: '11px',
-                          cursor: 'pointer',
-                          marginRight: '6px',
-                          color: palette.bodyText,
-                          fontWeight: 800,
-                          fontFamily: FONT_DISPLAY,
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          boxShadow: `0 2px 0 ${palette.border}`,
+                        color: palette.bodyText,
+                        fontWeight: 600,
+                      }}>{student.email}</td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        <span style={countBadgeStyle(
+                          student.avgScore >= 80 ? palette.softGreen : student.avgScore >= 40 ? palette.gold : palette.danger,
+                          student.avgScore > 0
+                        )}>
+                          {student.avgScore}%
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        <span style={countBadgeStyle(palette.teal, (student.progress?.gamesPlayed || 0) > 0)}>
+                          {student.progress?.gamesPlayed || 0}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        <span style={countBadgeStyle(palette.softGreen, (student.progress?.wordsLearned || 0) > 0)}>
+                          {student.progress?.wordsLearned || 0}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        <span style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
-                        }}
-                      >
-                        <Icon name="edit" size={10} color={palette.bodyText} />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setSelected(student)}
-                        style={{
-                          padding: '6px 12px',
-                          background: `${palette.softGreen}15`,
-                          border: `1.5px solid ${palette.softGreen}40`,
-                          borderRadius: '8px',
-                          fontSize: '11px',
-                          cursor: 'pointer',
-                          marginRight: '6px',
-                          color: palette.softGreen,
+                          fontSize: '13px',
                           fontWeight: 800,
                           fontFamily: FONT_DISPLAY,
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          boxShadow: `0 2px 0 ${palette.softGreen}20`,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <Icon name="chart" size={10} color={palette.softGreen} />
-                        Progress
-                      </button>
-                      <button
-                        onClick={() => requestDeleteStudent(student.id)}
-                        style={{
-                          padding: '6px 12px',
-                          background: `${palette.danger}12`,
-                          color: palette.danger,
-                          border: `1.5px solid ${palette.danger}40`,
-                          borderRadius: '8px',
-                          fontSize: '11px',
-                          cursor: 'pointer',
-                          fontWeight: 800,
-                          fontFamily: FONT_DISPLAY,
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          boxShadow: `0 2px 0 ${palette.danger}20`,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <Icon name="trash" size={10} color={palette.danger} />
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                          color: (student.progress?.streak || 0) > 0 ? palette.gold : palette.bodyTextSoft,
+                        }}>
+                          <Icon name="flame" size={12} color={(student.progress?.streak || 0) > 0 ? palette.gold : palette.bodyTextSoft} />
+                          {student.progress?.streak || 0}
+                        </span>
+                      </td>
+                      <td style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        fontSize: '11px',
+                        color: palette.bodyTextSoft,
+                        fontWeight: 600,
+                      }}>{student.joinDate}</td>
+                      <td style={{ padding: '12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <button
+                          onClick={() => { setSelected(student); setEditForm({ displayName: student.displayName, email: student.email }); setIsEditing(true); }}
+                          style={{
+                            padding: '6px 12px',
+                            background: palette.white,
+                            border: `1.5px solid ${palette.border}`,
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            marginRight: '6px',
+                            color: palette.bodyText,
+                            fontWeight: 800,
+                            fontFamily: FONT_DISPLAY,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            boxShadow: `0 2px 0 ${palette.border}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Icon name="edit" size={10} color={palette.bodyText} />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setSelected(student)}
+                          style={{
+                            padding: '6px 12px',
+                            background: `${palette.softGreen}15`,
+                            border: `1.5px solid ${palette.softGreen}40`,
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            marginRight: '6px',
+                            color: palette.softGreen,
+                            fontWeight: 800,
+                            fontFamily: FONT_DISPLAY,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            boxShadow: `0 2px 0 ${palette.softGreen}20`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Icon name="chart" size={10} color={palette.softGreen} />
+                          Progress
+                        </button>
+                        <button
+                          onClick={() => requestDeleteStudent(student.id)}
+                          style={{
+                            padding: '6px 12px',
+                            background: `${palette.danger}12`,
+                            color: palette.danger,
+                            border: `1.5px solid ${palette.danger}40`,
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            fontWeight: 800,
+                            fontFamily: FONT_DISPLAY,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            boxShadow: `0 2px 0 ${palette.danger}20`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Icon name="trash" size={10} color={palette.danger} />
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filtered.length === 0 && students.length > 0 && (
                   <tr>
                     <td colSpan={8} style={{
@@ -1055,7 +1076,7 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
               marginBottom: '4px',
               fontFamily: FONT_DISPLAY,
               letterSpacing: '-0.2px',
-            }}>{selectedStudent.displayName}</h3>
+            }}>{getStudentDisplayName(selectedStudent)}</h3>
             <p style={{
               fontSize: '13px',
               color: palette.bodyTextSoft,
@@ -1176,5 +1197,3 @@ const AdminStudents = ({ students, setStudents, loading, calculateAvgScore }) =>
 };
 
 export default AdminStudents;
-
-

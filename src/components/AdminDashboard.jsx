@@ -1,21 +1,11 @@
 // src/components/AdminDashboard.jsx
-// ✅ FIXED: TeacherLiveScoreboard now prioritizes Username if studentName is invalid/default.
+// ✅ FIXED: TeacherLiveScoreboard prioritizes the exact name typed in the Live Game. ID fallback removed.
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../pages/firebase';
 import {
-  collection,
-  getDocs,
-  addDoc,
-  doc,
-  getDoc,
-  updateDoc,
-  query,
-  where,
-  onSnapshot,
-  deleteDoc,
-  documentId
+  collection, getDocs, addDoc, doc, getDoc, updateDoc, query, where, onSnapshot, deleteDoc, documentId
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 
@@ -471,27 +461,29 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                 const answers = score.answers || score.responses || {};
                 const studentProfile = students.find(s => s.id === score.studentId);
                 
-                // ✅ ITO ANG FIX: Mas matalinong fallback chain
+                // ✅ ULTIMATE FIX: Name priority chain
                 const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
                 let studentDisplayName = 'Unknown Student';
 
-                // 1. Unahin ang pangalan na tinype sa Live Game
+                // 1. Priority: Name typed in Live Game (e.g., "CAMPOS BSIT - 4D")
                 if (score.studentName && !invalidNames.includes(score.studentName.trim())) {
                   studentDisplayName = score.studentName;
                 } 
-                // 2. Kung "Student" or "User" lang ang nasave, hanapin ang Username (e.g., @WAWAYOT)
+                // 2. Fallback: Username from account (e.g., "kumag")
                 else if (studentProfile && studentProfile.username && !invalidNames.includes(studentProfile.username.trim())) {
                   studentDisplayName = studentProfile.username;
                 }
-                // 3. Kung wala, hanapin ang Display Name
+                // 3. Fallback: Display Name from account
                 else if (studentProfile && studentProfile.displayName && !invalidNames.includes(studentProfile.displayName.trim())) {
                   studentDisplayName = studentProfile.displayName;
                 } 
-                // 4. Kung talagang wala, gamitin ang Email prefix or ID
+                // 4. Fallback: Email prefix
                 else if (studentProfile && studentProfile.email) {
                   studentDisplayName = studentProfile.email.split('@')[0];
-                } else if (score.studentId) {
-                  studentDisplayName = `Student (${score.studentId.slice(0, 4)})`;
+                } 
+                // 5. Final Fallback: Do NOT show ID, just "Unknown Student"
+                else {
+                  studentDisplayName = 'Unknown Student';
                 }
 
                 return (
