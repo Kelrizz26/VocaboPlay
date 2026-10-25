@@ -1,7 +1,8 @@
 // src/components/dashboard/LiveJoinModal.jsx
 // ============================================================
 // ✅ JOIN LIVE GAME MODAL - FULL SIZE
-// ✅ FIXED: Name input is now strictly BLANK by default. Student must type it.
+// ✅ FIXED: Auto-assigns account name (DisplayName or Username).
+// ✅ REMOVED: Name input box. Read-only display instead.
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -28,7 +29,7 @@ const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
 const LiveJoinModal = ({ onClose, onJoined }) => {
   const [pin, setPin] = useState('');
-  const [name, setName] = useState(''); // ✅ Blank by default
+  const [name, setName] = useState(''); 
   const [avatarId, setAvatarId] = useState(DEFAULT_AVATAR_ID);
   const [avatarImage, setAvatarImage] = useState('');
   const [step, setStep] = useState(1);
@@ -39,7 +40,6 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
   const localUserId = localStorage.getItem('userId');
 
   useEffect(() => {
-    // ✅ FIX: We ONLY load the avatar and userId. We DO NOT load the name here.
     const loadProfile = async () => {
       const user = auth.currentUser;
       if (!user) return; 
@@ -53,16 +53,22 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
           const equippedId = data.equippedAvatar || DEFAULT_AVATAR_ID;
           const avatar = getAvatarById(equippedId);
 
+          // ✅ SMART NAME RESOLUTION: Kung "User" ang displayName, gamitin ang username
+          const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
+          let resolvedName = data.displayName;
+          if (!resolvedName || invalidNames.includes(resolvedName.trim())) {
+            resolvedName = data.username || 'Student';
+          }
+
           setUserProfile({
             userId: localUserId || user.uid,
             avatarId: equippedId,
             avatarImage: avatar?.image || ''
           });
           
+          setName(resolvedName); // ✅ Iset ang resolved name
           setAvatarId(equippedId);
           setAvatarImage(avatar?.image || '');
-          
-          // ❌ REMOVED: setName(...) is gone. The input stays blank!
         }
       } catch (err) {
         console.error('Error loading profile:', err);
@@ -88,14 +94,14 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
   };
 
   const handleConfirmJoin = async () => {
-    if (!name.trim()) { setError('Please enter your name'); return; }
+    if (!name) { setError('Profile is still loading. Please wait.'); return; }
 
     setLoading(true); setError('');
 
     try {
       const result = await joinLiveSession(pin, {
         userId: userProfile?.userId || localUserId || auth.currentUser?.uid,
-        name: name.trim(), // ✅ Ito yung itinype ng student
+        name: name, // ✅ Gagamitin ang auto-resolved name
         avatarId: avatarId,
         avatarImage: avatarImage
       });
@@ -139,26 +145,23 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
           <div style={styles.stepWrap}>
             <div style={styles.iconHeader}>✨</div>
             <h2 style={styles.title}>Confirm Profile</h2>
-            <p style={styles.subtitle}>Enter your name for this game</p>
+            <p style={styles.subtitle}>You will appear in the game as:</p>
+            
             {error && <div style={styles.errorMsg}>{error}</div>}
+            
             <div style={styles.avatarPreview}>
               {avatarImage ? <img src={avatarImage} alt="Avatar" style={styles.avatarImg} /> : <span style={styles.avatarEmoji}>👤</span>}
             </div>
-            <div style={styles.fieldGroup}>
-              <label style={styles.label}>Your Name</label>
-              <input 
-                type="text" 
-                placeholder="Type your name here..." 
-                value={name} 
-                onChange={(e) => setName(e.target.value.slice(0, 20))} 
-                style={styles.input} 
-                maxLength={20} 
-                autoFocus 
-              />
+
+            {/* ✅ READ-ONLY NAME DISPLAY (Walang input box) */}
+            <div style={styles.nameDisplayBox}>
+              <div style={styles.nameDisplayLabel}>Your Name</div>
+              <div style={styles.nameDisplayValue}>{name || 'Loading...'}</div>
             </div>
+
             <div style={styles.actionsRow}>
               <button onClick={() => setStep(1)} style={styles.backBtn} disabled={loading}>← Back</button>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleConfirmJoin} disabled={loading || !name.trim()} style={{ ...styles.primaryBtn, flex: 2, marginTop: 0, opacity: loading || !name.trim() ? 0.5 : 1 }}>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleConfirmJoin} disabled={loading || !name} style={{ ...styles.primaryBtn, flex: 2, marginTop: 0, opacity: loading || !name ? 0.5 : 1 }}>
                 {loading ? 'Joining...' : '🚀 Join Game'}
               </motion.button>
             </div>
@@ -180,7 +183,33 @@ const styles = {
   errorMsg: { background: `rgba(219, 122, 100, 0.15)`, border: `1.5px solid ${palette.coral}`, color: palette.coral, padding: '12px 16px', borderRadius: '12px', marginBottom: '16px', textAlign: 'center', fontSize: '13px', fontWeight: '800', fontFamily: BRAND_FONT_BODY },
   fieldGroup: { marginBottom: '18px' },
   label: { fontSize: '13px', fontWeight: '800', display: 'block', marginBottom: '8px', color: palette.bodyText, fontFamily: BRAND_FONT_DISPLAY, letterSpacing: '0.06em', textTransform: 'uppercase' },
-  input: { width: '100%', padding: '16px 20px', border: `1.5px solid rgba(0, 0, 0, 0.08)`, borderRadius: '14px', fontSize: '17px', background: 'rgba(255, 255, 255, 0.6)', color: palette.deepNavy, fontFamily: BRAND_FONT_BODY, fontWeight: 700, boxSizing: 'border-box', outline: 'none' },
+  
+  // ✅ BAGONG STYLE PARA SA READ-ONLY NAME
+  nameDisplayBox: { 
+    width: '100%', 
+    padding: '16px 20px', 
+    border: `1.5px solid ${palette.warmOrange}50`, 
+    borderRadius: '14px', 
+    background: palette.creamSoft, 
+    textAlign: 'center',
+    marginBottom: '24px'
+  },
+  nameDisplayLabel: { 
+    fontSize: '11px', 
+    fontWeight: 800, 
+    color: palette.bodyTextSoft, 
+    textTransform: 'uppercase', 
+    letterSpacing: '1px', 
+    marginBottom: '4px',
+    fontFamily: BRAND_FONT_DISPLAY
+  },
+  nameDisplayValue: { 
+    fontSize: 'clamp(20px, 2.5vw, 28px)', 
+    fontWeight: 800, 
+    color: palette.deepNavy, 
+    fontFamily: BRAND_FONT_DISPLAY 
+  },
+
   pinInput: { width: '100%', padding: '24px 20px', border: `1.5px solid rgba(0, 0, 0, 0.08)`, borderRadius: '16px', fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: '800', background: 'rgba(255, 255, 255, 0.6)', color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY, boxSizing: 'border-box', outline: 'none', textAlign: 'center', letterSpacing: '10px' },
   primaryBtn: { width: '100%', padding: '18px 24px', background: palette.softGreen, color: palette.white, border: 'none', borderRadius: '16px', fontSize: '17px', fontWeight: '800', cursor: 'pointer', fontFamily: BRAND_FONT_DISPLAY, boxShadow: `0 4px 0 ${palette.softGreenShadow}`, marginTop: '8px', letterSpacing: '0.5px', transition: 'all 0.15s ease' },
   avatarPreview: { width: 'clamp(140px, 20vw, 160px)', height: 'clamp(170px, 24vw, 200px)', margin: '0 auto 24px', borderRadius: '24px', background: palette.creamSoft, border: `3px solid ${palette.warmOrange}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 8px 24px rgba(42, 40, 69, 0.15)` },
