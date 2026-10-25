@@ -6,6 +6,7 @@
 //   - Added cache bypass after create activity / live host exit
 // ✅ PRESERVED: All UI, modals, live host flow, scoreboard, print, profile menu
 // ✅ UPDATED: Responsive topbar — 1 row on desktop, 2 rows on mobile
+// ✅ FIXED: Matrix now correctly reads `isCorrect` from the answer object. Name fallback fixed.
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -534,7 +535,17 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                 const incorrect = totalQ - correct;
                 const answers = score.answers || score.responses || {};
                 const studentProfile = students.find(s => s.id === score.studentId);
-                const studentDisplayName = studentProfile ? studentProfile.displayName : (score.studentName && score.studentName !== 'New User' ? score.studentName : 'Unknown Student');
+                
+                // ✅ FIXED: Name fallback logic
+                let studentDisplayName = 'Unknown Student';
+                if (studentProfile && studentProfile.displayName && !['User', 'New User'].includes(studentProfile.displayName)) {
+                  studentDisplayName = studentProfile.displayName;
+                } else if (score.studentName && !['User', 'New User', 'Student', 'Unknown', 'New'].includes(score.studentName)) {
+                  studentDisplayName = score.studentName;
+                } else if (score.studentId) {
+                  studentDisplayName = `Student (${score.studentId.slice(0, 4)})`;
+                }
+
                 return (
                   <React.Fragment key={score.id}>
                     <tr style={{ borderBottom: `1.5px solid ${palette.borderSoft}` }}>
@@ -543,16 +554,25 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                       <td style={{ padding: '8px', textAlign: 'center', color: palette.warmOrange, fontWeight: 800, fontFamily: FONT_DISPLAY }}>{correct}/{totalQ}</td>
                       {questionNumbers.map(q => {
                         let isCorrect = false;
-                        if (Array.isArray(answers)) { isCorrect = answers[q - 1] === true; }
-                        else if (typeof answers === 'object' && answers !== null) { isCorrect = answers[`Q${q}`] === true || answers[`q${q}`] === true || answers[q] === true || answers[`${q}`] === true; }
+                        
+                        // ✅ FIXED: Check object format for isCorrect
+                        if (Array.isArray(answers)) {
+                          const ans = answers[q - 1];
+                          isCorrect = ans === true || (ans && typeof ans === 'object' && ans.isCorrect === true);
+                        } else if (typeof answers === 'object' && answers !== null) {
+                          const ans = answers[`Q${q}`] || answers[`q${q}`] || answers[q] || answers[`${q}`];
+                          if (ans === true) {
+                            isCorrect = true;
+                          } else if (ans && typeof ans === 'object' && (ans.isCorrect === true || ans.correct === true)) {
+                            isCorrect = true;
+                          }
+                        }
+                        
                         return (<td key={`Q${q}`} style={{ padding: '4px', textAlign: 'center' }}>{isCorrect ? <span className="correct-cell">✅</span> : <span className="incorrect-cell">❌</span>}</td>);
                       })}
                       <td style={{ padding: '8px', textAlign: 'center', color: palette.softGreen, fontWeight: 700 }}>{correct}</td>
                       <td style={{ padding: '8px', textAlign: 'center', color: palette.danger, fontWeight: 700 }}>{incorrect}</td>
                     </tr>
-                    {(!score.answers && !score.responses) && index === 0 && (
-                      <tr><td colSpan={questionNumbers.length + 5} style={{ color: palette.danger, fontSize: '11px', textAlign: 'center', padding: '8px', background: `${palette.danger}10` }}>⚠️ Warning: This score record does not contain per-question answers data. The matrix will show all as incorrect. Please check your game saving logic to ensure it saves the `answers` object.</td></tr>
-                    )}
                   </React.Fragment>
                 );
               })}
