@@ -1,5 +1,5 @@
 // src/components/AdminDashboard.jsx
-// ✅ FIXED: TeacherLiveScoreboard now prioritizes score.studentName (from Live Game) over account name.
+// ✅ FIXED: TeacherLiveScoreboard now prioritizes Username if studentName is invalid/default.
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -471,14 +471,25 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                 const answers = score.answers || score.responses || {};
                 const studentProfile = students.find(s => s.id === score.studentId);
                 
-                // ✅ ITO ANG FIX: Inuuna natin ang score.studentName (mula sa Live Game) bago ang account name.
+                // ✅ ITO ANG FIX: Mas matalinong fallback chain
                 const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
                 let studentDisplayName = 'Unknown Student';
 
+                // 1. Unahin ang pangalan na tinype sa Live Game
                 if (score.studentName && !invalidNames.includes(score.studentName.trim())) {
                   studentDisplayName = score.studentName;
-                } else if (studentProfile && studentProfile.displayName && !invalidNames.includes(studentProfile.displayName.trim())) {
+                } 
+                // 2. Kung "Student" or "User" lang ang nasave, hanapin ang Username (e.g., @WAWAYOT)
+                else if (studentProfile && studentProfile.username && !invalidNames.includes(studentProfile.username.trim())) {
+                  studentDisplayName = studentProfile.username;
+                }
+                // 3. Kung wala, hanapin ang Display Name
+                else if (studentProfile && studentProfile.displayName && !invalidNames.includes(studentProfile.displayName.trim())) {
                   studentDisplayName = studentProfile.displayName;
+                } 
+                // 4. Kung talagang wala, gamitin ang Email prefix or ID
+                else if (studentProfile && studentProfile.email) {
+                  studentDisplayName = studentProfile.email.split('@')[0];
                 } else if (score.studentId) {
                   studentDisplayName = `Student (${score.studentId.slice(0, 4)})`;
                 }
