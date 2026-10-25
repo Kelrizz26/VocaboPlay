@@ -5,6 +5,7 @@
 // ✅ UPDATED: Added questionOrder randomization & hasFinished lock
 // ✅ UPDATED: Added maxAttempts retake logic
 // ✅ UPDATED: Removed timeLimit logic
+// ✅ FIXED: Answer keys now use Q1, Q2, Q3 format for Teacher Matrix
 // ============================================================
 
 import { 
@@ -29,9 +30,9 @@ import { db } from '../pages/firebase';
 // ============================================================
 // ✅ CONSTANTS
 // ============================================================
-export const QUESTION_TIME = 15; // ✅ 15 SECONDS per question (Wayground style)
+export const QUESTION_TIME = 15; 
 export const BASE_POINTS = 1000;
-export const TIME_PENALTY = 20; // points deducted per second
+export const TIME_PENALTY = 20; 
 export const MAX_PLAYERS = 50;
 
 // ============================================================
@@ -72,7 +73,7 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
       questions: activityData.questions || [],
       totalQuestions: activityData.totalQuestions || 0,
       questionTime: QUESTION_TIME,
-      maxAttempts: activityData.maxAttempts || 1,   // ✅ Naiwan ang Max Attempts
+      maxAttempts: activityData.maxAttempts || 1,   
       status: 'lobby',
       currentQuestion: 0,
       players: [],
@@ -97,7 +98,6 @@ export const createLiveSession = async (activityId, teacherId, teacherName) => {
 // ============================================================
 export const joinLiveSession = async (gamePin, playerData) => {
   try {
-    // Find active session by PIN
     const sessionsQuery = query(
       collection(db, 'liveSessions'),
       where('gamePin', '==', gamePin),
@@ -115,30 +115,27 @@ export const joinLiveSession = async (gamePin, playerData) => {
     const sessionRef = doc(db, 'liveSessions', sessionDoc.id);
     const maxAttempts = sessionData.maxAttempts || 1;
 
-    // ✅ CHECK: Existing Player Logic
     const existingPlayerIndex = sessionData.players?.findIndex(p => p.userId === playerData.userId);
     
     if (existingPlayerIndex !== -1 && existingPlayerIndex !== undefined) {
       const existingPlayer = sessionData.players[existingPlayerIndex];
       const currentAttempts = existingPlayer.attemptsMade || 1;
 
-      // ❌ BLOCK: Kung tapos na siya AT naubos na ang attempts
       if (existingPlayer.hasFinished && currentAttempts >= maxAttempts) {
         throw new Error(`You have already used all ${maxAttempts} attempt(s) for this quiz.`);
       }
 
-      // ✅ ALLOW RETRY: Kung tapos na pero may natitira pang attempts
       if (existingPlayer.hasFinished && currentAttempts < maxAttempts) {
         const updatedPlayers = [...sessionData.players];
         updatedPlayers[existingPlayerIndex] = {
           ...existingPlayer,
-          score: 0,                 // Reset score
-          correctAnswers: 0,        // Reset correct count
-          answers: {},              // Clear previous answers
-          currentQuestionIndex: 0,  // Back to Q1
-          hasFinished: false,       // Unlock player
-          attemptsMade: currentAttempts + 1, // Increment attempt counter
-          questionOrder: shuffleArray(Array.from({ length: sessionData.totalQuestions }, (_, i) => i)), // New random order
+          score: 0,
+          correctAnswers: 0,
+          answers: {},
+          currentQuestionIndex: 0,
+          hasFinished: false,
+          attemptsMade: currentAttempts + 1,
+          questionOrder: shuffleArray(Array.from({ length: sessionData.totalQuestions }, (_, i) => i)),
           isConnected: true,
         };
         
@@ -152,7 +149,6 @@ export const joinLiveSession = async (gamePin, playerData) => {
         };
       }
 
-      // ✅ ALLOW: Re-connection (nag-refresh lang or nadisconnect, hindi pa tapos)
       if (!existingPlayer.hasFinished) {
         const updatedPlayers = [...sessionData.players];
         updatedPlayers[existingPlayerIndex] = { ...existingPlayer, isConnected: true };
@@ -167,25 +163,22 @@ export const joinLiveSession = async (gamePin, playerData) => {
       }
     }
 
-    // Check if session is in lobby (no late join for new players)
     if (sessionData.status !== 'lobby') {
       throw new Error('Game already started. Cannot join now.');
     }
 
-    // Check max players
     if (sessionData.players?.length >= MAX_PLAYERS) {
       throw new Error('Session is full');
     }
 
-    // ✅ GENERATE RANDOMIZED QUESTION ORDER FOR THIS STUDENT
     const questionOrder = shuffleArray(
       Array.from({ length: sessionData.totalQuestions }, (_, i) => i)
     );
 
-    // Add player
+    // ✅ FIX: Siguraduhing may pangalan, kung wala, "Student" ang fallback
     const newPlayer = {
       userId: playerData.userId,
-      name: playerData.name,
+      name: playerData.name || 'Student', // Fallback kung walang name naipasa
       avatarId: playerData.avatarId || 'avatar1',
       avatarImage: playerData.avatarImage || '',
       score: 0,
@@ -193,7 +186,7 @@ export const joinLiveSession = async (gamePin, playerData) => {
       answers: {},
       currentQuestionIndex: 0,
       hasFinished: false, 
-      attemptsMade: 1,          // ✅ Initialize attempt to 1
+      attemptsMade: 1,          
       questionOrder,      
       isConnected: true,
       joinedAt: new Date().toISOString(),
@@ -269,7 +262,6 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
 
     const player = players[playerIndex];
     
-    // ✅ USE questionOrder TO FIND ACTUAL QUESTION
     const actualQuestionIndex = player.questionOrder 
       ? player.questionOrder[questionIndex] 
       : questionIndex;
@@ -295,10 +287,11 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
       score: player.score + points,
       correctAnswers: player.correctAnswers + (isCorrect ? 1 : 0),
       currentQuestionIndex: nextQuestionIndex,
-      hasFinished: hasFinished, // ✅ MARK AS FINISHED
+      hasFinished: hasFinished, 
       answers: {
         ...player.answers,
-        [actualQuestionIndex]: { // ✅ SAVE BY ACTUAL INDEX
+        // ✅ FIX: Ginawa nating Q1, Q2, Q3... ang key para gumana ang matrix sa teacher dashboard
+        [`Q${actualQuestionIndex + 1}`]: { 
           answer,
           isCorrect,
           timeSpent,
@@ -311,7 +304,6 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
     const updatedPlayers = [...players];
     updatedPlayers[playerIndex] = updatedPlayer;
 
-    // Sort by score (for ranking)
     updatedPlayers.sort((a, b) => b.score - a.score);
     updatedPlayers.forEach((p, i) => {
       p.rank = i + 1;
@@ -321,7 +313,6 @@ export const submitAnswer = async (sessionId, playerId, questionIndex, answer, t
       players: updatedPlayers
     });
 
-    // Save to liveAnswers collection for analytics
     await addDoc(collection(db, 'liveAnswers'), {
       sessionId,
       playerId,
@@ -365,7 +356,6 @@ export const updatePlayerProgress = async (sessionId, playerId, questionIndex) =
 
     const player = players[playerIndex];
     
-    // ✅ USE questionOrder TO FIND ACTUAL QUESTION
     const actualQuestionIndex = player.questionOrder 
       ? player.questionOrder[questionIndex] 
       : questionIndex;
@@ -376,10 +366,11 @@ export const updatePlayerProgress = async (sessionId, playerId, questionIndex) =
     const updatedPlayer = {
       ...player,
       currentQuestionIndex: nextQuestionIndex,
-      hasFinished: hasFinished, // ✅ MARK AS FINISHED
+      hasFinished: hasFinished, 
       answers: {
         ...player.answers,
-        [actualQuestionIndex]: { // ✅ RECORD TIMEOUT AS WRONG
+        // ✅ FIX: Q1, Q2, Q3 key format para sa timeouts
+        [`Q${actualQuestionIndex + 1}`]: { 
           answer: null,
           isCorrect: false,
           timeSpent: QUESTION_TIME,

@@ -2,6 +2,8 @@
 // ============================================================
 // ✅ JOIN LIVE GAME MODAL - FULL SIZE
 // ✅ UPDATED: Glassmorphism Container + Full Body Avatar Fix
+// ✅ FIXED: Prevents async profile fetch from overwriting user-typed name
+// ✅ FIXED: Uses localUserId for consistency with Dashboard
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -48,6 +50,8 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState(null);
 
+  const localUserId = localStorage.getItem('userId');
+
   useEffect(() => {
     const loadProfile = async () => {
       const user = auth.currentUser;
@@ -62,13 +66,20 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
           const equippedId = data.equippedAvatar || DEFAULT_AVATAR_ID;
           const avatar = getAvatarById(equippedId);
 
+          // Check for displayName, username, or name field
+          const actualName = data.displayName || data.username || data.name || 'Student';
+
           setUserProfile({
-            userId: user.uid,
-            name: data.displayName || data.username || 'Student',
+            userId: localUserId || user.uid,
+            name: actualName,
             avatarId: equippedId,
             avatarImage: avatar?.image || ''
           });
-          setName(data.displayName || data.username || 'Student');
+          
+          // ✅ FIX: Only set the name if the user hasn't typed anything yet.
+          // This prevents a slow network request from overwriting their input.
+          setName((prevName) => prevName || actualName);
+          
           setAvatarId(equippedId);
           setAvatarImage(avatar?.image || '');
         }
@@ -78,7 +89,7 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
     };
 
     loadProfile();
-  }, []);
+  }, [localUserId]);
 
   const handlePinChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
@@ -115,7 +126,7 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
 
     try {
       const result = await joinLiveSession(pin, {
-        userId: userProfile?.userId || auth.currentUser.uid,
+        userId: userProfile?.userId || localUserId || auth.currentUser?.uid,
         name: name.trim(),
         avatarId: avatarId,
         avatarImage: avatarImage
@@ -193,7 +204,6 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
 
             {error && <div style={styles.errorMsg}>{error}</div>}
 
-            {/* ✅ BAGONG FULL BODY AVATAR CONTAINER */}
             <div style={styles.avatarPreview}>
               {avatarImage ? (
                 <img
@@ -406,12 +416,11 @@ const styles = {
     transition: 'all 0.15s ease',
   },
   
-  // ✅ BAGONG FULL BODY AVATAR PREVIEW
   avatarPreview: {
     width: 'clamp(140px, 20vw, 160px)',
-    height: 'clamp(170px, 24vw, 200px)', // Mas mataas kaysa lapad
+    height: 'clamp(170px, 24vw, 200px)',
     margin: '0 auto 24px',
-    borderRadius: '24px', // Rounded rectangle imbes na circle
+    borderRadius: '24px',
     background: palette.creamSoft,
     border: `3px solid ${palette.warmOrange}`,
     overflow: 'hidden',
@@ -423,8 +432,8 @@ const styles = {
   avatarImg: {
     width: '100%',
     height: '100%',
-    objectFit: 'contain', // ✅ ITO ANG MAGPAPAKITA NG BUONG KATAWAN
-    padding: '8px', // Konting espasyo sa gilid
+    objectFit: 'contain',
+    padding: '8px',
   },
   
   avatarEmoji: {
