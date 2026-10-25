@@ -1,10 +1,7 @@
 // src/components/dashboard/LivePlayerGame.jsx
 // ============================================================
 // ✅ STUDENT LIVE GAME - FULL SIZE
-// ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
-// ✅ FIXED: Auto-save score agad pagka-tapos ng student (hindi na kailangan hintayin teacher)
-// ✅ REMOVED: Global Time Limit (Teacher na lang ang mag-e-end ng game)
-// ✅ FIXED: Shuffled options are now permanently stable using useMemo.
+// ✅ FIXED: Used answersRef.current in auto-save to guarantee all answers are saved.
 // ============================================================
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -142,7 +139,12 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
 
       const myPlayer = session?.players?.find(p => p.userId === playerId);
       const actualQIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
-      answersRef.current[`Q${actualQIndex + 1}`] = result.isCorrect;
+      
+      // ✅ Always save to local Ref first
+      answersRef.current[`Q${actualQIndex + 1}`] = {
+        isCorrect: result.isCorrect,
+        answer: option
+      };
 
       setTimeout(() => { moveToNextQuestion(); }, 1500);
 
@@ -161,7 +163,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       setIsFinished(true);
       setFeedback(null);
       
-      // ✅ AUTO-SAVE: Save score to database when student finishes
+      // ✅ AUTO-SAVE
       if (!savedScoreRef.current && completeActivity) {
         savedScoreRef.current = true;
         
@@ -180,7 +182,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
                   myPlayer.correctAnswers || 0,
                   myPlayer.correctAnswers || 0,
                   data.totalQuestions || 0,
-                  myPlayer.answers || {}
+                  answersRef.current // ✅ CRITICAL FIX: Use answersRef, NOT myPlayer.answers
                 );
               }
             }
@@ -200,8 +202,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
   const currentQuestion = session?.questions?.[actualQuestionIndex];
 
-  // ✅ ITO ANG PINAKA-FIX: Naka-depende lang sa actualQuestionIndex.
-  // Kahit mag-update ang timer o Firebase, hindi mag-s-shuffle ulit kasi hindi nagbago ang index.
   const shuffledOptions = useMemo(() => {
     if (!currentQuestion || !currentQuestion.options) return [];
     const opts = [...currentQuestion.options];
@@ -210,7 +210,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       [opts[i], opts[j]] = [opts[j], opts[i]];
     }
     return opts;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actualQuestionIndex]); 
 
   const myCorrectCount = myPlayer?.correctAnswers || myPlayer?.correct || 0;
@@ -223,7 +222,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   });
   const myRank = sortedPlayers.findIndex(p => p.userId === playerId) + 1;
 
-  // ✅ RENDER RESULTS KAPAG TAPOS NA
   if (isFinished) {
     return <LivePlayerResults session={session} playerId={playerId} onExit={() => onGameEnd(session)} />;
   }
@@ -240,58 +238,32 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   return (
     <div style={styles.container}>
       <div style={styles.gameInner}>
-        {/* Header */}
         <div style={styles.header}>
           <div style={styles.headerLeft}>
-            <p style={styles.questionCounter}>
-              Question {currentQuestionIndex + 1} of {session.totalQuestions}
-            </p>
+            <p style={styles.questionCounter}>Question {currentQuestionIndex + 1} of {session.totalQuestions}</p>
           </div>
-          
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div style={{
-              ...styles.timerBox,
-              background: timeLeft <= 5 ? palette.coral : timeLeft <= 10 ? palette.warmOrange : palette.softGreen
-            }}>
+            <div style={{ ...styles.timerBox, background: timeLeft <= 5 ? palette.coral : timeLeft <= 10 ? palette.warmOrange : palette.softGreen }}>
               <span style={styles.timerIcon}>⏱️</span>
               <span style={styles.timerText}>{timeLeft}s</span>
             </div>
           </div>
         </div>
 
-        {/* My Score Bar */}
         <div style={styles.scoreBar}>
-          <div style={styles.scoreItem}>
-            <span style={styles.scoreLabelSmall}>Score</span>
-            <span style={styles.scoreValueSmall}>{myScore}</span>
-          </div>
+          <div style={styles.scoreItem}><span style={styles.scoreLabelSmall}>Score</span><span style={styles.scoreValueSmall}>{myScore}</span></div>
           <div style={styles.divider}></div>
-          <div style={styles.scoreItem}>
-            <span style={styles.scoreLabelSmall}>Rank</span>
-            <span style={styles.scoreValueSmall}>#{myRank}</span>
-          </div>
+          <div style={styles.scoreItem}><span style={styles.scoreLabelSmall}>Rank</span><span style={styles.scoreValueSmall}>#{myRank}</span></div>
         </div>
 
-        {/* Progress Bar */}
         <div style={styles.progressBar}>
-          <motion.div
-            style={styles.progressFill}
-            animate={{ width: `${((currentQuestionIndex + 1) / session.totalQuestions) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
+          <motion.div style={styles.progressFill} animate={{ width: `${((currentQuestionIndex + 1) / session.totalQuestions) * 100}%` }} transition={{ duration: 0.5 }} />
         </div>
 
-        {/* Question */}
-        <motion.div
-          key={currentQuestionIndex}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={styles.questionCard}
-        >
+        <motion.div key={currentQuestionIndex} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={styles.questionCard}>
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* Options */}
         <div className="live-options-grid" style={styles.optionsGrid}>
           {shuffledOptions.map((option, index) => {
             const isSelected = selectedAnswer === option;
@@ -314,11 +286,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
                   cursor: hasAnswered ? 'default' : 'pointer',
                 }}
               >
-                <div style={{
-                  ...styles.optionLabel,
-                  ...(showCorrect ? styles.optionLabelCorrect : {}),
-                  ...(showWrong ? styles.optionLabelWrong : {}),
-                }}>
+                <div style={{ ...styles.optionLabel, ...(showCorrect ? styles.optionLabelCorrect : {}), ...(showWrong ? styles.optionLabelWrong : {}) }}>
                   {String.fromCharCode(65 + index)}
                 </div>
                 <div style={styles.optionText}>{option}</div>
@@ -329,7 +297,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           })}
         </div>
 
-        {/* Feedback */}
         <AnimatePresence>
           {feedback && (
             <motion.div
