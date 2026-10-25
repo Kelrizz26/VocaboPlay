@@ -4,10 +4,10 @@
 // ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
 // ✅ FIXED: Auto-save score agad pagka-tapos ng student (hindi na kailangan hintayin teacher)
 // ✅ REMOVED: Global Time Limit (Teacher na lang ang mag-e-end ng game)
-// ✅ FIXED: Shuffled options are now stable and won't change on re-renders (timer/firebase updates)
+// ✅ FIXED: Shuffled options are now permanently stable using useMemo.
 // ============================================================
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore'; 
 import { db } from '../../pages/firebase'; 
@@ -38,7 +38,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const [feedback, setFeedback] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false); 
-  const [shuffledOptions, setShuffledOptions] = useState([]); // ✅ Bagong state para sa stable options
   
   const questionStartRef = useRef(null);
   const sessionSavedRef = useRef(false);
@@ -75,32 +74,15 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     return () => unsubscribe();
   }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId, isFinished]);
 
-  // ✅ Effect 2: Reset state per question & Shuffle Options (Only runs when question changes)
+  // ✅ Effect 2: Reset state per question (Walang shuffle dito)
   useEffect(() => {
     if (session?.status !== 'playing') return;
-    
     setSelectedAnswer(null);
     setHasAnswered(false);
     setFeedback(null);
     setTimeLeft(QUESTION_TIME);
     questionStartRef.current = Date.now();
-
-    // ✅ I-shuffle ang options DITO para hindi magbago-bago kapag nag-tick ang timer
-    const myPlayer = session?.players?.find(p => p.userId === playerId);
-    const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
-    const currentQuestion = session?.questions?.[actualQuestionIndex];
-
-    if (currentQuestion && currentQuestion.options) {
-      const opts = [...currentQuestion.options];
-      for (let i = opts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [opts[i], opts[j]] = [opts[j], opts[i]];
-      }
-      setShuffledOptions(opts);
-    } else {
-      setShuffledOptions([]);
-    }
-  }, [currentQuestionIndex, session?.status, playerId, session?.players, session?.questions]);
+  }, [currentQuestionIndex, session?.status]);
 
   // ✅ Effect 3: Per-question timer
   useEffect(() => {
@@ -218,6 +200,19 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
   const currentQuestion = session?.questions?.[actualQuestionIndex];
 
+  // ✅ ITO ANG PINAKA-FIX: Naka-depende lang sa actualQuestionIndex.
+  // Kahit mag-update ang timer o Firebase, hindi mag-s-shuffle ulit kasi hindi nagbago ang index.
+  const shuffledOptions = useMemo(() => {
+    if (!currentQuestion || !currentQuestion.options) return [];
+    const opts = [...currentQuestion.options];
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    return opts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actualQuestionIndex]); 
+
   const myCorrectCount = myPlayer?.correctAnswers || myPlayer?.correct || 0;
   const myScore = myCorrectCount;
 
@@ -296,7 +291,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* Options (Gamit ang stable na shuffledOptions state) */}
+        {/* Options */}
         <div className="live-options-grid" style={styles.optionsGrid}>
           {shuffledOptions.map((option, index) => {
             const isSelected = selectedAnswer === option;
