@@ -70,6 +70,13 @@ const Icon = ({ name, size = 18, color = palette.bodyTextSoft }) => {
         <path d="M8 20h8a4 4 0 004-4V8a4 4 0 00-4-4H8a4 4 0 00-4 4v8a4 4 0 004 4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       </>
     ),
+    clipboard: (
+      <>
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M9 14l2 2 4-4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
     clock: (
       <>
         <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
@@ -229,7 +236,7 @@ const AdminLeaderboards = () => {
       case 'points': return 'pts';
       case 'words': return 'words';
       case 'streak': return 'days';
-      case 'games': return 'games';
+      case 'games': return 'activities'; // Pinalitan mula 'games'
       default: return 'pts';
     }
   }, [selectedLeaderboard]);
@@ -271,18 +278,18 @@ const AdminLeaderboards = () => {
 
       // STEP 3: scores for teacher activities → aggregate stats per student
       const scoresSnap = await getDocs(collection(db, 'scores'));
-      const studentScores = {}; // { studentId: { points: 0, games: 0, words: 0, dates: Set } }
+      const studentScores = {}; // { studentId: { points: 0, activities: 0, words: 0, dates: Set } }
 
       scoresSnap.forEach(d => {
         const s = d.data();
         if (activityIds.includes(s.activityId) && s.studentId) {
           if (!studentScores[s.studentId]) {
-            studentScores[s.studentId] = { points: 0, games: 0, words: 0, dates: new Set() };
+            studentScores[s.studentId] = { points: 0, activities: 0, words: 0, dates: new Set() };
           }
           
-          // Sum up points, games, and words from Live Quizzes only
+          // Sum up points, activities, and words from Live Quizzes only
           studentScores[s.studentId].points += (s.score || s.points || 0); 
-          studentScores[s.studentId].games += 1;
+          studentScores[s.studentId].activities += 1;
           studentScores[s.studentId].words += (s.correctAnswers || s.wordsLearned || 0); 
           
           // Track dates for streak calculation
@@ -351,14 +358,14 @@ const AdminLeaderboards = () => {
                 ...data.progress, // keep other fields like level
                 totalPoints: liveStats.points,
                 wordsLearned: liveStats.words,
-                gamesPlayed: liveStats.games,
+                gamesPlayed: liveStats.activities, // Ginagamit pa rin ang key na 'gamesPlayed' internally
                 longestStreak: longestStreak,
                 streak: longestStreak,
               },
               stats: {
                 totalPoints: liveStats.points,
                 wordsLearned: liveStats.words,
-                gamesPlayed: liveStats.games,
+                gamesPlayed: liveStats.activities, 
                 longestStreak: longestStreak,
                 streak: longestStreak,
               },
@@ -419,7 +426,8 @@ const AdminLeaderboards = () => {
     { id: 'points', label: 'Total Points',   icon: 'star',   color: palette.warmOrange, bg: `${palette.warmOrange}15` },
     { id: 'words',  label: 'Words Learned',  icon: 'book',   color: palette.softGreen,  bg: `${palette.softGreen}15` },
     { id: 'streak', label: 'Longest Streak', icon: 'flame',  color: palette.gold,       bg: `${palette.gold}15` },
-    { id: 'games',  label: 'Games Played',   icon: 'game',   color: palette.coral,      bg: `${palette.coral}15` },
+    // Pinalitan ang label at icon
+    { id: 'games',  label: 'Activities Played', icon: 'clipboard', color: palette.coral,  bg: `${palette.coral}15` },
   ];
 
   const currentType = leaderboardTypes.find(t => t.id === selectedLeaderboard) || leaderboardTypes[0];
@@ -1216,7 +1224,7 @@ const AdminLeaderboards = () => {
             }}>
               {[
                 { label: 'Words Learned', value: selectedProfile.progress?.wordsLearned || 0, color: palette.softGreen },
-                { label: 'Games Played', value: selectedProfile.progress?.gamesPlayed || 0, color: palette.coral },
+                { label: 'Activities Played', value: selectedProfile.progress?.gamesPlayed || 0, color: palette.coral }, // Pinalitan ang label
                 { label: 'Longest Streak', value: selectedProfile.progress?.longestStreak || 0, color: palette.gold },
                 { label: 'Total Points', value: selectedProfile.totalPoints || selectedProfile.progress?.totalPoints || 0, color: palette.warmOrange },
               ].map((stat, i) => (
