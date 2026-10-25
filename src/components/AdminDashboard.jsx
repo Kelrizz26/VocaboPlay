@@ -1,5 +1,6 @@
 // src/components/AdminDashboard.jsx
 // ✅ FIXED: TeacherLiveScoreboard prioritizes the exact name typed in the Live Game. ID fallback removed.
+// ✅ FIXED: Print CSS now hides the background and only prints the modal content.
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -414,11 +415,55 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
       <style>{`
         @media print {
           @page { size: landscape; margin: 8mm; }
-          body { background: white !important; }
-          .no-print { display: none !important; }
-          .print-only { display: block !important; }
-          .modal-overlay { position: static !important; background: transparent !important; padding: 0 !important; }
-          .modal-content { max-width: 100% !important; max-height: 100% !important; overflow: visible !important; box-shadow: none !important; border: none !important; padding: 0 !important; background: white !important; }
+          
+          /* 1. Itago lahat ng elements sa page */
+          body * {
+            visibility: hidden;
+          }
+          
+          /* 2. Ipapakita LANG yung modal overlay at modal content */
+          .modal-overlay, .modal-content, .modal-content * {
+            visibility: visible;
+          }
+
+          /* 3. Reset modal position para maging normal sa papel */
+          .modal-overlay {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+          }
+          
+          .modal-content {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+          }
+
+          /* 4. Itago ang mga buttons */
+          .no-print {
+            display: none !important;
+          }
+
+          /* 5. Ipakita yung print-only header */
+          .print-only {
+            display: block !important;
+          }
+
+          /* 6. Table styling para malinis sa papel */
           .print-table { width: 100%; border-collapse: collapse; font-size: 10px; }
           .print-table th, .print-table td { border: 1px solid #000 !important; padding: 4px !important; text-align: center; color: #000 !important; }
           .print-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
@@ -461,30 +506,21 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                 const answers = score.answers || score.responses || {};
                 const studentProfile = students.find(s => s.id === score.studentId);
                 
-                // ✅ ULTIMATE FIX: Name priority chain
                 const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
                 let studentDisplayName = 'Unknown Student';
 
-                // 1. Priority: Name typed in Live Game (e.g., "CAMPOS BSIT - 4D")
                 if (score.studentName && !invalidNames.includes(score.studentName.trim())) {
                   studentDisplayName = score.studentName;
                 } 
-                // 2. Fallback: Username from account (e.g., "kumag")
                 else if (studentProfile && studentProfile.username && !invalidNames.includes(studentProfile.username.trim())) {
                   studentDisplayName = studentProfile.username;
                 }
-                // 3. Fallback: Display Name from account
                 else if (studentProfile && studentProfile.displayName && !invalidNames.includes(studentProfile.displayName.trim())) {
                   studentDisplayName = studentProfile.displayName;
                 } 
-                // 4. Fallback: Email prefix
                 else if (studentProfile && studentProfile.email) {
                   studentDisplayName = studentProfile.email.split('@')[0];
                 } 
-                // 5. Final Fallback: Do NOT show ID, just "Unknown Student"
-                else {
-                  studentDisplayName = 'Unknown Student';
-                }
 
                 return (
                   <React.Fragment key={score.id}>
