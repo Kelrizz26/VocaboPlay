@@ -1,6 +1,6 @@
 // src/components/AdminDashboard.jsx
 // ✅ FIXED: TeacherLiveScoreboard prioritizes the exact name typed in the Live Game. ID fallback removed.
-// ✅ FIXED: Print CSS now hides the background and only prints the modal content.
+// ✅ FIXED: Print CSS perfectly hides the dashboard wrapper and flows the modal naturally.
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -416,34 +416,41 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
         @media print {
           @page { size: landscape; margin: 8mm; }
           
-          /* 1. Itago lahat ng elements sa page */
-          body * {
-            visibility: hidden;
-          }
+          /* 1. Itago nang tuluyan ang buong dashboard wrapper */
+          .admin-dashboard-wrapper { display: none !important; }
           
-          /* 2. Ipapakita LANG yung modal overlay at modal content */
-          .modal-overlay, .modal-content, .modal-content * {
-            visibility: visible;
-          }
-
-          /* 3. Reset modal position para maging normal sa papel */
-          .modal-overlay {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
+          /* 2. Ayusin ang body, html, at root para maging normal block flow */
+          html, body, #root {
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
             background: white !important;
-            padding: 0 !important;
             margin: 0 !important;
+            padding: 0 !important;
             display: block !important;
           }
-          
-          .modal-content {
+
+          /* 3. Iposisyon ang modal overlay sa pinakataas at gawing normal */
+          .modal-overlay {
             position: absolute !important;
-            left: 0 !important;
             top: 0 !important;
-            max-width: 100% !important;
+            left: 0 !important;
+            display: block !important;
             width: 100% !important;
+            height: auto !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+
+          /* 4. Alisin ang mga constraints (scroll, shadow, border) ng modal content */
+          .modal-content {
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
             max-height: none !important;
             overflow: visible !important;
             box-shadow: none !important;
@@ -453,17 +460,11 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
             background: white !important;
           }
 
-          /* 4. Itago ang mga buttons */
-          .no-print {
-            display: none !important;
-          }
+          /* 5. Itago ang mga buttons at UI elements na hindi kailangan sa papel */
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
 
-          /* 5. Ipakita yung print-only header */
-          .print-only {
-            display: block !important;
-          }
-
-          /* 6. Table styling para malinis sa papel */
+          /* 6. Ayusin ang table para maging malinis sa papel */
           .print-table { width: 100%; border-collapse: collapse; font-size: 10px; }
           .print-table th, .print-table td { border: 1px solid #000 !important; padding: 4px !important; text-align: center; color: #000 !important; }
           .print-table th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
