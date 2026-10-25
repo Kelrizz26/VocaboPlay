@@ -2,6 +2,7 @@
 // ============================================================
 // ✅ ADMIN LEADERBOARDS - Polished to match Super Admin
 // Shows ONLY teacher's students (filtered by teacherId)
+// Data reflects ONLY live quizzes/activities hosted by the teacher
 // ============================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -235,6 +236,7 @@ const AdminLeaderboards = () => {
 
   // ============================================================
   // ✅ FETCH: Only students who joined the teacher's activities
+  // Aggregates stats from the 'scores' collection (Live Quizzes)
   // ============================================================
   const fetchTeacherLeaderboard = useCallback(async () => {
     setLoading(true);
@@ -267,15 +269,34 @@ const AdminLeaderboards = () => {
         return;
       }
 
-      // STEP 3: scores for teacher activities → student IDs
+      // STEP 3: scores for teacher activities → aggregate stats per student
       const scoresSnap = await getDocs(collection(db, 'scores'));
-      const studentIds = [];
+      const studentScores = {}; // { studentId: { points: 0, games: 0, words: 0, dates: Set } }
+
       scoresSnap.forEach(d => {
         const s = d.data();
-        if (activityIds.includes(s.activityId) && !studentIds.includes(s.studentId)) {
-          studentIds.push(s.studentId);
+        if (activityIds.includes(s.activityId) && s.studentId) {
+          if (!studentScores[s.studentId]) {
+            studentScores[s.studentId] = { points: 0, games: 0, words: 0, dates: new Set() };
+          }
+          
+          // Sum up points, games, and words from Live Quizzes only
+          studentScores[s.studentId].points += (s.score || s.points || 0); 
+          studentScores[s.studentId].games += 1;
+          studentScores[s.studentId].words += (s.correctAnswers || s.wordsLearned || 0); 
+          
+          // Track dates for streak calculation
+          const dateVal = s.createdAt || s.date || s.timestamp;
+          if (dateVal) {
+            const dObj = dateVal.seconds ? dateVal.toDate() : new Date(dateVal);
+            if (!isNaN(dObj.getTime())) {
+              studentScores[s.studentId].dates.add(dObj.toDateString());
+            }
+          }
         }
       });
+
+      const studentIds = Object.keys(studentScores);
 
       if (studentIds.length === 0) {
         setLeaderboardData([]);
@@ -283,23 +304,66 @@ const AdminLeaderboards = () => {
         return;
       }
 
+      // Helper para kalkulahin ang Longest Streak base sa mga araw na nag-quiz sila
+      const calculateLongestStreak = (datesSet) => {
+        if (datesSet.size === 0) return 0;
+        const sortedDates = Array.from(datesSet).map(d => new Date(d).setHours(0,0,0,0)).sort((a,b) => a - b);
+        let maxStreak = 1;
+        let currentStreak = 1;
+        for (let i = 1; i < sortedDates.length; i++) {
+          const diffTime = Math.abs(sortedDates[i] - sortedDates[i-1]);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            currentStreak++;
+            maxStreak = Math.max(maxStreak, currentStreak);
+          } else if (diffDays > 1) {
+            currentStreak = 1;
+          }
+        }
+        return maxStreak;
+      };
+
       // STEP 4: student users in that set
       const usersSnap = await getDocs(collection(db, 'users'));
       const students = usersSnap.docs
         .map(d => {
           const data = d.data();
           if (data.role === 'student' && studentIds.includes(d.id)) {
+            const liveStats = studentScores[d.id];
+            const longestStreak = calculateLongestStreak(liveStats.dates);
+
+            // ✅ NAME FIX: Kapag "User" o generic ang displayName, username ang gagamitin
+            let finalDisplayName = data.displayName;
+            const genericNames = ['user', 'new user', 'student', 'unknown'];
+            if (!finalDisplayName || genericNames.includes(finalDisplayName.trim().toLowerCase())) {
+              finalDisplayName = data.username || data.email?.split('@')[0] || 'Unknown';
+            }
+
             return {
               id: d.id,
               ...data,
-              displayName: data.displayName || data.email?.split('@')[0] || 'Unknown',
+              displayName: finalDisplayName,
               username: data.username || `@${(data.displayName || 'user').toLowerCase().replace(/\s/g, '')}`,
               email: data.email || 'No email',
               equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
-              progress: data.progress || {},
-              stats: data.progress || {},
-              totalPoints: data.totalPoints || data.progress?.totalPoints || 0,
-              currentStreak: data.currentStreak || data.progress?.streak || 0
+              // ✅ OVERRIDE PROGRESS: Live Quiz stats ang ipapakita, hindi global stats
+              progress: {
+                ...data.progress, // keep other fields like level
+                totalPoints: liveStats.points,
+                wordsLearned: liveStats.words,
+                gamesPlayed: liveStats.games,
+                longestStreak: longestStreak,
+                streak: longestStreak,
+              },
+              stats: {
+                totalPoints: liveStats.points,
+                wordsLearned: liveStats.words,
+                gamesPlayed: liveStats.games,
+                longestStreak: longestStreak,
+                streak: longestStreak,
+              },
+              totalPoints: liveStats.points,
+              currentStreak: longestStreak
             };
           }
           return null;
@@ -338,29 +402,13 @@ const AdminLeaderboards = () => {
   }, [selectedLeaderboard, getValue]);
 
   // ============================================================
-  // ✅ FETCH PROFILE FOR MODAL
+  // ✅ FETCH PROFILE FOR MODAL (Direct na kukunin sa calculated data)
   // ============================================================
-  const fetchUserProfile = async (userId) => {
-    try {
-      const userRef = doc(db, 'users', userId);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        setSelectedProfile({
-          id: userId,
-          displayName: data.displayName || 'Anonymous',
-          username: data.username || `@${(data.displayName || 'user').toLowerCase().replace(/\s/g, '')}`,
-          email: data.email || 'No email',
-          bio: data.bio || 'No bio yet',
-          equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
-          progress: data.progress || {},
-          stats: data.progress || {},
-          totalPoints: data.totalPoints || 0
-        });
-        setShowProfileModal(true);
-      }
-    } catch (err) {
-      console.error('Error fetching profile:', err);
+  const fetchUserProfile = (userId) => {
+    const student = leaderboardData.find(s => s.id === userId);
+    if (student) {
+      setSelectedProfile(student);
+      setShowProfileModal(true);
     }
   };
 
@@ -971,7 +1019,7 @@ const AdminLeaderboards = () => {
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
-                          background: student.rank === 1 ? `palette.gold15`:student.rank===2?palette.creamSoft:student.rank===3?`{palette.coral}15` : 'transparent',
+                          background: student.rank === 1 ? `${palette.gold}15` : student.rank === 2 ? palette.creamSoft : student.rank === 3 ? `${palette.coral}15` : 'transparent',
                           border: student.rank <= 3 ? `1.5px solid ${student.rank === 1 ? `${palette.gold}40` : student.rank === 2 ? palette.border : `${palette.coral}30`}` : 'none',
                           display: 'flex',
                           alignItems: 'center',
@@ -1169,7 +1217,7 @@ const AdminLeaderboards = () => {
               {[
                 { label: 'Words Learned', value: selectedProfile.progress?.wordsLearned || 0, color: palette.softGreen },
                 { label: 'Games Played', value: selectedProfile.progress?.gamesPlayed || 0, color: palette.coral },
-                { label: 'Streak', value: selectedProfile.progress?.streak || 0, color: palette.gold },
+                { label: 'Longest Streak', value: selectedProfile.progress?.longestStreak || 0, color: palette.gold },
                 { label: 'Total Points', value: selectedProfile.totalPoints || selectedProfile.progress?.totalPoints || 0, color: palette.warmOrange },
               ].map((stat, i) => (
                 <div key={i} style={{
@@ -1226,5 +1274,3 @@ const AdminLeaderboards = () => {
 };
 
 export default AdminLeaderboards;
-
-
