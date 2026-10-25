@@ -4,9 +4,10 @@
 // ✅ UPDATED: Randomized Questions & Options + Dere-derecho sa Results
 // ✅ FIXED: Auto-save score agad pagka-tapos ng student (hindi na kailangan hintayin teacher)
 // ✅ REMOVED: Global Time Limit (Teacher na lang ang mag-e-end ng game)
+// ✅ FIXED: Shuffled options are now stable and won't change on re-renders (timer/firebase updates)
 // ============================================================
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore'; 
 import { db } from '../../pages/firebase'; 
@@ -37,8 +38,9 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const [feedback, setFeedback] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false); 
+  const [shuffledOptions, setShuffledOptions] = useState([]); // ✅ Bagong state para sa stable options
+  
   const questionStartRef = useRef(null);
-
   const sessionSavedRef = useRef(false);
   const answersRef = useRef({});
   const savedScoreRef = useRef(false); 
@@ -51,7 +53,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
       setSession(data);
 
       if (data.status === 'ended') {
-        // Fallback: Save score if teacher ends the game before student finishes
         if (completeActivity && !sessionSavedRef.current && !savedScoreRef.current) {
           sessionSavedRef.current = true;
           savedScoreRef.current = true; 
@@ -74,15 +75,32 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
     return () => unsubscribe();
   }, [initialSession?.sessionId, onGameEnd, completeActivity, playerId, initialSession?.activityId, isFinished]);
 
-  // ✅ Effect 2: Reset state per question
+  // ✅ Effect 2: Reset state per question & Shuffle Options (Only runs when question changes)
   useEffect(() => {
     if (session?.status !== 'playing') return;
+    
     setSelectedAnswer(null);
     setHasAnswered(false);
     setFeedback(null);
     setTimeLeft(QUESTION_TIME);
     questionStartRef.current = Date.now();
-  }, [currentQuestionIndex, session?.status]);
+
+    // ✅ I-shuffle ang options DITO para hindi magbago-bago kapag nag-tick ang timer
+    const myPlayer = session?.players?.find(p => p.userId === playerId);
+    const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
+    const currentQuestion = session?.questions?.[actualQuestionIndex];
+
+    if (currentQuestion && currentQuestion.options) {
+      const opts = [...currentQuestion.options];
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      setShuffledOptions(opts);
+    } else {
+      setShuffledOptions([]);
+    }
+  }, [currentQuestionIndex, session?.status, playerId, session?.players, session?.questions]);
 
   // ✅ Effect 3: Per-question timer
   useEffect(() => {
@@ -199,16 +217,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
   const myPlayer = session?.players?.find(p => p.userId === playerId);
   const actualQuestionIndex = myPlayer?.questionOrder?.[currentQuestionIndex];
   const currentQuestion = session?.questions?.[actualQuestionIndex];
-  
-  const shuffledOptions = useMemo(() => {
-    if (!currentQuestion || !currentQuestion.options) return [];
-    const opts = [...currentQuestion.options];
-    for (let i = opts.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [opts[i], opts[j]] = [opts[j], opts[i]];
-    }
-    return opts;
-  }, [actualQuestionIndex, currentQuestion?.options]);
 
   const myCorrectCount = myPlayer?.correctAnswers || myPlayer?.correct || 0;
   const myScore = myCorrectCount;
@@ -246,7 +254,6 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           </div>
           
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {/* ✅ PER-QUESTION TIMER (Global timer removed) */}
             <div style={{
               ...styles.timerBox,
               background: timeLeft <= 5 ? palette.coral : timeLeft <= 10 ? palette.warmOrange : palette.softGreen
@@ -289,7 +296,7 @@ const LivePlayerGame = ({ session: initialSession, playerId, onGameEnd, complete
           <h2 style={styles.questionText}>{currentQuestion.question}</h2>
         </motion.div>
 
-        {/* Options */}
+        {/* Options (Gamit ang stable na shuffledOptions state) */}
         <div className="live-options-grid" style={styles.optionsGrid}>
           {shuffledOptions.map((option, index) => {
             const isSelected = selectedAnswer === option;
