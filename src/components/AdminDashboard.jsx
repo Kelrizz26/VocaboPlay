@@ -1,12 +1,5 @@
 // src/components/AdminDashboard.jsx
-// ✅ UPDATED: Optimized Firebase reads
-//   - Replaced full `scores` collection scan with chunked `where('activityId', 'in', [...])`
-//   - Replaced full `users` collection scan with chunked `where(documentId(), 'in', [...])`
-//   - Added session cache (3 min TTL) for dashboard data
-//   - Added cache bypass after create activity / live host exit
-// ✅ PRESERVED: All UI, modals, live host flow, scoreboard, print, profile menu
-// ✅ UPDATED: Responsive topbar — 1 row on desktop, 2 rows on mobile
-// ✅ FIXED: Matrix now correctly reads `isCorrect` from the answer object. Name fallback fixed.
+// ✅ FIXED: TeacherLiveScoreboard now prioritizes score.studentName (from Live Game) over account name.
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -26,57 +19,37 @@ import {
 } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 
-// Import admin components
 import AdminOverview from './admin/AdminOverview';
 import AdminStudents from './admin/AdminStudents';
 import AdminActivities from './admin/AdminActivities';
 import AdminWords from './admin/AdminWords';
 import AdminLeaderboards from './admin/AdminLeaderboards';
 
-// ✅ LIVE GAME COMPONENTS
 import LiveHostLobby from './admin/LiveHostLobby';
 import LiveHostGame from './admin/LiveHostGame';
 import LiveHostResults from './admin/LiveHostResults';
 
 import { fontFamily } from './dashboard/dashboardStyles';
 
-// ===== MUTED GAME UI PALETTE (soft, not too bright) =====
 const palette = {
-  warmOrange: '#E9A075',
-  warmOrangeShadow: '#C27E4F',
-  coral: '#DB7A64',
-  coralShadow: '#A95845',
-  teal: '#4F9188',
-  tealShadow: '#3A6A63',
-  deepNavy: '#2A2845',
-  deepNavyLight: '#3A3757',
-  bodyText: '#6B6880',
-  bodyTextSoft: '#8A8799',
-  cream: '#FDF9F3',
-  creamSoft: '#F5EFE6',
-  white: '#FFFFFF',
-  border: '#EBE2D5',
-  borderSoft: '#F2EBE0',
-  softGreen: '#7FA574',
-  softGreenShadow: '#5E7F55',
-  shadow: 'rgba(42, 40, 69, 0.06)',
-  shadowMd: 'rgba(42, 40, 69, 0.10)',
-  danger: '#DB7A64',
-  dangerShadow: '#A95845',
+  warmOrange: '#E9A075', warmOrangeShadow: '#C27E4F',
+  coral: '#DB7A64', coralShadow: '#A95845',
+  teal: '#4F9188', tealShadow: '#3A6A63',
+  deepNavy: '#2A2845', deepNavyLight: '#3A3757',
+  bodyText: '#6B6880', bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3', creamSoft: '#F5EFE6',
+  white: '#FFFFFF', border: '#EBE2D5', borderSoft: '#F2EBE0',
+  softGreen: '#7FA574', softGreenShadow: '#5E7F55',
+  shadow: 'rgba(42, 40, 69, 0.06)', shadowMd: 'rgba(42, 40, 69, 0.10)',
+  danger: '#DB7A64', dangerShadow: '#A95845',
 };
 
 const FONT_DISPLAY = "'Fredoka', sans-serif";
 const FONT_BODY = "'Nunito', sans-serif";
 
-// ✅ Cache TTL — 3 minutes
 const DASHBOARD_CACHE_TTL_MS = 3 * 60 * 1000;
-
-// ✅ Firestore `in` query max — Firestore limit is 10
 const FIRESTORE_IN_CHUNK_SIZE = 10;
 
-// ============================================================
-// ✅ CACHE HELPERS (sessionStorage)
-// ============================================================
 const getDashboardCacheKey = (uid) => `admin_dashboard_cache_${uid}`;
 
 const readDashboardCache = (uid) => {
@@ -87,42 +60,24 @@ const readDashboardCache = (uid) => {
     if (!parsed?.timestamp) return null;
     if (Date.now() - parsed.timestamp > DASHBOARD_CACHE_TTL_MS) return null;
     return parsed.data;
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 };
 
 const writeDashboardCache = (uid, data) => {
   try {
-    sessionStorage.setItem(getDashboardCacheKey(uid), JSON.stringify({
-      data,
-      timestamp: Date.now(),
-    }));
-  } catch (e) {
-    // ignore quota errors — cache is best-effort
-  }
+    sessionStorage.setItem(getDashboardCacheKey(uid), JSON.stringify({ data, timestamp: Date.now() }));
+  } catch (e) {}
 };
 
-// ============================================================
-// ✅ CHUNK HELPER — splits array into chunks for Firestore `in` queries
-// ============================================================
 const chunkArray = (arr, size) => {
   const chunks = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
+  for (let i = 0; i < arr.length; i += size) { chunks.push(arr.slice(i, i + size)); }
   return chunks;
 };
 
 const chunkyButton = (bg, shadowColor) => ({
-  background: bg,
-  color: '#ffffff',
-  border: 'none',
-  borderRadius: '10px',
-  fontWeight: '800',
-  cursor: 'pointer',
-  boxShadow: `0 3px 0 ${shadowColor}`,
-  transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+  background: bg, color: '#ffffff', border: 'none', borderRadius: '10px', fontWeight: '800',
+  cursor: 'pointer', boxShadow: `0 3px 0 ${shadowColor}`, transition: 'transform 0.1s ease, box-shadow 0.1s ease',
   fontFamily: FONT_DISPLAY,
 });
 
@@ -135,13 +90,7 @@ const releaseBtn = (e, shadowColor) => {
   e.currentTarget.style.boxShadow = `0 3px 0 ${shadowColor}`;
 };
 
-// ============================================================
-// ✅ ACTIVITY TYPE OPTIONS & HELPERS
-// ============================================================
-const ACTIVITY_TYPE_SUGGESTIONS = [
-  'Quiz', 'Short Quiz', 'Long Quiz', 'Prelim', 'Midterm', 'Final',
-];
-
+const ACTIVITY_TYPE_SUGGESTIONS = ['Quiz', 'Short Quiz', 'Long Quiz', 'Prelim', 'Midterm', 'Final'];
 const ACTIVITY_TYPE_ALIASES = {
   'quiz': 'quiz', 'quiz master': 'quiz', 'short quiz': 'short-quiz', 'short-quiz': 'short-quiz',
   'long quiz': 'long-quiz', 'long-quiz': 'long-quiz', 'prelim': 'prelim', 'midterm': 'midterm',
@@ -156,9 +105,6 @@ const slugifyActivityType = (input) => {
   return lower.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 };
 
-// ============================================================
-// ✅ TypableSelect
-// ============================================================
 const TypableSelect = ({ value, onChange, options = [], placeholder = '', inputStyle: customInputStyle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
@@ -223,7 +169,6 @@ const TypableSelect = ({ value, onChange, options = [], placeholder = '', inputS
   );
 };
 
-// ===== DUOTONE SVG ICONS =====
 const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = `${palette.bodyTextSoft}55` }) => {
   const icons = {
     game: (<><path d="M6 12h4m-2-2v4m6-4h.01M17 12h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M8 20h8a4 4 0 004-4V8a4 4 0 00-4-4H8a4 4 0 00-4 4v8a4 4 0 004 4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></>),
@@ -239,16 +184,9 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft, secondaryColor = 
     users: (<><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="9" cy="7" r="4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></>),
     chevronDown: (<path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>),
   };
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
-      {icons[name] || icons.game}
-    </svg>
-  );
+  return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>{icons[name] || icons.game}</svg>);
 };
 
-// ============================================================
-// ===== CREATE ACTIVITY MODAL =====
-// ============================================================
 const CreateActivityModal = ({ onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -452,9 +390,6 @@ const CreateActivityModal = ({ onClose, onCreated }) => {
   );
 };
 
-// ============================================================
-// ===== LIVE SCOREBOARD (UPDATED WITH MATRIX & PRINT) =====
-// ============================================================
 const TeacherLiveScoreboard = ({ activity, students = [] }) => {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -536,12 +471,14 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                 const answers = score.answers || score.responses || {};
                 const studentProfile = students.find(s => s.id === score.studentId);
                 
-                // ✅ FIXED: Name fallback logic
+                // ✅ ITO ANG FIX: Inuuna natin ang score.studentName (mula sa Live Game) bago ang account name.
+                const invalidNames = ['User', 'New User', 'Student', 'Unknown', 'New', ''];
                 let studentDisplayName = 'Unknown Student';
-                if (studentProfile && studentProfile.displayName && !['User', 'New User'].includes(studentProfile.displayName)) {
-                  studentDisplayName = studentProfile.displayName;
-                } else if (score.studentName && !['User', 'New User', 'Student', 'Unknown', 'New'].includes(score.studentName)) {
+
+                if (score.studentName && !invalidNames.includes(score.studentName.trim())) {
                   studentDisplayName = score.studentName;
+                } else if (studentProfile && studentProfile.displayName && !invalidNames.includes(studentProfile.displayName.trim())) {
+                  studentDisplayName = studentProfile.displayName;
                 } else if (score.studentId) {
                   studentDisplayName = `Student (${score.studentId.slice(0, 4)})`;
                 }
@@ -554,8 +491,6 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                       <td style={{ padding: '8px', textAlign: 'center', color: palette.warmOrange, fontWeight: 800, fontFamily: FONT_DISPLAY }}>{correct}/{totalQ}</td>
                       {questionNumbers.map(q => {
                         let isCorrect = false;
-                        
-                        // ✅ FIXED: Check object format for isCorrect
                         if (Array.isArray(answers)) {
                           const ans = answers[q - 1];
                           isCorrect = ans === true || (ans && typeof ans === 'object' && ans.isCorrect === true);
@@ -567,7 +502,6 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
                             isCorrect = true;
                           }
                         }
-                        
                         return (<td key={`Q${q}`} style={{ padding: '4px', textAlign: 'center' }}>{isCorrect ? <span className="correct-cell">✅</span> : <span className="incorrect-cell">❌</span>}</td>);
                       })}
                       <td style={{ padding: '8px', textAlign: 'center', color: palette.softGreen, fontWeight: 700 }}>{correct}</td>
@@ -584,9 +518,6 @@ const TeacherLiveScoreboard = ({ activity, students = [] }) => {
   );
 };
 
-// ============================================================
-// ===== MAIN ADMIN DASHBOARD =====
-// ============================================================
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('Overview');
@@ -628,9 +559,6 @@ const AdminDashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  // ============================================================
-  // ✅ OPTIMIZED fetchAllData
-  // ============================================================
   const fetchAllData = async (bypassCache = false) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -649,9 +577,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      const activitiesSnapshot = await getDocs(
-        query(collection(db, 'activities'), where('teacherId', '==', user.uid))
-      );
+      const activitiesSnapshot = await getDocs(query(collection(db, 'activities'), where('teacherId', '==', user.uid)));
       const activitiesData = [];
       const teacherActivityIds = [];
       activitiesSnapshot.forEach((d) => {
@@ -666,16 +592,12 @@ const AdminDashboard = () => {
         const activityChunks = chunkArray(teacherActivityIds, FIRESTORE_IN_CHUNK_SIZE);
         for (const chunk of activityChunks) {
           try {
-            const scoresSnapshot = await getDocs(
-              query(collection(db, 'scores'), where('activityId', 'in', chunk))
-            );
+            const scoresSnapshot = await getDocs(query(collection(db, 'scores'), where('activityId', 'in', chunk)));
             scoresSnapshot.forEach((d) => {
               const s = d.data();
               if (s.studentId) studentIdsSet.add(s.studentId);
             });
-          } catch (err) {
-            console.error('Error fetching scores chunk:', err);
-          }
+          } catch (err) { console.error('Error fetching scores chunk:', err); }
         }
       }
       const studentIds = Array.from(studentIdsSet);
@@ -685,26 +607,18 @@ const AdminDashboard = () => {
         const studentChunks = chunkArray(studentIds, FIRESTORE_IN_CHUNK_SIZE);
         for (const chunk of studentChunks) {
           try {
-            const usersSnapshot = await getDocs(
-              query(collection(db, 'users'), where(documentId(), 'in', chunk))
-            );
+            const usersSnapshot = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)));
             usersSnapshot.forEach((d) => {
               const data = d.data();
               if (data.role === 'student') {
                 studentsData.push({
-                  id: d.id,
-                  ...data,
-                  displayName: data.displayName || data.email?.split('@')[0] || 'Unknown',
-                  avgScore: calculateAvgScore(data.progress),
-                  gamesPlayed: data.progress?.gamesPlayed || 0,
-                  joinDate: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : 'Unknown',
-                  progress: data.progress || {},
+                  id: d.id, ...data, displayName: data.displayName || data.email?.split('@')[0] || 'Unknown',
+                  avgScore: calculateAvgScore(data.progress), gamesPlayed: data.progress?.gamesPlayed || 0,
+                  joinDate: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : 'Unknown', progress: data.progress || {},
                 });
               }
             });
-          } catch (err) {
-            console.error('Error fetching users chunk:', err);
-          }
+          } catch (err) { console.error('Error fetching users chunk:', err); }
         }
       }
       setStudents(studentsData);
@@ -717,12 +631,7 @@ const AdminDashboard = () => {
 
       const gamesData = await initializeGames();
 
-      writeDashboardCache(user.uid, {
-        activities: activitiesData,
-        students: studentsData,
-        words: wordsData,
-        games: gamesData,
-      });
+      writeDashboardCache(user.uid, { activities: activitiesData, students: studentsData, words: wordsData, games: gamesData });
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -759,9 +668,7 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     try {
       localStorage.removeItem('adminToken'); localStorage.removeItem('userType'); localStorage.removeItem('userId'); localStorage.removeItem('token'); localStorage.removeItem('userProfile'); localStorage.removeItem('vocaboplay_progress');
-      if (auth.currentUser) {
-        try { sessionStorage.removeItem(getDashboardCacheKey(auth.currentUser.uid)); } catch (e) {}
-      }
+      if (auth.currentUser) { try { sessionStorage.removeItem(getDashboardCacheKey(auth.currentUser.uid)); } catch (e) {} }
       await auth.signOut(); navigate('/');
     } catch (error) { console.error('Logout error:', error); navigate('/'); }
   };
@@ -789,265 +696,67 @@ const AdminDashboard = () => {
   if (liveView === 'results' && liveSession) { return <LiveHostResults session={liveSession} onPlayAgain={handleLiveExit} onBackToDashboard={handleLiveExit} />; }
 
   const menuItems = [
-    { name: 'Overview', icon: 'chart' },
-    { name: 'Students', icon: 'users' },
-    { name: 'Activities', icon: 'game' },
-    { name: 'Words', icon: 'book' },
-    { name: 'Leaderboards', icon: 'trophy' }
+    { name: 'Overview', icon: 'chart' }, { name: 'Students', icon: 'users' },
+    { name: 'Activities', icon: 'game' }, { name: 'Words', icon: 'book' }, { name: 'Leaderboards', icon: 'trophy' }
   ];
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
-
         .admin-dashboard-wrapper * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        /* ============ ✅ GLOBAL — prevent horizontal body scroll ============ */
-        html, body {
-          overflow-x: hidden !important;
-          max-width: 100% !important;
-          width: 100% !important;
-          overscroll-behavior-x: none !important;
-        }
+        html, body { overflow-x: hidden !important; max-width: 100% !important; width: 100% !important; overscroll-behavior-x: none !important; }
         body { font-family: 'Nunito', sans-serif; background: ${palette.cream}; }
-
-        /* ✅ Root wrapper — no horizontal overflow */
-        .admin-dashboard-wrapper {
-          overflow-x: hidden !important;
-          max-width: 100vw !important;
-          width: 100% !important;
-        }
-
-        /* ============ ✅ TOP NAV ============ */
-        /* Desktop default: 1 row — Logo | Nav Links (center) | Profile */
-        .admin-top-nav {
-          background: ${palette.deepNavy};
-          padding: 12px 24px;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          position: sticky;
-          top: 0;
-          z-index: 1000;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .admin-logo {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: white;
-          font-family: ${FONT_DISPLAY};
-          font-weight: 800;
-          font-size: 16px;
-          flex-shrink: 0;
-          white-space: nowrap;
-        }
-
-        .admin-nav-links {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-          min-width: 0;
-          overflow-x: auto;
-          padding-bottom: 2px;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: thin;
-        }
+        .admin-dashboard-wrapper { overflow-x: hidden !important; max-width: 100vw !important; width: 100% !important; }
+        .admin-top-nav { background: ${palette.deepNavy}; padding: 12px 24px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .admin-logo { display: flex; align-items: center; gap: 8px; color: white; font-family: ${FONT_DISPLAY}; font-weight: 800; font-size: 16px; flex-shrink: 0; white-space: nowrap; }
+        .admin-nav-links { display: flex; gap: 8px; align-items: center; justify-content: center; flex: 1; min-width: 0; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
         .admin-nav-links::-webkit-scrollbar { height: 4px; }
         .admin-nav-links::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
         .admin-nav-links::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
-        .admin-nav-link {
-          background: transparent;
-          color: rgba(255,255,255,0.7);
-          border: none;
-          padding: 8px 16px;
-          border-radius: 10px;
-          font-family: ${FONT_DISPLAY};
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-          flex-shrink: 0;
-          -webkit-tap-highlight-color: transparent;
-          touch-action: manipulation;
-        }
-
-        .admin-nav-link:hover {
-          background: rgba(255,255,255,0.1);
-          color: white;
-        }
-
-        .admin-nav-link.active {
-          background: ${palette.warmOrange};
-          color: white;
-          box-shadow: 0 2px 0 ${palette.warmOrangeShadow};
-        }
-
-        .admin-profile-wrapper {
-          flex-shrink: 0;
-        }
-
-        /* Profile button hover */
-        .profile-menu-btn {
-          transition: background 0.15s ease, border-color 0.15s ease;
-          -webkit-tap-highlight-color: transparent;
-          touch-action: manipulation;
-        }
-        .profile-menu-btn:hover {
-          background: rgba(255,255,255,0.15) !important;
-          border-color: rgba(255,255,255,0.25) !important;
-        }
-
-        /* ============ ✅ TABLE WRAP ============ */
-        .admin-table-wrap {
-          -webkit-overflow-scrolling: touch;
-          overscroll-behavior-x: contain;
-          touch-action: pan-x pan-y;
-          scrollbar-width: thin;
-        }
+        .admin-nav-link { background: transparent; color: rgba(255,255,255,0.7); border: none; padding: 8px 16px; border-radius: 10px; font-family: ${FONT_DISPLAY}; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease; white-space: nowrap; flex-shrink: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .admin-nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+        .admin-nav-link.active { background: ${palette.warmOrange}; color: white; box-shadow: 0 2px 0 ${palette.warmOrangeShadow}; }
+        .admin-profile-wrapper { flex-shrink: 0; }
+        .profile-menu-btn { transition: background 0.15s ease, border-color 0.15s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .profile-menu-btn:hover { background: rgba(255,255,255,0.15) !important; border-color: rgba(255,255,255,0.25) !important; }
+        .admin-table-wrap { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; touch-action: pan-x pan-y; scrollbar-width: thin; }
         .admin-table-wrap::-webkit-scrollbar { height: 6px; }
         .admin-table-wrap::-webkit-scrollbar-track { background: ${palette.creamSoft}; border-radius: 6px; }
         .admin-table-wrap::-webkit-scrollbar-thumb { background: ${palette.border}; border-radius: 6px; }
-
-        /* ============ ✅ MODAL ============ */
-        .admin-modal-content {
-          max-width: 100% !important;
-          box-sizing: border-box !important;
-        }
-
-        /* ============ ✅ TABLET & BELOW — switch to 2-row topbar ============ */
-        @media (max-width: 768px) {
-          .admin-top-nav {
-            flex-wrap: wrap;
-            padding: 10px 14px;
-            gap: 8px;
-          }
-          .admin-logo {
-            order: 1;
-            font-size: 14px;
-          }
-          .admin-profile-wrapper {
-            order: 2;
-            margin-left: auto;
-          }
-          .admin-nav-links {
-            order: 3;
-            flex: 1 1 100%;
-            width: 100%;
-            justify-content: flex-start;
-            gap: 6px;
-            overscroll-behavior-x: contain;
-            touch-action: pan-x pan-y;
-          }
-          .admin-nav-link { padding: 6px 12px; font-size: 12px; }
-          .admin-main-content { padding: 16px 14px 32px !important; }
-          .admin-modal-content { padding: 20px !important; max-height: 90vh !important; }
-          .admin-profile-info { display: none !important; }
-        }
-
-        /* ============ ✅ SMALL PHONES ============ */
-        @media (max-width: 480px) {
-          .admin-top-nav { padding: 8px 10px; gap: 6px; }
-          .admin-logo { font-size: 13px; gap: 6px; }
-          .admin-logo svg { width: 16px !important; height: 16px !important; }
-          .admin-nav-link { padding: 6px 10px; font-size: 11px; gap: 5px; }
-          .admin-nav-link svg { width: 12px !important; height: 12px !important; }
-          .admin-main-content { padding: 12px 10px 28px !important; }
-          .admin-modal-content { padding: 16px !important; border-radius: 16px !important; }
-        }
+        .admin-modal-content { max-width: 100% !important; box-sizing: border-box !important; }
+        @media (max-width: 768px) { .admin-top-nav { flex-wrap: wrap; padding: 10px 14px; gap: 8px; } .admin-logo { order: 1; font-size: 14px; } .admin-profile-wrapper { order: 2; margin-left: auto; } .admin-nav-links { order: 3; flex: 1 1 100%; width: 100%; justify-content: flex-start; gap: 6px; overscroll-behavior-x: contain; touch-action: pan-x pan-y; } .admin-nav-link { padding: 6px 12px; font-size: 12px; } .admin-main-content { padding: 16px 14px 32px !important; } .admin-modal-content { padding: 20px !important; max-height: 90vh !important; } .admin-profile-info { display: none !important; } }
+        @media (max-width: 480px) { .admin-top-nav { padding: 8px 10px; gap: 6px; } .admin-logo { font-size: 13px; gap: 6px; } .admin-logo svg { width: 16px !important; height: 16px !important; } .admin-nav-link { padding: 6px 10px; font-size: 11px; gap: 5px; } .admin-nav-link svg { width: 12px !important; height: 12px !important; } .admin-main-content { padding: 12px 10px 28px !important; } .admin-modal-content { padding: 16px !important; border-radius: 16px !important; } }
       `}</style>
 
       <div className="admin-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: palette.cream, fontFamily: FONT_BODY }}>
-
-        {/* ✅ TOP NAVIGATION BAR — Responsive (1 row desktop, 2 rows mobile) */}
         <nav className="admin-top-nav">
-          {/* LOGO */}
-          <div className="admin-logo">
-            <Icon name="trophy" size={20} color={palette.warmOrange} />
-            Admin Dashboard
-          </div>
-
-          {/* NAV LINKS */}
+          <div className="admin-logo"><Icon name="trophy" size={20} color={palette.warmOrange} />Admin Dashboard</div>
           <div className="admin-nav-links">
             {menuItems.map(item => (
-              <button
-                key={item.name}
-                className={`admin-nav-link ${activeMenu === item.name ? 'active' : ''}`}
-                onClick={() => setActiveMenu(item.name)}
-              >
-                <Icon name={item.icon} size={14} color={activeMenu === item.name ? 'white' : 'rgba(255,255,255,0.7)'} />
-                {item.name}
+              <button key={item.name} className={`admin-nav-link ${activeMenu === item.name ? 'active' : ''}`} onClick={() => setActiveMenu(item.name)}>
+                <Icon name={item.icon} size={14} color={activeMenu === item.name ? 'white' : 'rgba(255,255,255,0.7)'} />{item.name}
               </button>
             ))}
           </div>
-
-          {/* PROFILE MENU */}
           <div className="admin-profile-wrapper" style={{ position: 'relative' }}>
-            <button
-              className="profile-menu-btn"
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              style={{
-                padding: '5px 12px 5px 6px',
-                background: 'rgba(255,255,255,0.08)',
-                color: palette.white,
-                border: `1.5px solid rgba(255,255,255,0.15)`,
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontFamily: FONT_DISPLAY,
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <div style={{
-                width: '30px', height: '30px', borderRadius: '50%',
-                background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden', flexShrink: 0,
-                border: '1.5px solid rgba(255,255,255,0.2)',
-              }}>
-                {teacher?.avatar && teacher?.avatar !== '' ? (
-                  <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: FONT_DISPLAY }}>
-                    {teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}
-                  </span>
-                )}
+            <button className="profile-menu-btn" onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ padding: '5px 12px 5px 6px', background: 'rgba(255,255,255,0.08)', color: palette.white, border: `1.5px solid rgba(255,255,255,0.15)`, borderRadius: '10px', cursor: 'pointer', fontFamily: FONT_DISPLAY, transition: 'all 0.15s ease', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, border: '1.5px solid rgba(255,255,255,0.2)' }}>
+                {teacher?.avatar && teacher?.avatar !== '' ? <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: 'white', fontWeight: 800, fontSize: '13px', fontFamily: FONT_DISPLAY }}>{teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}</span>}
               </div>
               <div className="admin-profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1, minWidth: 0 }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
-                  {teacher?.displayName || 'Admin'}
-                </span>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
-                  {teacher?.role || 'Admin'}
-                </span>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: palette.white, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>{teacher?.displayName || 'Admin'}</span>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{teacher?.role || 'Admin'}</span>
               </div>
               <Icon name="chevronDown" size={12} color="rgba(255,255,255,0.6)" />
             </button>
-
             {showProfileMenu && (
               <>
                 <div onClick={() => setShowProfileMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
                 <div className="admin-profile-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', background: palette.white, borderRadius: '14px', zIndex: 1000, minWidth: '250px', maxWidth: 'calc(100vw - 24px)', overflow: 'hidden', border: `1.5px solid ${palette.border}`, fontFamily: FONT_BODY, boxShadow: '0 10px 30px rgba(42, 40, 69, 0.15)' }}>
                   <div style={{ padding: '12px 14px', background: palette.creamSoft, borderBottom: `1.5px solid ${palette.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', background: teacher?.gender === 'male' ? '#6B8ACB' : palette.coral, flexShrink: 0 }}>
-                      {teacher?.avatar && teacher?.avatar !== '' ? (
-                        <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>{teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}</span>
-                      )}
+                      {teacher?.avatar && teacher?.avatar !== '' ? <img src={teacher.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>{teacher?.displayName?.charAt(0)?.toUpperCase() || 'A'}</span>}
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_DISPLAY }}>{teacher?.displayName || 'Admin'}</div>
@@ -1065,27 +774,18 @@ const AdminDashboard = () => {
           </div>
         </nav>
 
-        {/* ✅ MAIN CONTENT */}
         <div className="admin-main-content" style={{ flex: 1, padding: '32px', overflowY: 'auto', fontFamily: FONT_BODY }}>
-          <div className="admin-content-wrapper">
-            {renderContent()}
-          </div>
+          <div className="admin-content-wrapper">{renderContent()}</div>
         </div>
       </div>
 
-      {showCreateActivity && (
-        <CreateActivityModal onClose={() => setShowCreateActivity(false)} onCreated={handleActivityCreated} />
-      )}
+      {showCreateActivity && <CreateActivityModal onClose={() => setShowCreateActivity(false)} onCreated={handleActivityCreated} />}
 
       {showScoresModal && selectedActivityForScores && (
         <div className="modal-overlay" style={styles.modalOverlay} onClick={() => setShowScoresModal(false)}>
           <div className="modal-content admin-modal-content" style={{...styles.modalContent, maxWidth: '95vw', width: '100%'}} onClick={(e) => e.stopPropagation()}>
-            <button className="no-print" style={styles.modalClose} onClick={() => setShowScoresModal(false)}>
-              <Icon name="close" size={20} color={palette.bodyTextSoft} />
-            </button>
-            <h2 className="no-print" style={styles.modalTitle}>
-              <Icon name="chart" size={18} color={palette.teal} /> Scores for: {selectedActivityForScores.title}
-            </h2>
+            <button className="no-print" style={styles.modalClose} onClick={() => setShowScoresModal(false)}><Icon name="close" size={20} color={palette.bodyTextSoft} /></button>
+            <h2 className="no-print" style={styles.modalTitle}><Icon name="chart" size={18} color={palette.teal} /> Scores for: {selectedActivityForScores.title}</h2>
             <TeacherLiveScoreboard activity={selectedActivityForScores} students={students} />
             <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '10px', flexWrap: 'wrap' }}>
               <button onClick={() => window.print()} style={{...styles.publishBtn, background: palette.teal, boxShadow: `0 3px 0 ${palette.tealShadow}`, flex: '0 0 auto', padding: '12px 24px'}} onMouseDown={e => pressBtn(e)} onMouseUp={e => releaseBtn(e, palette.tealShadow)} onMouseLeave={e => releaseBtn(e, palette.tealShadow)}>🖨️ Print Report</button>
@@ -1098,9 +798,6 @@ const AdminDashboard = () => {
   );
 };
 
-// ============================================================
-// ===== STYLES =====
-// ============================================================
 const styles = {
   pageTitle: { fontSize: '24px', fontWeight: '800', color: palette.deepNavy, marginBottom: '24px', fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' },
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' },
