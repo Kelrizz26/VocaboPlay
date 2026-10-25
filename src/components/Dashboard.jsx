@@ -1,5 +1,20 @@
 // src/components/Dashboard.jsx
-// ✅ FIXED: completeActivity now accepts overrideName to save the exact name typed in the Live Join Modal.
+// ============================================================
+// ✅ FULLSCREEN API: Auto-fullscreen when in a game
+// ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
+// ✅ NEW: onExitToGames prop — returns to the Games selection screen
+// ✅ FIXED: X button in sidebar — visible on mobile only (hidden on web)
+// ✅ UPDATED: Rotate phone prompt in English
+// ✅ REMOVED: Light Mode toggle from sidebar
+// ✅ UPDATED: Sidebar menu spacing — bigger padding + gap
+// ✅ UPDATED: Recent Activity — shows ONLY teacher's activity title
+// ✅ NEW: Supports new activity types — Short Quiz, Long Quiz, Prelim, Midterm, Final
+// ✅ NEW: Clickable teacher-pin activities → personal Question Breakdown modal
+// ✅ FIXED: completeActivity — participants counter now only increments on FIRST attempt
+// ✅ UPDATED: REMOVED "ENTER CODE" button. Fixed maxAttempts logic in handleJoinActivity.
+// ✅ FIXED: Join Live button color changed to Orange & text fixed.
+// ✅ FIXED: setDoc with merge: true in updateProgress to ensure new students are saved to Admin Dashboard.
+// ============================================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../pages/firebase';
@@ -611,15 +626,16 @@ const Dashboard = () => {
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
       const updateData = {
-        uid: userId,
-        role: 'student',
-        displayName: userProfile.displayName || 'Student',
+        uid: userId, // ✅ Siguraduhing may UID
+        role: 'student', // ✅ Siguraduhing student role
+        displayName: userProfile.displayName || 'Student', // ✅ Siguraduhing may pangalan
         totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
         currentStreak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
         learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats,
         totalDiamonds: newDiamonds, lastActive: new Date().toISOString()
       };
 
+      // ✅ ITO ANG FIX: setDoc na may merge:true para kung wala pa yung user, magagawa siya
       await setDoc(userRef, updateData, { merge: true });
 
       const newProgress = {
@@ -645,8 +661,7 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ FIXED: Added overrideName as 7th parameter
-  const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = [], overrideName = null) => {
+  const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = []) => {
     try {
       const activityRef = doc(db, 'activities', activityId);
       const activitySnap = await getDoc(activityRef);
@@ -662,8 +677,7 @@ const Dashboard = () => {
 
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
-        // ✅ Ginagamit na ang overrideName kung meron, para makuha ang totoong pangalan sa Live Game
-        studentName: overrideName || userProfile.displayName || 'Student',
+        studentName: userProfile.displayName || 'Student',
         score, correctAnswers, totalQuestions,
         gameType: activityData.gameType || 'quiz',
         activityTitle: activityData.title || '',
@@ -1098,6 +1112,7 @@ const Dashboard = () => {
                     <ExpBar xp={displayProgress.xp} xpToNext={displayProgress.xpToNext} level={displayProgress.level} isMaxLevel={displayProgress.isMaxLevel} color={palette.warmOrange} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {/* ✅ UPDATED: Text changed to Join Live, Color set to Orange */}
                     <button onClick={() => setShowLiveJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Icon name="play" size={14} color={palette.white} /> Join Live
                     </button>
