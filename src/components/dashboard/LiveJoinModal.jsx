@@ -1,7 +1,7 @@
 // src/components/dashboard/LiveJoinModal.jsx
 // ============================================================
 // ✅ JOIN LIVE GAME MODAL - FULL SIZE
-// ✅ FIXED: Name is now strictly pulled from localStorage first
+// ✅ FIXED: Name input is now strictly BLANK by default. Student must type it.
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -28,7 +28,7 @@ const BRAND_FONT_BODY = "'Nunito', sans-serif";
 
 const LiveJoinModal = ({ onClose, onJoined }) => {
   const [pin, setPin] = useState('');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(''); // ✅ Blank by default
   const [avatarId, setAvatarId] = useState(DEFAULT_AVATAR_ID);
   const [avatarImage, setAvatarImage] = useState('');
   const [step, setStep] = useState(1);
@@ -39,30 +39,10 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
   const localUserId = localStorage.getItem('userId');
 
   useEffect(() => {
-    // ✅ FIX: Prioritize LocalStorage for Name and ID
-    let cachedName = '';
-    let cachedAvatar = DEFAULT_AVATAR_ID;
-
-    try {
-      const cachedData = JSON.parse(localStorage.getItem('firebaseUserData') || '{}');
-      if (cachedData.displayName) cachedName = cachedData.displayName;
-      else if (cachedData.username) cachedName = cachedData.username;
-      
-      if (cachedData.equippedAvatar) cachedAvatar = cachedData.equippedAvatar;
-    } catch (e) {}
-
-    if (cachedName) {
-      setName(cachedName);
-      setAvatarId(cachedAvatar);
-      const avatar = getAvatarById(cachedAvatar);
-      setAvatarImage(avatar?.image || '');
-      setUserProfile({ userId: localUserId, name: cachedName, avatarId: cachedAvatar });
-    }
-
-    // Fallback to Firebase ONLY if localStorage didn't have the name
+    // ✅ FIX: We ONLY load the avatar and userId. We DO NOT load the name here.
     const loadProfile = async () => {
       const user = auth.currentUser;
-      if (!user || cachedName) return; 
+      if (!user) return; 
 
       try {
         const userRef = doc(db, 'users', user.uid);
@@ -72,18 +52,17 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
           const data = userSnap.data();
           const equippedId = data.equippedAvatar || DEFAULT_AVATAR_ID;
           const avatar = getAvatarById(equippedId);
-          const actualName = data.displayName || data.username || data.name || 'Student';
 
           setUserProfile({
             userId: localUserId || user.uid,
-            name: actualName,
             avatarId: equippedId,
             avatarImage: avatar?.image || ''
           });
           
-          setName((prevName) => prevName || actualName);
           setAvatarId(equippedId);
           setAvatarImage(avatar?.image || '');
+          
+          // ❌ REMOVED: setName(...) is gone. The input stays blank!
         }
       } catch (err) {
         console.error('Error loading profile:', err);
@@ -116,7 +95,7 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
     try {
       const result = await joinLiveSession(pin, {
         userId: userProfile?.userId || localUserId || auth.currentUser?.uid,
-        name: name.trim(),
+        name: name.trim(), // ✅ Ito yung itinype ng student
         avatarId: avatarId,
         avatarImage: avatarImage
       });
@@ -160,14 +139,22 @@ const LiveJoinModal = ({ onClose, onJoined }) => {
           <div style={styles.stepWrap}>
             <div style={styles.iconHeader}>✨</div>
             <h2 style={styles.title}>Confirm Profile</h2>
-            <p style={styles.subtitle}>This is how you'll appear in the game</p>
+            <p style={styles.subtitle}>Enter your name for this game</p>
             {error && <div style={styles.errorMsg}>{error}</div>}
             <div style={styles.avatarPreview}>
-              {avatarImage ? <img src={avatarImage} alt={name} style={styles.avatarImg} /> : <span style={styles.avatarEmoji}>👤</span>}
+              {avatarImage ? <img src={avatarImage} alt="Avatar" style={styles.avatarImg} /> : <span style={styles.avatarEmoji}>👤</span>}
             </div>
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Your Name</label>
-              <input type="text" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value.slice(0, 20))} style={styles.input} maxLength={20} />
+              <input 
+                type="text" 
+                placeholder="Type your name here..." 
+                value={name} 
+                onChange={(e) => setName(e.target.value.slice(0, 20))} 
+                style={styles.input} 
+                maxLength={20} 
+                autoFocus 
+              />
             </div>
             <div style={styles.actionsRow}>
               <button onClick={() => setStep(1)} style={styles.backBtn} disabled={loading}>← Back</button>
