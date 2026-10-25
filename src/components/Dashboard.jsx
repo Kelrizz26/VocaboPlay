@@ -1,20 +1,6 @@
 // src/components/Dashboard.jsx
-// ============================================================
-// ✅ FULLSCREEN API: Auto-fullscreen when in a game
-// ✅ FULLY RESPONSIVE IN LANDSCAPE MODE
-// ✅ NEW: onExitToGames prop — returns to the Games selection screen
-// ✅ FIXED: X button in sidebar — visible on mobile only (hidden on web)
-// ✅ UPDATED: Rotate phone prompt in English
-// ✅ REMOVED: Light Mode toggle from sidebar
-// ✅ UPDATED: Sidebar menu spacing — bigger padding + gap
-// ✅ UPDATED: Recent Activity — shows ONLY teacher's activity title
-// ✅ NEW: Supports new activity types — Short Quiz, Long Quiz, Prelim, Midterm, Final
-// ✅ NEW: Clickable teacher-pin activities → personal Question Breakdown modal
-// ✅ FIXED: completeActivity — participants counter now only increments on FIRST attempt
-// ✅ UPDATED: REMOVED "ENTER CODE" button. Fixed maxAttempts logic in handleJoinActivity.
-// ✅ FIXED: Join Live button color changed to Orange & text fixed.
-// ✅ FIXED: setDoc with merge: true in updateProgress to ensure new students are saved to Admin Dashboard.
-// ============================================================
+// ✅ FIXED: DisplayName now prioritizes Username if DisplayName is just "User" or "Student".
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../pages/firebase';
@@ -353,6 +339,7 @@ const Dashboard = () => {
         return {
           uid: userId || 'unknown',
           displayName: data.displayName || 'User',
+          username: data.username || '',
           email: data.email || '',
           avatar: data.avatar || '👤',
           role: data.role || 'student',
@@ -360,7 +347,7 @@ const Dashboard = () => {
         };
       }
     } catch (e) {}
-    return { uid: userId || 'unknown', displayName: 'New User', email: '', avatar: '👤', role: 'student', progress: { totalPoints: 0 } };
+    return { uid: userId || 'unknown', displayName: 'New User', username: '', email: '', avatar: '👤', role: 'student', progress: { totalPoints: 0 } };
   });
 
   const [progress, setProgress] = useState(() => {
@@ -626,16 +613,15 @@ const Dashboard = () => {
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
       const updateData = {
-        uid: userId, // ✅ Siguraduhing may UID
-        role: 'student', // ✅ Siguraduhing student role
-        displayName: userProfile.displayName || 'Student', // ✅ Siguraduhing may pangalan
+        uid: userId,
+        role: 'student',
+        displayName: userProfile.displayName || 'Student',
         totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
         currentStreak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
         learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats,
         totalDiamonds: newDiamonds, lastActive: new Date().toISOString()
       };
 
-      // ✅ ITO ANG FIX: setDoc na may merge:true para kung wala pa yung user, magagawa siya
       await setDoc(userRef, updateData, { merge: true });
 
       const newProgress = {
@@ -661,7 +647,7 @@ const Dashboard = () => {
     }
   };
 
-  const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = []) => {
+  const completeActivity = async (activityId, score, correctAnswers, totalQuestions, answers = {}, wordsList = [], overrideName = null) => {
     try {
       const activityRef = doc(db, 'activities', activityId);
       const activitySnap = await getDoc(activityRef);
@@ -677,7 +663,7 @@ const Dashboard = () => {
 
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
-        studentName: userProfile.displayName || 'Student',
+        studentName: overrideName || userProfile.displayName || 'Student',
         score, correctAnswers, totalQuestions,
         gameType: activityData.gameType || 'quiz',
         activityTitle: activityData.title || '',
@@ -784,7 +770,11 @@ const Dashboard = () => {
     accuracy: stats?.progress?.accuracy ?? progress.accuracy ?? 0,
   };
 
-  const displayName = stats?.displayName || userProfile?.displayName || 'User';
+  // ✅ ITO ANG FIX: Mas priority ang username kung ang displayName ay generic lang
+  const rawDisplayName = stats?.displayName || userProfile?.displayName || 'User';
+  const displayName = (['User', 'New User', 'Student'].includes(rawDisplayName) && (stats?.username || userProfile?.username)) 
+    ? (stats?.username || userProfile?.username) 
+    : rawDisplayName;
 
   if (liveView === 'lobby' && liveSession) return <LivePlayerLobby session={liveSession} playerId={livePlayerId} onGameStart={handleLiveGameStart} onCancel={handleLiveExit} />;
   if (liveView === 'game' && liveSession) return <LivePlayerGame session={liveSession} playerId={livePlayerId} onGameEnd={handleLiveGameEnd} completeActivity={completeActivity} />;
@@ -1112,7 +1102,6 @@ const Dashboard = () => {
                     <ExpBar xp={displayProgress.xp} xpToNext={displayProgress.xpToNext} level={displayProgress.level} isMaxLevel={displayProgress.isMaxLevel} color={palette.warmOrange} />
                   </div>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {/* ✅ UPDATED: Text changed to Join Live, Color set to Orange */}
                     <button onClick={() => setShowLiveJoinModal(true)} style={{ ...chunkyButton(palette.warmOrange, palette.warmOrangeShadow, 'sm'), display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Icon name="play" size={14} color={palette.white} /> Join Live
                     </button>
