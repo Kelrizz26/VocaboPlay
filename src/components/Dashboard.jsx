@@ -1,5 +1,6 @@
 // src/components/Dashboard.jsx
 // ✅ FIXED: updateProgress and completeActivity now save the resolved Name (Username if DisplayName is generic).
+// ✅ ADDED: Activity Type badges in Recent Activities list.
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1190,6 +1191,14 @@ const Dashboard = () => {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayTitle}</span>
+                              
+                              {/* ✅ DAGDAG: Badge para sa Activity Type */}
+                              {activity.gameType && (
+                                <span style={{ fontSize: '9px', padding: '2px 6px', flexShrink: 0, background: `${palette.teal}22`, color: palette.teal, borderRadius: '4px', fontWeight: 800 }}>
+                                  {gameLabel}
+                                </span>
+                              )}
+
                               {activity.source === 'teacher-pin' && (
                                 <span style={{ fontSize: '9px', padding: '2px 6px', flexShrink: 0, background: `${palette.warmOrange}22`, color: palette.warmOrange, borderRadius: '4px', fontWeight: 800 }}>PIN</span>
                               )}
