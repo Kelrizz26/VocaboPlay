@@ -1,6 +1,6 @@
 // src/components/dashboard/SynoQuest.jsx
 // ✅ LANDSCAPE-RESPONSIVE
-// ✅ Timer: A1/A2 = 25s, B1/B2 = 35s, C1/C2 = 45s
+// ✅ Timer: A1/A2 = 25s, B1/B2 = 35s, C1 = 45s
 // ✅ NEW: Level-Up transition modal ("A1 → A2", etc.)
 // ✅ NEW: Accuracy-based rewards — 0-49%=1-2💎, 50%=3💎, 100%=15💎
 // ✅ FIXED: Modals are now render functions (no blink/remount)
@@ -183,7 +183,7 @@ const REFILL_TIME = 1800;
 const HINT_COSTS = [0, 3, 5, 7, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
 const getHintCost = (n) => n < HINT_COSTS.length ? HINT_COSTS[n] : HINT_COSTS[HINT_COSTS.length - 1];
 
-const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
 const QUESTIONS_PER_LEVEL = 10;
 const COMPLETION_BONUS_DIAMONDS = 50;
 
@@ -193,7 +193,6 @@ const LEVEL_CONFIG = {
   'B1': { timer: 35, label: 'B1 - Intermediate', emoji: '🟡', questionsPerLevel: 10 },
   'B2': { timer: 35, label: 'B2 - Upper Intermediate', emoji: '🟡', questionsPerLevel: 10 },
   'C1': { timer: 45, label: 'C1 - Advanced', emoji: '🟠', questionsPerLevel: 10 },
-  'C2': { timer: 45, label: 'C2 - Proficiency', emoji: '👑', questionsPerLevel: 10 },
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -227,7 +226,6 @@ const wordLevelMap = {
   'balance':'B1','benefit':'B1','budget':'B1','capable':'B1','challenge':'B1','character':'B1','knowledge':'B1','opportunity':'B1','prepare':'B1','successful':'B1',
   'abandon':'B2','accurate':'B2','confident':'B2','conscious':'B2','demonstrate':'B2','efficient':'B2','organize':'B2','maintain':'B2','relevant':'B2','sufficient':'B2',
   'adapt':'C1','brilliant':'C1','complex':'C1','crucial':'C1','dominate':'C1','establish':'C1','flexible':'C1','genuine':'C1','isolate':'C1','vital':'C1',
-  'abundant':'C2','decisive':'C2','exquisite':'C2','futile':'C2','harmonious':'C2','inevitable':'C2','lucid':'C2','profound':'C2','resilient':'C2','tranquil':'C2'
 };
 
 const allVocabPairs = Object.keys(wordLevelMap).map((word, index) => ({
@@ -242,7 +240,6 @@ const wordPairs = {
   'B1': allVocabPairs.filter(p => p.category.includes('B1')),
   'B2': allVocabPairs.filter(p => p.category.includes('B2')),
   'C1': allVocabPairs.filter(p => p.category.includes('C1')),
-  'C2': allVocabPairs.filter(p => p.category.includes('C2')),
 };
 const getWordsByLevel = (l) => wordPairs[l] || wordPairs['A1'];
 
@@ -556,7 +553,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   // ══════════════════════════════════════════════════════════════
   // ✅ performLevelUp — computes reward, awards diamonds,
-  //    then shows the transition modal (or 'finished' if C2)
+  //    then shows the transition modal (or 'finished' after C1)
   // ══════════════════════════════════════════════════════════════
   const performLevelUp = () => {
     const currentIndex = CEFR_LEVELS.indexOf(currentLevel);
@@ -578,7 +575,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     }
 
     if (currentIndex === CEFR_LEVELS.length - 1) {
-      // ✅ C2 done → award completion bonus + show 'finished' screen
+      // ✅ C1 done → award completion bonus + show 'finished' screen
       if (!completionBonusSavedRef.current && currentUser) {
         completionBonusSavedRef.current = true;
         setCompletionBonus(COMPLETION_BONUS_DIAMONDS);
@@ -1582,7 +1579,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
             </div>
           )}
           <h1 className="sq-intro-title" style={{ fontSize: '30px', fontWeight: '800', color: theme.textPrimary, marginBottom: '2px', letterSpacing: '-0.5px', fontFamily: FONT_DISPLAY }}>SynoQuest</h1>
-          <p className="sq-intro-sub" style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>📚 10 questions per level • CEFR A1 to C2!</p>
+          <p className="sq-intro-sub" style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>📚 10 questions per level • CEFR A1 to C1!</p>
           <div className="sq-intro-stats" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <div style={{ background: `linear-gradient(135deg, ${palette.gold}20, ${palette.warmOrange}20)`, padding: '8px 14px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', border: `1.5px solid ${palette.gold}60` }}>
               <span style={{ fontSize: '14px' }}>💰</span>
@@ -1595,7 +1592,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
               <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, fontFamily: FONT_BODY }}>gems</span>
             </div>
           </div>
-          <div className="sq-intro-levels" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
+          <div className="sq-intro-levels" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
             {CEFR_LEVELS.map((level) => {
               const config = LEVEL_CONFIG[level];
               return (
@@ -1649,7 +1646,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
           </h2>
 
           <p className="sq-end-sub" style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
-            You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C2</strong>! 🎉
+            You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C1</strong>! 🎉
           </p>
 
           <div className="sq-end-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>

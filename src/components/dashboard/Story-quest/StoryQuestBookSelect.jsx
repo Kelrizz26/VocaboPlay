@@ -4,6 +4,7 @@
 // ✅ Welcome modal shows on Dashboard entry, hides when returning from level
 // ✅ Full character visible (objectFit: contain)
 // ✅ ADDED: classNames para ma-target ng landscape CSS
+// ✅ UPDATED: Swapped the visual positions of A2 (Windmill) and B1 (Village)
 
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -29,12 +30,13 @@ const speakFallback = () => {
 };
 
 const LEVELS = [
-  { level: 'A1', title: "Tom's First Day at School", left: '13%', top: '63%' },
-  { level: 'A2', title: "The Lost Kitten",           left: '30%', top: '30%' },
-  { level: 'B1', title: "The Secret Garden",         left: '43%', top: '72%' },
-  { level: 'B2', title: "The Time Traveler's Diary", left: '55%', top: '30%' },
-  { level: 'C1', title: "The Pianist's Farewell",    left: '65%', top: '72%' },
-  { level: 'C2', title: "The Architect of Dreams",   left: '87%', top: '30%' },
+  { level: 'A1', title: "Tom's First Day at School", left: '16%', top: '61%' },
+  // 👇 SWAPPED POSITIONS (A2 napunta sa windmill, B1 napunta sa village) 👇
+  { level: 'A2', title: "The Lost Kitten",           left: '46.5%', top: '64%' }, 
+  { level: 'B1', title: "The Secret Garden",         left: '30%', top: '35%' },   
+  // 👆 👆
+  { level: 'B2', title: "The Time Traveler's Diary", left: '55%', top: '35%' },
+  { level: 'C1', title: "The Pianist's Farewell",    left: '86.5%', top: '48%' },
 ];
 
 const StoryQuestBookSelect = ({

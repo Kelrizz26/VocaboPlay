@@ -3,10 +3,11 @@
 // ✅ 5 CONSECUTIVE wrong matches = -1 ❤️
 // ✅ Timeout = -1 ❤️ + GAME OVER AGAD
 // ✅ Diamond reward per level completion
-// ✅ +50 💎 completion bonus (A1 → C2)
+// ✅ +50 💎 completion bonus (A1 → C1)
 // ✅ MP3 background music via backgroundMusic.js
 // ✅ FIXED: Footer "attempts" now resets to 0 every 5 wrong matches
 // ✅ All existing features preserved
+// ✅ UPDATED: Removed C2 level completely
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -46,13 +47,11 @@ const wordLevelMap = {
   'discovery':'B2','exploration':'B2','innovation':'B2','perspective':'B2','significant':'B2',
   'aspiration':'C1','collaboration':'C1','dedication':'C1','eloquent':'C1','exceptional':'C1',
   'fundamental':'C1','perseverance':'C1','sophisticated':'C1','versatile':'C1','visionary':'C1',
-  'ambivalent':'C2','clandestine':'C2','effervescent':'C2','transient':'C2','celestial':'C2',
-  'gregarious':'C2','luminous':'C2','scrupulous':'C2','quintessential':'C2','serendipity':'C2',
 };
 
-const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
-const LEVEL_PAIRS = { 'A1': 10, 'A2': 12, 'B1': 14, 'B2': 16, 'C1': 18, 'C2': 20 };
+const LEVEL_PAIRS = { 'A1': 10, 'A2': 12, 'B1': 14, 'B2': 16, 'C1': 18 };
 
 const LEVEL_GRID = {
   'A1': { cols: 5, maxWidth: '560px' },
@@ -60,7 +59,6 @@ const LEVEL_GRID = {
   'B1': { cols: 7, maxWidth: '750px' },
   'B2': { cols: 8, maxWidth: '840px' },
   'C1': { cols: 9, maxWidth: '930px' },
-  'C2': { cols: 10, maxWidth: '1020px' },
 };
 
 const LEVEL_CONFIG = {
@@ -69,7 +67,6 @@ const LEVEL_CONFIG = {
   'B1': { timer: 70, label: 'B1 - Intermediate', emoji: '🟡' },
   'B2': { timer: 65, label: 'B2 - Upper Intermediate', emoji: '🟡' },
   'C1': { timer: 60, label: 'C1 - Advanced', emoji: '🟠' },
-  'C2': { timer: 55, label: 'C2 - Proficiency', emoji: '👑' },
 };
 
 const COMPLETION_BONUS_DIAMONDS = 50;
@@ -746,7 +743,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   };
 
   const devForceFinished = () => {
-    setCurrentLevel('C2');
+    setCurrentLevel('C1');
     setGameState('finished');
   };
 
@@ -952,7 +949,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             </div>
           )}
           <h1 style={{ fontSize: '30px', fontWeight: '800', color: theme.textPrimary, marginBottom: '2px', letterSpacing: '-0.5px', fontFamily: FONT_DISPLAY }}>Match Game</h1>
-          <p style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>🧩 Match words with images • CEFR A1 to C2!</p>
+          <p style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '16px', fontWeight: '600', fontFamily: FONT_BODY }}>🧩 Match words with images • CEFR A1 to C1!</p>
           <div className="mg-intro-chips" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <div style={{ background: `linear-gradient(135deg, ${palette.gold}20, ${palette.warmOrange}20)`, padding: '8px 14px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', border: `1.5px solid ${palette.gold}60` }}>
               <span style={{ fontSize: '14px' }}>💰</span>
@@ -965,7 +962,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
               <span style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, fontFamily: FONT_BODY }}>gems</span>
             </div>
           </div>
-          <div className="mg-intro-levels" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
+          <div className="mg-intro-levels" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', marginBottom: '14px', background: theme.surfaceBg, padding: '8px', borderRadius: '10px', border: `1px solid ${theme.surfaceBorder}` }}>
             {CEFR_LEVELS.map((level) => {
               const config = LEVEL_CONFIG[level];
               const pairs = LEVEL_PAIRS[level];
@@ -1078,7 +1075,7 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
             {isFinished ? 'All Levels Complete!' : 'Game Over!'}
           </h2>
           <p className="mg-gameover-sub" style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '16px', fontFamily: FONT_BODY, fontWeight: 600 }}>
-            {isFinished ? (<>You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C2</strong>! 🎉</>) : (<>Reached <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{currentLevel}</strong> with <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{correctAnswers}</strong> correct!</>)}
+            {isFinished ? (<>You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C1</strong>! 🎉</>) : (<>Reached <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{currentLevel}</strong> with <strong style={{ color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{correctAnswers}</strong> correct!</>)}
           </p>
           <div className="mg-gameover-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
             <div className="mg-gameover-stat-box" style={{ padding: '12px', background: theme.surfaceBg, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>

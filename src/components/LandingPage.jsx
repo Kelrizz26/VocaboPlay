@@ -73,7 +73,7 @@ const Landing = () => {
     if (!statsVisible) return;
     const duration = 1400;
     const start = performance.now();
-    const targets = { games: 3, levels: 6, free: 100, hours: 24 };
+    const targets = { games: 3, levels: 5, free: 100, hours: 24 };
 
     const tick = (now) => {
       const t = Math.min((now - start) / duration, 1);
@@ -203,7 +203,6 @@ const Landing = () => {
     B1: { title: 'Intermediate', text: 'More varied vocabulary for familiar topics, experiences, and communication.', source: 'Oxford 3000' },
     B2: { title: 'Upper Intermediate', text: 'A broader range of vocabulary for detailed conversations and ideas.', source: 'Oxford 3000 & Oxford 5000' },
     C1: { title: 'Advanced', text: 'Precise and flexible vocabulary for complex communication and learning.', source: 'Oxford 5000' },
-    C2: { title: 'Proficient', text: 'Advanced vocabulary for expressing complex ideas with precision and nuance.', source: 'Cambridge English Vocabulary Profile' }
   };
 
   const cardStyle = {
@@ -922,13 +921,13 @@ const Landing = () => {
                 Understand the CEFR Framework
               </h2>
               <p style={{ ...bodyStyle, maxWidth: '760px', margin: '0 auto' }}>
-                The Common European Framework of Reference for Languages (CEFR) is an internationally recognized framework that VocaboPlay uses to organize vocabulary into six proficiency levels, ranging from A1 to C2. Vocabulary selection is guided by the Oxford Learner's Word Lists, particularly the Oxford 3000 and Oxford 5000, for levels A1 through C1, while the Cambridge English Vocabulary Profile is used as a reference for C2-level vocabulary.
+                The Common European Framework of Reference for Languages (CEFR) is an internationally recognized framework that VocaboPlay uses to organize vocabulary by proficiency level, currently covering A1 through C1. Vocabulary selection is guided by the Oxford Learner's Word Lists — the Oxford 3000 for A1–B2 and the Oxford 5000 for B2–C1.
               </p>
             </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+              gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
               gap: '12px',
               marginBottom: '32px',
             }} className="cefr-level-grid">
@@ -1032,13 +1031,12 @@ const Landing = () => {
             <div style={{
               marginTop: '32px',
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '16px',
             }} className="source-cards">
               {[
-                ['CEFR', 'A1 to C2', 'Common European Framework of Reference for Languages — the international scale VocaboPlay uses to structure difficulty and progression.'],
-                ['Oxford 3000 & 5000', 'A1 to C1', "Oxford Learner's CEFR-aligned word lists, used as the primary vocabulary reference from beginner through advanced levels."],
-                ['Cambridge EVP', 'C2', 'The Cambridge English Vocabulary Profile, used to source proficient-level C2 vocabulary beyond the Oxford lists.'],
+                ['CEFR', 'A1 to C1', 'Common European Framework of Reference for Languages — the international scale VocaboPlay uses to structure difficulty and progression.'],
+                ['Oxford 3000 & 5000', 'A1 to C1', "Oxford Learner's CEFR-aligned word lists — the Oxford 3000 covers A1–B2, and the Oxford 5000 extends through B2–C1."],
               ].map(([name, level, desc]) => (
                 <div key={name} className="small-card-responsive" style={smallCardStyle}>
                   <div style={{
@@ -1232,7 +1230,7 @@ const Landing = () => {
             <div className="grid-4">
               {[
                 { icon: 'game', title: 'Fun Learning', desc: 'Interactive games make vocabulary learning enjoyable and engaging.', color: palette.teal },
-                { icon: 'brain', title: 'CEFR-Aligned', desc: 'Vocabulary organized by CEFR level, sourced from the Oxford 3000/5000 and Cambridge EVP.', color: palette.warmOrange },
+                { icon: 'brain', title: 'CEFR-Aligned', desc: 'Vocabulary organized by CEFR level, sourced from the Oxford 3000 and Oxford 5000 word lists.', color: palette.warmOrange },
                 { icon: 'chart', title: 'Track Progress', desc: 'Watch your word count, streaks, and accuracy grow with clear stats.', color: palette.coral },
                 { icon: 'globe', title: 'Learn Anywhere', desc: 'Fully responsive on mobile, tablet, and desktop — practice anytime.', color: palette.softGreen },
               ].map((feature, i) => (
@@ -1299,7 +1297,7 @@ const Landing = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {[
                 { num: 1, title: 'Create an Account', desc: 'Sign up for free and set up your learning profile.', color: palette.teal },
-                { num: 2, title: 'Browse the CEFR Word Library', desc: 'Explore a vocabulary library organized by CEFR level, A1 through C2. Filter words by level and focus on what matches your goals.', color: palette.warmOrange },
+                { num: 2, title: 'Browse the CEFR Word Library', desc: 'Explore a vocabulary library organized by CEFR level, A1 through C1. Filter words by level and focus on what matches your goals.', color: palette.warmOrange },
                 { num: 3, title: 'Learn Through Games', desc: 'Practice with Syno Quest, Match Game, and Story Quest — all pulling from your word library, with more game modes launching soon.', color: palette.coral },
                 { num: 4, title: 'Track Your Progress', desc: 'Monitor your improvement, keep your streak going, and watch your vocabulary grow.', color: palette.softGreen },
               ].map(step => (

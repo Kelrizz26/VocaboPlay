@@ -1,7 +1,9 @@
+
 // src/components/dashboard/MatchGameDevPanel.jsx
 // ============================================================
 // 🧪 MATCH GAME DEV PANEL
 // Only visible when ?dev=1 is in URL
+// C1 is the final level. C2 has been removed.
 // ============================================================
 
 import React, { useState } from 'react';
@@ -24,7 +26,8 @@ const MatchGameDevPanel = ({
     setTimeout(() => setMessage(''), 2000);
   };
 
-  const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  // C1 is the final level.
+  const levels = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
   const handleJump = (lvl) => {
     if (onJumpToLevel) {
@@ -228,7 +231,12 @@ const MatchGameDevPanel = ({
         <div className="mg-dev-panel">
           <div className="mg-dev-header">
             <span className="mg-dev-title">🧪 MATCH GAME DEV</span>
-            <button className="mg-dev-close" onClick={() => setIsOpen(false)}>✕</button>
+            <button
+              className="mg-dev-close"
+              onClick={() => setIsOpen(false)}
+            >
+              ✕
+            </button>
           </div>
 
           {/* Current Level */}
@@ -243,7 +251,9 @@ const MatchGameDevPanel = ({
               {levels.map((lvl) => (
                 <button
                   key={lvl}
-                  className={`mg-dev-btn ${currentLevel === lvl ? 'active' : ''}`}
+                  className={`mg-dev-btn ${
+                    currentLevel === lvl ? 'active' : ''
+                  }`}
                   onClick={() => handleJump(lvl)}
                 >
                   {lvl}
@@ -256,9 +266,19 @@ const MatchGameDevPanel = ({
           <div className="mg-dev-section">
             <span className="mg-dev-label">🎉 Show Level Up Modal</span>
             <div className="mg-dev-btn-row">
-              <button className="mg-dev-btn mg-dev-btn-gold" onClick={() => handleForceLevelUp('A1', 'A2')}>A1→A2</button>
-              <button className="mg-dev-btn mg-dev-btn-gold" onClick={() => handleForceLevelUp('B1', 'B2')}>B1→B2</button>
-              <button className="mg-dev-btn mg-dev-btn-gold" onClick={() => handleForceLevelUp('C1', 'C2')}>C1→C2</button>
+              <button
+                className="mg-dev-btn mg-dev-btn-gold"
+                onClick={() => handleForceLevelUp('A1', 'A2')}
+              >
+                A1→A2
+              </button>
+
+              <button
+                className="mg-dev-btn mg-dev-btn-gold"
+                onClick={() => handleForceLevelUp('B1', 'B2')}
+              >
+                B1→B2
+              </button>
             </div>
           </div>
 
@@ -266,16 +286,25 @@ const MatchGameDevPanel = ({
           <div className="mg-dev-section">
             <span className="mg-dev-label">🎬 Force End Screens</span>
             <div className="mg-dev-btn-row">
-              <button className="mg-dev-btn mg-dev-btn-danger" onClick={onForceGameOver}>
+              <button
+                className="mg-dev-btn mg-dev-btn-danger"
+                onClick={onForceGameOver}
+              >
                 💀 Game Over
               </button>
-              <button className="mg-dev-btn mg-dev-btn-green" onClick={onForceFinished}>
+
+              <button
+                className="mg-dev-btn mg-dev-btn-green"
+                onClick={onForceFinished}
+              >
                 👑 All Complete
               </button>
             </div>
           </div>
 
-          {message && <div className="mg-dev-message">{message}</div>}
+          {message && (
+            <div className="mg-dev-message">{message}</div>
+          )}
 
           <div className="mg-dev-hint">
             Only visible with <strong>?dev=1</strong>

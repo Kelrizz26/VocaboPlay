@@ -582,7 +582,7 @@ const ShortStoryGame = ({ onBack, onExitToGames, updateProgress, recordGame }) =
           <div className="sq-card" style={{ maxWidth: '520px', background: palette.white, borderRadius: '24px', padding: '32px 28px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.35)' }}>
             <div className="sq-big-emoji" style={{ fontSize: '64px', marginBottom: '6px' }}>👑</div>
             <h2 style={{ fontSize: '26px', fontWeight: '800', color: palette.gold, marginBottom: '4px', fontFamily: FONT_DISPLAY }}>All Chapters Complete!</h2>
-            <p style={{ fontSize: '13px', color: palette.bodyTextSoft, marginBottom: '16px', fontWeight: 600 }}>You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C2</strong>! 🎉</p>
+            <p style={{ fontSize: '13px', color: palette.bodyTextSoft, marginBottom: '16px', fontWeight: 600 }}>You mastered <strong style={{ color: palette.gold, fontFamily: FONT_DISPLAY }}>A1 → C1</strong>! 🎉</p>
             <div className="sq-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
               <div className="sq-stat-box" style={{ padding: '12px', background: palette.creamSoft, borderRadius: '10px', border: `1.5px solid ${palette.border}` }}>
                 <div className="sq-stat-value" style={{ fontSize: '20px', fontWeight: '800', color: palette.purple, fontFamily: FONT_DISPLAY }}>{game.score}</div>

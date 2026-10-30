@@ -1,7 +1,9 @@
+
 // src/components/dashboard/SynoQuestDevPanel.jsx
 // ============================================================
 // 🧪 SYNOQUEST DEV PANEL — Same as MatchGame Dev Panel
 // Only visible when ?dev=1 is in URL
+// C1 is the final level.
 // ============================================================
 
 import React, { useState } from 'react';
@@ -24,7 +26,8 @@ const SynoQuestDevPanel = ({
     setTimeout(() => setMessage(''), 2000);
   };
 
-  const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  // C1 is the final level. C2 has been removed.
+  const levels = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
   const handleJump = (lvl) => {
     if (onJumpToLevel) {
@@ -226,7 +229,12 @@ const SynoQuestDevPanel = ({
         <div className="sq-dev-panel">
           <div className="sq-dev-header">
             <span className="sq-dev-title">🧪 SYNOQUEST DEV</span>
-            <button className="sq-dev-close" onClick={() => setIsOpen(false)}>✕</button>
+            <button
+              className="sq-dev-close"
+              onClick={() => setIsOpen(false)}
+            >
+              ✕
+            </button>
           </div>
 
           <div className="sq-dev-current">
@@ -239,7 +247,9 @@ const SynoQuestDevPanel = ({
               {levels.map((lvl) => (
                 <button
                   key={lvl}
-                  className={`sq-dev-btn ${currentLevel === lvl ? 'active' : ''}`}
+                  className={`sq-dev-btn ${
+                    currentLevel === lvl ? 'active' : ''
+                  }`}
                   onClick={() => handleJump(lvl)}
                 >
                   {lvl}
@@ -251,25 +261,44 @@ const SynoQuestDevPanel = ({
           <div className="sq-dev-section">
             <span className="sq-dev-label">🎉 Show Level Up Modal</span>
             <div className="sq-dev-btn-row">
-              <button className="sq-dev-btn sq-dev-btn-gold" onClick={() => handleForceLevelUp('A1', 'A2')}>A1→A2</button>
-              <button className="sq-dev-btn sq-dev-btn-gold" onClick={() => handleForceLevelUp('B1', 'B2')}>B1→B2</button>
-              <button className="sq-dev-btn sq-dev-btn-gold" onClick={() => handleForceLevelUp('C1', 'C2')}>C1→C2</button>
+              <button
+                className="sq-dev-btn sq-dev-btn-gold"
+                onClick={() => handleForceLevelUp('A1', 'A2')}
+              >
+                A1→A2
+              </button>
+
+              <button
+                className="sq-dev-btn sq-dev-btn-gold"
+                onClick={() => handleForceLevelUp('B1', 'B2')}
+              >
+                B1→B2
+              </button>
             </div>
           </div>
 
           <div className="sq-dev-section">
             <span className="sq-dev-label">🎬 Force End Screens</span>
             <div className="sq-dev-btn-row">
-              <button className="sq-dev-btn sq-dev-btn-danger" onClick={onForceGameOver}>
+              <button
+                className="sq-dev-btn sq-dev-btn-danger"
+                onClick={onForceGameOver}
+              >
                 💀 Game Over
               </button>
-              <button className="sq-dev-btn sq-dev-btn-green" onClick={onForceFinished}>
+
+              <button
+                className="sq-dev-btn sq-dev-btn-green"
+                onClick={onForceFinished}
+              >
                 👑 All Complete
               </button>
             </div>
           </div>
 
-          {message && <div className="sq-dev-message">{message}</div>}
+          {message && (
+            <div className="sq-dev-message">{message}</div>
+          )}
 
           <div className="sq-dev-hint">
             Only visible with <strong>?dev=1</strong>
