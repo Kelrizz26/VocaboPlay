@@ -2,6 +2,8 @@
 // ✅ FIXED: Imported calculation functions from Dashboard to ensure Level & XP match perfectly.
 // ✅ FIXED: normalizeGameData now checks the ACTUAL Firebase keys first (capital first letter)
 //           to avoid legacy lowercase keys overriding the real game stats.
+// ✅ FIXED: Removed "Best: x/y" text from High Scores modal.
+// ✅ FIXED: Removed "Played xX" text and changed "Best pts" to "pts" in High Scores modal.
 // ✅ All features preserved: clickable cards, modals, demo panel, responsive styles
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -1253,7 +1255,6 @@ const MyProgress = () => {
             {highScores.map((entry, i) => {
               const img = getGameImage(entry.gameType);
               const label = getGameLabel(entry.gameType);
-              const accuracy = entry.bestTotal > 0 ? Math.round((entry.bestCorrect / entry.bestTotal) * 100) : 0;
               const date = entry.bestDate ? new Date(entry.bestDate) : null;
               const formattedDate = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
@@ -1281,11 +1282,9 @@ const MyProgress = () => {
                     <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
                       {label}
                     </div>
-                    <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px', fontWeight: 600 }}>
-                      Played {entry.timesPlayed}× · Best: {entry.bestCorrect}/{entry.bestTotal} ({accuracy}%)
-                    </div>
+                    {/* ✅ BINAGO: Inalis ang Played Xx at Best: x/y dito */}
                     {formattedDate && (
-                      <div style={{ fontSize: '10px', color: palette.bodyTextSoft, marginTop: '1px' }}>
+                      <div style={{ fontSize: '10px', color: palette.bodyTextSoft, marginTop: '2px' }}>
                         {formattedDate}
                       </div>
                     )}
@@ -1295,7 +1294,7 @@ const MyProgress = () => {
                       {entry.bestScore}
                     </div>
                     <div style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '3px' }}>
-                      Best pts
+                      pts
                     </div>
                   </div>
                 </div>
