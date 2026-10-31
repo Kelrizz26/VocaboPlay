@@ -1,6 +1,4 @@
 // src/components/Dashboard.jsx
-// ✅ FIXED: updateProgress and completeActivity now save the resolved Name (Username if DisplayName is generic).
-// ✅ ADDED: Activity Type badges in Recent Activities list.
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +19,7 @@ import MyProgress from './dashboard/MyProgress';
 import WordLibrary from './dashboard/WordLibrary';
 import FavoritesPage from './dashboard/FavoritesPage';
 import PlayGames from './dashboard/PlayGames';
+import SentenceBuilder from './dashboard/SentenceBuilder';
 
 import AvatarShop from './dashboard/AvatarShop';
 import CharacterAvatar from './CharacterAvatar';
@@ -151,6 +150,7 @@ const GAME_META = {
   'shortstory':  { image: '/image/shortstory.png',    emoji: '📖', label: 'Story Quest' },
   'story-quest': { image: '/image/shortstory.png',    emoji: '📖', label: 'Story Quest' },
   'sentencebuilder': { image: '/image/sentence.png',  emoji: '✍️', label: 'Sentence Builder' },
+  'sentence-builder': { image: '/image/sentence.png',  emoji: '✍️', label: 'Sentence Builder' }, 
   'sentence':    { image: '/image/sentence.png',      emoji: '✍️', label: 'Sentence Builder' },
   'short-quiz':  { image: '/image/quizgame.png',      emoji: '⚡', label: 'Short Quiz' },
   'long-quiz':   { image: '/image/quizgame.png',      emoji: '📋', label: 'Long Quiz' },
@@ -175,41 +175,20 @@ const parseAnswerValue = (val) => {
 
 const getAnswerForQuestion = (answers, q) => {
   if (!answers) return false;
-
-  if (Array.isArray(answers)) {
-    return parseAnswerValue(answers[q - 1]);
-  }
-
+  if (Array.isArray(answers)) return parseAnswerValue(answers[q - 1]);
   if (typeof answers !== 'object') return false;
+  if (Object.prototype.hasOwnProperty.call(answers, `Q${q}`)) return parseAnswerValue(answers[`Q${q}`]);
+  if (Object.prototype.hasOwnProperty.call(answers, `q${q}`)) return parseAnswerValue(answers[`q${q}`]);
 
-  if (Object.prototype.hasOwnProperty.call(answers, `Q${q}`)) {
-    return parseAnswerValue(answers[`Q${q}`]);
-  }
-  if (Object.prototype.hasOwnProperty.call(answers, `q${q}`)) {
-    return parseAnswerValue(answers[`q${q}`]);
-  }
-
-  const hasZeroKey =
-    Object.prototype.hasOwnProperty.call(answers, 0) ||
-    Object.prototype.hasOwnProperty.call(answers, '0');
-
+  const hasZeroKey = Object.prototype.hasOwnProperty.call(answers, 0) || Object.prototype.hasOwnProperty.call(answers, '0');
   if (hasZeroKey) {
-    if (Object.prototype.hasOwnProperty.call(answers, q - 1)) {
-      return parseAnswerValue(answers[q - 1]);
-    }
-    if (Object.prototype.hasOwnProperty.call(answers, String(q - 1))) {
-      return parseAnswerValue(answers[String(q - 1)]);
-    }
+    if (Object.prototype.hasOwnProperty.call(answers, q - 1)) return parseAnswerValue(answers[q - 1]);
+    if (Object.prototype.hasOwnProperty.call(answers, String(q - 1))) return parseAnswerValue(answers[String(q - 1)]);
     return false;
   }
 
-  if (Object.prototype.hasOwnProperty.call(answers, q)) {
-    return parseAnswerValue(answers[q]);
-  }
-  if (Object.prototype.hasOwnProperty.call(answers, String(q))) {
-    return parseAnswerValue(answers[String(q)]);
-  }
-
+  if (Object.prototype.hasOwnProperty.call(answers, q)) return parseAnswerValue(answers[q]);
+  if (Object.prototype.hasOwnProperty.call(answers, String(q))) return parseAnswerValue(answers[String(q)]);
   return false;
 };
 
@@ -442,6 +421,7 @@ const Dashboard = () => {
       'wordpics': 'wordpics',
       'synoquest': 'wordpics',
       'guesswhat': 'guesswhat',
+      'sentence-builder': 'sentence-builder', // ✅ ADDED MAPPING
     };
     const gameId = gameMap[selectedActivity.gameType] || 'quiz';
     setCurrentGame(gameId);
@@ -579,6 +559,14 @@ const Dashboard = () => {
           total: (gameStats.MatchGame?.total || 0) + (updates.MatchGame.totalPairs || 0)
         };
       }
+      // ✅ IDINAGDAG NATIN ITO PARA SA SENTENCE BUILDER
+      if (updates.SentenceBuilder) {
+        gameStats.SentenceBuilder = {
+          played: (gameStats.SentenceBuilder?.played || 0) + (updates.SentenceBuilder.gamesCompleted || 0),
+          correct: (gameStats.SentenceBuilder?.correct || 0) + (updates.SentenceBuilder.correctAnswers || 0),
+          total: (gameStats.SentenceBuilder?.total || 0) + (updates.SentenceBuilder.totalQuestions || 0)
+        };
+      }
 
       const oldLevel = computeLevelFromPoints(currentTotalPoints);
       const newLevel = computeLevelFromPoints(newTotalPoints);
@@ -613,7 +601,6 @@ const Dashboard = () => {
 
       const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
 
-      // ✅ FIX: Use resolvedName instead of userProfile.displayName to avoid overwriting with "User"
       const rawDisplayName = userProfile.displayName || 'User';
       const resolvedName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
         ? userProfile.username 
@@ -622,7 +609,7 @@ const Dashboard = () => {
       const updateData = {
         uid: userId,
         role: 'student',
-        displayName: resolvedName, // ✅ Use resolved name
+        displayName: resolvedName, 
         totalPoints: newTotalPoints, level: newLevel, xp: currentXP, xpToNext,
         currentStreak: newStreak, gamesPlayed: newGamesPlayed, wordsLearned: newWordsLearned,
         learnedWordsList: newLearnedWords, accuracy: newAccuracy, gameStats,
@@ -668,7 +655,6 @@ const Dashboard = () => {
       const existingSnap = await getDocs(existingQuery);
       const isFirstAttempt = existingSnap.empty;
 
-      // ✅ FIX: Resolve name for fallback just in case overrideName is null
       const rawDisplayName = userProfile.displayName || 'User';
       const fallbackName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
         ? userProfile.username 
@@ -676,7 +662,7 @@ const Dashboard = () => {
 
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
-        studentName: overrideName || fallbackName || 'Student', // ✅ Use overrideName or fallback
+        studentName: overrideName || fallbackName || 'Student',
         score, correctAnswers, totalQuestions,
         gameType: activityData.gameType || 'quiz',
         activityTitle: activityData.title || '',
@@ -694,6 +680,7 @@ const Dashboard = () => {
     } catch (error) { console.error('Error completing activity:', error); }
   };
 
+  // ✅ IN-UPDATE NATIN ITO PARA MAKAPAG-RECORD NG STATS SA GAME STATS AT POINTS
   const recordSoloGame = async (gameType, score, correctAnswers, totalQuestions, wordsList = []) => {
     if (!userId) return;
     try {
@@ -709,9 +696,26 @@ const Dashboard = () => {
         gameType, source: 'solo', wordsList,
         completedAt: new Date().toISOString()
       });
-      if (wordsList && wordsList.length > 0) {
-        await updateProgress({ newWords: wordsList });
+
+      // ✅ DITO NATIN IPINAPASA ANG TOTAL POINTS PARA DERETSO SA updateProgress
+      const updates = { 
+        gamesPlayed: 1,
+        totalPoints: score // ✅ CRITICAL FIX: Idinagdag natin ito para tumaas ang points sa Firebase
+      };
+      
+      if (gameType === 'sentence-builder') {
+        updates.SentenceBuilder = {
+          gamesCompleted: 1,
+          correctAnswers: correctAnswers,
+          totalQuestions: totalQuestions
+        };
       }
+
+      if (wordsList && wordsList.length > 0) {
+        updates.newWords = wordsList;
+      }
+
+      await updateProgress(updates);
       await refreshRecentActivities();
     } catch (error) { console.error('Error recording solo game:', error); }
   };
@@ -719,7 +723,7 @@ const Dashboard = () => {
   const handleLogout = () => { localStorage.clear(); auth.signOut().catch(console.error); navigate('/'); };
 
   const startGame = (gameId) => {
-    const availableGames = ['wordpics', 'match', 'quiz', 'guesswhat', 'short-story'];
+    const availableGames = ['wordpics', 'match', 'quiz', 'guesswhat', 'short-story', 'sentence-builder'];
     if (!availableGames.includes(gameId)) {
       console.warn('❌ Invalid game ID:', gameId);
       return;
@@ -788,7 +792,6 @@ const Dashboard = () => {
     accuracy: stats?.progress?.accuracy ?? progress.accuracy ?? 0,
   };
 
-  // ✅ ITO ANG FIX: Mas priority ang username kung ang displayName ay generic lang
   const rawDisplayName = stats?.displayName || userProfile?.displayName || 'User';
   const displayName = (['User', 'New User', 'Student'].includes(rawDisplayName) && (stats?.username || userProfile?.username)) 
     ? (stats?.username || userProfile?.username) 
@@ -1090,6 +1093,15 @@ const Dashboard = () => {
               recordGame={recordSoloGame}
             />
           )}
+          
+          {currentGame === 'sentence-builder' && (
+            <SentenceBuilder
+              onBack={exitGame}
+              onExitToGames={exitToGames}
+              updateProgress={updateProgress}
+              recordGame={recordSoloGame}
+            />
+          )}
 
           {!currentGame && activeMenu === 'Word Library' && <WordLibrary />}
           {!currentGame && activeMenu === 'Games' && <PlayGames startGame={startGame} />}
@@ -1192,7 +1204,6 @@ const Dashboard = () => {
                             <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: "'Fredoka', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayTitle}</span>
                               
-                              {/* ✅ DAGDAG: Badge para sa Activity Type */}
                               {activity.gameType && (
                                 <span style={{ fontSize: '9px', padding: '2px 6px', flexShrink: 0, background: `${palette.teal}22`, color: palette.teal, borderRadius: '4px', fontWeight: 800 }}>
                                   {gameLabel}

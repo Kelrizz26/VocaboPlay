@@ -1,8 +1,7 @@
 // src/components/dashboard/MyProgress.jsx
-// ✅ FIXED: Removed `limit(300)` — ensures 100% correct high scores
-//   - Cache (2 min TTL) still saves reads on repeated modal opens
-//   - statsRef still prevents over-fetching on stats changes
-//   - All UI, features, and behavior preserved
+// ✅ FIXED: Imported calculation functions from Dashboard to ensure Level & XP match perfectly.
+// ✅ FIXED: normalizeGameData now checks the ACTUAL Firebase keys first (capital first letter)
+//           to avoid legacy lowercase keys overriding the real game stats.
 // ✅ All features preserved: clickable cards, modals, demo panel, responsive styles
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -12,6 +11,9 @@ import { colors, fontFamily } from './dashboardStyles';
 import { auth, db } from '../../pages/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+
+// ✅ IMPORT NATIN YUNG MGA FORMULA GALING SA DASHBOARD
+import { computeLevelFromPoints, computeCurrentXP, computeXpToNext } from '../Dashboard';
 
 // ===== MUTED GAME UI PALETTE (soft, not too bright) =====
 const palette = {
@@ -234,7 +236,6 @@ const MyProgress = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
-        console.log('✅ MyProgress: Using auth uid:', user.uid);
       }
     });
     return () => unsubscribe();
@@ -259,18 +260,14 @@ const MyProgress = () => {
   const [gameHistory, setGameHistory] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // 🧪 DEMO overrides — driven by DEV/DEMO PANEL via window event
+  // 🧪 DEMO overrides
   const [demoOverrides, setDemoOverrides] = useState({
     level: '',
     xp: '',
     xpToNext: '',
-    games: {}, // { synoQuest: '250', matchGame: '', ... }
+    games: {},
   });
 
-  // ============================================================
-  // ✅ statsRef — para hindi kailanganin ang `stats` sa dependency
-  //          array ng modal fetch effect. Updated every render.
-  // ============================================================
   const statsRef = useRef(stats);
   useEffect(() => {
     statsRef.current = stats;
@@ -297,9 +294,9 @@ const MyProgress = () => {
 
       Object.values(gameStats).forEach(game => {
         if (game && typeof game === 'object') {
-          totalGames += game.gamesPlayed || 0;
-          totalCorrect += game.correctAnswers || 0;
-          totalQuestions += game.totalQuestions || game.totalSentences || 0;
+          totalGames += game.gamesPlayed || game.played || 0;
+          totalCorrect += game.correctAnswers || game.correct || 0;
+          totalQuestions += game.totalQuestions || game.totalSentences || game.total || 0;
         }
       });
 
@@ -339,12 +336,6 @@ const MyProgress = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ============================================================
-  // ✅ Fetch details when modal opens
-  //   - Uses statsRef (not stats) → NO refetch on stats changes
-  //   - Cache (2 min TTL) → NO reads on repeated opens
-  //   - No limit on scores query → 100% correct high scores
-  // ============================================================
   useEffect(() => {
     const fetchDetails = async () => {
       if (!activeModal || !userId) return;
@@ -352,17 +343,14 @@ const MyProgress = () => {
 
       try {
         if (activeModal === 'words') {
-          // ✅ Words — from stats (NO Firebase read)
           const currentStats = statsRef.current;
           const words =
             currentStats?.progress?.learnedWords ||
             currentStats?.progress?.learnedWordsList ||
             currentStats?.learnedWords ||
             [];
-          console.log('📚 MyProgress: Fetching learned words:', words.length, 'words');
           setLearnedWords(Array.isArray(words) ? words : []);
         } else if (activeModal === 'games' || activeModal === 'points') {
-          // ✅ Try cache first
           const cacheKey = `myprogress_modal_${userId}_${activeModal}`;
           const currentGamesCount = statsRef.current?.gamesPlayed || 0;
 
@@ -375,17 +363,13 @@ const MyProgress = () => {
               const hasData = Array.isArray(parsed?.data);
 
               if (hasData && isFresh && isSameGameCount) {
-                console.log('📦 MyProgress modal: loaded from cache');
                 setGameHistory(parsed.data);
                 setLoadingDetails(false);
                 return;
               }
             }
-          } catch (e) {
-            /* ignore cache errors */
-          }
+          } catch (e) {}
 
-          // ✅ Cache miss or stale — fetch fresh (no limit, correct data)
           const scoresQuery = query(
             collection(db, 'scores'),
             where('studentId', '==', userId)
@@ -396,16 +380,13 @@ const MyProgress = () => {
           activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
           setGameHistory(activities);
 
-          // ✅ Save to cache (with gamesCount for auto-invalidation)
           try {
             sessionStorage.setItem(cacheKey, JSON.stringify({
               data: activities,
               timestamp: Date.now(),
               gamesCount: currentGamesCount,
             }));
-          } catch (e) {
-            /* ignore quota errors */
-          }
+          } catch (e) {}
         }
       } catch (err) {
         console.error('Error fetching details:', err);
@@ -415,11 +396,8 @@ const MyProgress = () => {
     };
 
     fetchDetails();
-  }, [activeModal, userId]); // ✅ REMOVED stats — fixes over-fetching
+  }, [activeModal, userId]);
 
-  // ============================================================
-  // ✅ Compute high scores per game
-  // ============================================================
   const highScores = React.useMemo(() => {
     if (!gameHistory.length) return [];
     const map = {};
@@ -429,7 +407,7 @@ const MyProgress = () => {
       const gameTypeLower = String(key).toLowerCase();
       const correct = entry.correctAnswers || 0;
       const total = entry.totalQuestions || 0;
-      const score = entry.score || correct; // 1 correct = 1 point
+      const score = entry.score || correct;
 
       if (!map[gameTypeLower]) {
         map[gameTypeLower] = {
@@ -465,6 +443,8 @@ const MyProgress = () => {
       'guesswhat': 'GuessWhat',
       'short-story': 'Story Quest',
       'story-quest': 'Story Quest',
+      'sentence-builder': 'Sentence Builder',
+      'sentencebuilder': 'Sentence Builder',
     }[key] || 'Game';
   };
 
@@ -478,6 +458,8 @@ const MyProgress = () => {
       'guesswhat': '/image/guesswhatgame.png',
       'short-story': '/image/shortstory.png',
       'story-quest': '/image/shortstory.png',
+      'sentence-builder': '/image/sentence.png',
+      'sentencebuilder': '/image/sentence.png',
     }[key] || null;
   };
 
@@ -584,42 +566,54 @@ const MyProgress = () => {
 
   const gameStatsData = progress.gameStats || {};
 
+  // ✅ Helper para i-normalize ang data (para kahit anong casing/properties, gumana)
+  const normalizeGameData = (gameKey, fallbackKey1, fallbackKey2) => {
+    const raw = gameStatsData[gameKey] || gameStatsData[fallbackKey1] || gameStatsData[fallbackKey2] || {};
+    return {
+      gamesPlayed: raw.gamesPlayed ?? raw.played ?? 0,
+      correctAnswers: raw.correctAnswers ?? raw.correct ?? 0,
+      totalQuestions: raw.totalQuestions ?? raw.totalSentences ?? raw.total ?? 0
+    };
+  };
+
+  // ✅ FIX: Inuna natin ang CAPITALIZED keys (actual keys na sine-save ng Dashboard.jsx)
+  // para hindi ma-override ng lumang lowercase keys na naka-stuck sa lumang value.
   const gameTypes = [
     {
       key: 'synoQuest',
       label: 'Syno Quest',
       image: '/image/wordpics.png',
-      data: gameStatsData.synoQuest || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+      data: normalizeGameData('SynoQuest', 'synoQuest', 'wordpics')
     },
     {
       key: 'matchGame',
       label: 'Match Game',
       image: '/image/matchgame.png',
-      data: gameStatsData.matchGame || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+      data: normalizeGameData('MatchGame', 'matchGame', 'match')
     },
     {
       key: 'shortStory',
       label: 'Short Story',
       image: '/image/shortstory.png',
-      data: gameStatsData.shortStory || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+      data: normalizeGameData('ShortStory', 'shortStory', 'short-story')
     },
     {
       key: 'quizMaster',
       label: 'Quiz Master',
       image: '/image/quizgame.png',
-      data: gameStatsData.quizMaster || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+      data: normalizeGameData('QuizGame', 'quizMaster', 'quiz')
     },
     {
       key: 'guessWhat',
       label: 'GuessWhat',
       image: '/image/guesswhatgame.png',
-      data: gameStatsData.guessWhat || { gamesPlayed: 0, correctAnswers: 0, totalQuestions: 0 }
+      data: normalizeGameData('GuessWhat', 'guessWhat', 'guesswhat')
     },
     {
       key: 'sentenceBuilder',
       label: 'Sentence Builder',
       image: '/image/sentence.png',
-      data: gameStatsData.sentenceBuilder || { gamesPlayed: 0, correctAnswers: 0, totalSentences: 0 }
+      data: normalizeGameData('SentenceBuilder', 'sentenceBuilder', 'sentence-builder')
     }
   ];
 
@@ -639,18 +633,23 @@ const MyProgress = () => {
   let totalQuestions = 0;
   gameTypes.forEach(game => {
     totalCorrect += game.data.correctAnswers || 0;
-    totalQuestions += game.data.totalQuestions || game.data.totalSentences || 0;
+    totalQuestions += game.data.totalQuestions || 0;
   });
   const overallAccuracy =
     totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
   const displayAccuracy = stats?.accuracy || overallAccuracy || 0;
 
-  // 🧪 DEMO: apply XP overrides if set, otherwise use real stats
-  const level = demoOverrides.level !== '' ? Number(demoOverrides.level) : (stats?.level || 1);
-  const xp = demoOverrides.xp !== '' ? Number(demoOverrides.xp) : (stats?.xp || 0);
-  const xpToNext = demoOverrides.xpToNext !== '' ? Number(demoOverrides.xpToNext) : (stats?.xpToNext || 100);
+  // ✅ DITO NATIN GINAGAMIT YUNG COMPUTE FUNCTIONS PARA PANTay SILA NG DASHBOARD
+  const rawTotalPoints = stats?.totalPoints || 0;
+  const computedLevel = computeLevelFromPoints(rawTotalPoints);
+  const computedXP = computeCurrentXP(rawTotalPoints);
+  const computedXpToNext = computeXpToNext(rawTotalPoints);
 
-  const totalPoints = stats?.totalPoints || 0;
+  const level = demoOverrides.level !== '' ? Number(demoOverrides.level) : computedLevel;
+  const xp = demoOverrides.xp !== '' ? Number(demoOverrides.xp) : computedXP;
+  const xpToNext = demoOverrides.xpToNext !== '' ? Number(demoOverrides.xpToNext) : computedXpToNext;
+
+  const totalPoints = rawTotalPoints;
   const gamesPlayed = stats?.gamesPlayed || 0;
   const streak = stats?.currentStreak || 0;
   const wordsLearned = stats?.wordsLearned || 0;
@@ -1033,7 +1032,6 @@ const MyProgress = () => {
           const gamesPlayedCount = game.data.gamesPlayed || 0;
 
           // ✅ Tier-based progress — resets every 100 games
-          // 0-99 → X/100, 100-199 → X/200, 200-299 → X/300, ... 900-999 → X/1000
           const tierEnd = (Math.floor(gamesPlayedCount / 100) + 1) * 100;
           const barPct = gamesPlayedCount % 100;
 

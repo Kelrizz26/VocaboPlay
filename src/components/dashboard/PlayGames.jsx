@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// src/components/dashboard/PlayGames.jsx
+
+import React, { useState } from 'react'; // ✅ Tinanggal ang useEffect
 import { colors, fontFamily } from './dashboardStyles';
 
 // ===== MUTED GAME UI PALETTE (soft, not too bright) =====
@@ -71,15 +73,10 @@ const Icon = ({ name, size = 20, color = palette.bodyText, secondaryColor = `${p
 const PlayGames = ({ startGame }) => {
   const [filter, setFilter] = useState('all');
   const [hoveredGame, setHoveredGame] = useState(null);
-  const [pageLoaded, setPageLoaded] = useState(false);
-
-  useEffect(() => {
-    setPageLoaded(true);
-  }, []);
 
   // ✅ 6 games total:
-  //    - 3 available (Syno Quest, Match Game, Story Quest)
-  //    - 3 locked   (Quiz Master, GuessWhat, Sentence Builder) — All Games lang
+  //    - 4 available (Syno Quest, Match Game, Story Quest, Sentence Builder)
+  //    - 2 locked   (Quiz Master, GuessWhat) — All Games lang
   const games = [
     {
       id: 'wordpics',
@@ -114,7 +111,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/shortstory.png',
       accentColor: palette.teal,
       lightColor: palette.creamSoft,
-      categories: ['reading', 'challenge'],   // 👈 nasa both reading + challenge
+      categories: ['reading', 'challenge'], 
       timeEstimate: '15-20 min',
       difficulty: 'intermediate',
       players: '1 player',
@@ -128,7 +125,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/quizgame.png',
       accentColor: palette.deepNavy,
       lightColor: palette.creamSoft,
-      categories: [],                          // 👈 walang category → All Games lang
+      categories: [], 
       timeEstimate: '10-15 min',
       difficulty: 'intermediate',
       players: '1 player',
@@ -141,7 +138,7 @@ const PlayGames = ({ startGame }) => {
       image: '/image/guesswhatgame.png',
       accentColor: palette.coral,
       lightColor: palette.creamSoft,
-      categories: [],                          // 👈 walang category → All Games lang
+      categories: [], 
       timeEstimate: '8-12 min',
       difficulty: 'advanced',
       players: '1 player',
@@ -154,11 +151,11 @@ const PlayGames = ({ startGame }) => {
       image: '/image/sentence.png',
       accentColor: palette.softGreen,
       lightColor: palette.creamSoft,
-      categories: [],                          // 👈 walang category → All Games lang
+      categories: [], 
       timeEstimate: '6-10 min',
       difficulty: 'beginner',
       players: '1 player',
-      available: false
+      available: true // ✅ UNLOCKED
     },
   ];
 
@@ -199,9 +196,7 @@ const PlayGames = ({ startGame }) => {
       padding: '0',
       fontFamily,
       color: palette.deepNavy,
-      opacity: pageLoaded ? 1 : 0,
-      transform: pageLoaded ? 'translateY(0)' : 'translateY(16px)',
-      transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+      // ✅ TINANGGAL ANG OPACITY/TRANSFORM PARA INSTANT ANG PAGLABAS
     }}>
       <style>{`
         @media (max-width: 768px) {
@@ -234,7 +229,7 @@ const PlayGames = ({ startGame }) => {
           .playgames-categories button { padding: 5px 10px !important; font-size: 11px !important; }
         }
         .playgames-card {
-          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         }
       `}</style>
 
