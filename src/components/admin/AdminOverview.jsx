@@ -3,6 +3,7 @@
 // ✅ ADMIN OVERVIEW — polished to match Super Admin
 // ✅ CONNECTED TO AVATAR SHOP — Shows FACE of character
 // ✅ FIXED: Recent Activity now shows Username if DisplayName is generic (User/Student).
+// ✅ FIXED: Platform Stats now correctly maps CEFR levels (A1-C1) to Easy/Medium/Hard.
 // ============================================================
 
 import React, { useState } from 'react';
@@ -196,25 +197,24 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
     })
     .slice(0, 3);
 
-  const easyWords = words.filter(w =>
-    w.difficulty === 'Easy' ||
-    w.difficulty === 'beginner' ||
-    w.difficulty === 1
-  ).length;
+  // ✅ FIXED LOGIC: Helper para malaman kung anong CEFR level (A1-C1) ang word
+  const getWordLevel = (word) => {
+    // Sinusubukan kunin ang value mula sa cefr, difficulty, o level property
+    const levelStr = (word.cefr || word.difficulty || word.level || '').toString().toUpperCase();
+    
+    // Mapping base sa CEFR (A1 to C1)
+    if (['A1', 'A2', 'BEGINNER', 'EASY', '1'].includes(levelStr)) return 'easy';
+    if (['B1', 'B2', 'INTERMEDIATE', 'MEDIUM', '2', '3'].includes(levelStr)) return 'medium';
+    if (['C1', 'C2', 'ADVANCED', 'HARD', '4', '5'].includes(levelStr)) return 'hard';
+    
+    // Fallback kung walang makitang level
+    return 'unknown';
+  };
 
-  const mediumWords = words.filter(w =>
-    w.difficulty === 'Medium' ||
-    w.difficulty === 'intermediate' ||
-    w.difficulty === 2 ||
-    w.difficulty === 3
-  ).length;
-
-  const hardWords = words.filter(w =>
-    w.difficulty === 'Hard' ||
-    w.difficulty === 'advanced' ||
-    w.difficulty === 4 ||
-    w.difficulty === 5
-  ).length;
+  // ✅ Gagamitin na natin ang getWordLevel para mabilang sila nang tama
+  const easyWords = words.filter(w => getWordLevel(w) === 'easy').length;
+  const mediumWords = words.filter(w => getWordLevel(w) === 'medium').length;
+  const hardWords = words.filter(w => getWordLevel(w) === 'hard').length;
 
   const totalPlays = students.reduce(
     (total, s) => total + (s.progress?.gamesPlayed || 0),
@@ -450,9 +450,10 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
               style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}
             >
               {[
-                { label: 'Easy Words', value: easyWords, color: palette.softGreen },
-                { label: 'Medium Words', value: mediumWords, color: palette.gold },
-                { label: 'Hard Words', value: hardWords, color: palette.danger },
+                // ✅ Pinalitan ko lang ng konting label para maging malinaw na CEFR based siya
+                { label: 'Beginner (A1-A2)', value: easyWords, color: palette.softGreen },
+                { label: 'Intermediate (B1-B2)', value: mediumWords, color: palette.gold },
+                { label: 'Advanced (C1)', value: hardWords, color: palette.danger },
                 { label: 'Total Plays', value: totalPlays, color: palette.warmOrange },
               ].map((item, i) => (
                 <div
@@ -482,7 +483,7 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
                     lineHeight: 1.2,
                   }}>{item.value}</div>
                   <div style={{
-                    fontSize: '11px',
+                    fontSize: '10px',
                     color: item.color,
                     fontWeight: 700,
                     marginTop: '2px',
