@@ -771,7 +771,7 @@ const AdminDashboard = () => {
 
       <div className="admin-dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: palette.cream, fontFamily: FONT_BODY }}>
         <nav className="admin-top-nav">
-          <div className="admin-logo"><Icon name="trophy" size={20} color={palette.warmOrange} />Admin Dashboard</div>
+          <div className="admin-logo"><Icon name="trophy" size={20} color={palette.warmOrange} />Teacher Dashboard</div>
           <div className="admin-nav-links">
             {menuItems.map(item => (
               <button key={item.name} className={`admin-nav-link ${activeMenu === item.name ? 'active' : ''}`} onClick={() => setActiveMenu(item.name)}>
