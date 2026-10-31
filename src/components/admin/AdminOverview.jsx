@@ -3,7 +3,7 @@
 // ✅ ADMIN OVERVIEW — polished to match Super Admin
 // ✅ CONNECTED TO AVATAR SHOP — Shows FACE of character
 // ✅ FIXED: Recent Activity now shows Username if DisplayName is generic (User/Student).
-// ✅ FIXED: Platform Stats now correctly maps CEFR levels (A1-C1) to Easy/Medium/Hard.
+// ✅ FIXED: Platform Stats now correctly reads `word.cefrLevel` (A1-C1) from AdminWords.
 // ============================================================
 
 import React, { useState } from 'react';
@@ -197,10 +197,9 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
     })
     .slice(0, 3);
 
-  // ✅ FIXED LOGIC: Helper para malaman kung anong CEFR level (A1-C1) ang word
+  // ✅ FIXED LOGIC: Idinagdag ang `word.cefrLevel` para mabasa ang tamang field galing AdminWords
   const getWordLevel = (word) => {
-    // Sinusubukan kunin ang value mula sa cefr, difficulty, o level property
-    const levelStr = (word.cefr || word.difficulty || word.level || '').toString().toUpperCase();
+    const levelStr = (word.cefrLevel || word.cefr || word.difficulty || word.level || '').toString().toUpperCase();
     
     // Mapping base sa CEFR (A1 to C1)
     if (['A1', 'A2', 'BEGINNER', 'EASY', '1'].includes(levelStr)) return 'easy';
@@ -450,7 +449,6 @@ const AdminOverview = ({ students, games, words, setActiveMenu, activities = [] 
               style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}
             >
               {[
-                // ✅ Pinalitan ko lang ng konting label para maging malinaw na CEFR based siya
                 { label: 'Beginner (A1-A2)', value: easyWords, color: palette.softGreen },
                 { label: 'Intermediate (B1-B2)', value: mediumWords, color: palette.gold },
                 { label: 'Advanced (C1)', value: hardWords, color: palette.danger },

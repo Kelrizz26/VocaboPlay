@@ -2,8 +2,9 @@
 // ============================================================
 // CEFR-based Word Library admin panel — polished to match Super Admin
 // WordPics sync removed. Antonyms removed.
-// Uses `cefrLevel` (A1..C2) instead of `difficulty`.
+// Uses `cefrLevel` (A1..C1) instead of `difficulty`.
 // Has single example sentence + single synonym.
+// ✅ UPDATED: Removed C2 from levels, mappings, and UI.
 // ============================================================
 
 import React, { useState } from 'react';
@@ -194,7 +195,7 @@ const Icon = ({ name, size = 18, color = palette.bodyTextSoft }) => {
 };
 
 // ============================================================
-// CEFR SYSTEM (local)
+// CEFR SYSTEM (local) - UPDATED TO REMOVE C2
 // ============================================================
 const CEFR_LEVELS = [
   { id: 'A1', name: 'A1', label: 'Beginner',           color: '#2E7D32', bg: 'rgba(46, 125, 50, 0.12)' },
@@ -202,7 +203,6 @@ const CEFR_LEVELS = [
   { id: 'B1', name: 'B1', label: 'Intermediate',       color: '#B85C1A', bg: 'rgba(184, 92, 26, 0.12)' },
   { id: 'B2', name: 'B2', label: 'Upper-Intermediate', color: '#E07B00', bg: 'rgba(224, 123, 0, 0.12)' },
   { id: 'C1', name: 'C1', label: 'Advanced',           color: '#A93226', bg: 'rgba(169, 50, 38, 0.12)' },
-  { id: 'C2', name: 'C2', label: 'Proficiency',        color: '#7B1E1E', bg: 'rgba(123, 30, 30, 0.12)' },
 ];
 
 const LEGACY_DIFFICULTY_MAP = {
@@ -214,7 +214,7 @@ const LEGACY_DIFFICULTY_MAP = {
 const normalizeCefr = (value) => {
   if (!value) return 'B1';
   const upper = String(value).toUpperCase();
-  if (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(upper)) return upper;
+  if (['A1', 'A2', 'B1', 'B2', 'C1'].includes(upper)) return upper;
   const lower = String(value).toLowerCase();
   return LEGACY_DIFFICULTY_MAP[lower] || 'B1';
 };
@@ -298,10 +298,11 @@ const AdminWords = ({ words, setWords, loading }) => {
 
   const totalStudies = words.reduce((a, w) => a + (w.timesStudied || 0), 0);
 
+  // ✅ UPDATED: Tinanggal ang C2 dito
   const groupedStats = {
     beginner: (cefrCounts.A1 || 0) + (cefrCounts.A2 || 0),
     intermediate: (cefrCounts.B1 || 0) + (cefrCounts.B2 || 0),
-    advanced: (cefrCounts.C1 || 0) + (cefrCounts.C2 || 0),
+    advanced: (cefrCounts.C1 || 0),
   };
 
   // ---------- OPEN MODAL ----------
@@ -571,7 +572,8 @@ const AdminWords = ({ words, setWords, loading }) => {
           <div style={summaryIconStyle(palette.coral)}>
             <Icon name="trend" size={14} color={palette.coral} />
           </div>
-          <div style={summaryLabelStyle}>Advanced (C1–C2)</div>
+          {/* ✅ UPDATED: C1 na lang */}
+          <div style={summaryLabelStyle}>Advanced (C1)</div>
           <div style={summaryValueStyle(palette.coral)}>{groupedStats.advanced}</div>
         </div>
         <div style={summaryCardStyle(palette.teal)}>
@@ -1151,5 +1153,3 @@ const AdminWords = ({ words, setWords, loading }) => {
 };
 
 export default AdminWords;
-
-
