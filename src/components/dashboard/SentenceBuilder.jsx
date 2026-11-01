@@ -442,7 +442,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       alignItems: 'center',
       boxSizing: 'border-box'
     }}>
-      {/* 👇 DITO ANG MGA AGGRESSIVE MOBILE FIXES 👇 */}
+      {/* 👇 DITO ANG MGA SOBRANG AGGRESSIVE NA MOBILE FIXES 👇 */}
       <style>{`
         .sb-container {
           max-width: 1200px;
@@ -456,159 +456,160 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
-          .sb-container { padding: 8px !important; }
+          .sb-container { padding: 6px !important; }
 
-          /* Header HUD */
+          /* Header HUD - Sobrang liit na */
           .sb-header-hud {
             flex-direction: column !important;
             align-items: flex-start !important;
-            gap: 8px !important;
-            margin-bottom: 12px !important;
+            gap: 4px !important;
+            margin-bottom: 8px !important;
           }
           .sb-title-box {
-            padding: 6px 12px !important;
-            border-radius: 10px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            gap: 8px !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 1.5px 0 #8c5728 !important;
+            gap: 4px !important;
             width: 100%;
           }
-          .sb-title-box span { font-size: 20px !important; }
-          .sb-title-box h1 { font-size: 15px !important; margin: 0 !important; }
-          .sb-title-box p { font-size: 9px !important; }
+          .sb-title-box span { font-size: 16px !important; }
+          .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; }
+          .sb-title-box p { font-size: 7px !important; }
           
           .sb-stats-row {
             width: 100% !important;
             justify-content: space-between !important;
-            gap: 6px !important;
-          }
-          .sb-stat-badge {
-            padding: 4px 8px !important;
-            border-radius: 8px !important;
-            border-width: 2px !important;
-            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
             gap: 4px !important;
           }
-          .sb-stat-badge .stat-icon { font-size: 14px !important; }
-          .sb-stat-badge span { font-size: 14px !important; }
-          .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
+          .sb-stat-badge {
+            padding: 2px 6px !important;
+            border-radius: 6px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
+            gap: 2px !important;
+          }
+          .sb-stat-badge .stat-icon { font-size: 10px !important; }
+          .sb-stat-badge span { font-size: 10px !important; }
+          .sb-stat-badge button { width: 14px !important; height: 14px !important; font-size: 8px !important; }
 
-          /* Banners */
+          /* Banners - Pinaliit din */
           .sb-banner-box {
-            padding: 4px 16px !important;
-            border-width: 2px !important;
-            box-shadow: 0 3px 0 #3a1f0a !important;
-            border-radius: 16px !important;
+            padding: 2px 10px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 2px 0 #3a1f0a !important;
+            border-radius: 8px !important;
+            margin-top: 2px !important;
+          }
+          .sb-banner-box h2 { font-size: 12px !important; margin: 0 !important; }
+          .sb-subtext-box {
+            padding: 2px 8px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 1.5px 0 #8c5728 !important;
+            border-radius: 6px !important;
             margin-top: 4px !important;
           }
-          .sb-banner-box h2 { font-size: 16px !important; margin: 0 !important; }
-          .sb-subtext-box {
-            padding: 4px 10px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-          }
-          .sb-subtext-box p { font-size: 10px !important; text-align: center; margin: 0 !important; }
+          .sb-subtext-box p { font-size: 8px !important; text-align: center; margin: 0 !important; }
 
-          /* Topic Cards */
+          /* Topic Cards - Sobrang liit na parang match game */
           .sb-topic-grid {
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 10px !important;
-            margin-bottom: 20px !important;
+            gap: 6px !important;
+            margin-bottom: 12px !important;
           }
           .sb-topic-card {
-            border-width: 2.5px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 3px 0 var(--border-color) !important;
+            border-width: 1.5px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 2px 0 var(--border-color) !important;
           }
-          .sb-topic-card .card-image { height: 80px !important; }
-          .sb-topic-card .card-content { padding: 8px !important; }
-          .sb-topic-card .card-title { font-size: 13px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-desc { font-size: 9px !important; line-height: 1.1 !important; margin-bottom: 6px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-          .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-progress-bar { height: 4px !important; margin-bottom: 6px !important; }
-          .sb-topic-card .card-badge { font-size: 7px !important; padding: 1px 4px !important; border-width: 1px !important; border-radius: 4px !important; }
-          .sb-topic-card .card-arrow { width: 22px !important; height: 22px !important; border-width: 1.5px !important; }
-          .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
+          .sb-topic-card .card-image { height: 60px !important; border-bottom-width: 1.5px !important; }
+          .sb-topic-card .card-content { padding: 6px !important; }
+          .sb-topic-card .card-title { font-size: 11px !important; margin-bottom: 1px !important; }
+          .sb-topic-card .card-desc { display: none !important; /* Tinatago natin muna para sobrang liit */ }
+          .sb-topic-card .card-progress-text { font-size: 7px !important; margin-bottom: 1px !important; }
+          .sb-topic-card .card-progress-bar { height: 3px !important; margin-bottom: 4px !important; }
+          .sb-topic-card .card-badge { font-size: 6px !important; padding: 1px 3px !important; border-width: 1px !important; border-radius: 3px !important; }
+          .sb-topic-card .card-arrow { width: 18px !important; height: 18px !important; border-width: 1.5px !important; }
+          .sb-topic-card .card-arrow svg { width: 8px !important; height: 8px !important; }
 
           /* Level Selection */
           .sb-level-header {
-            padding: 8px 12px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            gap: 8px !important;
-            border-radius: 10px !important;
+            padding: 6px 8px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 1.5px 0 #8c5728 !important;
+            gap: 6px !important;
+            border-radius: 8px !important;
           }
-          .sb-level-header span { font-size: 20px !important; }
-          .sb-level-header h1 { font-size: 15px !important; }
-          .sb-level-header p { font-size: 10px !important; }
+          .sb-level-header span { font-size: 16px !important; }
+          .sb-level-header h1 { font-size: 12px !important; }
+          .sb-level-header p { font-size: 8px !important; }
           
-          .sb-level-card { padding: 10px 12px !important; border-radius: 10px !important; gap: 8px !important; }
-          .sb-level-card .level-icon { width: 36px !important; height: 36px !important; font-size: 16px !important; border-width: 2px !important; border-radius: 6px !important; }
-          .sb-level-card .level-text-title { font-size: 14px !important; }
-          .sb-level-card .level-text-desc { font-size: 10px !important; margin-top: 2px !important; }
-          .sb-level-card > div:last-child span { font-size: 18px !important; }
+          .sb-level-card { padding: 8px 10px !important; border-radius: 8px !important; gap: 6px !important; }
+          .sb-level-card .level-icon { width: 30px !important; height: 30px !important; font-size: 12px !important; border-width: 1.5px !important; border-radius: 4px !important; }
+          .sb-level-card .level-text-title { font-size: 12px !important; }
+          .sb-level-card .level-text-desc { font-size: 9px !important; margin-top: 1px !important; }
+          .sb-level-card > div:last-child span { font-size: 14px !important; }
 
           /* Playing Screen */
-          .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; margin-bottom: 8px !important; }
+          .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 4px !important; margin-bottom: 6px !important; }
           .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 4px !important; }
-          .sb-top-stats > div { padding: 4px 8px !important; font-size: 11px !important; border-width: 2px !important; box-shadow: 0 1.5px 0 rgba(0,0,0,0.3) !important; }
-          .sb-top-stats button { padding: 4px 10px !important; font-size: 11px !important; }
+          .sb-top-stats > div { padding: 2px 6px !important; font-size: 10px !important; border-width: 1.5px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats button { padding: 2px 8px !important; font-size: 10px !important; }
           
-          .sb-progress-container { padding: 6px 10px !important; margin-bottom: 10px !important; border-width: 2px !important; border-radius: 8px !important; box-shadow: 0 2px 0 #8c5728 !important; }
-          .sb-progress-text { font-size: 10px !important; margin-bottom: 4px !important; }
-          .sb-progress-bar { height: 6px !important; }
+          .sb-progress-container { padding: 4px 8px !important; margin-bottom: 6px !important; border-width: 1.5px !important; border-radius: 6px !important; box-shadow: 0 1.5px 0 #8c5728 !important; }
+          .sb-progress-text { font-size: 9px !important; margin-bottom: 2px !important; }
+          .sb-progress-bar { height: 4px !important; }
 
-          .sb-game-card { padding: 12px 10px !important; border-width: 2.5px !important; border-radius: 12px !important; box-shadow: 0 4px 0 #8c5728 !important; }
-          .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
-          .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 2px 6px !important; border-width: 1.5px !important; border-radius: 6px !important; }
+          .sb-game-card { padding: 8px !important; border-width: 1.5px !important; border-radius: 8px !important; box-shadow: 0 3px 0 #8c5728 !important; }
+          .sb-game-card h2 { font-size: 12px !important; margin-bottom: 8px !important; }
+          .sb-level-badge, .sb-hint-badge { font-size: 8px !important; padding: 1px 4px !important; border-width: 1px !important; border-radius: 4px !important; }
 
           /* SENTENCE BOX */
-          .sb-sentence-box { padding: 8px !important; min-height: 60px !important; max-height: 100px !important; overflow-y: auto !important; border-width: 2px !important; gap: 6px !important; border-radius: 8px !important; margin-bottom: 12px !important; align-content: flex-start; }
-          .sb-sentence-box span { font-size: 13px !important; }
+          .sb-sentence-box { padding: 6px !important; min-height: 50px !important; max-height: 80px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 8px !important; align-content: flex-start; }
+          .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BUTTONS */
-          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; align-items: flex-start !important; margin-bottom: 12px !important; }
+          /* WORD BUTTONS - Pinaliit at pinaluwag */
+          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 4px !important; align-items: flex-start !important; margin-bottom: 8px !important; }
           .sb-word-btn {
-            padding: 6px 12px !important;
-            min-height: 36px !important;
+            padding: 4px 8px !important;
+            min-height: 28px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 14px !important;
-            border-width: 2px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
-            flex: 0 0 auto !important; /* Ito yung pumipigil sa stretch */
+            font-size: 11px !important;
+            border-width: 1.5px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
+            flex: 0 0 auto !important;
+            white-space: nowrap !important; /* Ito ang sisiguro na hindi mag-wrap ang text at lalaki horizontally */
           }
 
           /* ACTION BUTTONS */
-          .sb-action-buttons { flex-direction: row !important; gap: 8px !important; margin-top: 12px !important; }
+          .sb-action-buttons { flex-direction: row !important; gap: 6px !important; margin-top: 8px !important; }
           .sb-action-btn {
             flex: 1 !important;
-            width: 100% !important;
-            padding: 10px !important;
-            min-height: 44px !important;
-            font-size: 14px !important;
-            border-width: 2.5px !important;
-            border-radius: 10px !important;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.3) !important;
+            width: auto !important;
+            padding: 8px !important;
+            min-height: 32px !important;
+            font-size: 11px !important;
+            border-width: 1.5px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
           }
           
-          .sb-footer-btn { padding: 8px 16px !important; font-size: 12px !important; border-width: 2.5px !important; box-shadow: 0 3px 0 #3a1f0a !important; }
+          .sb-footer-btn { padding: 6px 12px !important; font-size: 10px !important; border-width: 1.5px !important; box-shadow: 0 2px 0 #3a1f0a !important; }
         }
 
         @media (max-width: 400px) {
           .sb-topic-grid { grid-template-columns: 1fr !important; }
-          .sb-topic-card .card-image { height: 120px !important; }
-          .sb-topic-card .card-title { font-size: 15px !important; }
-          .sb-topic-card .card-desc { font-size: 10px !important; -webkit-line-clamp: unset !important; }
-          .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
-          .sb-topic-card .card-arrow { width: 26px !important; height: 26px !important; }
+          .sb-topic-card .card-image { height: 100px !important; }
+          .sb-topic-card .card-title { font-size: 13px !important; }
+          .sb-topic-card .card-desc { display: block !important; font-size: 9px !important; -webkit-line-clamp: unset !important; }
+          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 4px !important; }
+          .sb-topic-card .card-arrow { width: 22px !important; height: 22px !important; }
           
-          .sb-word-btn { font-size: 13px !important; padding: 6px 10px !important; min-height: 34px !important; }
-          .sb-action-btn { font-size: 13px !important; padding: 8px !important; min-height: 40px !important; }
+          .sb-word-btn { font-size: 10px !important; padding: 4px 6px !important; min-height: 26px !important; }
+          .sb-action-btn { font-size: 10px !important; padding: 6px !important; min-height: 30px !important; }
         }
       `}</style>
 
