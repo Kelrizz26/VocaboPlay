@@ -443,6 +443,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       boxSizing: 'border-box'
     }}>
       <style>{`
+        /* GLOBAL LAYOUT PARA SA DESKTOP */
         .sb-container {
           max-width: 1200px;
           width: 100%;
@@ -451,6 +452,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
+        }
+
+        .sb-header-hud {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+          width: 100%;
         }
 
         /* --- GLOBAL DESKTOP FIXES --- */
@@ -503,14 +513,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           touch-action: manipulation;
         }
 
-        /* ✅ MOBILE FIX (PAPAREHASIN SA DESKTOP ANG AYOS, WALANG PIPILIIN) */
+        /* ✅ MOBILE FIX (Eksaktong kapareho ng Image 2) */
         @media (max-width: 1024px) {
           .sb-container { 
             padding: 8px !important; 
-            padding-bottom: 100px !important; /* Espasyo para sa Back to Games */
+            padding-bottom: 80px !important; /* ESPASYO PARA SA BACK TO GAMES */
             height: auto !important; 
             min-height: 100dvh !important;
-            overflow: visible !important; 
+            overflow-y: auto !important; 
+            overflow-x: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
           }
 
           /* PAG SA LARO LANG, NAKA-LOCK ANG HEIGHT AT WALANG SCROLL */
@@ -520,41 +533,50 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             padding-bottom: 8px !important;
           }
 
-          /* HEADER: Ipapasa sa flex-wrap para kapag hindi magkasya, bababa nang maayos */
+          /* HEADER: Row layout, maliit pero bukas lahat */
           .sb-header-hud {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: wrap !important;
+            flex-wrap: nowrap !important;
             align-items: center !important;
             justify-content: space-between !important;
-            gap: 12px !important;
-            margin-bottom: 16px !important;
+            gap: 4px !important;
+            margin-bottom: 12px !important;
             width: 100% !important;
           }
           
-          /* Ibinabalik ang tamang laki (katulad ng desktop) */
           .sb-title-box {
-            padding: 10px 16px !important;
-            border-width: 3px !important;
-            box-shadow: 0 4px 0 #8c5728 !important;
-            border-radius: 16px !important;
+            width: auto !important;
+            flex-shrink: 1 !important; 
+            justify-content: flex-start !important;
+            padding: 6px 10px !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
+            gap: 6px !important;
+            border-radius: 8px !important;
           }
-          .sb-title-box span { font-size: 24px !important; }
-          .sb-title-box h1 { font-size: 16px !important; margin: 0 !important; }
-          .sb-title-box p { font-size: 10px !important; margin: 0 !important; display: block !important; } 
+          .sb-title-box span { font-size: 16px !important; }
+          .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; }
+          .sb-title-box p { font-size: 8px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; display: block !important; } 
           
           .sb-stats-row {
-            gap: 6px !important;
-            flex-wrap: wrap !important;
+            width: auto !important;
+            flex-shrink: 0 !important;
+            justify-content: flex-end !important;
+            gap: 4px !important;
+            flex-wrap: nowrap !important;
           }
           .sb-stat-badge {
-            padding: 4px 12px !important;
-            border-radius: 12px !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
             border-width: 2px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
+            gap: 4px !important;
+            height: 28px !important;
+            box-sizing: border-box !important;
           }
           .sb-stat-badge .stat-icon { font-size: 14px !important; }
-          .sb-stat-badge span { font-size: 14px !important; }
+          .sb-stat-badge span { font-size: 14px !important; font-weight: 900 !important; }
           .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
 
           /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
@@ -562,38 +584,31 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             display: none !important;
           }
 
-          /* TOPIC GRID - IBINABALIK SA 1 COLUMN PARA KOPYA NG DESKTOP PERO PATAYO */
+          /* TOPIC CARDS: BALIK SA 2 COLUMNS PARA KUMPYANSA */
           .sb-topic-grid {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
-            margin-bottom: 24px !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+            margin-bottom: 16px !important;
           }
-          
-          /* IBINALIK LAHAT NG CARD STYLES SA NORMAL (WALANG PINUTOL) */
-          .sb-topic-card { 
-            border-width: 3px !important; 
-            border-radius: 20px !important; 
-            box-shadow: 0 6px 0 var(--border-color) !important; 
-          }
-          .sb-topic-card .card-image { height: 140px !important; border-bottom-width: 3px !important; }
-          .sb-topic-card .card-content { padding: 16px !important; }
-          .sb-topic-card .card-title { font-size: 18px !important; margin-bottom: 6px !important; }
-          .sb-topic-card .card-desc { display: block !important; font-size: 12px !important; margin-bottom: 12px !important; }
-          .sb-topic-card .card-progress-text { font-size: 10px !important; margin-bottom: 4px !important; }
-          .sb-topic-card .card-progress-bar { height: 8px !important; margin-bottom: 12px !important; }
-          .sb-topic-card .card-badge { font-size: 10px !important; padding: 4px 10px !important; border-radius: 8px !important; }
-          .sb-topic-card .card-arrow { width: 32px !important; height: 32px !important; border-width: 2px !important; }
-          .sb-topic-card .card-arrow svg { width: 16px !important; height: 16px !important; }
+          .sb-topic-card { border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 2.5px 0 var(--border-color) !important; }
+          .sb-topic-card .card-image { height: 65px !important; border-bottom-width: 2px !important; }
+          .sb-topic-card .card-content { padding: 8px !important; }
+          .sb-topic-card .card-title { font-size: 12px !important; margin-bottom: 2px !important; }
+          .sb-topic-card .card-desc { display: none !important; }
+          .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
+          .sb-topic-card .card-progress-bar { height: 4px !important; margin-bottom: 6px !important; }
+          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 6px !important; border-width: 1px !important; border-radius: 4px !important; }
+          .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
+          .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
 
-          /* Footer Button */
+          /* FOOTER BUTTON */
           .sb-footer-btn {
-            padding: 10px 24px !important;
-            font-size: 14px !important;
-            border-width: 3px !important;
-            box-shadow: 0 4px 0 #3a1f0a !important;
+            padding: 8px 16px !important;
+            font-size: 12px !important;
+            border-width: 2.5px !important;
           }
 
-          /* --- LARO (PLAYING SCREEN) - HINDI GINALAW, STEADY PA RIN --- */
+          /* PLAYING SCREEN FIXES (HINDI GINALAW, STEADY PA RIN) */
           .sb-playing-wrapper { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
           .sb-playing-wrapper > div { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
