@@ -521,7 +521,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             overflow: hidden !important;
           }
 
-          /* ✅ IBINALIK SA ROW ANG HEADER PARA MAGKATABI, WALANG TINAGO */
+          /* ✅ HEADER SA MOBILE - NAKA-ROW AT WALANG TINAGO */
           .sb-header-hud {
             display: flex !important;
             flex-direction: row !important;
@@ -532,7 +532,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             width: 100% !important;
           }
           
-          /* TITLE BOX - PINAGKASYA PERO BUKAS LAHAT */
           .sb-title-box {
             width: auto !important;
             flex-shrink: 1 !important; 
@@ -547,7 +546,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-title-box h1 { font-size: 10px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; }
           .sb-title-box p { font-size: 7px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; display: block !important; } 
           
-          /* STATS ROW - PINALIIT PARA KASYA SA KANAN */
           .sb-stats-row {
             width: auto !important;
             flex-shrink: 0 !important;
@@ -568,11 +566,58 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-stat-badge span { font-size: 10px !important; font-weight: 900 !important; }
           .sb-stat-badge button { width: 14px !important; height: 14px !important; font-size: 8px !important; }
 
-          /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
           .sb-container.is-playing .sb-header-hud {
             display: none !important;
           }
 
+          /* ✅ TOPIC CARDS - GINAWANG 2 COLUMNS PARA MAGKASYA */
+          .sb-topic-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+            margin-bottom: 16px !important;
+          }
+          .sb-topic-card {
+            border-width: 2px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 2.5px 0 var(--border-color) !important;
+          }
+          .sb-topic-card .card-image { height: 65px !important; border-bottom-width: 2px !important; }
+          .sb-topic-card .card-content { padding: 8px !important; }
+          .sb-topic-card .card-title { font-size: 12px !important; margin-bottom: 2px !important; }
+          .sb-topic-card .card-desc { display: none !important; } /* Tinanggal description para umikli */
+          .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
+          .sb-topic-card .card-progress-bar { height: 4px !important; margin-bottom: 6px !important; }
+          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 6px !important; border-width: 1px !important; border-radius: 4px !important; }
+          .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
+          .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
+
+          /* Footer Button */
+          .sb-footer-btn {
+            padding: 8px 16px !important;
+            font-size: 12px !important;
+            border-width: 2.5px !important;
+          }
+
+          /* LEVEL SELECTION */
+          .sb-level-header {
+            padding: 8px 12px !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
+            gap: 8px !important;
+            border-radius: 10px !important;
+          }
+          .sb-level-header span { font-size: 18px !important; }
+          .sb-level-header h1 { font-size: 14px !important; }
+          .sb-level-header p { font-size: 10px !important; }
+          
+          .sb-level-card { padding: 10px 14px !important; border-radius: 10px !important; gap: 8px !important; }
+          .sb-level-card .level-icon { width: 36px !important; height: 36px !important; font-size: 14px !important; border-width: 2px !important; border-radius: 6px !important; }
+          .sb-level-card .level-text-title { font-size: 14px !important; }
+          .sb-level-card .level-text-desc { font-size: 10px !important; margin-top: 2px !important; }
+          .sb-level-card > div:last-child span { font-size: 18px !important; }
+
+
+          /* ✅ PLAYING SCREEN */
           .sb-playing-wrapper { 
             height: 100% !important;
             display: flex !important;
@@ -587,7 +632,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             overflow: hidden !important;
           }
 
-          /* TOP HUD (Exit, Coins, Hearts) SA LARO */
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
           .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { 
@@ -610,7 +654,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-shadow: 0 2px 0 #8c5728 !important;
           }
 
-          /* PROGRESS BAR */
           .sb-progress-container { 
             padding: 4px 8px !important; 
             margin-bottom: 6px !important; 
@@ -624,7 +667,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
           .sb-progress-bar { height: 4px !important; }
 
-          /* GAME CARD */
           .sb-game-card { 
             padding: 8px 10px !important; 
             border-width: 2px !important; 
@@ -663,7 +705,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             flex-shrink: 0 !important;
           }
 
-          /* SENTENCE BOX */
           .sb-sentence-box { 
             flex: 1 1 40% !important; 
             min-height: 50px !important;
@@ -680,7 +721,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BANK */
           .sb-word-bank-container { 
             flex: 1 1 60% !important; 
             min-height: 60px !important;
@@ -697,7 +737,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
           
-          /* MGA SALITA */
           .sb-word-btn {
             padding: 0 8px !important;
             height: 26px !important;
@@ -714,7 +753,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             touch-action: manipulation !important;
           }
 
-          /* FEEDBACK MESSAGE */
           .sb-feedback-msg {
             flex-shrink: 0 !important;
             height: 24px !important;
@@ -732,7 +770,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
 
-          /* BUTTONS */
           .sb-action-buttons { 
             flex-shrink: 0 !important;
             gap: 6px !important; 
