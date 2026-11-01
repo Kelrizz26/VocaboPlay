@@ -502,31 +502,31 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
+          /* TODO: ISAGAD ANG FIT SA SCREEN (NO SCROLL) */
           .sb-container { 
-            padding: 4px !important; 
+            padding: 4px 6px !important; 
             height: 100dvh !important; 
             overflow: hidden !important; 
             display: flex !important;
             flex-direction: column !important;
+            justify-content: flex-start !important;
           }
 
           .sb-header-hud { display: none !important; }
 
           .sb-playing-wrapper { 
-            justify-content: flex-start !important; 
             height: 100% !important;
-            padding-top: 0 !important;
             display: flex !important;
             flex-direction: column !important;
           }
-          
+
           .sb-playing-wrapper > div {
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
           }
 
-          /* TOP HUD (Exit, Coins, Hearts) */
+          /* TOP HUD (Exit, Coins, Hearts) - Pinaliit nang todo */
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; }
           .sb-top-stats { gap: 4px !important; }
           .sb-top-stats > div { 
@@ -535,17 +535,19 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-width: 1.5px !important; 
             box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; 
             border-radius: 6px !important;
-            gap: 3px !important;
+            gap: 2px !important;
           }
           .sb-top-stats span { font-size: 11px !important; }
+          .sb-top-stats svg { width: 12px !important; height: 12px !important; }
           .sb-top-hud button { 
             padding: 2px 8px !important; 
             font-size: 11px !important; 
             border-width: 1.5px !important;
             border-radius: 6px !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
           }
 
-          /* PROGRESS BAR */
+          /* PROGRESS BAR - Pinaliit */
           .sb-progress-container { 
             padding: 4px 6px !important; 
             margin-bottom: 4px !important; 
@@ -574,17 +576,19 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             margin-bottom: 2px !important; 
           }
           
-          /* Itago muna yung "Arrange the words..." para makatipid ng space */
+          /* Itago yung "Arrange the words..." para makatipid ng space */
           .sb-game-card h2 { 
             display: none !important; 
           }
           
+          /* "YOUR SENTENCE" at "WORD BANK" labels */
           .sb-game-card p { 
             font-size: 9px !important; 
             margin-bottom: 2px !important; 
             margin-top: 0 !important; 
             letter-spacing: 0 !important; 
             color: #8c5728 !important;
+            font-weight: 900 !important;
           }
           
           .sb-level-badge, .sb-hint-badge { 
@@ -595,28 +599,28 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             margin-bottom: 0 !important; 
           }
 
-          /* SENTENCE BOX */
+          /* SENTENCE BOX - FIXED HEIGHT */
           .sb-sentence-box { 
             padding: 4px !important; 
-            height: 50px !important;
-            min-height: 50px !important;
-            max-height: 50px !important;
+            height: 55px !important;
+            min-height: 55px !important;
+            max-height: 55px !important;
             overflow-y: auto !important; 
             border-width: 1.5px !important; 
             gap: 4px !important; 
             border-radius: 6px !important; 
-            margin-bottom: 2px !important; 
+            margin-bottom: 4px !important; 
             align-content: flex-start !important; 
           }
-          .sb-sentence-box span { font-size: 9px !important; }
+          .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BANK */
+          /* WORD BANK - FIXED HEIGHT */
           .sb-word-bank-container { 
             gap: 4px !important; 
             margin-bottom: 0 !important; 
-            height: 65px !important;
-            min-height: 65px !important; 
-            max-height: 65px !important;
+            height: 75px !important;
+            min-height: 75px !important; 
+            max-height: 75px !important;
             align-content: flex-start !important; 
             align-items: flex-start !important; 
             overflow-y: auto !important;
@@ -625,19 +629,19 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-radius: 6px !important;
           }
           
-          /* WORD BUTTONS */
+          /* WORD BUTTONS - MALIIT PERO KLARO */
           .sb-word-btn {
             padding: 0 6px !important;
-            height: 22px !important;
-            min-height: 22px !important;
-            max-height: 22px !important;
-            font-size: 10px !important;
+            height: 26px !important;
+            min-height: 26px !important;
+            max-height: 26px !important;
+            font-size: 11px !important;
             border-width: 1.5px !important;
             border-radius: 4px !important;
             flex: 0 0 auto !important; 
             align-self: flex-start !important;
             box-sizing: border-box !important;
-            white-space: nowrap !important; /* Para hindi mag-wrap into 2 lines */
+            white-space: nowrap !important;
           }
 
           /* FEEDBACK MESSAGE */
@@ -647,7 +651,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             max-height: 24px !important;
             padding: 0 4px !important;
             font-size: 9px !important;
-            margin-bottom: 0 !important;
+            margin-bottom: 2px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -656,27 +660,30 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-radius: 4px !important;
           }
 
-          /* BUTTONS (Reset at Check Answer) */
+          /* BUTTONS (Reset at Check Answer) - PINAKA-IMPORTANTE: margin-top: auto */
           .sb-action-buttons { 
             gap: 6px !important; 
-            margin-top: auto !important; /* PINAKA-IMPORTANTE: Pinipin nito sa baba yung buttons */
-            padding-top: 4px !important;
+            margin-top: auto !important; 
+            padding-top: 6px !important;
           }
           .sb-action-btn {
-            height: 28px !important;
-            min-height: 28px !important;
+            height: 32px !important;
+            min-height: 32px !important;
             padding: 0 !important;
-            font-size: 11px !important;
+            font-size: 12px !important;
             border-width: 1.5px !important;
-            border-radius: 4px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 0 #bdc3c7 !important;
           }
         }
 
+        /* ✅ EXTRA TIGHT PARA SA MALILIIT NA PHONE (Max-width 400px) */
         @media (max-width: 400px) {
-          .sb-sentence-box { height: 45px !important; min-height: 45px !important; max-height: 45px !important; }
-          .sb-word-bank-container { height: 60px !important; min-height: 60px !important; max-height: 60px !important; }
-          .sb-word-btn { font-size: 9px !important; padding: 0 4px !important; height: 20px !important; min-height: 20px !important; max-height: 20px !important; }
-          .sb-action-btn { font-size: 10px !important; height: 26px !important; min-height: 26px !important; }
+          .sb-game-card { padding: 6px 8px !important; }
+          .sb-sentence-box { height: 50px !important; min-height: 50px !important; max-height: 50px !important; }
+          .sb-word-bank-container { height: 65px !important; min-height: 65px !important; max-height: 65px !important; }
+          .sb-word-btn { font-size: 10px !important; padding: 0 5px !important; height: 24px !important; min-height: 24px !important; max-height: 24px !important; }
+          .sb-action-btn { font-size: 11px !important; height: 30px !important; min-height: 30px !important; }
           .sb-feedback-msg { height: 22px !important; min-height: 22px !important; max-height: 22px !important; font-size: 8px !important; }
         }
       `}</style>
