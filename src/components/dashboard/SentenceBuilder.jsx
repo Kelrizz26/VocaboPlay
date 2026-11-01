@@ -442,7 +442,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       alignItems: 'center',
       boxSizing: 'border-box'
     }}>
-      {/* 👇 GLOBAL CSS + MOBILE FIXES 👇 */}
       <style>{`
         .sb-container {
           max-width: 1200px;
@@ -454,7 +453,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           box-sizing: border-box;
         }
 
-        /* --- GLOBAL DESKTOP FIXES (Huwag galawin, okay na to) --- */
+        /* --- GLOBAL DESKTOP STYLES (Ito yung maganda sa PC) --- */
         .sb-word-bank-container { 
           display: flex; 
           flex-wrap: wrap; 
@@ -500,138 +499,160 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           transition: all 0.1s ease;
         }
 
+        .sb-game-card {
+          background: #fff8f0;
+          border-radius: 24px;
+          padding: 40px;
+          border: 4px solid #b87a42;
+          box-shadow: 0 10px 0 #8c5728, 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .sb-sentence-box {
+          min-height: 100px;
+          max-height: 150px;
+          overflow-y: auto;
+          border-radius: 16px;
+          padding: 16px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-content: flex-start;
+        }
+
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
-          /* TODO: ISAGAD ANG FIT SA SCREEN (NO SCROLL) */
           .sb-container { 
-            padding: 4px 6px !important; 
+            padding: 0 !important; 
             height: 100dvh !important; 
             overflow: hidden !important; 
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
           }
-
-          .sb-header-hud { display: none !important; }
 
           .sb-playing-wrapper { 
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
+            padding: 8px !important;
+            box-sizing: border-box !important;
           }
 
-          .sb-playing-wrapper > div {
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-
-          /* TOP HUD (Exit, Coins, Hearts) - Pinaliit nang todo */
-          .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; }
-          .sb-top-stats { gap: 4px !important; }
+          /* TOP HUD */
+          .sb-top-hud { margin-bottom: 6px !important; gap: 4px !important; flex-wrap: nowrap !important; }
+          .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { 
-            padding: 2px 6px !important; 
+            padding: 4px 8px !important; 
             font-size: 11px !important; 
             border-width: 1.5px !important; 
             box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; 
             border-radius: 6px !important;
-            gap: 2px !important;
+            gap: 4px !important;
+            height: 24px !important;
+            box-sizing: border-box !important;
           }
           .sb-top-stats span { font-size: 11px !important; }
-          .sb-top-stats svg { width: 12px !important; height: 12px !important; }
           .sb-top-hud button { 
-            padding: 2px 8px !important; 
+            padding: 0 10px !important; 
             font-size: 11px !important; 
             border-width: 1.5px !important;
             border-radius: 6px !important;
+            height: 24px !important;
             box-shadow: 0 2px 0 #8c5728 !important;
           }
 
-          /* PROGRESS BAR - Pinaliit */
+          /* PROGRESS BAR */
           .sb-progress-container { 
-            padding: 4px 6px !important; 
-            margin-bottom: 4px !important; 
+            padding: 4px 8px !important; 
+            margin-bottom: 6px !important; 
             border-width: 1.5px !important; 
             border-radius: 6px !important; 
-            box-shadow: none !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
+            height: 28px !important;
+            box-sizing: border-box !important;
           }
-          .sb-progress-text { font-size: 9px !important; margin-bottom: 2px !important; }
+          .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
           .sb-progress-bar { height: 4px !important; }
 
-          /* GAME CARD (Yung Puting Kahon) */
+          /* GAME CARD */
           .sb-game-card { 
-            padding: 8px 10px !important; 
+            padding: 8px !important; 
             border-width: 2px !important; 
-            border-radius: 10px !important; 
+            border-radius: 8px !important; 
             box-shadow: 0 3px 0 #8c5728 !important;
             display: flex !important;
             flex-direction: column !important;
-            flex: 1 !important;
+            flex: 1 !important; /* Pinupuno nito yung natitirang space */
+            min-height: 0 !important; /* Importante para hindi mag-overflow */
             overflow: hidden !important;
-            min-height: 0 !important;
+            box-sizing: border-box !important;
           }
           
-          /* Pilitin i-zero ang margins ng wrappers sa loob */
-          .sb-game-card > div { 
-            margin-bottom: 2px !important; 
+          /* Badges (A1 Level & Hint) */
+          .sb-game-card > div:first-child { 
+            margin-bottom: 4px !important; 
+            flex-wrap: nowrap !important;
+            height: 20px !important;
+          }
+          .sb-level-badge, .sb-hint-badge { 
+            font-size: 9px !important; 
+            padding: 0 6px !important; 
+            border-width: 1px !important; 
+            border-radius: 4px !important; 
+            line-height: 18px !important;
           }
           
-          /* Itago yung "Arrange the words..." para makatipid ng space */
+          /* Hide Title */
           .sb-game-card h2 { 
             display: none !important; 
           }
           
-          /* "YOUR SENTENCE" at "WORD BANK" labels */
+          /* Labels (YOUR SENTENCE / WORD BANK) */
           .sb-game-card p { 
-            font-size: 9px !important; 
-            margin-bottom: 2px !important; 
-            margin-top: 0 !important; 
+            font-size: 10px !important; 
+            margin: 4px 0 2px 0 !important; 
             letter-spacing: 0 !important; 
             color: #8c5728 !important;
             font-weight: 900 !important;
-          }
-          
-          .sb-level-badge, .sb-hint-badge { 
-            font-size: 8px !important; 
-            padding: 1px 4px !important; 
-            border-width: 1px !important; 
-            border-radius: 4px !important; 
-            margin-bottom: 0 !important; 
+            line-height: 1 !important;
           }
 
-          /* SENTENCE BOX - FIXED HEIGHT */
+          /* SENTENCE BOX - FLEX PARA HATIIN YUNG SPACE */
           .sb-sentence-box { 
             padding: 4px !important; 
-            height: 55px !important;
-            min-height: 55px !important;
-            max-height: 55px !important;
+            flex: 0.4 !important; /* 40% ng space */
+            min-height: 45px !important;
+            height: auto !important;
+            max-height: 60px !important;
             overflow-y: auto !important; 
             border-width: 1.5px !important; 
             gap: 4px !important; 
             border-radius: 6px !important; 
-            margin-bottom: 4px !important; 
+            margin-bottom: 0 !important; 
             align-content: flex-start !important; 
+            box-sizing: border-box !important;
           }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BANK - FIXED HEIGHT */
+          /* WORD BANK - FLEX PARA HATIIN YUNG SPACE */
           .sb-word-bank-container { 
             gap: 4px !important; 
             margin-bottom: 0 !important; 
-            height: 75px !important;
-            min-height: 75px !important; 
-            max-height: 75px !important;
+            flex: 0.6 !important; /* 60% ng space */
+            min-height: 60px !important;
+            height: auto !important;
+            max-height: 90px !important;
             align-content: flex-start !important; 
             align-items: flex-start !important; 
             overflow-y: auto !important;
-            padding: 2px !important;
-            border-width: 1.5px !important;
+            padding: 4px !important;
+            border: 1px dashed rgba(0,0,0,0.1) !important;
             border-radius: 6px !important;
+            box-sizing: border-box !important;
           }
           
-          /* WORD BUTTONS - MALIIT PERO KLARO */
+          /* MGA SALITA */
           .sb-word-btn {
-            padding: 0 6px !important;
+            padding: 0 8px !important;
             height: 26px !important;
             min-height: 26px !important;
             max-height: 26px !important;
@@ -642,6 +663,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             align-self: flex-start !important;
             box-sizing: border-box !important;
             white-space: nowrap !important;
+            line-height: 1 !important;
           }
 
           /* FEEDBACK MESSAGE */
@@ -649,42 +671,36 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             height: 24px !important;
             min-height: 24px !important;
             max-height: 24px !important;
-            padding: 0 4px !important;
-            font-size: 9px !important;
-            margin-bottom: 2px !important;
+            padding: 0 !important;
+            font-size: 10px !important;
+            margin: 4px 0 0 0 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             overflow: hidden !important;
             border-width: 1.5px !important;
             border-radius: 4px !important;
+            box-sizing: border-box !important;
           }
 
-          /* BUTTONS (Reset at Check Answer) - PINAKA-IMPORTANTE: margin-top: auto */
+          /* BUTTONS (Reset at Check) - NAKA-PIN SA BABA */
           .sb-action-buttons { 
             gap: 6px !important; 
-            margin-top: auto !important; 
+            margin-top: auto !important; /* Ito ang magpupush sa kanila sa ilalim */
             padding-top: 6px !important;
+            height: 36px !important;
+            flex-shrink: 0 !important;
           }
           .sb-action-btn {
-            height: 32px !important;
-            min-height: 32px !important;
+            height: 100% !important;
+            min-height: 0 !important;
             padding: 0 !important;
-            font-size: 12px !important;
+            font-size: 13px !important;
             border-width: 1.5px !important;
             border-radius: 6px !important;
-            box-shadow: 0 2px 0 #bdc3c7 !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
+            box-sizing: border-box !important;
           }
-        }
-
-        /* ✅ EXTRA TIGHT PARA SA MALILIIT NA PHONE (Max-width 400px) */
-        @media (max-width: 400px) {
-          .sb-game-card { padding: 6px 8px !important; }
-          .sb-sentence-box { height: 50px !important; min-height: 50px !important; max-height: 50px !important; }
-          .sb-word-bank-container { height: 65px !important; min-height: 65px !important; max-height: 65px !important; }
-          .sb-word-btn { font-size: 10px !important; padding: 0 5px !important; height: 24px !important; min-height: 24px !important; max-height: 24px !important; }
-          .sb-action-btn { font-size: 11px !important; height: 30px !important; min-height: 30px !important; }
-          .sb-feedback-msg { height: 22px !important; min-height: 22px !important; max-height: 22px !important; font-size: 8px !important; }
         }
       `}</style>
 
@@ -965,88 +981,86 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   if (gameState === 'playing' && currentQuestion) {
     return (
       <CozyThemeWrapper>
-        <div className="sb-playing-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, width: '100%' }}>
-          
-          <div style={{ width: '100%', maxWidth: '950px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* TINANGGAL KO LAHAT NG INLINE STYLES DITO PARA CSS NA LANG ANG MAG-ADJUST */}
+        <div className="sb-playing-wrapper">
+          <div className="sb-playing-content">
             
-            <div className="sb-top-hud" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <button onClick={handleExitGame} style={{ background: '#e67e22', border: '3px solid #b9770e', padding: '8px 20px', borderRadius: '12px', color: '#fff', cursor: 'pointer', fontSize: '15px', fontWeight: '900', boxShadow: '0 4px 0 #8c5728' }}>Exit</button>
+            <div className="sb-top-hud">
+              <button onClick={handleExitGame} className="sb-exit-btn">Exit</button>
               
-              <div className="sb-top-stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ background: '#fff', padding: '6px 16px', borderRadius: '16px', border: '3px solid #d4af37', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 0 #b8860b' }}>
-                  <span style={{ fontSize: '18px' }}>🪙</span>
-                  <span style={{ fontSize: '18px', fontWeight: '900', color: '#8c5728' }}>{totalPoints}</span>
+              <div className="sb-top-stats">
+                <div className="sb-stat-box gold">
+                  <span>🪙</span>
+                  <span>{totalPoints}</span>
                 </div>
                 
-                <div style={{ background: '#fff', padding: '6px 16px', borderRadius: '16px', border: '3px solid #c0392b', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 0 #922b21' }}>
-                  <span style={{ fontSize: '18px' }}>❤️</span>
-                  <span style={{ fontSize: '18px', fontWeight: '900', color: '#c0392b' }}>{lives}</span>
+                <div className="sb-stat-box red">
+                  <span>❤️</span>
+                  <span>{lives}</span>
                   {lives < MAX_LIVES && timeLeftStr && (
-                    <span style={{ fontSize: '12px', color: '#c0392b', fontWeight: 'bold' }}>({timeLeftStr})</span>
+                    <span>({timeLeftStr})</span>
                   )}
                 </div>
                 
-                <div style={{ background: '#fff', padding: '6px 16px', borderRadius: '16px', border: '3px solid #2980b9', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 0 #1c5980' }}>
-                  <span style={{ fontSize: '18px', fontWeight: '900', color: '#2980b9' }}>🎯 {score}</span>
+                <div className="sb-stat-box blue">
+                  <span>🎯 {score}</span>
                 </div>
               </div>
             </div>
 
-            <div className="sb-progress-container" style={{ marginBottom: '20px', background: '#fff', padding: '10px 20px', borderRadius: '16px', border: '3px solid #b87a42', boxShadow: '0 4px 0 #8c5728' }}>
-              <div className="sb-progress-text" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '14px', color: '#3E2723', fontWeight: '900' }}>
+            <div className="sb-progress-container">
+              <div className="sb-progress-text">
                 <span>{selectedTopic.title} ({selectedLevel}) • Q{currentIndex + 1} of {activeQuestions.length}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              <div className="sb-progress-bar" style={{ width: '100%', height: '10px', background: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: 'linear-gradient(90deg, #f39c12, #f1c40f)', width: `${progress}%`, transition: 'width 0.3s ease' }} />
+              <div className="sb-progress-bar">
+                <div className="sb-progress-fill" style={{ width: `${progress}%` }} />
               </div>
             </div>
 
-            <div className="sb-game-card" style={{ background: '#fff8f0', borderRadius: '24px', padding: '40px', border: '4px solid #b87a42', boxShadow: '0 10px 0 #8c5728, 0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div className="sb-game-card">
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
-                <span className="sb-level-badge" style={{ padding: '4px 14px', borderRadius: '12px', fontSize: '14px', fontWeight: '900', background: '#f5af19', color: '#fff', border: '2px solid #b87a42' }}>{selectedLevel} Level</span>
-                <span className="sb-hint-badge" style={{ fontSize: '14px', color: '#7a4b24', fontStyle: 'italic', fontWeight: '700', background: '#fff', padding: '4px 12px', borderRadius: '10px', border: '2px dashed #d89c63' }}>💡 {currentQuestion.hint}</span>
+              <div className="sb-badges-row">
+                <span className="sb-level-badge">{selectedLevel} Level</span>
+                <span className="sb-hint-badge">💡 {currentQuestion.hint}</span>
               </div>
 
-              <h2 style={{ fontSize: '22px', fontWeight: '900', color: '#3E2723', marginBottom: '24px', textAlign: 'center' }}>Arrange the words to form a sentence.</h2>
+              <h2 className="sb-game-title">Arrange the words to form a sentence.</h2>
 
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
-                
-                <div className="sb-sentence-box" style={{ overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
-                  {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
+              <div className="sb-section">
+                <p className="sb-label">YOUR SENTENCE</p>
+                <div className="sb-sentence-box" style={{ borderColor: answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff' }}>
+                  {selectedWords.length === 0 && !answered && <span className="sb-placeholder">Tap words below...</span>}
                   {selectedWords.map((word, index) => (
-                    <button key={`selected-${index}`} onClick={() => handleRemoveWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}>{word}</button>
+                    <button key={`selected-${index}`} onClick={() => handleRemoveWord(word, index)} disabled={answered} className="sb-word-btn sb-selected-word" style={{ background: answered ? 'transparent' : '#2ecc71', borderColor: answered ? 'transparent' : '#1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}>{word}</button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
-                
-                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-start' }}>
+              <div className="sb-section">
+                <p className="sb-label">WORD BANK</p>
+                <div className="sb-word-bank-container">
                   {wordBank.map((word, index) => (
-                    <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
+                    <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', borderColor: '#b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
                   ))}
                 </div>
               </div>
 
               {answered && (
-                <div className="sb-feedback-msg" style={{ borderRadius: '16px', background: isCorrect ? '#d4edda' : '#f8d7da', border: `3px solid ${isCorrect ? '#27ae60' : '#c0392b'}`, textAlign: 'center', color: isCorrect ? '#155724' : '#721c24', fontWeight: '900' }}>{feedbackMessage}</div>
+                <div className="sb-feedback-msg" style={{ background: isCorrect ? '#d4edda' : '#f8d7da', borderColor: isCorrect ? '#27ae60' : '#c0392b', color: isCorrect ? '#155724' : '#721c24' }}>{feedbackMessage}</div>
               )}
 
-              <div className="sb-action-buttons" style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+              <div className="sb-action-buttons">
                 {!answered ? (
                   <>
-                    <button onClick={() => initQuestion(currentQuestion)} className="sb-action-btn" style={{ flex: 1, background: '#ecf0f1', color: '#7f8c8d', border: '3px solid #bdc3c7', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #bdc3c7' }}>Reset</button>
-                    <button onClick={handleCheckAnswer} disabled={selectedWords.length === 0} className="sb-action-btn" style={{ flex: 2, background: '#f39c12', color: '#fff', border: '3px solid #b9770e', borderRadius: '16px', cursor: selectedWords.length === 0 ? 'not-allowed' : 'pointer', fontWeight: '900', opacity: selectedWords.length === 0 ? 0.5 : 1, boxShadow: '0 4px 0 #b9770e' }}>Check Answer</button>
+                    <button onClick={() => initQuestion(currentQuestion)} className="sb-action-btn" style={{ flex: 1, background: '#ecf0f1', color: '#7f8c8d', borderColor: '#bdc3c7', boxShadow: '0 4px 0 #bdc3c7' }}>Reset</button>
+                    <button onClick={handleCheckAnswer} disabled={selectedWords.length === 0} className="sb-action-btn" style={{ flex: 2, background: '#f39c12', color: '#fff', borderColor: '#b9770e', opacity: selectedWords.length === 0 ? 0.5 : 1, boxShadow: '0 4px 0 #b9770e' }}>Check Answer</button>
                   </>
                 ) : (
                   isCorrect ? (
-                    <button onClick={handleNext} className="sb-action-btn" style={{ width: '100%', background: '#2ecc71', color: '#fff', border: '3px solid #1d8348', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #1d8348' }}>{currentIndex === activeQuestions.length - 1 ? 'Finish Level' : 'Next Sentence →'}</button>
+                    <button onClick={handleNext} className="sb-action-btn" style={{ width: '100%', background: '#2ecc71', color: '#fff', borderColor: '#1d8348', boxShadow: '0 4px 0 #1d8348' }}>{currentIndex === activeQuestions.length - 1 ? 'Finish Level' : 'Next Sentence →'}</button>
                   ) : (
-                    <button onClick={handleTryAgain} className="sb-action-btn" style={{ width: '100%', background: '#e74c3c', color: '#fff', border: '3px solid #c0392b', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #922b21' }}>Try Again 🔄</button>
+                    <button onClick={handleTryAgain} className="sb-action-btn" style={{ width: '100%', background: '#e74c3c', color: '#fff', borderColor: '#c0392b', boxShadow: '0 4px 0 #922b21' }}>Try Again 🔄</button>
                   )
                 )}
               </div>
