@@ -605,21 +605,43 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
           .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 2px 8px !important; border-width: 1.5px !important; border-radius: 6px !important; }
 
-          .sb-sentence-box { padding: 10px !important; min-height: 60px !important; max-height: 100px !important; overflow-y: auto !important; border-width: 2px !important; gap: 6px !important; border-radius: 8px !important; margin-bottom: 12px !important; align-content: flex-start !important; }
+          /* ✅ FIX: PIN SA TAAS ANG BUONG PLAYING WRAPPER (NO RE-CENTERING) */
+          .sb-playing-wrapper {
+            justify-content: flex-start !important;
+            padding-top: 4px !important;
+          }
+
+          /* ✅ FIX: SENTENCE BOX - FIXED HEIGHT PARA HINDI MAG-GROW */
+          .sb-sentence-box { 
+            padding: 10px !important; 
+            height: 85px !important;
+            min-height: 85px !important;
+            max-height: 85px !important;
+            overflow-y: auto !important; 
+            scrollbar-gutter: stable !important;
+            border-width: 2px !important; 
+            gap: 6px !important; 
+            border-radius: 8px !important; 
+            margin-bottom: 12px !important; 
+            align-content: flex-start !important; 
+          }
           .sb-sentence-box span { font-size: 12px !important; }
 
-          /* ✅ FIX PARA HINDI MAG-JUMP PATAAS SA MOBILE */
+          /* ✅ FIX: WORD BANK - MAS MALAKING MIN-HEIGHT PARA HINDI MAG-COLLAPSE */
           .sb-word-bank-container { 
             gap: 8px !important; 
             margin-bottom: 12px !important; 
-            min-height: 80px !important; /* Reserve space para hindi mag-collapse */
+            min-height: 120px !important; /* Sapat para sa 3 rows, hindi mag-jump */
             align-content: flex-start !important; 
             align-items: flex-start !important; 
+            overflow-y: auto !important;
+            scrollbar-gutter: stable !important;
           }
           .sb-word-btn {
             padding: 6px 12px !important;
             height: 34px !important;
-            min-height: 34px !important; /* Fixed height */
+            min-height: 34px !important;
+            max-height: 34px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -628,6 +650,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-radius: 8px !important;
             flex: 0 0 auto !important; 
             align-self: flex-start !important;
+            box-sizing: border-box !important;
           }
 
           .sb-action-buttons { gap: 8px !important; margin-top: 12px !important; }
@@ -651,7 +674,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
           .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; }
           
-          .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 30px !important; min-height: 30px !important; }
+          .sb-sentence-box {
+            height: 75px !important;
+            min-height: 75px !important;
+            max-height: 75px !important;
+          }
+          .sb-word-bank-container {
+            min-height: 105px !important;
+          }
+          .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 30px !important; min-height: 30px !important; max-height: 30px !important; }
           .sb-action-btn { font-size: 12px !important; height: 38px !important; }
         }
       `}</style>
@@ -933,7 +964,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   if (gameState === 'playing' && currentQuestion) {
     return (
       <CozyThemeWrapper>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' }}>
+        {/* ✅ ADDED className="sb-playing-wrapper" PARA MA-FIX YUNG RE-CENTERING SA MOBILE */}
+        <div className="sb-playing-wrapper" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' }}>
           
           <div style={{ width: '100%', maxWidth: '950px' }}>
             
