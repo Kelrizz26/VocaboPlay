@@ -33,17 +33,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   const MAX_LIVES = 5;
   const REFILL_TIME_MS = 30 * 60 * 1000;
 
-  // Default states muna, papalitan natin kapag nag-load na ang user
   const [lives, setLives] = useState(MAX_LIVES);
   const [nextRefillTime, setNextRefillTime] = useState(null);
   const [timeLeftStr, setTimeLeftStr] = useState('');
 
-  // Ibang states (Diamonds, Unlocked, Progress)
   const [diamonds, setDiamonds] = useState(150);
   const [unlockedLevels, setUnlockedLevels] = useState(getInitialUnlockedLevels());
   const [levelProgress, setLevelProgress] = useState({});
 
-  // Auth at Data Loading
   const [currentUser, setCurrentUser] = useState(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
 
@@ -52,7 +49,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       if (user) {
         setCurrentUser(user);
         
-        // 1. Kunin ang specific data ng user na ito galing sa browser
         const savedLives = localStorage.getItem(`sb_lives_${user.uid}`);
         const savedRefill = localStorage.getItem(`sb_next_refill_${user.uid}`);
         const savedUnlocked = localStorage.getItem(`sb_unlocked_${user.uid}`);
@@ -74,7 +70,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           setLevelProgress({});
         }
 
-        // 2. Fetch diamonds at points sa Firebase
         try {
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
@@ -90,7 +85,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         }
         setIsUserLoaded(true);
       } else {
-        // Kapag walang naka-login (Guest)
         setCurrentUser(null);
         setLives(MAX_LIVES);
         setNextRefillTime(null);
@@ -103,7 +97,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return () => unsubscribe();
   }, []);
 
-  // I-save ang data sa browser specific sa user na naka-login
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(`sb_lives_${currentUser.uid}`, lives.toString());
@@ -119,9 +112,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     }
   }, [lives, nextRefillTime, unlockedLevels, levelProgress, currentUser]);
 
-  // 1. Offline Refill Logic (Kapag bumalik ka sa page, iche-check kung may naipon nang hearts)
   useEffect(() => {
-    if (!isUserLoaded) return; // Hintayin munang mag-load yung user data bago mag-compute
+    if (!isUserLoaded) return;
 
     const now = Date.now();
     if (lives < MAX_LIVES && nextRefillTime) {
@@ -141,12 +133,10 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         }
       }
     } else if (lives < MAX_LIVES && !nextRefillTime) {
-      // Kung kulang ang lives pero walang timer (e.g. bagong login), start tayo ng timer
       setNextRefillTime(now + REFILL_TIME_MS);
     }
   }, [isUserLoaded, lives, nextRefillTime]);
 
-  // 2. Live Countdown Timer
   useEffect(() => {
     if (lives >= MAX_LIVES || !nextRefillTime) {
       setTimeLeftStr('');
@@ -264,7 +254,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       setIsCorrect(false);
       playWrong();
       
-      // Start timer kapag nabawasan ang lives (kung dati ay 5)
       setLives(prev => {
         const newLives = prev - 1;
         if (prev === MAX_LIVES && newLives < MAX_LIVES && !nextRefillTime) {
@@ -588,6 +577,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                   <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#FFFFFF', margin: '0 0 8px 0', textShadow: '2px 2px 0px rgba(0,0,0,0.4)', letterSpacing: '0.5px' }}>{course.title}</h3>
                   <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4', flex: 1, marginBottom: '20px', fontWeight: '700', textShadow: '1px 1px 0px rgba(0,0,0,0.3)' }}>{course.description}</p>
                   
+                  {/* 👇 PROGRESS BAR - IBINALIK NATIN DITO 👇 */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#FFFFFF', fontWeight: '900', marginBottom: '6px', textShadow: '1px 1px 0px rgba(0,0,0,0.3)' }}>
+                      <span>Progress</span>
+                      <span>{courseProgress}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.4)' }}>
+                      <div style={{ width: `${courseProgress}%`, height: '100%', background: '#FFFFFF', borderRadius: '10px', transition: 'width 0.5s ease' }} />
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                     
                     <div style={{ 
@@ -865,4 +865,4 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   return null;
 };
 
-export default SentenceBuilder;
+export default SentenceBuilder; 
