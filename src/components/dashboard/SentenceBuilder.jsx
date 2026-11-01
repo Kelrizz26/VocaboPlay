@@ -507,7 +507,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         @media (max-width: 1024px) {
           .sb-container { 
             padding: 8px !important; 
-            height: auto !important; /* HAYAANG LUMAKI PARA MAKAPAG-SCROLL SA TOPICS */
+            height: auto !important; 
             min-height: 100dvh !important;
             overflow: visible !important; 
             display: flex !important;
@@ -521,40 +521,52 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             overflow: hidden !important;
           }
 
-          /* IBINALIK YUNG HEADER SA TOPICS AT LEVELS PERO GINAWANG COMPACT */
+          /* ✅ IBINALIK SA ROW ANG HEADER PARA MAGKATABI, WALANG TINAGO */
           .sb-header-hud {
             display: flex !important;
-            flex-direction: column !important;
+            flex-direction: row !important;
             align-items: center !important;
-            gap: 8px !important;
-            margin-bottom: 12px !important;
-            width: 100% !important;
-          }
-          .sb-title-box {
-            width: 100% !important;
-            justify-content: center !important;
-            padding: 8px 12px !important;
-            border-width: 2px !important;
-            box-shadow: 0 3px 0 #8c5728 !important;
-          }
-          .sb-title-box h1 { font-size: 16px !important; }
-          .sb-title-box p { font-size: 10px !important; }
-          .sb-title-box span { font-size: 22px !important; }
-          
-          .sb-stats-row {
-            width: 100% !important;
             justify-content: space-between !important;
-            gap: 6px !important;
+            gap: 4px !important;
+            margin-bottom: 8px !important;
+            width: 100% !important;
+          }
+          
+          /* TITLE BOX - PINAGKASYA PERO BUKAS LAHAT */
+          .sb-title-box {
+            width: auto !important;
+            flex-shrink: 1 !important; 
+            justify-content: flex-start !important;
+            padding: 4px 6px !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
+            gap: 4px !important;
+            border-radius: 8px !important;
+          }
+          .sb-title-box span { font-size: 14px !important; }
+          .sb-title-box h1 { font-size: 10px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; }
+          .sb-title-box p { font-size: 7px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; display: block !important; } 
+          
+          /* STATS ROW - PINALIIT PARA KASYA SA KANAN */
+          .sb-stats-row {
+            width: auto !important;
+            flex-shrink: 0 !important;
+            justify-content: flex-end !important;
+            gap: 4px !important;
+            flex-wrap: nowrap !important;
           }
           .sb-stat-badge {
-            padding: 4px 10px !important;
-            border-width: 2px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
+            padding: 2px 6px !important;
+            border-radius: 8px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
+            gap: 2px !important;
+            height: 22px !important;
+            box-sizing: border-box !important;
           }
-          .sb-stat-badge .stat-icon { font-size: 14px !important; }
-          .sb-stat-badge span { font-size: 14px !important; }
-          .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
+          .sb-stat-badge .stat-icon { font-size: 10px !important; }
+          .sb-stat-badge span { font-size: 10px !important; font-weight: 900 !important; }
+          .sb-stat-badge button { width: 14px !important; height: 14px !important; font-size: 8px !important; }
 
           /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
           .sb-container.is-playing .sb-header-hud {
