@@ -460,8 +460,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
           /* Header HUD */
           .sb-header-hud {
-            flex-direction: column !important;
-            align-items: flex-start !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
             gap: 6px !important;
             margin-bottom: 12px !important;
           }
@@ -471,7 +472,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-width: 2px !important;
             box-shadow: 0 2px 0 #8c5728 !important;
             gap: 6px !important;
-            width: 100%;
+            flex: 1 1 100% !important; 
           }
           .sb-title-box span { font-size: 20px !important; }
           .sb-title-box h1 { font-size: 14px !important; margin: 0 !important; }
@@ -499,6 +500,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-width: 2px !important;
             box-shadow: 0 3px 0 #3a1f0a !important;
             border-radius: 16px !important;
+            margin-top: 4px !important;
           }
           .sb-banner-box h2 { font-size: 16px !important; margin: 0 !important; }
           .sb-subtext-box {
@@ -521,58 +523,61 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-radius: 12px !important;
             box-shadow: 0 3px 0 var(--border-color) !important;
           }
-          .sb-topic-card .card-image { height: 80px !important; }
-          .sb-topic-card .card-content { padding: 8px !important; }
+          .sb-topic-card .card-image { height: 70px !important; }
+          .sb-topic-card .card-content { padding: 6px !important; }
           .sb-topic-card .card-title { font-size: 12px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-desc { font-size: 9px !important; line-height: 1.1 !important; margin-bottom: 6px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-          .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-progress-bar { height: 4px !important; margin-bottom: 6px !important; }
-          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 4px !important; border-width: 1px !important; border-radius: 6px !important; }
-          .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
-          .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
+          .sb-topic-card .card-desc { font-size: 8px !important; line-height: 1.1 !important; margin-bottom: 4px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+          .sb-topic-card .card-progress-text { font-size: 7px !important; margin-bottom: 2px !important; }
+          .sb-topic-card .card-progress-bar { height: 3px !important; margin-bottom: 4px !important; }
+          .sb-topic-card .card-badge { font-size: 6px !important; padding: 1px 4px !important; border-width: 1px !important; border-radius: 4px !important; }
+          .sb-topic-card .card-arrow { width: 16px !important; height: 16px !important; border-width: 1.5px !important; }
+          .sb-topic-card .card-arrow svg { width: 8px !important; height: 8px !important; }
 
           /* Level Selection */
           .sb-level-header {
-            padding: 8px 12px !important;
+            padding: 6px 10px !important;
             border-width: 2px !important;
             box-shadow: 0 3px 0 #8c5728 !important;
-            gap: 8px !important;
-            border-radius: 12px !important;
+            gap: 6px !important;
+            border-radius: 10px !important;
           }
-          .sb-level-header span { font-size: 20px !important; }
-          .sb-level-header h1 { font-size: 14px !important; }
-          .sb-level-header p { font-size: 9px !important; }
+          .sb-level-header span { font-size: 16px !important; }
+          .sb-level-header h1 { font-size: 12px !important; }
+          .sb-level-header p { font-size: 8px !important; }
           
-          .sb-level-card { padding: 8px 10px !important; border-radius: 10px !important; gap: 8px !important; }
-          .sb-level-card .level-icon { width: 36px !important; height: 36px !important; font-size: 14px !important; border-width: 2px !important; border-radius: 6px !important; }
-          .sb-level-card .level-text-title { font-size: 13px !important; }
-          .sb-level-card .level-text-desc { font-size: 9px !important; margin-top: 1px !important; }
-          .sb-level-card > div:last-child span { font-size: 16px !important; }
+          .sb-level-card { padding: 6px 8px !important; border-radius: 8px !important; gap: 6px !important; }
+          .sb-level-card .level-icon { width: 30px !important; height: 30px !important; font-size: 12px !important; border-width: 1.5px !important; border-radius: 6px !important; }
+          .sb-level-card .level-text-title { font-size: 12px !important; }
+          .sb-level-card .level-text-desc { font-size: 8px !important; margin-top: 1px !important; }
+          .sb-level-card > div:last-child span { font-size: 14px !important; }
 
           /* Playing Screen */
-          .sb-top-hud { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; margin-bottom: 8px !important; }
+          .sb-top-hud { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; margin-bottom: 6px !important; }
           .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 4px !important; }
-          .sb-top-stats > div { padding: 3px 8px !important; font-size: 10px !important; border-width: 2px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats > div { padding: 2px 6px !important; font-size: 10px !important; border-width: 1.5px !important; box-shadow: 0 1.5px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats button { padding: 4px 10px !important; font-size: 10px !important; }
           
-          .sb-progress-container { padding: 6px 10px !important; margin-bottom: 10px !important; border-width: 2px !important; box-shadow: 0 2px 0 #8c5728 !important; }
+          .sb-progress-container { padding: 6px 8px !important; margin-bottom: 8px !important; border-width: 2px !important; border-radius: 8px !important; box-shadow: 0 2px 0 #8c5728 !important; }
           .sb-progress-text { font-size: 10px !important; margin-bottom: 4px !important; }
           .sb-progress-bar { height: 6px !important; }
 
-          .sb-game-card { padding: 12px 10px !important; border-width: 2px !important; border-radius: 12px !important; box-shadow: 0 4px 0 #8c5728 !important; }
-          .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
-          .sb-level-badge { font-size: 10px !important; padding: 2px 8px !important; border-width: 1px !important; }
-          .sb-hint-badge { font-size: 10px !important; padding: 2px 8px !important; border-width: 1px !important; }
+          .sb-game-card { padding: 10px 8px !important; border-width: 2px !important; border-radius: 12px !important; box-shadow: 0 4px 0 #8c5728 !important; }
+          .sb-game-card h2 { font-size: 14px !important; margin-bottom: 10px !important; }
+          .sb-level-badge, .sb-hint-badge { font-size: 9px !important; padding: 2px 6px !important; border-width: 1.5px !important; border-radius: 6px !important; }
 
-          .sb-sentence-box { padding: 10px !important; min-height: 60px !important; border-width: 2px !important; gap: 4px !important; border-radius: 10px !important; }
+          .sb-sentence-box { padding: 8px !important; min-height: 50px !important; border-width: 2px !important; gap: 4px !important; border-radius: 8px !important; margin-bottom: 12px !important; }
+          .sb-sentence-box span { font-size: 12px !important; }
+
+          .sb-word-bank-container { margin-bottom: 12px !important; gap: 6px !important; }
           .sb-word-btn {
-            padding: 4px 8px !important;
-            font-size: 12px !important;
-            border-width: 1px !important;
-            border-radius: 6px !important;
+            padding: 6px 10px !important;
+            font-size: 13px !important;
+            border-width: 1.5px !important;
+            border-radius: 8px !important;
             box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
           }
           
-          .sb-action-buttons { flex-direction: row !important; gap: 6px !important; margin-top: 12px !important; }
+          .sb-action-buttons { flex-direction: column !important; gap: 8px !important; margin-top: 12px !important; }
           .sb-action-btn {
             width: 100% !important;
             padding: 10px !important;
@@ -587,11 +592,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
         @media (max-width: 400px) {
           .sb-topic-grid { grid-template-columns: 1fr !important; }
-          .sb-topic-card .card-image { height: 120px !important; }
+          .sb-topic-card .card-image { height: 100px !important; }
           .sb-topic-card .card-title { font-size: 14px !important; }
-          .sb-topic-card .card-desc { font-size: 11px !important; -webkit-line-clamp: unset !important; }
-          .sb-topic-card .card-badge { font-size: 9px !important; padding: 3px 6px !important; }
-          .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; }
+          .sb-topic-card .card-desc { font-size: 10px !important; -webkit-line-clamp: unset !important; }
+          .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
+          .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; }
         }
       `}</style>
 
@@ -930,7 +935,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '24px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minHeight: '50px' }}>
+                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minHeight: '50px' }}>
                   {wordBank.map((word, index) => (
                     <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
                   ))}
