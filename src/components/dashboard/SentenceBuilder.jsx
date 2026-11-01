@@ -568,32 +568,35 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-sentence-box { padding: 6px !important; min-height: 40px !important; max-height: 60px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 6px !important; align-content: flex-start; }
           .sb-sentence-box span { font-size: 9px !important; }
 
-          /* WORD BUTTONS - MAY SPACE NA! */
-          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; align-items: flex-start !important; margin-bottom: 8px !important; }
+          /* WORD BUTTONS - AYOS NA! */
+          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; align-items: center !important; margin-bottom: 8px !important; }
           .sb-word-btn {
-            padding: 4px 8px !important; /* Binigyan ng space sa gilid */
-            height: 28px !important; /* Fixed height */
-            min-height: 0 !important;
+            height: 32px !important; /* Fixed height para hindi mag-stretch */
+            padding: 0 12px !important; /* Sapat na space sa gilid */
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 10px !important;
+            font-size: 12px !important;
             border-width: 1.5px !important;
-            border-radius: 4px !important;
-            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
-            flex: 0 0 auto !important; /* Prevents stretch */
-            white-space: nowrap !important; /* Prevents text wrap */
+            border-radius: 6px !important;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
           }
 
           /* ACTION BUTTONS */
-          .sb-action-buttons { flex-direction: row !important; gap: 4px !important; margin-top: 8px !important; }
+          .sb-action-buttons { display: flex !important; flex-direction: row !important; gap: 8px !important; margin-top: 8px !important; }
           .sb-action-btn {
             flex: 1 !important;
-            padding: 4px !important;
-            height: 28px !important; /* Fixed height */
-            font-size: 10px !important;
-            border-width: 1.5px !important;
-            border-radius: 6px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 13px !important;
+            border-width: 2px !important;
+            border-radius: 8px !important;
             box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
           }
           
@@ -608,8 +611,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-badge { font-size: 6px !important; padding: 1px 4px !important; }
           .sb-topic-card .card-arrow { width: 18px !important; height: 18px !important; }
           
-          .sb-word-btn { font-size: 9px !important; padding: 4px 6px !important; min-height: 24px !important; }
-          .sb-action-btn { font-size: 9px !important; padding: 4px !important; min-height: 26px !important; }
+          .sb-word-btn { font-size: 11px !important; padding: 0 10px !important; height: 28px !important; }
+          .sb-action-btn { font-size: 12px !important; height: 32px !important; }
         }
       `}</style>
 
