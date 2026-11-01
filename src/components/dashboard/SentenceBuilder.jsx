@@ -443,6 +443,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       boxSizing: 'border-box'
     }}>
       <style>{`
+        /* GLOBAL LAYOUT PARA SA DESKTOP */
         .sb-container {
           max-width: 1200px;
           width: 100%;
@@ -451,6 +452,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
+        }
+
+        .sb-header-hud {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+          width: 100%;
         }
 
         /* --- GLOBAL DESKTOP FIXES --- */
@@ -503,17 +513,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           touch-action: manipulation;
         }
 
-        /* ✅ MOBILE & LANDSCAPE FIX */
+        /* ✅ MOBILE FIX (Sakop lahat ng mobile at tablet) */
         @media (max-width: 1024px) {
           .sb-container { 
             padding: 8px !important; 
-            padding-bottom: 40px !important; /* Dinagdag para kita yung button sa baba */
+            padding-bottom: 80px !important; /* Espasyo para sa Back to Games */
             height: auto !important; 
             min-height: 100dvh !important;
             overflow: visible !important; 
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
           }
 
           /* PAG SA LARO LANG, NAKA-LOCK ANG HEIGHT AT WALANG SCROLL */
@@ -523,7 +530,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             padding-bottom: 8px !important;
           }
 
-          /* ✅ IBINALIK SA ROW ANG HEADER PARA MAGKATABI, WALANG TINAGO */
+          /* HEADER: Title sa kaliwa, Stats sa kanan */
           .sb-header-hud {
             display: flex !important;
             flex-direction: row !important;
@@ -534,7 +541,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             width: 100% !important;
           }
           
-          /* TITLE BOX - PINAGKASYA PERO BUKAS LAHAT */
           .sb-title-box {
             width: auto !important;
             flex-shrink: 1 !important; 
@@ -549,7 +555,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; }
           .sb-title-box p { font-size: 8px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; display: block !important; } 
           
-          /* STATS ROW - PINALIIT PARA KASYA SA KANAN */
           .sb-stats-row {
             width: auto !important;
             flex-shrink: 0 !important;
@@ -575,186 +580,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             display: none !important;
           }
 
-          .sb-playing-wrapper { 
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-          }
-
-          .sb-playing-wrapper > div {
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-          }
-
-          /* TOP HUD (Exit, Coins, Hearts) SA LARO */
-          .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
-          .sb-top-stats { gap: 4px !important; display: flex !important; }
-          .sb-top-stats > div { 
-            padding: 2px 8px !important; 
-            font-size: 11px !important; 
-            border-width: 1.5px !important; 
-            box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; 
-            border-radius: 6px !important;
-            gap: 4px !important;
-            height: 24px !important;
-            box-sizing: border-box !important;
-          }
-          .sb-top-stats span { font-size: 11px !important; }
-          .sb-top-hud button { 
-            padding: 0 10px !important; 
-            font-size: 11px !important; 
-            border-width: 1.5px !important;
-            border-radius: 6px !important;
-            height: 24px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-          }
-
-          /* PROGRESS BAR */
-          .sb-progress-container { 
-            padding: 4px 8px !important; 
-            margin-bottom: 6px !important; 
-            border-width: 1.5px !important; 
-            border-radius: 6px !important; 
-            box-shadow: 0 2px 0 #8c5728 !important;
-            height: 28px !important;
-            box-sizing: border-box !important;
-            flex-shrink: 0 !important;
-          }
-          .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
-          .sb-progress-bar { height: 4px !important; }
-
-          /* GAME CARD */
-          .sb-game-card { 
-            padding: 8px 10px !important; 
-            border-width: 2px !important; 
-            border-radius: 10px !important; 
-            box-shadow: 0 3px 0 #8c5728 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            flex: 1 !important; 
-            overflow: hidden !important;
-            min-height: 0 !important;
-          }
-          
-          .sb-game-card > div:first-child { 
-            margin-bottom: 4px !important; 
-            flex-wrap: nowrap !important;
-            height: 22px !important;
-            flex-shrink: 0 !important;
-          }
-          .sb-level-badge, .sb-hint-badge { 
-            font-size: 9px !important; 
-            padding: 0 6px !important; 
-            border-width: 1px !important; 
-            border-radius: 4px !important; 
-            line-height: 20px !important;
-          }
-          
-          .sb-game-card h2 { display: none !important; }
-          
-          .sb-game-card p { 
-            font-size: 10px !important; 
-            margin: 4px 0 2px 0 !important; 
-            letter-spacing: 0 !important; 
-            color: #8c5728 !important;
-            font-weight: 900 !important;
-            line-height: 1 !important;
-            flex-shrink: 0 !important;
-          }
-
-          /* SENTENCE BOX */
-          .sb-sentence-box { 
-            flex: 1 1 40% !important; 
-            min-height: 50px !important;
-            max-height: 70px !important;
-            height: auto !important;
-            padding: 4px !important; 
-            overflow-y: auto !important; 
-            border-width: 1.5px !important; 
-            gap: 4px !important; 
-            border-radius: 6px !important; 
-            margin-bottom: 0 !important; 
-            align-content: flex-start !important; 
-            box-sizing: border-box !important;
-          }
-          .sb-sentence-box span { font-size: 10px !important; }
-
-          /* WORD BANK */
-          .sb-word-bank-container { 
-            flex: 1 1 60% !important; 
-            min-height: 60px !important;
-            max-height: 100px !important;
-            height: auto !important;
-            gap: 4px !important; 
-            margin-bottom: 0 !important; 
-            align-content: flex-start !important; 
-            align-items: flex-start !important; 
-            overflow-y: auto !important;
-            padding: 4px !important;
-            border: 1px dashed rgba(0,0,0,0.1) !important;
-            border-radius: 6px !important;
-            box-sizing: border-box !important;
-          }
-          
-          /* MGA SALITA */
-          .sb-word-btn {
-            padding: 0 8px !important;
-            height: 26px !important;
-            min-height: 26px !important;
-            max-height: 26px !important;
-            font-size: 11px !important;
-            border-width: 1.5px !important;
-            border-radius: 4px !important;
-            flex: none !important; 
-            align-self: flex-start !important;
-            box-sizing: border-box !important;
-            white-space: nowrap !important;
-            line-height: 1 !important;
-            touch-action: manipulation !important;
-          }
-
-          /* FEEDBACK MESSAGE */
-          .sb-feedback-msg {
-            flex-shrink: 0 !important;
-            height: 24px !important;
-            min-height: 24px !important;
-            max-height: 24px !important;
-            padding: 0 !important;
-            font-size: 10px !important;
-            margin: 4px 0 0 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            overflow: hidden !important;
-            border-width: 1.5px !important;
-            border-radius: 4px !important;
-            box-sizing: border-box !important;
-          }
-
-          /* BUTTONS */
-          .sb-action-buttons { 
-            flex-shrink: 0 !important;
-            gap: 6px !important; 
-            margin-top: auto !important;
-            padding-top: 6px !important;
-            height: 36px !important;
-          }
-          .sb-action-btn {
-            height: 100% !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-            font-size: 13px !important;
-            border-width: 1.5px !important;
-            border-radius: 6px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            box-sizing: border-box !important;
-            touch-action: manipulation !important;
-          }
-
-          /* TOPIC GRID */
+          /* TOPIC CARDS: 2 COLUMNS SA MOBILE */
           .sb-topic-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 8px !important;
@@ -771,12 +597,45 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
           .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
 
-          /* Footer Button */
+          /* FOOTER BUTTON */
           .sb-footer-btn {
             padding: 8px 16px !important;
             font-size: 12px !important;
             border-width: 2.5px !important;
           }
+
+          /* PLAYING SCREEN FIXES */
+          .sb-playing-wrapper { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+          .sb-playing-wrapper > div { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+          .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
+          .sb-top-stats { gap: 4px !important; display: flex !important; }
+          .sb-top-stats > div { padding: 2px 8px !important; font-size: 11px !important; border-width: 1.5px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; border-radius: 6px !important; gap: 4px !important; height: 24px !important; box-sizing: border-box !important; }
+          .sb-top-stats span { font-size: 11px !important; }
+          .sb-top-hud button { padding: 0 10px !important; font-size: 11px !important; border-width: 1.5px !important; border-radius: 6px !important; height: 24px !important; box-shadow: 0 2px 0 #8c5728 !important; }
+
+          .sb-progress-container { padding: 4px 8px !important; margin-bottom: 6px !important; border-width: 1.5px !important; border-radius: 6px !important; box-shadow: 0 2px 0 #8c5728 !important; height: 28px !important; box-sizing: border-box !important; flex-shrink: 0 !important; }
+          .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
+          .sb-progress-bar { height: 4px !important; }
+
+          .sb-game-card { padding: 8px 10px !important; border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 3px 0 #8c5728 !important; display: flex !important; flex-direction: column !important; flex: 1 !important; overflow: hidden !important; min-height: 0 !important; }
+          .sb-game-card > div:first-child { margin-bottom: 4px !important; flex-wrap: nowrap !important; height: 22px !important; flex-shrink: 0 !important; }
+          .sb-level-badge, .sb-hint-badge { font-size: 9px !important; padding: 0 6px !important; border-width: 1px !important; border-radius: 4px !important; line-height: 20px !important; }
+          
+          .sb-game-card h2 { display: none !important; }
+          
+          .sb-game-card p { font-size: 10px !important; margin: 4px 0 2px 0 !important; letter-spacing: 0 !important; color: #8c5728 !important; font-weight: 900 !important; line-height: 1 !important; flex-shrink: 0 !important; }
+
+          .sb-sentence-box { flex: 1 1 40% !important; min-height: 50px !important; max-height: 70px !important; height: auto !important; padding: 4px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 0 !important; align-content: flex-start !important; box-sizing: border-box !important; }
+          .sb-sentence-box span { font-size: 10px !important; }
+
+          .sb-word-bank-container { flex: 1 1 60% !important; min-height: 60px !important; max-height: 100px !important; height: auto !important; gap: 4px !important; margin-bottom: 0 !important; align-content: flex-start !important; align-items: flex-start !important; overflow-y: auto !important; padding: 4px !important; border: 1px dashed rgba(0,0,0,0.1) !important; border-radius: 6px !important; box-sizing: border-box !important; }
+          
+          .sb-word-btn { padding: 0 8px !important; height: 26px !important; min-height: 26px !important; max-height: 26px !important; font-size: 11px !important; border-width: 1.5px !important; border-radius: 4px !important; flex: none !important; align-self: flex-start !important; box-sizing: border-box !important; white-space: nowrap !important; line-height: 1 !important; touch-action: manipulation !important; }
+
+          .sb-feedback-msg { flex-shrink: 0 !important; height: 24px !important; min-height: 24px !important; max-height: 24px !important; padding: 0 !important; font-size: 10px !important; margin: 4px 0 0 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow: hidden !important; border-width: 1.5px !important; border-radius: 4px !important; box-sizing: border-box !important; }
+
+          .sb-action-buttons { flex-shrink: 0 !important; gap: 6px !important; margin-top: auto !important; padding-top: 6px !important; height: 36px !important; }
+          .sb-action-btn { height: 100% !important; min-height: 0 !important; padding: 0 !important; font-size: 13px !important; border-width: 1.5px !important; border-radius: 6px !important; box-shadow: 0 2px 0 #8c5728 !important; box-sizing: border-box !important; touch-action: manipulation !important; }
         }
       `}</style>
 
@@ -970,7 +829,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           })}
         </div>
 
-        {/* DINAGDAGAN KO NG MARGIN PARA KITANG-KITA */}
+        {/* DINAGDAGAN KO NG MARGIN PARA KITANG-KITA SA MOBILE */}
         <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
           <button onClick={handleExitGame} className="sb-footer-btn" style={{ background: '#7a4b24', border: '4px solid #4a2c12', padding: '12px 32px', borderRadius: '16px', color: '#fff', cursor: 'pointer', fontWeight: '900', fontSize: '16px', boxShadow: '0 6px 0 #3a1f0a, inset 0 4px 6px rgba(255,255,255,0.2)' }}>
             ← Back to Games
