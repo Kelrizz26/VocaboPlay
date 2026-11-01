@@ -515,13 +515,51 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             justify-content: flex-start !important;
           }
 
-          /* PAG SA LARO LANG (playing state), NAKA-LOCK ANG HEIGHT AT WALANG SCROLL */
+          /* PAG SA LARO LANG, NAKA-LOCK ANG HEIGHT AT WALANG SCROLL */
           .sb-container.is-playing {
             height: 100dvh !important;
             overflow: hidden !important;
           }
 
-          .sb-header-hud { display: none !important; }
+          /* IBINALIK YUNG HEADER SA TOPICS AT LEVELS PERO GINAWANG COMPACT */
+          .sb-header-hud {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+            width: 100% !important;
+          }
+          .sb-title-box {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 8px 12px !important;
+            border-width: 2px !important;
+            box-shadow: 0 3px 0 #8c5728 !important;
+          }
+          .sb-title-box h1 { font-size: 16px !important; }
+          .sb-title-box p { font-size: 10px !important; }
+          .sb-title-box span { font-size: 22px !important; }
+          
+          .sb-stats-row {
+            width: 100% !important;
+            justify-content: space-between !important;
+            gap: 6px !important;
+          }
+          .sb-stat-badge {
+            padding: 4px 10px !important;
+            border-width: 2px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
+          }
+          .sb-stat-badge .stat-icon { font-size: 14px !important; }
+          .sb-stat-badge span { font-size: 14px !important; }
+          .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
+
+          /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
+          .sb-container.is-playing .sb-header-hud {
+            display: none !important;
+          }
 
           .sb-playing-wrapper { 
             height: 100% !important;
@@ -537,7 +575,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             overflow: hidden !important;
           }
 
-          /* TOP HUD */
+          /* TOP HUD (Exit, Coins, Hearts) SA LARO */
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
           .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { 
@@ -735,7 +773,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
         `}</style>
 
-        <div className="sb-header-hud" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="sb-header-hud">
           
           <div className="sb-title-box" style={{ background: 'linear-gradient(180deg, #fbd786 0%, #f5af19 100%)', padding: '12px 24px', borderRadius: '20px', border: '4px solid #b87a42', boxShadow: '0 6px 0 #8c5728, inset 0 4px 6px rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '14px' }}>
             <span style={{ fontSize: '32px', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.2))' }}>📖</span>
