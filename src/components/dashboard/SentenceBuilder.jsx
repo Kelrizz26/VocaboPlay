@@ -428,7 +428,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   }
 
   const CozyThemeWrapper = ({ children }) => (
-    <div style={{
+    <div className="sb-outer-wrapper" style={{
       position: 'fixed', top: 0, left: 0, width: '100vw', 
       height: '100dvh', minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden',
       backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
@@ -503,6 +503,10 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
           /* TODO: ISAGAD ANG FIT SA SCREEN (NO SCROLL) */
+          .sb-outer-wrapper {
+            overflow: hidden !important;
+          }
+
           .sb-container { 
             padding: 4px 6px !important; 
             height: 100dvh !important; 
@@ -527,7 +531,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
 
           /* TOP HUD (Exit, Coins, Hearts) - Pinaliit nang todo */
-          .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; }
+          .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
           .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { 
             padding: 2px 8px !important; 
@@ -558,6 +562,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-shadow: 0 2px 0 #8c5728 !important;
             height: 28px !important;
             box-sizing: border-box !important;
+            flex-shrink: 0 !important;
           }
           .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
           .sb-progress-bar { height: 4px !important; }
@@ -579,14 +584,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-game-card > div:first-child { 
             margin-bottom: 4px !important; 
             flex-wrap: nowrap !important;
-            height: 20px !important;
+            height: 22px !important;
+            flex-shrink: 0 !important;
           }
           .sb-level-badge, .sb-hint-badge { 
             font-size: 9px !important; 
             padding: 0 6px !important; 
             border-width: 1px !important; 
             border-radius: 4px !important; 
-            line-height: 18px !important;
+            line-height: 20px !important;
           }
           
           /* Hide Title */
@@ -602,15 +608,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             color: #8c5728 !important;
             font-weight: 900 !important;
             line-height: 1 !important;
+            flex-shrink: 0 !important;
           }
 
-          /* SENTENCE BOX - FLEX PARA HATIIN YUNG SPACE */
+          /* SENTENCE BOX - NAKA-LOCK ANG HEIGHT (HINDI GUMAGALAW) */
           .sb-sentence-box { 
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            height: 65px !important;
+            min-height: 65px !important;
+            max-height: 65px !important;
             padding: 4px !important; 
-            flex: 0.4 !important; 
-            min-height: 45px !important;
-            height: auto !important;
-            max-height: 60px !important;
             overflow-y: auto !important; 
             border-width: 1.5px !important; 
             gap: 4px !important; 
@@ -621,14 +629,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BANK - FLEX PARA HATIIN YUNG SPACE */
+          /* WORD BANK - NAKA-LOCK DIN ANG HEIGHT (HINDI NAG-COLLAPSE) */
           .sb-word-bank-container { 
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            height: 90px !important;
+            min-height: 90px !important; 
+            max-height: 90px !important;
             gap: 4px !important; 
             margin-bottom: 0 !important; 
-            flex: 0.6 !important; 
-            min-height: 60px !important;
-            height: auto !important;
-            max-height: 90px !important;
             align-content: flex-start !important; 
             align-items: flex-start !important; 
             overflow-y: auto !important;
@@ -647,7 +656,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             font-size: 11px !important;
             border-width: 1.5px !important;
             border-radius: 4px !important;
-            flex: 0 0 auto !important; 
+            flex: none !important; 
             align-self: flex-start !important;
             box-sizing: border-box !important;
             white-space: nowrap !important;
@@ -656,6 +665,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
           /* FEEDBACK MESSAGE */
           .sb-feedback-msg {
+            flex-shrink: 0 !important;
             height: 24px !important;
             min-height: 24px !important;
             max-height: 24px !important;
@@ -673,11 +683,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
           /* BUTTONS (Reset at Check) - NAKA-PIN SA BABA */
           .sb-action-buttons { 
+            flex-shrink: 0 !important;
             gap: 6px !important; 
             margin-top: auto !important; 
             padding-top: 6px !important;
             height: 36px !important;
-            flex-shrink: 0 !important;
           }
           .sb-action-btn {
             height: 100% !important;
