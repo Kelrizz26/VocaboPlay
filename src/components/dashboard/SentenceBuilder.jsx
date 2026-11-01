@@ -461,7 +461,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           gap: 12px; 
           align-items: flex-start !important; 
           align-content: flex-start !important;
-          min-height: 80px; 
+          height: 140px; /* FIXED HEIGHT PARA HINDI GUMALAW */
+          overflow-y: auto;
           margin-bottom: 20px;
         }
         
@@ -605,18 +606,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
           .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 2px 8px !important; border-width: 1.5px !important; border-radius: 6px !important; }
 
-          /* ✅ FIX: PIN SA TAAS ANG BUONG PLAYING WRAPPER (NO RE-CENTERING) */
           .sb-playing-wrapper {
             justify-content: flex-start !important;
             padding-top: 4px !important;
           }
 
-          /* ✅ FIX: SENTENCE BOX - FIXED HEIGHT PARA HINDI MAG-GROW */
+          /* ✅ FIX: SENTENCE BOX - NAKA-FIXED HEIGHT, MAG-SCROLL NA LANG KUNG PUNO */
           .sb-sentence-box { 
             padding: 10px !important; 
-            height: 85px !important;
-            min-height: 85px !important;
-            max-height: 85px !important;
+            height: 90px !important;
+            min-height: 90px !important;
+            max-height: 90px !important;
             overflow-y: auto !important; 
             scrollbar-gutter: stable !important;
             border-width: 2px !important; 
@@ -627,15 +627,20 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-sentence-box span { font-size: 12px !important; }
 
-          /* ✅ FIX: WORD BANK - MAS MALAKING MIN-HEIGHT PARA HINDI MAG-COLLAPSE */
+          /* ✅ FIX: WORD BANK - NAKA-FIXED HEIGHT PARA HINDI MAGING EMPTY ANG SPACE */
           .sb-word-bank-container { 
             gap: 8px !important; 
             margin-bottom: 12px !important; 
-            min-height: 120px !important; /* Sapat para sa 3 rows, hindi mag-jump */
+            height: 130px !important; /* FIXED HEIGHT */
+            min-height: 130px !important; 
+            max-height: 130px !important;
             align-content: flex-start !important; 
             align-items: flex-start !important; 
             overflow-y: auto !important;
             scrollbar-gutter: stable !important;
+            border: 1px dashed rgba(0,0,0,0.05) !important; /* Optional: Para makita mo yung box */
+            border-radius: 8px !important;
+            padding: 4px !important;
           }
           .sb-word-btn {
             padding: 6px 12px !important;
@@ -675,12 +680,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; }
           
           .sb-sentence-box {
-            height: 75px !important;
-            min-height: 75px !important;
-            max-height: 75px !important;
+            height: 80px !important;
+            min-height: 80px !important;
+            max-height: 80px !important;
           }
           .sb-word-bank-container {
-            min-height: 105px !important;
+            height: 115px !important;
+            min-height: 115px !important;
+            max-height: 115px !important;
           }
           .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 30px !important; min-height: 30px !important; max-height: 30px !important; }
           .sb-action-btn { font-size: 12px !important; height: 38px !important; }
@@ -964,7 +971,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   if (gameState === 'playing' && currentQuestion) {
     return (
       <CozyThemeWrapper>
-        {/* ✅ ADDED className="sb-playing-wrapper" PARA MA-FIX YUNG RE-CENTERING SA MOBILE */}
         <div className="sb-playing-wrapper" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' }}>
           
           <div style={{ width: '100%', maxWidth: '950px' }}>
@@ -1013,7 +1019,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
-                <div className="sb-sentence-box" style={{ minHeight: '100px', maxHeight: '150px', overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
+                {/* ✅ FIX: NAKA-FIXED HEIGHT NA ITO (120px) PARA HINDI MAG-GROW PABABA */}
+                <div className="sb-sentence-box" style={{ height: '120px', minHeight: '120px', maxHeight: '120px', overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
                   {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
                   {selectedWords.map((word, index) => (
                     <button key={`selected-${index}`} onClick={() => handleRemoveWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}>{word}</button>
@@ -1023,7 +1030,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
-                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', minHeight: '50px', alignItems: 'flex-start' }}>
+                {/* ✅ FIX: NAKA-FIXED HEIGHT DIN ITO (150px) PARA HINDI MAG-COLLAPSE KAPAG NAUBOS */}
+                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', height: '150px', minHeight: '150px', maxHeight: '150px', overflowY: 'auto', alignItems: 'flex-start' }}>
                   {wordBank.map((word, index) => (
                     <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
                   ))}
