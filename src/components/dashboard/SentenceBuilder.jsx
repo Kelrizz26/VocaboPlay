@@ -507,7 +507,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         @media (max-width: 1024px) {
           .sb-container { 
             padding: 8px !important; 
-            height: auto !important; /* HAYAANG LUMAKI PARA MAKAPAG-SCROLL SA TOPICS */
+            height: auto !important; 
             min-height: 100dvh !important;
             overflow: visible !important; 
             display: flex !important;
@@ -521,40 +521,50 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             overflow: hidden !important;
           }
 
-          /* IBINALIK YUNG HEADER SA TOPICS AT LEVELS PERO GINAWANG COMPACT */
+          /* IBINALIK SA ROW ANG HEADER PARA MAGKATABI */
           .sb-header-hud {
             display: flex !important;
-            flex-direction: column !important;
+            flex-direction: row !important;
             align-items: center !important;
+            justify-content: space-between !important;
             gap: 8px !important;
             margin-bottom: 12px !important;
             width: 100% !important;
           }
-          .sb-title-box {
-            width: 100% !important;
-            justify-content: center !important;
-            padding: 8px 12px !important;
-            border-width: 2px !important;
-            box-shadow: 0 3px 0 #8c5728 !important;
-          }
-          .sb-title-box h1 { font-size: 16px !important; }
-          .sb-title-box p { font-size: 10px !important; }
-          .sb-title-box span { font-size: 22px !important; }
           
+          /* PINALIIT ANG TITLE BOX PARA KASYA SA GILID */
+          .sb-title-box {
+            width: auto !important;
+            justify-content: flex-start !important;
+            padding: 4px 8px !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
+            gap: 4px !important;
+            border-radius: 8px !important;
+          }
+          .sb-title-box span { font-size: 16px !important; }
+          .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; line-height: 1.1 !important; }
+          .sb-title-box p { font-size: 8px !important; margin: 0 !important; }
+          
+          /* PINALIIT ANG STATS ROW PARA KASYA SA KANAN */
           .sb-stats-row {
-            width: 100% !important;
-            justify-content: space-between !important;
-            gap: 6px !important;
+            width: auto !important;
+            justify-content: flex-end !important;
+            gap: 4px !important;
+            flex-wrap: nowrap !important;
           }
           .sb-stat-badge {
-            padding: 4px 10px !important;
+            padding: 2px 6px !important;
+            border-radius: 8px !important;
             border-width: 2px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
+            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
+            gap: 2px !important;
+            height: 24px !important;
+            box-sizing: border-box !important;
           }
-          .sb-stat-badge .stat-icon { font-size: 14px !important; }
-          .sb-stat-badge span { font-size: 14px !important; }
-          .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
+          .sb-stat-badge .stat-icon { font-size: 12px !important; }
+          .sb-stat-badge span { font-size: 12px !important; font-weight: 900 !important; }
+          .sb-stat-badge button { width: 16px !important; height: 16px !important; font-size: 10px !important; }
 
           /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
           .sb-container.is-playing .sb-header-hud {
