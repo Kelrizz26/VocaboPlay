@@ -591,7 +591,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             margin-bottom: 16px !important;
           }
           .sb-topic-card { border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 2.5px 0 var(--border-color) !important; }
-          .sb-topic-card .card-image { height: 65px !important; border-bottom-width: 2px !important; }
+          
+          /* ✅ ITO YUNG BINAGO KO: PINALAKI KO YUNG HEIGHT NG IMAGE PARA KLARO AT ISAGAD */
+          .sb-topic-card .card-image { height: 110px !important; border-bottom-width: 2px !important; }
+          .sb-topic-card .card-image img { object-fit: cover !important; object-position: center !important; }
+          
           .sb-topic-card .card-content { padding: 8px !important; }
           .sb-topic-card .card-title { font-size: 12px !important; margin-bottom: 2px !important; }
           .sb-topic-card .card-desc { display: none !important; }
