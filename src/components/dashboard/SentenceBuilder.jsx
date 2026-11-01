@@ -568,11 +568,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-sentence-box { padding: 6px !important; min-height: 50px !important; max-height: 80px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 8px !important; align-content: flex-start; }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BUTTONS - Pinaliit at pinaluwag */
+          /* WORD BUTTONS - THE FIX */
           .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 4px !important; align-items: flex-start !important; margin-bottom: 8px !important; }
           .sb-word-btn {
             padding: 4px 8px !important;
-            min-height: 28px !important;
+            height: auto !important; /* Prevent stretch */
+            min-height: 0 !important; /* Prevent stretch */
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -581,16 +582,16 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-radius: 6px !important;
             box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
             flex: 0 0 auto !important;
-            white-space: nowrap !important; /* Ito ang sisiguro na hindi mag-wrap ang text at lalaki horizontally */
+            white-space: nowrap !important;
           }
 
           /* ACTION BUTTONS */
           .sb-action-buttons { flex-direction: row !important; gap: 6px !important; margin-top: 8px !important; }
           .sb-action-btn {
             flex: 1 !important;
-            width: auto !important;
-            padding: 8px !important;
-            min-height: 32px !important;
+            padding: 6px !important;
+            min-height: 0 !important;
+            height: 32px !important; /* Fixed height */
             font-size: 11px !important;
             border-width: 1.5px !important;
             border-radius: 6px !important;
