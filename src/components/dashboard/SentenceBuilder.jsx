@@ -429,8 +429,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', 
-      height: '100dvh', minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden',
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, /* Naka-lock sa buong screen */
       backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -440,9 +439,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      overflow: 'hidden' /* PINIPIGILAN ANG PAGE NA MAG-SCROLL */
     }}>
-      {/* 👇 GLOBAL CSS + MOBILE FIXES 👇 */}
       <style>{`
         .sb-container {
           max-width: 1200px;
@@ -478,7 +477,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           cursor: pointer; 
           transition: all 0.1s ease;
           align-self: flex-start !important;
-          touch-action: manipulation; /* PINIPIGILAN ANG ZOOM SA MOBILE */
+          user-select: none;
+          touch-action: manipulation; /* PREVENT DOUBLE TAP ZOOM */
         }
 
         .sb-action-buttons {
@@ -499,18 +499,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           border-radius: 16px;
           cursor: pointer;
           transition: all 0.1s ease;
+          user-select: none;
           touch-action: manipulation;
         }
 
-        /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
-        @media (max-width: 768px) {
-          .sb-outer-wrapper {
-            overflow: hidden !important; /* NO SCROLL SA BUONG PAGE */
-          }
-
+        /* ✅ MOBILE & LANDSCAPE FIX (Sakop hanggang tablet at pahiga) */
+        @media (max-width: 1024px) {
           .sb-container { 
-            padding: 4px 6px !important; 
-            height: 100dvh !important; 
+            padding: 8px !important; 
+            height: 100% !important; 
             overflow: hidden !important; 
             display: flex !important;
             flex-direction: column !important;
@@ -523,15 +520,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
+            overflow: hidden !important;
           }
 
           .sb-playing-wrapper > div {
             height: 100% !important;
             display: flex !important;
             flex-direction: column !important;
+            overflow: hidden !important;
           }
 
-          /* TOP HUD (Exit, Coins, Hearts) */
+          /* TOP HUD */
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
           .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { 
@@ -568,7 +567,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
           .sb-progress-bar { height: 4px !important; }
 
-          /* GAME CARD (Yung Puting Kahon) */
+          /* GAME CARD */
           .sb-game-card { 
             padding: 8px 10px !important; 
             border-width: 2px !important; 
@@ -576,12 +575,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-shadow: 0 3px 0 #8c5728 !important;
             display: flex !important;
             flex-direction: column !important;
-            flex: 1 !important;
+            flex: 1 !important; /* Sinasalo ang natitirang space */
             overflow: hidden !important;
             min-height: 0 !important;
           }
           
-          /* Badges (A1 Level & Hint) */
+          /* Badges */
           .sb-game-card > div:first-child { 
             margin-bottom: 4px !important; 
             flex-wrap: nowrap !important;
@@ -601,7 +600,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             display: none !important; 
           }
           
-          /* Labels (YOUR SENTENCE / WORD BANK) */
+          /* Labels */
           .sb-game-card p { 
             font-size: 10px !important; 
             margin: 4px 0 2px 0 !important; 
@@ -612,12 +611,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             flex-shrink: 0 !important;
           }
 
-          /* ✅ SENTENCE BOX - ABSOLUTE FIXED HEIGHT (HINDI GUMAGALAW) */
+          /* SENTENCE BOX - SHARE NG SPACE (HINDI GUMAGALAW) */
           .sb-sentence-box { 
-            flex: 0 0 80px !important; /* LOCKED SA 80px */
-            height: 80px !important;
-            min-height: 80px !important;
-            max-height: 80px !important;
+            flex: 1 1 40% !important; /* 40% ng laman ng card */
+            min-height: 50px !important;
+            max-height: 70px !important;
+            height: auto !important;
             padding: 4px !important; 
             overflow-y: auto !important; 
             border-width: 1.5px !important; 
@@ -629,12 +628,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* ✅ WORD BANK - ABSOLUTE FIXED HEIGHT (HINDI NAG-COLLAPSE) */
+          /* WORD BANK - SHARE NG SPACE (HINDI NAG-COLLAPSE) */
           .sb-word-bank-container { 
-            flex: 1 1 auto !important; /* Sinasalo yung natitirang space */
-            min-height: 120px !important; /* Minimum na 120px */
+            flex: 1 1 60% !important; /* 60% ng laman ng card */
+            min-height: 60px !important;
+            max-height: 100px !important;
             height: auto !important;
-            max-height: 150px !important;
             gap: 4px !important; 
             margin-bottom: 0 !important; 
             align-content: flex-start !important; 
@@ -646,13 +645,13 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
           
-          /* MGA SALITA (Maliit, fixed height) */
+          /* MGA SALITA */
           .sb-word-btn {
             padding: 0 8px !important;
-            height: 28px !important;
-            min-height: 28px !important;
-            max-height: 28px !important;
-            font-size: 12px !important;
+            height: 26px !important;
+            min-height: 26px !important;
+            max-height: 26px !important;
+            font-size: 11px !important;
             border-width: 1.5px !important;
             border-radius: 4px !important;
             flex: none !important; 
@@ -660,7 +659,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
             white-space: nowrap !important;
             line-height: 1 !important;
-            touch-action: manipulation !important; /* PREVENT SCROLL SA TAP */
+            touch-action: manipulation !important;
           }
 
           /* FEEDBACK MESSAGE */
@@ -681,12 +680,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
 
-          /* BUTTONS (Reset at Check) */
+          /* BUTTONS */
           .sb-action-buttons { 
             flex-shrink: 0 !important;
             gap: 6px !important; 
-            margin-top: 8px !important; 
-            padding-top: 0 !important;
+            margin-top: auto !important; /* NAKA-PIN SA BABA */
+            padding-top: 6px !important;
             height: 36px !important;
           }
           .sb-action-btn {
@@ -1029,12 +1028,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
                 
-                {/* ✅ ONMOUSEDOWN PREVENT DEFAULT PARA HINDI MAG-SCROLL SA MOBILE */}
                 <div className="sb-sentence-box" style={{ overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
                   {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
                   {selectedWords.map((word, index) => (
                     <button 
                       key={`selected-${index}`} 
+                      onTouchStart={(e) => e.preventDefault()} 
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleRemoveWord(word, index)} 
                       disabled={answered} 
@@ -1050,11 +1049,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
                 
-                {/* ✅ ONMOUSEDOWN PREVENT DEFAULT DITO RIN */}
                 <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-start' }}>
                   {wordBank.map((word, index) => (
                     <button 
                       key={`bank-${index}`} 
+                      onTouchStart={(e) => e.preventDefault()} 
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleSelectWord(word, index)} 
                       disabled={answered} 
