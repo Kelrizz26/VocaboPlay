@@ -71,7 +71,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                setDiamonds(userData.totalDiamonds);
             }
 
-            // ✅ KUNIN ANG DATA GALING FIREBASE (Cross-Device)
             const sbData = userData.sentenceBuilderData || {};
             
             setLives(sbData.lives !== undefined ? sbData.lives : MAX_LIVES);
@@ -79,12 +78,10 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             setUnlockedLevels(sbData.unlockedLevels ? { ...getInitialUnlockedLevels(), ...sbData.unlockedLevels } : getInitialUnlockedLevels());
             setLevelProgress(sbData.levelProgress || {});
 
-            // Backup sa localStorage
             localStorage.setItem(`sb_lives_${user.uid}`, (sbData.lives !== undefined ? sbData.lives : MAX_LIVES).toString());
             if (sbData.nextRefillTime) localStorage.setItem(`sb_next_refill_${user.uid}`, sbData.nextRefillTime.toString());
             if (sbData.unlockedLevels) localStorage.setItem(`sb_unlocked_${user.uid}`, JSON.stringify(sbData.unlockedLevels));
             if (sbData.levelProgress) localStorage.setItem(`sb_progress_${user.uid}`, JSON.stringify(sbData.levelProgress));
-
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -103,7 +100,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return () => unsubscribe();
   }, []);
 
-  // ✅ AUTO-SAVE SA LOCALSTORAGE (Fallback/Backup)
   useEffect(() => {
     if (currentUser && isUserLoaded) {
       localStorage.setItem(`sb_lives_${currentUser.uid}`, lives.toString());
@@ -114,7 +110,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     }
   }, [lives, nextRefillTime, unlockedLevels, levelProgress, currentUser, isUserLoaded]);
 
-  // Refill Logic
   useEffect(() => {
     if (!isUserLoaded) return;
 
@@ -135,8 +130,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         } else {
           setNextRefillTime(null);
         }
-        
-        // Sync refill
         syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
       }
     } else if (lives < MAX_LIVES && !nextRefillTime) {
@@ -146,7 +139,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     }
   }, [isUserLoaded, lives, nextRefillTime]);
 
-  // Live Countdown
   useEffect(() => {
     if (lives >= MAX_LIVES || !nextRefillTime) {
       setTimeLeftStr('');
@@ -162,9 +154,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           const newLives = Math.min(prev + 1, MAX_LIVES);
           let newRefill = newLives < MAX_LIVES ? Date.now() + REFILL_TIME_MS : null;
           setNextRefillTime(newRefill);
-          
           syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
-          
           return newLives;
         });
       } else {
@@ -176,8 +166,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
     return () => clearInterval(interval);
   }, [nextRefillTime, lives]);
-
-  // ==========================================
 
   const [wordBank, setWordBank] = useState([]);
   const [selectedWords, setSelectedWords] = useState([]);
@@ -324,8 +312,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       };
       
       setLevelProgress(updatedProgress);
-      
-      // ✅ SYNC SA FIREBASE PARA KHIT SA IBANG DEVICE, NAKA-SAVE
       syncToFirebase({ levelProgress: updatedProgress });
 
       initQuestion(activeQuestions[nextIdx]);
@@ -352,7 +338,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       
       setLevelProgress(updatedProgress);
 
-      // ✅ SYNC SA FIREBASE
       syncToFirebase({ 
         unlockedLevels: updatedUnlocked, 
         levelProgress: updatedProgress 
@@ -395,7 +380,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             const newLives = prev + 1;
             let newRefill = newLives >= MAX_LIVES ? null : nextRefillTime;
             if (newLives >= MAX_LIVES) setNextRefillTime(null);
-            
             syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
             return newLives;
           });
@@ -443,10 +427,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return <div style={{ padding: '40px', textAlign: 'center', color: '#333', background: '#fdfbf7', minHeight: '100vh' }}>Loading...</div>;
   }
 
+  // ==========================================
+  // ✅ WRAPPER (Gaya sa MatchGame para siguradong may scroll at hindi mag-zoom)
+  // ==========================================
   const CozyThemeWrapper = ({ children }) => (
     <div style={{
-      minHeight: '100vh',
-      backgroundImage: `url('/image/sentence-bg.png')`, 
+      position: 'fixed', top: 0, left: 0, width: '100vw', 
+      height: '100dvh', minHeight: '100dvh', overflowY: 'auto',
+      backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundAttachment: 'fixed',
@@ -455,191 +443,149 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      position: 'relative',
-      overflowX: 'hidden',
-      width: '100%',
-      maxWidth: '100vw'
+      boxSizing: 'border-box'
     }}>
-      {/* 👇 DITO LANG TAYO NAGLAGAY NG MOBILE RESPONSIVENESS 👇 */}
+      {/* 👇 DITO NAKALAGAY ANG MGA MOBILE FIXES 👇 */}
       <style>{`
+        .sb-container {
+          max-width: 1200px;
+          width: 100%;
+          z-index: 1;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
-          .sb-container { padding: 10px !important; width: 100% !important; max-width: 100vw !important; }
-          
-          /* Header Adjustments */
+          .sb-container { padding: 12px !important; width: 100% !important; }
+
+          /* Header HUD */
           .sb-header-hud {
-            flex-direction: row !important;
-            justify-content: space-between !important;
-            align-items: center !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
             gap: 8px !important;
             margin-bottom: 16px !important;
           }
           .sb-title-box {
-            padding: 6px 10px !important;
-            gap: 8px !important;
-            border-width: 2px !important;
+            padding: 8px 14px !important;
             border-radius: 12px !important;
+            border-width: 2px !important;
             box-shadow: 0 3px 0 #8c5728 !important;
+            gap: 8px !important;
           }
-          .sb-title-box span { font-size: 20px !important; }
-          .sb-title-box h1 { font-size: 14px !important; }
-          .sb-title-box p { font-size: 8px !important; }
+          .sb-title-box span { font-size: 24px !important; }
+          .sb-title-box h1 { font-size: 16px !important; }
+          .sb-title-box p { font-size: 10px !important; }
           
           .sb-stats-row {
+            width: 100% !important;
+            justify-content: space-between !important;
             gap: 6px !important;
           }
           .sb-stat-badge {
             padding: 4px 8px !important;
+            border-radius: 10px !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
             gap: 4px !important;
-            border-width: 2px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
           }
-          .sb-stat-badge span { font-size: 12px !important; }
-          .sb-stat-badge .stat-icon { font-size: 12px !important; }
-          
-          /* Banner Adjustments */
+          .sb-stat-badge .stat-icon { font-size: 14px !important; }
+          .sb-stat-badge span { font-size: 14px !important; }
+
+          /* Banners */
           .sb-banner-box {
-            padding: 4px 16px !important;
-            border-width: 2px !important;
-            border-radius: 16px !important;
+            padding: 6px 20px !important;
+            border-width: 3px !important;
             box-shadow: 0 4px 0 #3a1f0a !important;
+            border-radius: 20px !important;
           }
-          .sb-banner-box h2 { font-size: 16px !important; }
-          
+          .sb-banner-box h2 { font-size: 18px !important; }
           .sb-subtext-box {
-            padding: 4px 12px !important;
+            padding: 6px 12px !important;
             border-width: 2px !important;
-            border-radius: 12px !important;
             box-shadow: 0 2px 0 #8c5728 !important;
           }
-          .sb-subtext-box p { font-size: 10px !important; }
-          
-          /* Topic Grid */
+          .sb-subtext-box p { font-size: 11px !important; text-align: center; }
+
+          /* Topic Cards */
           .sb-topic-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 10px !important;
-            margin-bottom: 20px !important;
           }
           .sb-topic-card {
             border-width: 3px !important;
+            border-radius: 16px !important;
             box-shadow: 0 4px 0 var(--border-color) !important;
-            border-radius: 12px !important;
           }
-          .sb-topic-card .card-image {
-            height: 90px !important;
-          }
-          .sb-topic-card .card-content {
-            padding: 8px !important;
-          }
-          .sb-topic-card .card-title {
-            font-size: 12px !important;
-            margin-bottom: 2px !important;
-          }
-          .sb-topic-card .card-desc {
-            font-size: 9px !important;
-            line-height: 1.1 !important;
-            margin-bottom: 6px !important;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-          }
-          .sb-topic-card .card-progress-text {
-            font-size: 8px !important;
-            margin-bottom: 2px !important;
-          }
-          .sb-topic-card .card-progress-bar {
-            height: 4px !important;
-            margin-bottom: 6px !important;
-          }
-          .sb-topic-card .card-badge {
-            font-size: 7px !important;
-            padding: 2px 4px !important;
-            border-width: 1px !important;
-            border-radius: 8px !important;
-          }
-          .sb-topic-card .card-arrow {
-            width: 20px !important;
-            height: 20px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
-          }
-          .sb-topic-card .card-arrow svg {
-            width: 10px !important;
-            height: 10px !important;
-          }
+          .sb-topic-card .card-image { height: 100px !important; }
+          .sb-topic-card .card-content { padding: 10px !important; }
+          .sb-topic-card .card-title { font-size: 13px !important; margin-bottom: 4px !important; }
+          .sb-topic-card .card-desc { font-size: 9px !important; line-height: 1.2 !important; margin-bottom: 8px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+          .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
+          .sb-topic-card .card-progress-bar { height: 6px !important; margin-bottom: 8px !important; }
+          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 6px !important; border-width: 1px !important; }
+          .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; border-width: 2px !important; }
+          .sb-topic-card .card-arrow svg { width: 12px !important; height: 12px !important; }
 
           /* Level Selection */
           .sb-level-header {
-            padding: 8px 12px !important;
-            gap: 8px !important;
+            padding: 10px 14px !important;
             border-width: 2px !important;
             box-shadow: 0 3px 0 #8c5728 !important;
+            gap: 8px !important;
+            border-radius: 12px !important;
           }
-          .sb-level-header span { font-size: 20px !important; }
+          .sb-level-header span { font-size: 24px !important; }
           .sb-level-header h1 { font-size: 16px !important; }
           .sb-level-header p { font-size: 10px !important; }
           
-          .sb-level-card { padding: 10px 12px !important; border-radius: 12px !important; gap: 8px !important; }
-          .sb-level-card .level-icon { width: 40px !important; height: 40px !important; font-size: 16px !important; border-radius: 8px !important; border-width: 2px !important; }
-          .sb-level-card .level-text-title { font-size: 14px !important; }
-          .sb-level-card .level-text-desc { font-size: 10px !important; margin-top: 2px !important; }
+          .sb-level-card { padding: 10px !important; border-radius: 12px !important; gap: 10px !important; }
+          .sb-level-card .level-icon { width: 40px !important; height: 40px !important; font-size: 18px !important; border-width: 2px !important; border-radius: 8px !important; }
+          .sb-level-card .level-text-title { font-size: 15px !important; }
+          .sb-level-card .level-text-desc { font-size: 11px !important; margin-top: 2px !important; }
+          .sb-level-card > div:last-child span { font-size: 20px !important; }
 
           /* Playing Screen */
-          .sb-top-hud { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; margin-bottom: 12px !important; }
+          .sb-top-hud { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; margin-bottom: 12px !important; }
           .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 6px !important; }
-          .sb-top-stats > div { padding: 4px 8px !important; font-size: 12px !important; border-width: 2px !important; box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats > div { padding: 4px 10px !important; font-size: 12px !important; border-width: 2px !important; box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important; }
           
-          .sb-game-card { padding: 12px 10px !important; border-width: 3px !important; box-shadow: 0 6px 0 #8c5728 !important; border-radius: 16px !important; }
+          .sb-game-card { padding: 16px 12px !important; border-width: 3px !important; border-radius: 16px !important; box-shadow: 0 6px 0 #8c5728 !important; }
           .sb-game-card h2 { font-size: 16px !important; margin-bottom: 16px !important; }
           
           .sb-word-btn {
-            padding: 6px 12px !important;
+            padding: 8px 14px !important;
             font-size: 14px !important;
             border-width: 2px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
             border-radius: 10px !important;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2) !important;
           }
-          .sb-action-buttons {
-            flex-direction: column !important;
-            gap: 8px !important;
-          }
+          
+          .sb-action-buttons { flex-direction: column !important; gap: 8px !important; }
           .sb-action-btn {
             width: 100% !important;
-            padding: 10px !important;
+            padding: 12px !important;
             font-size: 16px !important;
             border-width: 3px !important;
             border-radius: 12px !important;
             box-shadow: 0 4px 0 rgba(0,0,0,0.3) !important;
           }
           
-          .sb-footer-btn {
-            padding: 8px 16px !important;
-            font-size: 14px !important;
-            border-width: 3px !important;
-            box-shadow: 0 4px 0 #3a1f0a !important;
-          }
+          .sb-footer-btn { padding: 10px 20px !important; font-size: 14px !important; border-width: 3px !important; box-shadow: 0 4px 0 #3a1f0a !important; }
         }
 
         @media (max-width: 400px) {
           .sb-topic-grid { grid-template-columns: 1fr !important; }
-          .sb-topic-card .card-image { height: 120px !important; }
-          .sb-topic-card .card-title { font-size: 14px !important; }
+          .sb-topic-card .card-image { height: 140px !important; }
+          .sb-topic-card .card-title { font-size: 16px !important; }
           .sb-topic-card .card-desc { font-size: 11px !important; -webkit-line-clamp: unset !important; }
-          .sb-title-box h1 { font-size: 12px !important; }
-          .sb-stat-badge span { font-size: 10px !important; }
+          .sb-topic-card .card-badge { font-size: 9px !important; padding: 4px 8px !important; }
+          .sb-topic-card .card-arrow { width: 30px !important; height: 30px !important; }
         }
       `}</style>
 
-      <div className="sb-container" style={{ 
-        maxWidth: '1200px', 
-        width: '100%', 
-        zIndex: 1, 
-        padding: '24px',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <div className="sb-container">
         {children}
       </div>
     </div>
