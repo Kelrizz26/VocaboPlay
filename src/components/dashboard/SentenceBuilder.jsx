@@ -28,7 +28,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   };
 
   // ==========================================
-  // ❤️ HEART / LIVES REFILL LOGIC (USER-SPECIFIC)
+  // ❤️ HEART / LIVES REFILL LOGIC
   // ==========================================
   const MAX_LIVES = 5;
   const REFILL_TIME_MS = 30 * 60 * 1000;
@@ -44,41 +44,47 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   const [currentUser, setCurrentUser] = useState(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
 
+  // ✅ FUNCTION PARA MAG-SAVE SA FIREBASE
+  const syncToFirebase = async (updates) => {
+    if (!currentUser) return;
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, { sentenceBuilderData: updates });
+    } catch (error) {
+      console.error("Error syncing to Firebase:", error);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
         
-        const savedLives = localStorage.getItem(`sb_lives_${user.uid}`);
-        const savedRefill = localStorage.getItem(`sb_next_refill_${user.uid}`);
-        const savedUnlocked = localStorage.getItem(`sb_unlocked_${user.uid}`);
-        const savedProgress = localStorage.getItem(`sb_progress_${user.uid}`);
-
-        setLives(savedLives !== null ? parseInt(savedLives) : MAX_LIVES);
-        setNextRefillTime(savedRefill ? parseInt(savedRefill) : null);
-        
-        if (savedUnlocked) {
-          const parsed = JSON.parse(savedUnlocked);
-          setUnlockedLevels({ ...getInitialUnlockedLevels(), ...parsed });
-        } else {
-          setUnlockedLevels(getInitialUnlockedLevels());
-        }
-
-        if (savedProgress) {
-          setLevelProgress(JSON.parse(savedProgress));
-        } else {
-          setLevelProgress({});
-        }
-
         try {
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
+          
           if (userSnap.exists()) {
             const userData = userSnap.data();
             setTotalPoints(userData.totalPoints || 0);
             if (userData.totalDiamonds !== undefined) {
                setDiamonds(userData.totalDiamonds);
             }
+
+            // ✅ KUNIN ANG DATA GALING FIREBASE (Cross-Device)
+            const sbData = userData.sentenceBuilderData || {};
+            
+            setLives(sbData.lives !== undefined ? sbData.lives : MAX_LIVES);
+            setNextRefillTime(sbData.nextRefillTime || null);
+            setUnlockedLevels(sbData.unlockedLevels ? { ...getInitialUnlockedLevels(), ...sbData.unlockedLevels } : getInitialUnlockedLevels());
+            setLevelProgress(sbData.levelProgress || {});
+
+            // Backup sa localStorage para mabilis mag-load next time
+            localStorage.setItem(`sb_lives_${user.uid}`, (sbData.lives !== undefined ? sbData.lives : MAX_LIVES).toString());
+            if (sbData.nextRefillTime) localStorage.setItem(`sb_next_refill_${user.uid}`, sbData.nextRefillTime.toString());
+            if (sbData.unlockedLevels) localStorage.setItem(`sb_unlocked_${user.uid}`, JSON.stringify(sbData.unlockedLevels));
+            if (sbData.levelProgress) localStorage.setItem(`sb_progress_${user.uid}`, JSON.stringify(sbData.levelProgress));
+
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
@@ -97,22 +103,18 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return () => unsubscribe();
   }, []);
 
-  // ✅ FIX: Nilagyan ng isUserLoaded para hindi ma-overwrite ng blangko bago pa mag-load ang totoong data
+  // ✅ AUTO-SAVE SA LOCALSTORAGE (Fallback/Backup)
   useEffect(() => {
     if (currentUser && isUserLoaded) {
       localStorage.setItem(`sb_lives_${currentUser.uid}`, lives.toString());
-      
-      if (nextRefillTime) {
-        localStorage.setItem(`sb_next_refill_${currentUser.uid}`, nextRefillTime.toString());
-      } else {
-        localStorage.removeItem(`sb_next_refill_${currentUser.uid}`);
-      }
-
+      if (nextRefillTime) localStorage.setItem(`sb_next_refill_${currentUser.uid}`, nextRefillTime.toString());
+      else localStorage.removeItem(`sb_next_refill_${currentUser.uid}`);
       localStorage.setItem(`sb_unlocked_${currentUser.uid}`, JSON.stringify(unlockedLevels));
       localStorage.setItem(`sb_progress_${currentUser.uid}`, JSON.stringify(levelProgress));
     }
   }, [lives, nextRefillTime, unlockedLevels, levelProgress, currentUser, isUserLoaded]);
 
+  // Refill Logic
   useEffect(() => {
     if (!isUserLoaded) return;
 
@@ -125,19 +127,26 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         
         setLives(newLives);
         
+        let newRefill = null;
         if (newLives < MAX_LIVES) {
           const remainder = timePassed % REFILL_TIME_MS;
-          const newRefill = now + REFILL_TIME_MS - remainder;
+          newRefill = now + REFILL_TIME_MS - remainder;
           setNextRefillTime(newRefill);
         } else {
           setNextRefillTime(null);
         }
+        
+        // Sync refill
+        syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
       }
     } else if (lives < MAX_LIVES && !nextRefillTime) {
-      setNextRefillTime(now + REFILL_TIME_MS);
+      const newRefill = now + REFILL_TIME_MS;
+      setNextRefillTime(newRefill);
+      syncToFirebase({ lives, nextRefillTime: newRefill });
     }
   }, [isUserLoaded, lives, nextRefillTime]);
 
+  // Live Countdown
   useEffect(() => {
     if (lives >= MAX_LIVES || !nextRefillTime) {
       setTimeLeftStr('');
@@ -151,12 +160,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       if (diff <= 0) {
         setLives(prev => {
           const newLives = Math.min(prev + 1, MAX_LIVES);
+          let newRefill = newLives < MAX_LIVES ? Date.now() + REFILL_TIME_MS : null;
+          setNextRefillTime(newRefill);
           
-          if (newLives < MAX_LIVES) {
-            setNextRefillTime(Date.now() + REFILL_TIME_MS);
-          } else {
-            setNextRefillTime(null);
-          }
+          syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
+          
           return newLives;
         });
       } else {
@@ -200,7 +208,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
   const handleSelectTopic = (topic) => {
     if (!unlockedLevels[topic.id]) {
-      setUnlockedLevels(prev => ({ ...prev, [topic.id]: ['A1'] }));
+      const newUnlocked = { ...unlockedLevels, [topic.id]: ['A1'] };
+      setUnlockedLevels(newUnlocked);
+      syncToFirebase({ unlockedLevels: newUnlocked });
     }
     setSelectedTopic(topic);
     setGameState('level_selection');
@@ -217,8 +227,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
     const savedIndex = levelProgress[selectedTopic.id]?.[levelKey] || 0;
     const questionsInLevel = selectedTopic.levels[levelKey];
-    
-    // ✅ Kung tapos na (savedIndex >= length), start ulit sa 0 para makapag-replay. Kung hindi, resume sa savedIndex.
     const startIndex = savedIndex >= questionsInLevel.length ? 0 : savedIndex;
 
     setSelectedLevel(levelKey);
@@ -259,9 +267,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       
       setLives(prev => {
         const newLives = prev - 1;
+        let newRefill = nextRefillTime;
         if (prev === MAX_LIVES && newLives < MAX_LIVES && !nextRefillTime) {
-          setNextRefillTime(Date.now() + REFILL_TIME_MS);
+          newRefill = Date.now() + REFILL_TIME_MS;
+          setNextRefillTime(newRefill);
         }
+        syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
         return newLives;
       });
 
@@ -294,7 +305,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     }
   };
 
-  // ✅ FIX: Hindi na binubura ang progress. Ginagawa na lang "Completed".
   const handleNext = () => {
     if (lives <= 0) {
       setGameState('gameover');
@@ -305,55 +315,47 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
       
-      setLevelProgress(prev => {
-        const updated = {
-          ...prev,
-          [selectedTopic.id]: {
-            ...(prev[selectedTopic.id] || {}),
-            [selectedLevel]: nextIdx
-          }
-        };
-        if (currentUser) {
-          localStorage.setItem(`sb_progress_${currentUser.uid}`, JSON.stringify(updated));
+      const updatedProgress = {
+        ...levelProgress,
+        [selectedTopic.id]: {
+          ...(levelProgress[selectedTopic.id] || {}),
+          [selectedLevel]: nextIdx
         }
-        return updated;
-      });
+      };
+      
+      setLevelProgress(updatedProgress);
+      
+      // ✅ SYNC SA FIREBASE PARA KHIT SA IBANG DEVICE, NAKA-SAVE
+      syncToFirebase({ levelProgress: updatedProgress });
 
       initQuestion(activeQuestions[nextIdx]);
     } else {
       playVictory();
       const currentLevelIdx = CEFR_LEVELS.indexOf(selectedLevel);
+      let updatedUnlocked = { ...unlockedLevels };
+
       if (currentLevelIdx < CEFR_LEVELS.length - 1) {
         const nextLevel = CEFR_LEVELS[currentLevelIdx + 1];
-        setUnlockedLevels(prev => {
-          const levelsForTopic = prev[selectedTopic.id] || ['A1'];
-          if (!levelsForTopic.includes(nextLevel)) {
-            const updated = {
-              ...prev,
-              [selectedTopic.id]: [...levelsForTopic, nextLevel]
-            };
-            if (currentUser) {
-              localStorage.setItem(`sb_unlocked_${currentUser.uid}`, JSON.stringify(updated));
-            }
-            return updated;
-          }
-          return prev;
-        });
+        const levelsForTopic = updatedUnlocked[selectedTopic.id] || ['A1'];
+        if (!levelsForTopic.includes(nextLevel)) {
+          updatedUnlocked = {
+            ...updatedUnlocked,
+            [selectedTopic.id]: [...levelsForTopic, nextLevel]
+          };
+          setUnlockedLevels(updatedUnlocked);
+        }
       }
 
-      // I-set ang progress sa activeQuestions.length para maging "Completed"
-      setLevelProgress(prev => {
-        const updated = {
-          ...prev,
-          [selectedTopic.id]: {
-            ...(prev[selectedTopic.id] || {}),
-            [selectedLevel]: activeQuestions.length 
-          }
-        };
-        if (currentUser) {
-          localStorage.setItem(`sb_progress_${currentUser.uid}`, JSON.stringify(updated));
-        }
-        return updated;
+      const updatedProgress = { ...levelProgress };
+      if (!updatedProgress[selectedTopic.id]) updatedProgress[selectedTopic.id] = {};
+      updatedProgress[selectedTopic.id][selectedLevel] = activeQuestions.length;
+      
+      setLevelProgress(updatedProgress);
+
+      // ✅ SYNC SA FIREBASE
+      syncToFirebase({ 
+        unlockedLevels: updatedUnlocked, 
+        levelProgress: updatedProgress 
       });
 
       if (currentUser && recordGame) {
@@ -391,9 +393,10 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           
           setLives(prev => {
             const newLives = prev + 1;
-            if (newLives >= MAX_LIVES) {
-              setNextRefillTime(null);
-            }
+            let newRefill = newLives >= MAX_LIVES ? null : nextRefillTime;
+            if (newLives >= MAX_LIVES) setNextRefillTime(null);
+            
+            syncToFirebase({ lives: newLives, nextRefillTime: newRefill });
             return newLives;
           });
         } else {
@@ -423,6 +426,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           
           setLives(MAX_LIVES);
           setNextRefillTime(null);
+          syncToFirebase({ lives: MAX_LIVES, nextRefillTime: null });
           
           setGameState('playing');
           initQuestion(activeQuestions[currentIndex]);
@@ -694,8 +698,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               const questionCount = selectedTopic.levels[lvlKey]?.length || 0;
               
               const savedIndex = levelProgress[selectedTopic.id]?.[lvlKey];
-              
-              // ✅ Idinagdag natin itong logic para lumabas ang "Completed"
               const isCompleted = savedIndex !== undefined && savedIndex >= questionCount;
               const hasProgress = savedIndex !== undefined && savedIndex > 0 && savedIndex < questionCount;
               
@@ -722,7 +724,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                       </div>
                       <div style={{ fontSize: '16px', color: isUnlocked ? '#7a4b24' : '#7a6c60', marginTop: '4px', fontWeight: '700' }}>
                         {questionCount} Situational Sentences
-                        {/* ✅ UI Update: Lalabas na ang Completed ✅ o Resume at Q... */}
                         {isCompleted ? (
                           <span style={{ color: '#27ae60', marginLeft: '8px' }}>• Completed ✅</span>
                         ) : hasProgress ? (
