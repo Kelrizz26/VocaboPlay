@@ -429,7 +429,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, /* Naka-lock sa buong screen */
+      position: 'fixed', top: 0, left: 0, width: '100vw', 
+      height: '100dvh', minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden',
       backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -439,8 +440,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      boxSizing: 'border-box',
-      overflow: 'hidden' /* PINIPIGILAN ANG PAGE NA MAG-SCROLL */
+      boxSizing: 'border-box'
     }}>
       <style>{`
         .sb-container {
@@ -478,7 +478,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           transition: all 0.1s ease;
           align-self: flex-start !important;
           user-select: none;
-          touch-action: manipulation; /* PREVENT DOUBLE TAP ZOOM */
+          touch-action: manipulation;
         }
 
         .sb-action-buttons {
@@ -503,15 +503,22 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           touch-action: manipulation;
         }
 
-        /* ✅ MOBILE & LANDSCAPE FIX (Sakop hanggang tablet at pahiga) */
+        /* ✅ MOBILE & LANDSCAPE FIX */
         @media (max-width: 1024px) {
           .sb-container { 
             padding: 8px !important; 
-            height: 100% !important; 
-            overflow: hidden !important; 
+            height: auto !important; /* HAYAANG LUMAKI PARA MAKAPAG-SCROLL SA TOPICS */
+            min-height: 100dvh !important;
+            overflow: visible !important; 
             display: flex !important;
             flex-direction: column !important;
             justify-content: flex-start !important;
+          }
+
+          /* PAG SA LARO LANG (playing state), NAKA-LOCK ANG HEIGHT AT WALANG SCROLL */
+          .sb-container.is-playing {
+            height: 100dvh !important;
+            overflow: hidden !important;
           }
 
           .sb-header-hud { display: none !important; }
@@ -575,12 +582,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-shadow: 0 3px 0 #8c5728 !important;
             display: flex !important;
             flex-direction: column !important;
-            flex: 1 !important; /* Sinasalo ang natitirang space */
+            flex: 1 !important; 
             overflow: hidden !important;
             min-height: 0 !important;
           }
           
-          /* Badges */
           .sb-game-card > div:first-child { 
             margin-bottom: 4px !important; 
             flex-wrap: nowrap !important;
@@ -595,12 +601,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             line-height: 20px !important;
           }
           
-          /* Hide Title */
-          .sb-game-card h2 { 
-            display: none !important; 
-          }
+          .sb-game-card h2 { display: none !important; }
           
-          /* Labels */
           .sb-game-card p { 
             font-size: 10px !important; 
             margin: 4px 0 2px 0 !important; 
@@ -611,9 +613,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             flex-shrink: 0 !important;
           }
 
-          /* SENTENCE BOX - SHARE NG SPACE (HINDI GUMAGALAW) */
+          /* SENTENCE BOX */
           .sb-sentence-box { 
-            flex: 1 1 40% !important; /* 40% ng laman ng card */
+            flex: 1 1 40% !important; 
             min-height: 50px !important;
             max-height: 70px !important;
             height: auto !important;
@@ -628,9 +630,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BANK - SHARE NG SPACE (HINDI NAG-COLLAPSE) */
+          /* WORD BANK */
           .sb-word-bank-container { 
-            flex: 1 1 60% !important; /* 60% ng laman ng card */
+            flex: 1 1 60% !important; 
             min-height: 60px !important;
             max-height: 100px !important;
             height: auto !important;
@@ -684,7 +686,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-action-buttons { 
             flex-shrink: 0 !important;
             gap: 6px !important; 
-            margin-top: auto !important; /* NAKA-PIN SA BABA */
+            margin-top: auto !important;
             padding-top: 6px !important;
             height: 36px !important;
           }
@@ -702,7 +704,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         }
       `}</style>
 
-      <div className="sb-container">
+      <div className={`sb-container ${gameState === 'playing' ? 'is-playing' : ''}`}>
         {children}
       </div>
     </div>
