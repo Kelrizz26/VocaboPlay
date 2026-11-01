@@ -502,199 +502,125 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
-          .sb-container { padding: 8px !important; }
+          .sb-container { 
+            padding: 4px !important; 
+            height: 100dvh !important; 
+            overflow: hidden !important; 
+          }
 
-          .sb-header-hud {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 6px !important;
-            margin-bottom: 10px !important;
+          .sb-header-hud { display: none !important; }
+
+          .sb-playing-wrapper { 
+            justify-content: flex-start !important; 
+            height: 100% !important;
+            padding-top: 4px !important;
           }
-          .sb-title-box {
-            padding: 6px 10px !important;
-            border-radius: 8px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            gap: 6px !important;
-            width: 100%;
-          }
-          .sb-title-box span { font-size: 18px !important; }
-          .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; }
-          .sb-title-box p { font-size: 8px !important; }
+
+          .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; }
+          .sb-top-stats { gap: 4px !important; }
+          .sb-top-stats > div { padding: 2px 8px !important; font-size: 11px !important; border-width: 1.5px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats button { padding: 2px 6px !important; font-size: 10px !important; }
           
-          .sb-stats-row {
-            width: 100% !important;
-            justify-content: space-between !important;
-            gap: 4px !important;
-          }
-          .sb-stat-badge {
-            padding: 4px 8px !important;
-            border-radius: 8px !important;
-            border-width: 2px !important;
-            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
-            gap: 4px !important;
-          }
-          .sb-stat-badge .stat-icon { font-size: 12px !important; }
-          .sb-stat-badge span { font-size: 12px !important; }
-          .sb-stat-badge button { width: 16px !important; height: 16px !important; font-size: 10px !important; }
+          .sb-progress-container { padding: 4px 8px !important; margin-bottom: 6px !important; border-width: 1.5px !important; border-radius: 6px !important; }
+          .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; }
+          .sb-progress-bar { height: 4px !important; }
 
-          .sb-banner-box {
-            padding: 4px 12px !important;
-            border-width: 2px !important;
-            box-shadow: 0 3px 0 #3a1f0a !important;
-            border-radius: 10px !important;
-            margin-top: 4px !important;
-          }
-          .sb-banner-box h2 { font-size: 14px !important; margin: 0 !important; }
-          .sb-subtext-box {
-            padding: 4px 10px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            border-radius: 8px !important;
-            margin-top: 4px !important;
-          }
-          .sb-subtext-box p { font-size: 10px !important; text-align: center; margin: 0 !important; }
-
-          .sb-topic-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 8px !important;
-            margin-bottom: 16px !important;
-          }
-          .sb-topic-card {
-            border-width: 2px !important;
-            border-radius: 10px !important;
-            box-shadow: 0 2.5px 0 var(--border-color) !important;
-          }
-          .sb-topic-card .card-image { height: 65px !important; border-bottom-width: 2px !important; }
-          .sb-topic-card .card-content { padding: 8px !important; }
-          .sb-topic-card .card-title { font-size: 12px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-desc { display: none !important; }
-          .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-progress-bar { height: 4px !important; margin-bottom: 6px !important; }
-          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 6px !important; border-width: 1px !important; border-radius: 4px !important; }
-          .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
-          .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
-
-          .sb-level-header {
-            padding: 8px 12px !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 0 #8c5728 !important;
-            gap: 8px !important;
-            border-radius: 10px !important;
-          }
-          .sb-level-header span { font-size: 18px !important; }
-          .sb-level-header h1 { font-size: 14px !important; }
-          .sb-level-header p { font-size: 10px !important; }
-          
-          .sb-level-card { padding: 10px 14px !important; border-radius: 10px !important; gap: 8px !important; }
-          .sb-level-card .level-icon { width: 36px !important; height: 36px !important; font-size: 14px !important; border-width: 2px !important; border-radius: 6px !important; }
-          .sb-level-card .level-text-title { font-size: 14px !important; }
-          .sb-level-card .level-text-desc { font-size: 10px !important; margin-top: 2px !important; }
-          .sb-level-card > div:last-child span { font-size: 18px !important; }
-
-          .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; margin-bottom: 10px !important; }
-          .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 6px !important; }
-          .sb-top-stats > div { padding: 4px 10px !important; font-size: 12px !important; border-width: 2px !important; box-shadow: 0 1.5px 0 rgba(0,0,0,0.3) !important; }
-          .sb-top-stats button { padding: 4px 10px !important; font-size: 11px !important; }
-          
-          .sb-progress-container { padding: 6px 10px !important; margin-bottom: 10px !important; border-width: 2px !important; border-radius: 8px !important; box-shadow: 0 2px 0 #8c5728 !important; }
-          .sb-progress-text { font-size: 11px !important; margin-bottom: 4px !important; }
-          .sb-progress-bar { height: 6px !important; }
-
-          /* ✅ TODO: PALIITIN ANG GAME CARD PARA MAG-FIT SA MOBILE */
           .sb-game-card { 
-            padding: 8px 10px !important; 
+            padding: 6px 8px !important; 
             border-width: 2px !important; 
-            border-radius: 10px !important; 
-            box-shadow: 0 3px 0 #8c5728 !important; 
-            margin: 0 !important;
+            border-radius: 8px !important; 
+            box-shadow: 0 3px 0 #8c5728 !important;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
           }
-          .sb-game-card h2 { font-size: 12px !important; margin-bottom: 8px !important; }
-          .sb-level-badge, .sb-hint-badge { font-size: 9px !important; padding: 2px 6px !important; border-width: 1px !important; border-radius: 6px !important; margin-bottom: 6px !important; }
+          .sb-game-card > div:first-child { margin-bottom: 4px !important; }
+          .sb-game-card h2 { font-size: 11px !important; margin-bottom: 4px !important; margin-top: 0 !important; }
+          .sb-level-badge, .sb-hint-badge { font-size: 9px !important; padding: 1px 6px !important; border-width: 1px !important; border-radius: 4px !important; }
 
-          .sb-playing-wrapper {
-            justify-content: flex-start !important;
-            padding-top: 0 !important;
-          }
+          .sb-game-card p { font-size: 10px !important; margin-bottom: 2px !important; letter-spacing: 0 !important; }
 
-          /* ✅ TODO: FIXED HEIGHT ANG SENTENCE BOX (HINDI GUMAGALAW) */
+          /* ✅ FIXED HEIGHTS (Walang gagalaw) */
           .sb-sentence-box { 
-            padding: 6px !important; 
-            height: 70px !important;
-            min-height: 70px !important;
-            max-height: 70px !important;
+            padding: 4px !important; 
+            height: 65px !important;
+            min-height: 65px !important;
+            max-height: 65px !important;
             overflow-y: auto !important; 
             scrollbar-gutter: stable !important;
             border-width: 2px !important; 
             gap: 4px !important; 
             border-radius: 6px !important; 
-            margin-bottom: 6px !important; 
+            margin-bottom: 4px !important; 
             align-content: flex-start !important; 
           }
-          .sb-sentence-box span { font-size: 11px !important; }
+          .sb-sentence-box span { font-size: 10px !important; }
 
-          /* ✅ TODO: FIXED HEIGHT ANG WORD BANK (HINDI NAG-COLLAPSE) */
           .sb-word-bank-container { 
-            gap: 6px !important; 
-            margin-bottom: 6px !important; 
-            height: 110px !important;
-            min-height: 110px !important; 
-            max-height: 110px !important;
+            gap: 4px !important; 
+            margin-bottom: 4px !important; 
+            height: 80px !important;
+            min-height: 80px !important; 
+            max-height: 80px !important;
             align-content: flex-start !important; 
             align-items: flex-start !important; 
             overflow-y: auto !important;
             scrollbar-gutter: stable !important;
+            padding: 2px !important;
           }
           
           .sb-word-btn {
-            padding: 4px 10px !important;
-            height: 30px !important;
-            min-height: 30px !important;
-            max-height: 30px !important;
+            padding: 2px 8px !important;
+            height: 26px !important;
+            min-height: 26px !important;
+            max-height: 26px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 12px !important;
-            border-width: 2px !important;
-            border-radius: 6px !important;
+            font-size: 11px !important;
+            border-width: 1.5px !important;
+            border-radius: 4px !important;
             flex: 0 0 auto !important; 
             align-self: flex-start !important;
             box-sizing: border-box !important;
           }
 
-          .sb-action-buttons { gap: 6px !important; margin-top: 8px !important; }
-          .sb-action-btn {
-            height: 36px !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-            font-size: 12px !important;
+          /* ✅ FIXED HEIGHT DIN ANG FEEDBACK PARA HINDI MAITULAK ANG BUTTONS */
+          .sb-feedback-msg {
+            height: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            padding: 2px 6px !important;
+            font-size: 11px !important;
+            margin-bottom: 4px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
             border-width: 2px !important;
             border-radius: 6px !important;
           }
+
+          .sb-action-buttons { gap: 4px !important; margin-top: auto !important; }
+          .sb-action-btn {
+            height: 32px !important;
+            min-height: 32px !important;
+            padding: 0 !important;
+            font-size: 11px !important;
+            border-width: 1.5px !important;
+            border-radius: 6px !important;
+          }
           
-          .sb-footer-btn { padding: 8px 16px !important; font-size: 12px !important; border-width: 2.5px !important; box-shadow: 0 3px 0 #3a1f0a !important; }
+          .sb-footer-btn { padding: 6px 12px !important; font-size: 11px !important; }
         }
 
         @media (max-width: 400px) {
-          .sb-topic-grid { grid-template-columns: 1fr !important; }
-          .sb-topic-card .card-image { height: 100px !important; }
-          .sb-topic-card .card-title { font-size: 14px !important; }
-          .sb-topic-card .card-desc { display: block !important; font-size: 10px !important; -webkit-line-clamp: unset !important; }
-          .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
-          .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; }
-          
-          .sb-sentence-box {
-            height: 65px !important;
-            min-height: 65px !important;
-            max-height: 65px !important;
-          }
-          .sb-word-bank-container {
-            height: 100px !important;
-            min-height: 100px !important;
-            max-height: 100px !important;
-          }
-          .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 28px !important; min-height: 28px !important; max-height: 28px !important; }
-          .sb-action-btn { font-size: 11px !important; height: 34px !important; }
+          .sb-sentence-box { height: 55px !important; min-height: 55px !important; max-height: 55px !important; }
+          .sb-word-bank-container { height: 70px !important; min-height: 70px !important; max-height: 70px !important; }
+          .sb-word-btn { font-size: 10px !important; padding: 2px 6px !important; height: 24px !important; min-height: 24px !important; max-height: 24px !important; }
+          .sb-action-btn { font-size: 10px !important; height: 30px !important; }
+          .sb-game-card h2 { font-size: 10px !important; margin-bottom: 2px !important; }
+          .sb-feedback-msg { height: 28px !important; min-height: 28px !important; max-height: 28px !important; font-size: 10px !important; }
         }
       `}</style>
 
@@ -975,9 +901,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   if (gameState === 'playing' && currentQuestion) {
     return (
       <CozyThemeWrapper>
-        <div className="sb-playing-wrapper" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' }}>
+        <div className="sb-playing-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, width: '100%' }}>
           
-          <div style={{ width: '100%', maxWidth: '950px' }}>
+          <div style={{ width: '100%', maxWidth: '950px', height: '100%', display: 'flex', flexDirection: 'column' }}>
             
             <div className="sb-top-hud" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <button onClick={handleExitGame} style={{ background: '#e67e22', border: '3px solid #b9770e', padding: '8px 20px', borderRadius: '12px', color: '#fff', cursor: 'pointer', fontSize: '15px', fontWeight: '900', boxShadow: '0 4px 0 #8c5728' }}>Exit</button>
@@ -1023,7 +949,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
-                <div className="sb-sentence-box" style={{ minHeight: '100px', maxHeight: '150px', overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
+                
+                {/* TINANGGAL KO ANG MGA INLINE MIN-HEIGHT PARA SUMUNOD LANG SA CSS */}
+                <div className="sb-sentence-box" style={{ overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
                   {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
                   {selectedWords.map((word, index) => (
                     <button key={`selected-${index}`} onClick={() => handleRemoveWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}>{word}</button>
@@ -1033,15 +961,18 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
-                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', minHeight: '50px', alignItems: 'flex-start' }}>
+                
+                {/* TINANGGAL DIN ANG INLINE MIN-HEIGHT DITO */}
+                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-start' }}>
                   {wordBank.map((word, index) => (
                     <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
                   ))}
                 </div>
               </div>
 
+              {/* BINIGYAN NG SARILING CLASSNAME PARA SA FIXED HEIGHT */}
               {answered && (
-                <div style={{ padding: '16px', borderRadius: '16px', background: isCorrect ? '#d4edda' : '#f8d7da', border: `3px solid ${isCorrect ? '#27ae60' : '#c0392b'}`, marginBottom: '24px', textAlign: 'center', fontSize: '18px', color: isCorrect ? '#155724' : '#721c24', fontWeight: '900' }}>{feedbackMessage}</div>
+                <div className="sb-feedback-msg" style={{ borderRadius: '16px', background: isCorrect ? '#d4edda' : '#f8d7da', border: `3px solid ${isCorrect ? '#27ae60' : '#c0392b'}`, textAlign: 'center', color: isCorrect ? '#155724' : '#721c24', fontWeight: '900' }}>{feedbackMessage}</div>
               )}
 
               <div className="sb-action-buttons" style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
