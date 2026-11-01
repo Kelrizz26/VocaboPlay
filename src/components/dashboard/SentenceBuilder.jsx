@@ -454,13 +454,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           box-sizing: border-box;
         }
 
-        /* --- GLOBAL DESKTOP FIXES PARA SA WORD BANK AT BUTTONS --- */
+        /* --- GLOBAL DESKTOP FIXES (Huwag galawin, okay na to) --- */
         .sb-word-bank-container { 
           display: flex; 
           flex-wrap: wrap; 
           gap: 12px; 
-          align-items: flex-start !important; /* Pinipigilan mag-stretch pataas */
-          min-height: 50px; 
+          align-items: flex-start !important; 
+          align-content: flex-start !important;
+          min-height: 80px; 
           margin-bottom: 20px;
         }
         
@@ -476,6 +477,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           border-radius: 12px; 
           cursor: pointer; 
           transition: all 0.1s ease;
+          align-self: flex-start !important;
         }
 
         .sb-action-buttons {
@@ -603,17 +605,29 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
           .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 2px 8px !important; border-width: 1.5px !important; border-radius: 6px !important; }
 
-          .sb-sentence-box { padding: 10px !important; min-height: 60px !important; max-height: 100px !important; overflow-y: auto !important; border-width: 2px !important; gap: 6px !important; border-radius: 8px !important; margin-bottom: 12px !important; align-content: flex-start; }
+          .sb-sentence-box { padding: 10px !important; min-height: 60px !important; max-height: 100px !important; overflow-y: auto !important; border-width: 2px !important; gap: 6px !important; border-radius: 8px !important; margin-bottom: 12px !important; align-content: flex-start !important; }
           .sb-sentence-box span { font-size: 12px !important; }
 
-          .sb-word-bank-container { gap: 6px !important; margin-bottom: 12px !important; }
+          /* ✅ FIX PARA HINDI MAG-JUMP PATAAS SA MOBILE */
+          .sb-word-bank-container { 
+            gap: 8px !important; 
+            margin-bottom: 12px !important; 
+            min-height: 80px !important; /* Reserve space para hindi mag-collapse */
+            align-content: flex-start !important; 
+            align-items: flex-start !important; 
+          }
           .sb-word-btn {
             padding: 6px 12px !important;
             height: 34px !important;
-            min-height: 0 !important;
+            min-height: 34px !important; /* Fixed height */
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             font-size: 13px !important;
             border-width: 2px !important;
             border-radius: 8px !important;
+            flex: 0 0 auto !important; 
+            align-self: flex-start !important;
           }
 
           .sb-action-buttons { gap: 8px !important; margin-top: 12px !important; }
@@ -637,7 +651,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
           .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; }
           
-          .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 30px !important; }
+          .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 30px !important; min-height: 30px !important; }
           .sb-action-btn { font-size: 12px !important; height: 38px !important; }
         }
       `}</style>
