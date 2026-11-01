@@ -97,8 +97,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return () => unsubscribe();
   }, []);
 
+  // ✅ FIX: Nilagyan ng isUserLoaded para hindi ma-overwrite ng blangko bago pa mag-load ang totoong data
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && isUserLoaded) {
       localStorage.setItem(`sb_lives_${currentUser.uid}`, lives.toString());
       
       if (nextRefillTime) {
@@ -110,7 +111,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       localStorage.setItem(`sb_unlocked_${currentUser.uid}`, JSON.stringify(unlockedLevels));
       localStorage.setItem(`sb_progress_${currentUser.uid}`, JSON.stringify(levelProgress));
     }
-  }, [lives, nextRefillTime, unlockedLevels, levelProgress, currentUser]);
+  }, [lives, nextRefillTime, unlockedLevels, levelProgress, currentUser, isUserLoaded]);
 
   useEffect(() => {
     if (!isUserLoaded) return;
@@ -216,6 +217,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
     const savedIndex = levelProgress[selectedTopic.id]?.[levelKey] || 0;
     const questionsInLevel = selectedTopic.levels[levelKey];
+    
+    // ✅ Kung tapos na (savedIndex >= length), start ulit sa 0 para makapag-replay. Kung hindi, resume sa savedIndex.
     const startIndex = savedIndex >= questionsInLevel.length ? 0 : savedIndex;
 
     setSelectedLevel(levelKey);
@@ -291,6 +294,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     }
   };
 
+  // ✅ FIX: Hindi na binubura ang progress. Ginagawa na lang "Completed".
   const handleNext = () => {
     if (lives <= 0) {
       setGameState('gameover');
@@ -301,13 +305,19 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
       
-      setLevelProgress(prev => ({
-        ...prev,
-        [selectedTopic.id]: {
-          ...prev[selectedTopic.id],
-          [selectedLevel]: nextIdx
+      setLevelProgress(prev => {
+        const updated = {
+          ...prev,
+          [selectedTopic.id]: {
+            ...(prev[selectedTopic.id] || {}),
+            [selectedLevel]: nextIdx
+          }
+        };
+        if (currentUser) {
+          localStorage.setItem(`sb_progress_${currentUser.uid}`, JSON.stringify(updated));
         }
-      }));
+        return updated;
+      });
 
       initQuestion(activeQuestions[nextIdx]);
     } else {
@@ -315,21 +325,35 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       const currentLevelIdx = CEFR_LEVELS.indexOf(selectedLevel);
       if (currentLevelIdx < CEFR_LEVELS.length - 1) {
         const nextLevel = CEFR_LEVELS[currentLevelIdx + 1];
-        const levelsForTopic = unlockedLevels[selectedTopic.id] || ['A1'];
-        if (!levelsForTopic.includes(nextLevel)) {
-          setUnlockedLevels(prev => ({
-            ...prev,
-            [selectedTopic.id]: [...(prev[selectedTopic.id] || ['A1']), nextLevel]
-          }));
-        }
+        setUnlockedLevels(prev => {
+          const levelsForTopic = prev[selectedTopic.id] || ['A1'];
+          if (!levelsForTopic.includes(nextLevel)) {
+            const updated = {
+              ...prev,
+              [selectedTopic.id]: [...levelsForTopic, nextLevel]
+            };
+            if (currentUser) {
+              localStorage.setItem(`sb_unlocked_${currentUser.uid}`, JSON.stringify(updated));
+            }
+            return updated;
+          }
+          return prev;
+        });
       }
 
+      // I-set ang progress sa activeQuestions.length para maging "Completed"
       setLevelProgress(prev => {
-        const newProgress = { ...prev };
-        if (newProgress[selectedTopic.id]) {
-          delete newProgress[selectedTopic.id][selectedLevel];
+        const updated = {
+          ...prev,
+          [selectedTopic.id]: {
+            ...(prev[selectedTopic.id] || {}),
+            [selectedLevel]: activeQuestions.length 
+          }
+        };
+        if (currentUser) {
+          localStorage.setItem(`sb_progress_${currentUser.uid}`, JSON.stringify(updated));
         }
-        return newProgress;
+        return updated;
       });
 
       if (currentUser && recordGame) {
@@ -577,7 +601,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                   <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#FFFFFF', margin: '0 0 8px 0', textShadow: '2px 2px 0px rgba(0,0,0,0.4)', letterSpacing: '0.5px' }}>{course.title}</h3>
                   <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4', flex: 1, marginBottom: '20px', fontWeight: '700', textShadow: '1px 1px 0px rgba(0,0,0,0.3)' }}>{course.description}</p>
                   
-                  {/* 👇 PROGRESS BAR - IBINALIK NATIN DITO 👇 */}
                   <div style={{ marginBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#FFFFFF', fontWeight: '900', marginBottom: '6px', textShadow: '1px 1px 0px rgba(0,0,0,0.3)' }}>
                       <span>Progress</span>
@@ -671,6 +694,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               const questionCount = selectedTopic.levels[lvlKey]?.length || 0;
               
               const savedIndex = levelProgress[selectedTopic.id]?.[lvlKey];
+              
+              // ✅ Idinagdag natin itong logic para lumabas ang "Completed"
+              const isCompleted = savedIndex !== undefined && savedIndex >= questionCount;
               const hasProgress = savedIndex !== undefined && savedIndex > 0 && savedIndex < questionCount;
               
               return (
@@ -696,7 +722,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                       </div>
                       <div style={{ fontSize: '16px', color: isUnlocked ? '#7a4b24' : '#7a6c60', marginTop: '4px', fontWeight: '700' }}>
                         {questionCount} Situational Sentences
-                        {hasProgress && <span style={{ color: '#e67e22', marginLeft: '8px' }}>• Resume at Q{savedIndex + 1}</span>}
+                        {/* ✅ UI Update: Lalabas na ang Completed ✅ o Resume at Q... */}
+                        {isCompleted ? (
+                          <span style={{ color: '#27ae60', marginLeft: '8px' }}>• Completed ✅</span>
+                        ) : hasProgress ? (
+                          <span style={{ color: '#e67e22', marginLeft: '8px' }}>• Resume at Q{savedIndex + 1}</span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -865,4 +896,4 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   return null;
 };
 
-export default SentenceBuilder; 
+export default SentenceBuilder;
