@@ -494,8 +494,41 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           font-weight: 900;
           transition: all 0.1s;
         }
+        .topic-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 20px;
+          margin-bottom: 40px;
+        }
+        .topic-card {
+          transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+          will-change: transform, box-shadow;
+        }
+        .topic-card:hover { transform: translateY(-4px); }
+        .topic-card:active {
+          transform: translateY(6px) scale(0.98) !important;
+          box-shadow: 0 2px 0 var(--border-color) !important;
+        }
+        .card-progress-text {
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          color: #FFFFFF;
+          font-weight: 900;
+          margin-bottom: 4px;
+          text-shadow: 1px 1px 0px rgba(0,0,0,0.3);
+        }
+        .card-progress-bar {
+          width: 100%;
+          height: 8px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.4);
+          margin-bottom: 12px;
+        }
 
-        /* --- MOBILE RESPONSIVENESS --- */
+        /* --- MOBILE RESPONSIVENESS (Only affects mobile/tablet) --- */
         @media (max-width: 768px) {
           .sb-container { padding: 12px; }
           
@@ -519,31 +552,64 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-word-btn {
             padding: 8px 16px;
             font-size: 16px;
-            border-width: 2px;
+            border-width: 2px !important;
           }
           
           .sb-action-btn {
-            padding: 14px;
+            padding: 14px !important;
             font-size: 18px !important;
           }
 
           .sb-title { font-size: 20px !important; }
           .sb-desc { font-size: 12px !important; }
           
-          .sb-level-card {
-            padding: 12px 16px !important;
+          .sb-level-card { padding: 12px 16px !important; }
+          .sb-level-card .level-icon { width: 48px !important; height: 48px !important; font-size: 20px !important; }
+          .sb-level-card .level-text-title { font-size: 18px !important; }
+          .sb-level-card .level-text-desc { font-size: 13px !important; }
+
+          /* 👇 Grid adjustment for Mobile: 2 Columns, Compact Cards 👇 */
+          .topic-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 12px !important;
           }
-          .sb-level-card .level-icon {
-            width: 48px !important;
-            height: 48px !important;
-            font-size: 20px !important;
+          .topic-card { 
+            border-width: 3px !important; 
+            box-shadow: 0 4px 0 var(--border-color) !important; 
+            border-radius: 16px !important;
           }
-          .sb-level-card .level-text-title {
-            font-size: 18px !important;
+          .topic-card .card-image { height: 100px !important; }
+          .topic-card .card-content { padding: 10px !important; }
+          .topic-card .card-title { font-size: 14px !important; margin-bottom: 2px !important; }
+          .topic-card .card-desc { 
+            font-size: 10px !important; 
+            line-height: 1.2 !important;
+            margin-bottom: 8px !important; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
           }
-          .sb-level-card .level-text-desc {
-            font-size: 13px !important;
+          .topic-card .card-progress-text { font-size: 9px !important; margin-bottom: 2px !important; }
+          .topic-card .card-progress-bar { height: 6px !important; margin-bottom: 8px !important; }
+          .topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; border-width: 1px !important; }
+          .topic-card .card-arrow { width: 24px !important; height: 24px !important; border-width: 2px !important; }
+          .topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
+        }
+        
+        /* 👇 Very Small Screen (Phone): 1 Column 👇 */
+        @media (max-width: 400px) {
+          .topic-grid {
+            grid-template-columns: 1fr !important;
           }
+          .topic-card .card-image { height: 140px !important; }
+          .topic-card .card-title { font-size: 16px !important; }
+          .topic-card .card-desc { font-size: 12px !important; -webkit-line-clamp: unset; }
+          .topic-card .card-progress-text { font-size: 11px !important; }
+          .topic-card .card-progress-bar { height: 8px !important; }
+          .topic-card .card-badge { font-size: 10px !important; padding: 4px 8px !important; }
+          .topic-card .card-arrow { width: 28px !important; height: 28px !important; }
+          .topic-card .card-arrow svg { width: 12px !important; height: 12px !important; }
         }
       `}</style>
 
@@ -566,26 +632,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
     return (
       <CozyThemeWrapper>
-        <style>{`
-          .topic-card {
-            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
-            will-change: transform, box-shadow;
-          }
-          .topic-card:hover { transform: translateY(-4px); }
-          .topic-card:active {
-            transform: translateY(6px) scale(0.98) !important;
-            box-shadow: 0 2px 0 var(--border-color) !important;
-          }
-          @media (max-width: 768px) {
-            .topic-card { border-width: 3px; box-shadow: 0 6px 0 var(--border-color) !important; }
-            .topic-card .card-image { height: 120px !important; }
-            .topic-card .card-content { padding: 12px !important; }
-            .topic-card .card-title { font-size: 16px !important; }
-            .topic-card .card-desc { font-size: 11px !important; }
-            .topic-card .card-badge { font-size: 9px !important; padding: 3px 8px !important; }
-          }
-        `}</style>
-
         <div className="sb-header-hud">
           <div style={{ background: 'linear-gradient(180deg, #fbd786 0%, #f5af19 100%)', padding: '12px 24px', borderRadius: '20px', border: '4px solid #b87a42', boxShadow: '0 6px 0 #8c5728, inset 0 4px 6px rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '14px' }}>
             <span style={{ fontSize: '32px', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.2))' }}>📖</span>
@@ -632,7 +678,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+        <div className="topic-grid">
           {sentenceBuilderCourses.map((course) => {
             const theme = topicThemes[course.title] || { bg: '#E58E27', border: '#B3620B', img: null };
             const levelsDone = unlockedLevels[course.id]?.length || 1;
@@ -691,12 +737,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                   <h3 className="card-title" style={{ fontSize: '20px', fontWeight: '900', color: '#FFFFFF', margin: '0 0 4px 0', textShadow: '1px 1px 0px rgba(0,0,0,0.4)' }}>{course.title}</h3>
                   <p className="card-desc" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.3', flex: 1, marginBottom: '12px', fontWeight: '700', textShadow: '1px 1px 0px rgba(0,0,0,0.3)' }}>{course.description}</p>
                   
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#FFFFFF', fontWeight: '900', marginBottom: '4px', textShadow: '1px 1px 0px rgba(0,0,0,0.3)' }}>
+                  <div>
+                    <div className="card-progress-text">
                       <span>Progress</span>
                       <span>{courseProgress}%</span>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.4)' }}>
+                    <div className="card-progress-bar">
                       <div style={{ width: `${courseProgress}%`, height: '100%', background: '#FFFFFF', borderRadius: '10px', transition: 'width 0.5s ease' }} />
                     </div>
                   </div>
@@ -716,7 +762,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                       5 Levels
                     </div>
 
-                    <div style={{ 
+                    <div className="card-arrow" style={{ 
                       width: '32px', 
                       height: '32px', 
                       borderRadius: '50%', 
@@ -729,7 +775,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                       boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
                       transform: 'translateY(-1px)'
                     }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <svg viewBox="0 0 24 24" fill="none">
                         <path d="M5 12H19M13 6L19 12L13 18" stroke={theme.bg} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
