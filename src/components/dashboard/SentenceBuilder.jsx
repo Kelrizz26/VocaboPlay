@@ -460,39 +460,38 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
           /* Header HUD */
           .sb-header-hud {
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            align-items: center !important;
-            gap: 6px !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
             margin-bottom: 12px !important;
           }
           .sb-title-box {
-            padding: 6px 10px !important;
+            padding: 6px 12px !important;
             border-radius: 10px !important;
             border-width: 2px !important;
             box-shadow: 0 2px 0 #8c5728 !important;
-            gap: 6px !important;
-            flex: 1 1 100% !important; 
+            gap: 8px !important;
+            width: 100%;
           }
           .sb-title-box span { font-size: 20px !important; }
-          .sb-title-box h1 { font-size: 14px !important; margin: 0 !important; }
-          .sb-title-box p { font-size: 8px !important; }
+          .sb-title-box h1 { font-size: 15px !important; margin: 0 !important; }
+          .sb-title-box p { font-size: 9px !important; }
           
           .sb-stats-row {
             width: 100% !important;
             justify-content: space-between !important;
-            gap: 4px !important;
+            gap: 6px !important;
           }
           .sb-stat-badge {
             padding: 4px 8px !important;
             border-radius: 8px !important;
             border-width: 2px !important;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
+            box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
             gap: 4px !important;
           }
           .sb-stat-badge .stat-icon { font-size: 14px !important; }
           .sb-stat-badge span { font-size: 14px !important; }
-          .sb-stat-badge button { width: 20px !important; height: 20px !important; font-size: 12px !important; }
+          .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
 
           /* Banners */
           .sb-banner-box {
@@ -519,85 +518,85 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             margin-bottom: 20px !important;
           }
           .sb-topic-card {
-            border-width: 3px !important;
+            border-width: 2.5px !important;
             border-radius: 12px !important;
-            box-shadow: 0 4px 0 var(--border-color) !important;
+            box-shadow: 0 3px 0 var(--border-color) !important;
           }
           .sb-topic-card .card-image { height: 80px !important; }
           .sb-topic-card .card-content { padding: 8px !important; }
           .sb-topic-card .card-title { font-size: 13px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-desc { font-size: 9px !important; line-height: 1.2 !important; margin-bottom: 6px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+          .sb-topic-card .card-desc { font-size: 9px !important; line-height: 1.1 !important; margin-bottom: 6px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
           .sb-topic-card .card-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
-          .sb-topic-card .card-progress-bar { height: 5px !important; margin-bottom: 6px !important; }
-          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 4px !important; border-width: 1px !important; border-radius: 4px !important; }
-          .sb-topic-card .card-arrow { width: 22px !important; height: 22px !important; border-width: 2px !important; }
+          .sb-topic-card .card-progress-bar { height: 4px !important; margin-bottom: 6px !important; }
+          .sb-topic-card .card-badge { font-size: 7px !important; padding: 1px 4px !important; border-width: 1px !important; border-radius: 4px !important; }
+          .sb-topic-card .card-arrow { width: 22px !important; height: 22px !important; border-width: 1.5px !important; }
           .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
 
           /* Level Selection */
           .sb-level-header {
             padding: 8px 12px !important;
             border-width: 2px !important;
-            box-shadow: 0 3px 0 #8c5728 !important;
+            box-shadow: 0 2px 0 #8c5728 !important;
             gap: 8px !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
           }
           .sb-level-header span { font-size: 20px !important; }
-          .sb-level-header h1 { font-size: 14px !important; }
+          .sb-level-header h1 { font-size: 15px !important; }
           .sb-level-header p { font-size: 10px !important; }
           
-          .sb-level-card { padding: 10px 12px !important; border-radius: 12px !important; gap: 10px !important; }
-          .sb-level-card .level-icon { width: 40px !important; height: 40px !important; font-size: 18px !important; border-width: 2px !important; border-radius: 8px !important; }
-          .sb-level-card .level-text-title { font-size: 15px !important; }
-          .sb-level-card .level-text-desc { font-size: 11px !important; margin-top: 2px !important; }
-          .sb-level-card > div:last-child span { font-size: 20px !important; }
+          .sb-level-card { padding: 10px 12px !important; border-radius: 10px !important; gap: 8px !important; }
+          .sb-level-card .level-icon { width: 36px !important; height: 36px !important; font-size: 16px !important; border-width: 2px !important; border-radius: 6px !important; }
+          .sb-level-card .level-text-title { font-size: 14px !important; }
+          .sb-level-card .level-text-desc { font-size: 10px !important; margin-top: 2px !important; }
+          .sb-level-card > div:last-child span { font-size: 18px !important; }
 
           /* Playing Screen */
-          .sb-top-hud { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; margin-bottom: 10px !important; }
-          .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 6px !important; }
-          .sb-top-stats > div { padding: 4px 10px !important; font-size: 12px !important; border-width: 2px !important; box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important; }
-          .sb-top-stats button { padding: 6px 14px !important; font-size: 12px !important; }
+          .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; margin-bottom: 8px !important; }
+          .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 4px !important; }
+          .sb-top-stats > div { padding: 4px 8px !important; font-size: 11px !important; border-width: 2px !important; box-shadow: 0 1.5px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats button { padding: 4px 10px !important; font-size: 11px !important; }
           
-          .sb-progress-container { padding: 8px 12px !important; margin-bottom: 12px !important; border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 2px 0 #8c5728 !important; }
-          .sb-progress-text { font-size: 11px !important; margin-bottom: 4px !important; }
-          .sb-progress-bar { height: 8px !important; }
+          .sb-progress-container { padding: 6px 10px !important; margin-bottom: 10px !important; border-width: 2px !important; border-radius: 8px !important; box-shadow: 0 2px 0 #8c5728 !important; }
+          .sb-progress-text { font-size: 10px !important; margin-bottom: 4px !important; }
+          .sb-progress-bar { height: 6px !important; }
 
-          .sb-game-card { padding: 16px 14px !important; border-width: 3px !important; border-radius: 16px !important; box-shadow: 0 6px 0 #8c5728 !important; }
-          .sb-game-card h2 { font-size: 16px !important; margin-bottom: 16px !important; }
-          .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 3px 8px !important; border-width: 2px !important; border-radius: 8px !important; }
+          .sb-game-card { padding: 12px 10px !important; border-width: 2.5px !important; border-radius: 12px !important; box-shadow: 0 4px 0 #8c5728 !important; }
+          .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
+          .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 2px 6px !important; border-width: 1.5px !important; border-radius: 6px !important; }
 
           /* SENTENCE BOX */
-          .sb-sentence-box { padding: 12px !important; min-height: 80px !important; max-height: 120px !important; overflow-y: auto !important; border-width: 3px !important; gap: 8px !important; border-radius: 12px !important; margin-bottom: 16px !important; align-content: flex-start; }
-          .sb-sentence-box span { font-size: 14px !important; }
+          .sb-sentence-box { padding: 8px !important; min-height: 60px !important; max-height: 100px !important; overflow-y: auto !important; border-width: 2px !important; gap: 6px !important; border-radius: 8px !important; margin-bottom: 12px !important; align-content: flex-start; }
+          .sb-sentence-box span { font-size: 13px !important; }
 
-          /* WORD BUTTONS - AYOS NA! */
-          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; align-items: flex-start !important; margin-bottom: 16px !important; }
+          /* WORD BUTTONS */
+          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; align-items: flex-start !important; margin-bottom: 12px !important; }
           .sb-word-btn {
-            padding: 8px 14px !important;
-            min-height: 40px !important;
+            padding: 6px 12px !important;
+            min-height: 36px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 15px !important;
+            font-size: 14px !important;
             border-width: 2px !important;
             border-radius: 8px !important;
             box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
-            flex: 0 0 auto !important; /* Prevents stretch */
+            flex: 0 0 auto !important; /* Ito yung pumipigil sa stretch */
           }
 
           /* ACTION BUTTONS */
-          .sb-action-buttons { flex-direction: row !important; gap: 10px !important; margin-top: 16px !important; }
+          .sb-action-buttons { flex-direction: row !important; gap: 8px !important; margin-top: 12px !important; }
           .sb-action-btn {
             flex: 1 !important;
-            width: auto !important;
-            padding: 12px !important;
-            min-height: 48px !important;
-            font-size: 16px !important;
-            border-width: 3px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.3) !important;
+            width: 100% !important;
+            padding: 10px !important;
+            min-height: 44px !important;
+            font-size: 14px !important;
+            border-width: 2.5px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.3) !important;
           }
           
-          .sb-footer-btn { padding: 10px 20px !important; font-size: 14px !important; border-width: 3px !important; box-shadow: 0 4px 0 #3a1f0a !important; }
+          .sb-footer-btn { padding: 8px 16px !important; font-size: 12px !important; border-width: 2.5px !important; box-shadow: 0 3px 0 #3a1f0a !important; }
         }
 
         @media (max-width: 400px) {
@@ -605,11 +604,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-image { height: 120px !important; }
           .sb-topic-card .card-title { font-size: 15px !important; }
           .sb-topic-card .card-desc { font-size: 10px !important; -webkit-line-clamp: unset !important; }
-          .sb-topic-card .card-badge { font-size: 8px !important; padding: 3px 6px !important; }
+          .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
           .sb-topic-card .card-arrow { width: 26px !important; height: 26px !important; }
           
-          .sb-word-btn { font-size: 14px !important; padding: 6px 12px !important; min-height: 36px !important; }
-          .sb-action-btn { font-size: 14px !important; padding: 10px !important; min-height: 44px !important; }
+          .sb-word-btn { font-size: 13px !important; padding: 6px 10px !important; min-height: 34px !important; }
+          .sb-action-btn { font-size: 13px !important; padding: 8px !important; min-height: 40px !important; }
         }
       `}</style>
 
@@ -938,7 +937,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
-                <div className="sb-sentence-box" style={{ minHeight: '80px', maxHeight: '120px', overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
+                <div className="sb-sentence-box" style={{ minHeight: '100px', maxHeight: '150px', overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
                   {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
                   {selectedWords.map((word, index) => (
                     <button key={`selected-${index}`} onClick={() => handleRemoveWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}>{word}</button>
