@@ -454,7 +454,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           box-sizing: border-box;
         }
 
-        /* --- GLOBAL DESKTOP FIXES (Huwag galawin, okay na to) --- */
+        /* --- GLOBAL DESKTOP FIXES --- */
         .sb-word-bank-container { 
           display: flex; 
           flex-wrap: wrap; 
@@ -478,6 +478,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           cursor: pointer; 
           transition: all 0.1s ease;
           align-self: flex-start !important;
+          touch-action: manipulation; /* PINIPIGILAN ANG ZOOM SA MOBILE */
         }
 
         .sb-action-buttons {
@@ -498,13 +499,13 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           border-radius: 16px;
           cursor: pointer;
           transition: all 0.1s ease;
+          touch-action: manipulation;
         }
 
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
-          /* TODO: ISAGAD ANG FIT SA SCREEN (NO SCROLL) */
           .sb-outer-wrapper {
-            overflow: hidden !important;
+            overflow: hidden !important; /* NO SCROLL SA BUONG PAGE */
           }
 
           .sb-container { 
@@ -530,7 +531,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             flex-direction: column !important;
           }
 
-          /* TOP HUD (Exit, Coins, Hearts) - Pinaliit nang todo */
+          /* TOP HUD (Exit, Coins, Hearts) */
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
           .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { 
@@ -553,7 +554,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-shadow: 0 2px 0 #8c5728 !important;
           }
 
-          /* PROGRESS BAR - Pinaliit */
+          /* PROGRESS BAR */
           .sb-progress-container { 
             padding: 4px 8px !important; 
             margin-bottom: 6px !important; 
@@ -600,7 +601,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             display: none !important; 
           }
           
-          /* "YOUR SENTENCE" at "WORD BANK" labels */
+          /* Labels (YOUR SENTENCE / WORD BANK) */
           .sb-game-card p { 
             font-size: 10px !important; 
             margin: 4px 0 2px 0 !important; 
@@ -611,13 +612,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             flex-shrink: 0 !important;
           }
 
-          /* SENTENCE BOX - NAKA-LOCK ANG HEIGHT (HINDI GUMAGALAW) */
+          /* ✅ SENTENCE BOX - ABSOLUTE FIXED HEIGHT (HINDI GUMAGALAW) */
           .sb-sentence-box { 
-            flex-shrink: 0 !important;
-            flex-grow: 0 !important;
-            height: 65px !important;
-            min-height: 65px !important;
-            max-height: 65px !important;
+            flex: 0 0 80px !important; /* LOCKED SA 80px */
+            height: 80px !important;
+            min-height: 80px !important;
+            max-height: 80px !important;
             padding: 4px !important; 
             overflow-y: auto !important; 
             border-width: 1.5px !important; 
@@ -629,13 +629,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          /* WORD BANK - NAKA-LOCK DIN ANG HEIGHT (HINDI NAG-COLLAPSE) */
+          /* ✅ WORD BANK - ABSOLUTE FIXED HEIGHT (HINDI NAG-COLLAPSE) */
           .sb-word-bank-container { 
-            flex-shrink: 0 !important;
-            flex-grow: 0 !important;
-            height: 90px !important;
-            min-height: 90px !important; 
-            max-height: 90px !important;
+            flex: 1 1 auto !important; /* Sinasalo yung natitirang space */
+            min-height: 120px !important; /* Minimum na 120px */
+            height: auto !important;
+            max-height: 150px !important;
             gap: 4px !important; 
             margin-bottom: 0 !important; 
             align-content: flex-start !important; 
@@ -647,13 +646,13 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
           
-          /* MGA SALITA */
+          /* MGA SALITA (Maliit, fixed height) */
           .sb-word-btn {
             padding: 0 8px !important;
-            height: 26px !important;
-            min-height: 26px !important;
-            max-height: 26px !important;
-            font-size: 11px !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            max-height: 28px !important;
+            font-size: 12px !important;
             border-width: 1.5px !important;
             border-radius: 4px !important;
             flex: none !important; 
@@ -661,6 +660,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
             white-space: nowrap !important;
             line-height: 1 !important;
+            touch-action: manipulation !important; /* PREVENT SCROLL SA TAP */
           }
 
           /* FEEDBACK MESSAGE */
@@ -681,12 +681,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
 
-          /* BUTTONS (Reset at Check) - NAKA-PIN SA BABA */
+          /* BUTTONS (Reset at Check) */
           .sb-action-buttons { 
             flex-shrink: 0 !important;
             gap: 6px !important; 
-            margin-top: auto !important; 
-            padding-top: 6px !important;
+            margin-top: 8px !important; 
+            padding-top: 0 !important;
             height: 36px !important;
           }
           .sb-action-btn {
@@ -698,6 +698,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-radius: 6px !important;
             box-shadow: 0 2px 0 #8c5728 !important;
             box-sizing: border-box !important;
+            touch-action: manipulation !important;
           }
         }
       `}</style>
@@ -1028,10 +1029,20 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
                 
+                {/* ✅ ONMOUSEDOWN PREVENT DEFAULT PARA HINDI MAG-SCROLL SA MOBILE */}
                 <div className="sb-sentence-box" style={{ overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
                   {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
                   {selectedWords.map((word, index) => (
-                    <button key={`selected-${index}`} onClick={() => handleRemoveWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}>{word}</button>
+                    <button 
+                      key={`selected-${index}`} 
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleRemoveWord(word, index)} 
+                      disabled={answered} 
+                      className="sb-word-btn" 
+                      style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}
+                    >
+                      {word}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1039,9 +1050,19 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
                 
+                {/* ✅ ONMOUSEDOWN PREVENT DEFAULT DITO RIN */}
                 <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-start' }}>
                   {wordBank.map((word, index) => (
-                    <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
+                    <button 
+                      key={`bank-${index}`} 
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleSelectWord(word, index)} 
+                      disabled={answered} 
+                      className="sb-word-btn" 
+                      style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}
+                    >
+                      {word}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1053,14 +1074,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               <div className="sb-action-buttons" style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
                 {!answered ? (
                   <>
-                    <button onClick={() => initQuestion(currentQuestion)} className="sb-action-btn" style={{ flex: 1, background: '#ecf0f1', color: '#7f8c8d', border: '3px solid #bdc3c7', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #bdc3c7' }}>Reset</button>
-                    <button onClick={handleCheckAnswer} disabled={selectedWords.length === 0} className="sb-action-btn" style={{ flex: 2, background: '#f39c12', color: '#fff', border: '3px solid #b9770e', borderRadius: '16px', cursor: selectedWords.length === 0 ? 'not-allowed' : 'pointer', fontWeight: '900', opacity: selectedWords.length === 0 ? 0.5 : 1, boxShadow: '0 4px 0 #b9770e' }}>Check Answer</button>
+                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => initQuestion(currentQuestion)} className="sb-action-btn" style={{ flex: 1, background: '#ecf0f1', color: '#7f8c8d', border: '3px solid #bdc3c7', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #bdc3c7' }}>Reset</button>
+                    <button onMouseDown={(e) => e.preventDefault()} onClick={handleCheckAnswer} disabled={selectedWords.length === 0} className="sb-action-btn" style={{ flex: 2, background: '#f39c12', color: '#fff', border: '3px solid #b9770e', borderRadius: '16px', cursor: selectedWords.length === 0 ? 'not-allowed' : 'pointer', fontWeight: '900', opacity: selectedWords.length === 0 ? 0.5 : 1, boxShadow: '0 4px 0 #b9770e' }}>Check Answer</button>
                   </>
                 ) : (
                   isCorrect ? (
-                    <button onClick={handleNext} className="sb-action-btn" style={{ width: '100%', background: '#2ecc71', color: '#fff', border: '3px solid #1d8348', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #1d8348' }}>{currentIndex === activeQuestions.length - 1 ? 'Finish Level' : 'Next Sentence →'}</button>
+                    <button onMouseDown={(e) => e.preventDefault()} onClick={handleNext} className="sb-action-btn" style={{ width: '100%', background: '#2ecc71', color: '#fff', border: '3px solid #1d8348', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #1d8348' }}>{currentIndex === activeQuestions.length - 1 ? 'Finish Level' : 'Next Sentence →'}</button>
                   ) : (
-                    <button onClick={handleTryAgain} className="sb-action-btn" style={{ width: '100%', background: '#e74c3c', color: '#fff', border: '3px solid #c0392b', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #922b21' }}>Try Again 🔄</button>
+                    <button onMouseDown={(e) => e.preventDefault()} onClick={handleTryAgain} className="sb-action-btn" style={{ width: '100%', background: '#e74c3c', color: '#fff', border: '3px solid #c0392b', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #922b21' }}>Try Again 🔄</button>
                   )
                 )}
               </div>
