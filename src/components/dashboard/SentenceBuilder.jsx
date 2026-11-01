@@ -521,13 +521,13 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             overflow: hidden !important;
           }
 
-          /* ✅ IBINALIK SA ROW ANG HEADER PARA MAGKATABI (TITLE SA KALIWA, STATS SA KANAN) */
+          /* IBINALIK SA ROW ANG HEADER PARA MAGKATABI */
           .sb-header-hud {
             display: flex !important;
             flex-direction: row !important;
             align-items: center !important;
             justify-content: space-between !important;
-            gap: 4px !important;
+            gap: 8px !important;
             margin-bottom: 12px !important;
             width: 100% !important;
           }
@@ -539,13 +539,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             padding: 4px 8px !important;
             border-width: 2px !important;
             box-shadow: 0 2px 0 #8c5728 !important;
-            gap: 6px !important;
+            gap: 4px !important;
             border-radius: 8px !important;
-            flex-shrink: 1 !important;
           }
           .sb-title-box span { font-size: 16px !important; }
-          .sb-title-box h1 { font-size: 11px !important; margin: 0 !important; line-height: 1.1 !important; white-space: nowrap !important; }
-          .sb-title-box p { display: none !important; } /* Tinago yung subtitle para makatipid sa space */
+          .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; line-height: 1.1 !important; }
+          .sb-title-box p { font-size: 8px !important; margin: 0 !important; }
           
           /* PINALIIT ANG STATS ROW PARA KASYA SA KANAN */
           .sb-stats-row {
@@ -553,7 +552,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             justify-content: flex-end !important;
             gap: 4px !important;
             flex-wrap: nowrap !important;
-            flex-shrink: 0 !important;
           }
           .sb-stat-badge {
             padding: 2px 6px !important;
@@ -565,7 +563,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             box-sizing: border-box !important;
           }
           .sb-stat-badge .stat-icon { font-size: 12px !important; }
-          .sb-stat-badge span { font-size: 11px !important; font-weight: 900 !important; }
+          .sb-stat-badge span { font-size: 12px !important; font-weight: 900 !important; }
           .sb-stat-badge button { width: 16px !important; height: 16px !important; font-size: 10px !important; }
 
           /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
