@@ -442,7 +442,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       alignItems: 'center',
       boxSizing: 'border-box'
     }}>
-      {/* 👇 DITO ANG MGA SOBRANG AGGRESSIVE NA MOBILE FIXES 👇 */}
+      {/* 👇 GLOBAL CSS + MOBILE FIXES 👇 */}
       <style>{`
         .sb-container {
           max-width: 1200px;
@@ -454,11 +454,54 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           box-sizing: border-box;
         }
 
+        /* --- GLOBAL DESKTOP FIXES PARA SA WORD BANK AT BUTTONS --- */
+        .sb-word-bank-container { 
+          display: flex; 
+          flex-wrap: wrap; 
+          gap: 12px; 
+          align-items: flex-start !important; /* Pinipigilan mag-stretch pataas */
+          min-height: 50px; 
+          margin-bottom: 20px;
+        }
+        
+        .sb-word-btn { 
+          padding: 10px 24px; 
+          height: auto;
+          min-height: 46px; 
+          display: inline-flex; 
+          align-items: center; 
+          justify-content: center; 
+          font-size: 18px; 
+          font-weight: 900; 
+          border-radius: 12px; 
+          cursor: pointer; 
+          transition: all 0.1s ease;
+        }
+
+        .sb-action-buttons {
+          display: flex;
+          flex-direction: row;
+          gap: 16px;
+          margin-top: 24px;
+        }
+
+        .sb-action-btn {
+          flex: 1;
+          padding: 16px;
+          min-height: 56px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.1s ease;
+        }
+
         /* --- MOBILE RESPONSIVENESS (Max-width 768px) --- */
         @media (max-width: 768px) {
           .sb-container { padding: 8px !important; }
 
-          /* Header HUD */
           .sb-header-hud {
             flex-direction: column !important;
             align-items: flex-start !important;
@@ -493,7 +536,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-stat-badge span { font-size: 12px !important; }
           .sb-stat-badge button { width: 16px !important; height: 16px !important; font-size: 10px !important; }
 
-          /* Banners */
           .sb-banner-box {
             padding: 4px 12px !important;
             border-width: 2px !important;
@@ -511,7 +553,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-subtext-box p { font-size: 10px !important; text-align: center; margin: 0 !important; }
 
-          /* Topic Cards - Sobrang compact */
           .sb-topic-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 8px !important;
@@ -532,7 +573,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
           .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
 
-          /* Level Selection */
           .sb-level-header {
             padding: 8px 12px !important;
             border-width: 2px !important;
@@ -550,7 +590,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-level-card .level-text-desc { font-size: 10px !important; margin-top: 2px !important; }
           .sb-level-card > div:last-child span { font-size: 18px !important; }
 
-          /* Playing Screen */
           .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; margin-bottom: 10px !important; }
           .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 6px !important; }
           .sb-top-stats > div { padding: 4px 10px !important; font-size: 12px !important; border-width: 2px !important; box-shadow: 0 1.5px 0 rgba(0,0,0,0.3) !important; }
@@ -564,41 +603,27 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-game-card h2 { font-size: 14px !important; margin-bottom: 12px !important; }
           .sb-level-badge, .sb-hint-badge { font-size: 10px !important; padding: 2px 8px !important; border-width: 1.5px !important; border-radius: 6px !important; }
 
-          /* SENTENCE BOX */
           .sb-sentence-box { padding: 10px !important; min-height: 60px !important; max-height: 100px !important; overflow-y: auto !important; border-width: 2px !important; gap: 6px !important; border-radius: 8px !important; margin-bottom: 12px !important; align-content: flex-start; }
           .sb-sentence-box span { font-size: 12px !important; }
 
-          /* WORD BUTTONS - MAY SPACE NA! */
-          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; align-items: center !important; margin-bottom: 12px !important; }
+          .sb-word-bank-container { gap: 6px !important; margin-bottom: 12px !important; }
           .sb-word-btn {
             padding: 6px 12px !important;
             height: 34px !important;
             min-height: 0 !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
             font-size: 13px !important;
             border-width: 2px !important;
             border-radius: 8px !important;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.2) !important;
-            flex: 0 0 auto !important;
-            white-space: nowrap !important;
-            box-sizing: border-box !important;
           }
 
-          /* ACTION BUTTONS */
-          .sb-action-buttons { display: flex !important; flex-direction: row !important; gap: 10px !important; margin-top: 16px !important; }
+          .sb-action-buttons { gap: 8px !important; margin-top: 12px !important; }
           .sb-action-btn {
-            flex: 1 !important;
             height: 42px !important;
+            min-height: 0 !important;
             padding: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 14px !important;
-            border-width: 2.5px !important;
-            border-radius: 10px !important;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.3) !important;
+            font-size: 13px !important;
+            border-width: 2px !important;
+            border-radius: 8px !important;
           }
           
           .sb-footer-btn { padding: 8px 16px !important; font-size: 12px !important; border-width: 2.5px !important; box-shadow: 0 3px 0 #3a1f0a !important; }
@@ -612,8 +637,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-badge { font-size: 8px !important; padding: 2px 6px !important; }
           .sb-topic-card .card-arrow { width: 24px !important; height: 24px !important; }
           
-          .sb-word-btn { font-size: 12px !important; padding: 6px 10px !important; height: 30px !important; }
-          .sb-action-btn { font-size: 13px !important; height: 38px !important; }
+          .sb-word-btn { font-size: 11px !important; padding: 4px 8px !important; height: 30px !important; }
+          .sb-action-btn { font-size: 12px !important; height: 38px !important; }
         }
       `}</style>
 
@@ -952,7 +977,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
-                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', minHeight: '50px' }}>
+                <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', minHeight: '50px', alignItems: 'flex-start' }}>
                   {wordBank.map((word, index) => (
                     <button key={`bank-${index}`} onClick={() => handleSelectWord(word, index)} disabled={answered} className="sb-word-btn" style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}>{word}</button>
                   ))}
@@ -963,7 +988,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                 <div style={{ padding: '16px', borderRadius: '16px', background: isCorrect ? '#d4edda' : '#f8d7da', border: `3px solid ${isCorrect ? '#27ae60' : '#c0392b'}`, marginBottom: '24px', textAlign: 'center', fontSize: '18px', color: isCorrect ? '#155724' : '#721c24', fontWeight: '900' }}>{feedbackMessage}</div>
               )}
 
-              <div className="sb-action-buttons" style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div className="sb-action-buttons" style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
                 {!answered ? (
                   <>
                     <button onClick={() => initQuestion(currentQuestion)} className="sb-action-btn" style={{ flex: 1, background: '#ecf0f1', color: '#7f8c8d', border: '3px solid #bdc3c7', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', boxShadow: '0 4px 0 #bdc3c7' }}>Reset</button>
