@@ -458,7 +458,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         @media (max-width: 768px) {
           .sb-container { padding: 6px !important; }
 
-          /* Header HUD - Sobrang liit na */
+          /* Header HUD */
           .sb-header-hud {
             flex-direction: column !important;
             align-items: flex-start !important;
@@ -467,51 +467,51 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-title-box {
             padding: 4px 8px !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
             border-width: 1.5px !important;
             box-shadow: 0 1.5px 0 #8c5728 !important;
             gap: 4px !important;
             width: 100%;
           }
-          .sb-title-box span { font-size: 16px !important; }
-          .sb-title-box h1 { font-size: 12px !important; margin: 0 !important; }
-          .sb-title-box p { font-size: 7px !important; }
+          .sb-title-box span { font-size: 14px !important; }
+          .sb-title-box h1 { font-size: 10px !important; margin: 0 !important; }
+          .sb-title-box p { font-size: 6px !important; }
           
           .sb-stats-row {
             width: 100% !important;
             justify-content: space-between !important;
-            gap: 4px !important;
+            gap: 2px !important;
           }
           .sb-stat-badge {
-            padding: 2px 6px !important;
-            border-radius: 6px !important;
+            padding: 2px 4px !important;
+            border-radius: 4px !important;
             border-width: 1.5px !important;
             box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
             gap: 2px !important;
           }
           .sb-stat-badge .stat-icon { font-size: 10px !important; }
           .sb-stat-badge span { font-size: 10px !important; }
-          .sb-stat-badge button { width: 14px !important; height: 14px !important; font-size: 8px !important; }
+          .sb-stat-badge button { width: 12px !important; height: 12px !important; font-size: 8px !important; }
 
-          /* Banners - Pinaliit din */
+          /* Banners */
           .sb-banner-box {
-            padding: 2px 10px !important;
-            border-width: 1.5px !important;
-            box-shadow: 0 2px 0 #3a1f0a !important;
-            border-radius: 8px !important;
-            margin-top: 2px !important;
-          }
-          .sb-banner-box h2 { font-size: 12px !important; margin: 0 !important; }
-          .sb-subtext-box {
             padding: 2px 8px !important;
             border-width: 1.5px !important;
-            box-shadow: 0 1.5px 0 #8c5728 !important;
+            box-shadow: 0 1.5px 0 #3a1f0a !important;
             border-radius: 6px !important;
-            margin-top: 4px !important;
+            margin-top: 2px !important;
           }
-          .sb-subtext-box p { font-size: 8px !important; text-align: center; margin: 0 !important; }
+          .sb-banner-box h2 { font-size: 10px !important; margin: 0 !important; }
+          .sb-subtext-box {
+            padding: 2px 6px !important;
+            border-width: 1.5px !important;
+            box-shadow: 0 1px 0 #8c5728 !important;
+            border-radius: 4px !important;
+            margin-top: 2px !important;
+          }
+          .sb-subtext-box p { font-size: 7px !important; text-align: center; margin: 0 !important; }
 
-          /* Topic Cards - Sobrang liit na parang match game */
+          /* Topic Cards - Sapat na maliit */
           .sb-topic-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 6px !important;
@@ -519,98 +519,97 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-topic-card {
             border-width: 1.5px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 0 var(--border-color) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1.5px 0 var(--border-color) !important;
           }
-          .sb-topic-card .card-image { height: 60px !important; border-bottom-width: 1.5px !important; }
-          .sb-topic-card .card-content { padding: 6px !important; }
-          .sb-topic-card .card-title { font-size: 11px !important; margin-bottom: 1px !important; }
-          .sb-topic-card .card-desc { display: none !important; /* Tinatago natin muna para sobrang liit */ }
-          .sb-topic-card .card-progress-text { font-size: 7px !important; margin-bottom: 1px !important; }
-          .sb-topic-card .card-progress-bar { height: 3px !important; margin-bottom: 4px !important; }
-          .sb-topic-card .card-badge { font-size: 6px !important; padding: 1px 3px !important; border-width: 1px !important; border-radius: 3px !important; }
-          .sb-topic-card .card-arrow { width: 18px !important; height: 18px !important; border-width: 1.5px !important; }
-          .sb-topic-card .card-arrow svg { width: 8px !important; height: 8px !important; }
+          .sb-topic-card .card-image { height: 50px !important; border-bottom-width: 1.5px !important; }
+          .sb-topic-card .card-content { padding: 4px !important; }
+          .sb-topic-card .card-title { font-size: 9px !important; margin-bottom: 1px !important; }
+          .sb-topic-card .card-desc { display: none !important; /* Tinago na totally */ }
+          .sb-topic-card .card-progress-text { font-size: 6px !important; margin-bottom: 1px !important; }
+          .sb-topic-card .card-progress-bar { height: 2px !important; margin-bottom: 4px !important; }
+          .sb-topic-card .card-badge { font-size: 5px !important; padding: 1px 3px !important; border-width: 1px !important; border-radius: 2px !important; }
+          .sb-topic-card .card-arrow { width: 14px !important; height: 14px !important; border-width: 1px !important; }
+          .sb-topic-card .card-arrow svg { width: 6px !important; height: 6px !important; }
 
           /* Level Selection */
           .sb-level-header {
-            padding: 6px 8px !important;
+            padding: 4px 6px !important;
             border-width: 1.5px !important;
-            box-shadow: 0 1.5px 0 #8c5728 !important;
-            gap: 6px !important;
-            border-radius: 8px !important;
+            box-shadow: 0 1px 0 #8c5728 !important;
+            gap: 4px !important;
+            border-radius: 6px !important;
           }
-          .sb-level-header span { font-size: 16px !important; }
-          .sb-level-header h1 { font-size: 12px !important; }
-          .sb-level-header p { font-size: 8px !important; }
+          .sb-level-header span { font-size: 14px !important; }
+          .sb-level-header h1 { font-size: 10px !important; }
+          .sb-level-header p { font-size: 6px !important; }
           
-          .sb-level-card { padding: 8px 10px !important; border-radius: 8px !important; gap: 6px !important; }
-          .sb-level-card .level-icon { width: 30px !important; height: 30px !important; font-size: 12px !important; border-width: 1.5px !important; border-radius: 4px !important; }
-          .sb-level-card .level-text-title { font-size: 12px !important; }
-          .sb-level-card .level-text-desc { font-size: 9px !important; margin-top: 1px !important; }
-          .sb-level-card > div:last-child span { font-size: 14px !important; }
+          .sb-level-card { padding: 6px 8px !important; border-radius: 6px !important; gap: 4px !important; }
+          .sb-level-card .level-icon { width: 24px !important; height: 24px !important; font-size: 10px !important; border-width: 1px !important; border-radius: 4px !important; }
+          .sb-level-card .level-text-title { font-size: 10px !important; }
+          .sb-level-card .level-text-desc { font-size: 7px !important; margin-top: 1px !important; }
+          .sb-level-card > div:last-child span { font-size: 12px !important; }
 
           /* Playing Screen */
-          .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 4px !important; margin-bottom: 6px !important; }
-          .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 4px !important; }
-          .sb-top-stats > div { padding: 2px 6px !important; font-size: 10px !important; border-width: 1.5px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; }
-          .sb-top-stats button { padding: 2px 8px !important; font-size: 10px !important; }
+          .sb-top-hud { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: space-between !important; gap: 2px !important; margin-bottom: 4px !important; }
+          .sb-top-stats { width: 100% !important; justify-content: space-between !important; gap: 2px !important; }
+          .sb-top-stats > div { padding: 2px 4px !important; font-size: 8px !important; border-width: 1px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; }
+          .sb-top-stats button { padding: 2px 6px !important; font-size: 8px !important; }
           
-          .sb-progress-container { padding: 4px 8px !important; margin-bottom: 6px !important; border-width: 1.5px !important; border-radius: 6px !important; box-shadow: 0 1.5px 0 #8c5728 !important; }
-          .sb-progress-text { font-size: 9px !important; margin-bottom: 2px !important; }
+          .sb-progress-container { padding: 4px 6px !important; margin-bottom: 6px !important; border-width: 1.5px !important; border-radius: 6px !important; box-shadow: 0 1.5px 0 #8c5728 !important; }
+          .sb-progress-text { font-size: 8px !important; margin-bottom: 2px !important; }
           .sb-progress-bar { height: 4px !important; }
 
-          .sb-game-card { padding: 8px !important; border-width: 1.5px !important; border-radius: 8px !important; box-shadow: 0 3px 0 #8c5728 !important; }
-          .sb-game-card h2 { font-size: 12px !important; margin-bottom: 8px !important; }
-          .sb-level-badge, .sb-hint-badge { font-size: 8px !important; padding: 1px 4px !important; border-width: 1px !important; border-radius: 4px !important; }
+          .sb-game-card { padding: 6px !important; border-width: 1.5px !important; border-radius: 8px !important; box-shadow: 0 2px 0 #8c5728 !important; }
+          .sb-game-card h2 { font-size: 10px !important; margin-bottom: 6px !important; }
+          .sb-level-badge, .sb-hint-badge { font-size: 7px !important; padding: 1px 3px !important; border-width: 1px !important; border-radius: 4px !important; }
 
           /* SENTENCE BOX */
-          .sb-sentence-box { padding: 6px !important; min-height: 50px !important; max-height: 80px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 8px !important; align-content: flex-start; }
-          .sb-sentence-box span { font-size: 10px !important; }
+          .sb-sentence-box { padding: 6px !important; min-height: 40px !important; max-height: 60px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 6px !important; align-content: flex-start; }
+          .sb-sentence-box span { font-size: 9px !important; }
 
-          /* WORD BUTTONS - THE FIX */
-          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 4px !important; align-items: flex-start !important; margin-bottom: 8px !important; }
+          /* WORD BUTTONS - MAY SPACE NA! */
+          .sb-word-bank-container { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; align-items: flex-start !important; margin-bottom: 8px !important; }
           .sb-word-btn {
-            padding: 4px 8px !important;
-            height: auto !important; /* Prevent stretch */
-            min-height: 0 !important; /* Prevent stretch */
+            padding: 4px 8px !important; /* Binigyan ng space sa gilid */
+            height: 28px !important; /* Fixed height */
+            min-height: 0 !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            font-size: 11px !important;
+            font-size: 10px !important;
             border-width: 1.5px !important;
-            border-radius: 6px !important;
+            border-radius: 4px !important;
             box-shadow: 0 1.5px 0 rgba(0,0,0,0.2) !important;
-            flex: 0 0 auto !important;
-            white-space: nowrap !important;
+            flex: 0 0 auto !important; /* Prevents stretch */
+            white-space: nowrap !important; /* Prevents text wrap */
           }
 
           /* ACTION BUTTONS */
-          .sb-action-buttons { flex-direction: row !important; gap: 6px !important; margin-top: 8px !important; }
+          .sb-action-buttons { flex-direction: row !important; gap: 4px !important; margin-top: 8px !important; }
           .sb-action-btn {
             flex: 1 !important;
-            padding: 6px !important;
-            min-height: 0 !important;
-            height: 32px !important; /* Fixed height */
-            font-size: 11px !important;
+            padding: 4px !important;
+            height: 28px !important; /* Fixed height */
+            font-size: 10px !important;
             border-width: 1.5px !important;
             border-radius: 6px !important;
             box-shadow: 0 2px 0 rgba(0,0,0,0.3) !important;
           }
           
-          .sb-footer-btn { padding: 6px 12px !important; font-size: 10px !important; border-width: 1.5px !important; box-shadow: 0 2px 0 #3a1f0a !important; }
+          .sb-footer-btn { padding: 4px 10px !important; font-size: 9px !important; border-width: 1.5px !important; box-shadow: 0 2px 0 #3a1f0a !important; }
         }
 
         @media (max-width: 400px) {
           .sb-topic-grid { grid-template-columns: 1fr !important; }
-          .sb-topic-card .card-image { height: 100px !important; }
-          .sb-topic-card .card-title { font-size: 13px !important; }
-          .sb-topic-card .card-desc { display: block !important; font-size: 9px !important; -webkit-line-clamp: unset !important; }
-          .sb-topic-card .card-badge { font-size: 7px !important; padding: 2px 4px !important; }
-          .sb-topic-card .card-arrow { width: 22px !important; height: 22px !important; }
+          .sb-topic-card .card-image { height: 80px !important; }
+          .sb-topic-card .card-title { font-size: 12px !important; }
+          .sb-topic-card .card-desc { display: block !important; font-size: 8px !important; -webkit-line-clamp: unset !important; }
+          .sb-topic-card .card-badge { font-size: 6px !important; padding: 1px 4px !important; }
+          .sb-topic-card .card-arrow { width: 18px !important; height: 18px !important; }
           
-          .sb-word-btn { font-size: 10px !important; padding: 4px 6px !important; min-height: 26px !important; }
-          .sb-action-btn { font-size: 10px !important; padding: 6px !important; min-height: 30px !important; }
+          .sb-word-btn { font-size: 9px !important; padding: 4px 6px !important; min-height: 24px !important; }
+          .sb-action-btn { font-size: 9px !important; padding: 4px !important; min-height: 26px !important; }
         }
       `}</style>
 
