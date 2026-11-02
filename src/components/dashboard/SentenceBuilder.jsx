@@ -1,5 +1,5 @@
 // src/components/dashboard/SentenceBuilder.jsx
-// ✅ FIXED: 100% Steady Desktop Scroll (Using native window scroll instead of custom overflow container)
+// ✅ FIXED: 100% Steady Desktop Scroll (overscroll-behavior + no bg-jitter) + Restored Background
 // ✅ ALL DATA (Points, Diamonds, Hearts, Progress, Hints) SYNCED VIA FIREBASE
 // ✅ Hint system: Single button, 3 FREE hints per DAY
 // ✅ NEW: Level Completion Reward (Score x 2) - ONLY ONCE PER LEVEL
@@ -674,29 +674,30 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return <div style={{ padding: '40px', textAlign: 'center', color: '#333', background: '#fdfbf7', minHeight: '100vh' }}>Loading...</div>;
   }
 
-  // ✅ FULLY STABILIZED: Let the native browser window do the scrolling on desktop
+  // ✅ STABLE SCROLL + BACKGROUND RESTORED
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'relative',
-      width: '100%',
-      minHeight: '100vh',
+      position: 'fixed', 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      overflowY: 'auto', 
+      overflowX: 'hidden',
+      overscrollBehaviorY: 'contain', // Prevents scroll chaining/bounce
+      backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundColor: '#2A2845', // Fallback color
+      // Removed backgroundAttachment: 'fixed' -> This was causing the jitter!
       fontFamily: "'Fredoka', 'Poppins', sans-serif",
       color: '#4a3b32',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       boxSizing: 'border-box',
+      WebkitOverflowScrolling: 'touch'
     }}>
-      {/* Fixed Background Layer */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh',
-        backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
-
       <style>{`
         /* GLOBAL LAYOUT PARA SA DESKTOP */
         .sb-container {
