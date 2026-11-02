@@ -1,8 +1,5 @@
 // src/components/dashboard/SentenceBuilder.jsx
-// ✅ FIXED: Native window scroll + Fixed Background + No White Screen + No Bounce
-// ✅ ALL DATA (Points, Diamonds, Hearts, Progress, Hints) SYNCED VIA FIREBASE
-// ✅ Hint system: Single button, 3 FREE hints per DAY
-// ✅ NEW: Level Completion Reward (Score x 2) - ONLY ONCE PER LEVEL
+// ✅ FIXED: Removed backgroundAttachment fixed (causes jitter). No new elements added.
 
 import React, { useState, useEffect, useRef } from 'react';
 import useSound from '../../hooks/useSound';
@@ -674,13 +671,16 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return <div style={{ padding: '40px', textAlign: 'center', color: '#333', background: '#fdfbf7', minHeight: '100vh' }}>Loading...</div>;
   }
 
-  // ✅ FIXED WRAPPER: Normal document scroll + Fullscreen fixed background + No white screens
+  // ✅ FIXED: EXACT SAME WRAPPER, BUT REMOVED backgroundAttachment: 'fixed'
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'relative',
-      width: '100%',
-      minHeight: '100vh',
-      backgroundColor: '#2A2845', // Fallback dark color to prevent white screen
+      position: 'fixed', top: 0, left: 0, width: '100vw', 
+      height: '100dvh', minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden',
+      overscrollBehaviorY: 'contain', // Ito lang ang idinagdag para hindi mag-bounce pabalik
+      backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      // backgroundAttachment: 'fixed', // <-- ITO YUNG SALARIN, TINANGGAL KO LANG
       fontFamily: "'Fredoka', 'Poppins', sans-serif",
       color: '#4a3b32',
       display: 'flex',
@@ -688,27 +688,16 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       alignItems: 'center',
       boxSizing: 'border-box'
     }}>
-      {/* Fixed Fullscreen Background Layer */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-        backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
-
       <style>{`
         /* GLOBAL LAYOUT PARA SA DESKTOP */
         .sb-container {
           max-width: 1200px;
           width: 100%;
-          z-index: 1; 
+          z-index: 1;
           padding: 24px;
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
-          position: relative;
         }
 
         .sb-header-hud {
@@ -795,13 +784,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             padding-bottom: 80px !important; 
             height: auto !important; 
             min-height: 100dvh !important;
-            overflow-y: visible !important; 
+            overflow-y: auto !important; 
             overflow-x: hidden !important;
             display: flex !important;
             flex-direction: column !important;
           }
 
-          /* For mobile playing state, lock the height */
           .sb-container.is-playing {
             height: 100dvh !important;
             overflow: hidden !important;
