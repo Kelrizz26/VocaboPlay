@@ -1,5 +1,5 @@
 // src/components/dashboard/SentenceBuilder.jsx
-// ✅ FIXED: Desktop scroll jitter (Isolated fixed background layer)
+// ✅ FIXED: Desktop scroll bounce/jitter (overscroll-behavior + inset 0)
 // ✅ ALL DATA (Points, Diamonds, Hearts, Progress, Hints) SYNCED VIA FIREBASE
 // ✅ Hint system: Single button, 3 FREE hints per DAY
 // ✅ NEW: Level Completion Reward (Score x 2) - ONLY ONCE PER LEVEL
@@ -674,11 +674,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return <div style={{ padding: '40px', textAlign: 'center', color: '#333', background: '#fdfbf7', minHeight: '100vh' }}>Loading...</div>;
   }
 
-  // ✅ FIXED: CozyThemeWrapper separates the background from the scroll container
+  // ✅ FIXED: Fully stabilized scroll container
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'fixed', top: 0, left: 0, width: '100%', // Changed from 100vw to 100% to prevent horizontal shifting
-      height: '100dvh', minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden',
+      position: 'fixed', 
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      overflowY: 'auto', 
+      overflowX: 'hidden',
+      overscrollBehaviorY: 'contain', // ✅ STOPS THE BOUNCE!
       fontFamily: "'Fredoka', 'Poppins', sans-serif",
       color: '#4a3b32',
       display: 'flex',
@@ -687,9 +693,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       boxSizing: 'border-box',
       WebkitOverflowScrolling: 'touch'
     }}>
-      {/* ✅ FIXED BACKGROUND LAYER - Prevents jitter on scroll */}
+      {/* ✅ FIXED BACKGROUND LAYER (No scrolling issues) */}
       <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100%', height: '100dvh',
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
         backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -702,7 +708,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         .sb-container {
           max-width: 1200px;
           width: 100%;
-          z-index: 1; /* Sits on top of the background */
+          z-index: 1; 
           padding: 24px;
           display: flex;
           flex-direction: column;
