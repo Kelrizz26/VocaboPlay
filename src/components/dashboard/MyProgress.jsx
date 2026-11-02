@@ -4,6 +4,7 @@
 //           to avoid legacy lowercase keys overriding the real game stats.
 // ✅ FIXED: Removed "Best: x/y" text from High Scores modal.
 // ✅ FIXED: Removed "Played xX" text and changed "Best pts" to "pts" in High Scores modal.
+// ✅ NEW: Replaced "Game Performance" with a beautiful "Game Progress" list that includes images, latest score, highest score, and last played date (without confusing fractions).
 // ✅ All features preserved: clickable cards, modals, demo panel, responsive styles
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -115,28 +116,6 @@ const IconBadge = ({ icon, bg, iconColor = palette.bodyText, size = 40 }) => (
   >
     <Icon name={icon} size={Math.round(size * 0.5)} color={iconColor} />
   </div>
-);
-
-// ===== PILL BADGE (muted warm orange) =====
-const Pill = ({ children }) => (
-  <span
-    style={{
-      background: palette.warmOrange,
-      color: '#fff',
-      fontSize: '11px',
-      fontWeight: 800,
-      padding: '4px 12px',
-      borderRadius: '999px',
-      whiteSpace: 'nowrap',
-      minWidth: '60px',
-      textAlign: 'center',
-      fontFamily: BRAND_FONT_DISPLAY,
-      boxShadow: `0 2px 0 ${palette.warmOrangeShadow}`,
-      letterSpacing: '0.02em',
-    }}
-  >
-    {children}
-  </span>
 );
 
 // ============================================================
@@ -337,6 +316,26 @@ const MyProgress = () => {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // ✅ Fetch game history on mount para may data agad para sa Game Progress UI
+  useEffect(() => {
+    if (!userId) return;
+    const fetchHistory = async () => {
+      try {
+        const scoresQuery = query(
+          collection(db, 'scores'),
+          where('studentId', '==', userId)
+        );
+        const scoresSnap = await getDocs(scoresQuery);
+        const activities = scoresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        setGameHistory(activities);
+      } catch (err) {
+        console.error('Error fetching history:', err);
+      }
+    };
+    fetchHistory();
+  }, [userId]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -708,10 +707,8 @@ const MyProgress = () => {
           .myprogress-stats-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 640px) {
-          .game-perf-row { flex-wrap: wrap !important; gap: 10px !important; }
-          .game-perf-label { width: 100% !important; order: -1; font-size: 13px !important; }
-          .game-perf-bar { flex: 1 1 100% !important; order: 1; }
-          .game-perf-pill { order: 2; }
+          .game-progress-row { flex-direction: column !important; align-items: flex-start !important; }
+          .game-progress-right { text-align: left !important; align-items: flex-start !important; margin-top: 10px; }
         }
         .progress-card {
           transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -1004,112 +1001,129 @@ const MyProgress = () => {
         })}
       </div>
 
-      {/* ===== GAME PERFORMANCE ===== */}
+      {/* ===== GAME PROGRESS (BEAUTIFUL LAYOUT) ===== */}
       <div
         style={{
           background: palette.white,
           borderRadius: '16px',
-          padding: '20px 22px 8px',
+          padding: '24px',
           border: `1.5px solid ${palette.border}`,
           boxShadow: `0 2px 0 ${palette.border}`,
         }}
       >
-        <div
-          style={{
-            fontSize: '15px',
-            fontWeight: 800,
-            color: palette.deepNavy,
-            marginBottom: '14px',
-            fontFamily: BRAND_FONT_DISPLAY,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <Icon name="game" size={16} color={palette.warmOrange} />
-          Game Performance
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
+            Game Progress
+          </div>
+          <div style={{ fontSize: '12px', color: palette.bodyTextSoft, marginTop: '4px', fontWeight: 600 }}>
+            Your latest scores, highest scores, and attempts
+          </div>
         </div>
 
-        {gameTypesFinal.map((game, i) => {
-          const gamesPlayedCount = game.data.gamesPlayed || 0;
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {gameTypesFinal.map((game, i) => {
+            // Hanapin lahat ng history entries para sa game na ito
+            const entries = gameHistory.filter(entry => {
+              const mappedLabel = getGameLabel(entry.gameType || entry.activityType);
+              return mappedLabel.toLowerCase() === game.label.toLowerCase() ||
+                     String(entry.gameType || entry.activityType).toLowerCase() === game.key.toLowerCase();
+            });
 
-          // ✅ Tier-based progress — resets every 100 games
-          const tierEnd = (Math.floor(gamesPlayedCount / 100) + 1) * 100;
-          const barPct = gamesPlayedCount % 100;
+            // Dahil naka-sort ang gameHistory by date (descending), entries[0] ang pinaka-latest
+            const latestEntry = entries[0];
+            
+            const attempts = entries.length > 0 ? entries.length : (game.data.gamesPlayed || 0);
+            const latestScore = latestEntry ? (latestEntry.score || latestEntry.correctAnswers || 0) : 0;
+            
+            // Kunin ang pinakamataas na score
+            const highestScore = entries.length > 0 
+              ? Math.max(...entries.map(e => e.score || e.correctAnswers || 0)) 
+              : (game.data.correctAnswers || 0);
 
-          return (
-            <div
-              key={game.key}
-              className="game-perf-row"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                padding: '14px 0',
-                borderBottom:
-                  i !== gameTypesFinal.length - 1 ? `1.5px solid ${palette.borderSoft}` : 'none'
-              }}
-            >
-              <img
-                src={game.image}
-                alt={game.label}
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '10px',
-                  objectFit: 'cover',
-                  flexShrink: 0,
-                  border: `1.5px solid ${palette.border}`,
-                  background: palette.creamSoft,
-                }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+            // Date formatting
+            const lastPlayedDate = latestEntry && latestEntry.completedAt ? new Date(latestEntry.completedAt) : null;
+            const formattedLastPlayed = lastPlayedDate 
+              ? lastPlayedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
+              : 'Not played yet';
+              
+            const isCompleted = attempts > 0 && highestScore > 0;
 
-              <span
-                className="game-perf-label"
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: palette.deepNavy,
-                  width: '130px',
-                  flexShrink: 0,
-                  fontFamily: BRAND_FONT_DISPLAY,
-                }}
-              >
-                {game.label}
-              </span>
-
+            return (
               <div
-                className="game-perf-bar"
+                key={game.key}
+                className="game-progress-row"
                 style={{
-                  flex: 1,
-                  height: '8px',
-                  background: palette.creamSoft,
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  minWidth: '80px',
-                  border: `1px solid ${palette.border}`,
+                  padding: '20px 0',
+                  borderBottom: i !== gameTypesFinal.length - 1 ? `1.5px solid ${palette.borderSoft}` : 'none',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
+                  gap: '16px'
                 }}
               >
-                <div
-                  style={{
-                    width: `${barPct}%`,
-                    height: '100%',
-                    background: `linear-gradient(90deg, ${palette.warmOrange} 0%, ${palette.coral} 100%)`,
-                    borderRadius: '10px',
-                    transition: 'width 0.5s ease'
-                  }}
-                />
-              </div>
+                {/* KALIWA: Image at Scores */}
+                <div style={{ display: 'flex', gap: '16px', flex: 1, minWidth: '250px' }}>
+                  {/* Game Image */}
+                  <img
+                    src={game.image}
+                    alt={game.label}
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '12px',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      border: `1.5px solid ${palette.border}`,
+                      background: palette.creamSoft,
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
 
-              <div className="game-perf-pill">
-                <Pill>{gamesPlayedCount}/{tierEnd} games</Pill>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: palette.deepNavy, margin: '0 0 6px 0', fontFamily: BRAND_FONT_DISPLAY }}>
+                      {game.label}
+                    </h3>
+                    
+                    {/* PINAKAMALAKING SCORE (Walang /100) */}
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: palette.softGreen, fontFamily: BRAND_FONT_DISPLAY, marginBottom: '6px' }}>
+                      {highestScore} <span style={{ fontSize: '14px', color: palette.bodyTextSoft }}>pts</span>
+                    </div>
+                    
+                    {/* MGA DETALYE */}
+                    <div style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 600, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span>Latest score: <strong style={{ color: palette.deepNavy }}>{latestScore}</strong></span>
+                      <span>Highest score: <strong style={{ color: palette.deepNavy }}>{highestScore}</strong></span>
+                      <span>Last played: {formattedLastPlayed}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* KANAN: Attempts at Completed Badge */}
+                <div className="game-progress-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', paddingTop: '4px' }}>
+                  {isCompleted && (
+                    <span style={{ 
+                      background: '#E6F4EA', 
+                      color: '#137333', 
+                      fontSize: '11px', 
+                      fontWeight: 800, 
+                      padding: '4px 10px', 
+                      borderRadius: '12px', 
+                      fontFamily: BRAND_FONT_DISPLAY 
+                    }}>
+                      Completed
+                    </span>
+                  )}
+                  <span style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 600 }}>
+                    Attempts: {attempts}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* ============================================================
@@ -1282,7 +1296,6 @@ const MyProgress = () => {
                     <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
                       {label}
                     </div>
-                    {/* ✅ BINAGO: Inalis ang Played Xx at Best: x/y dito */}
                     {formattedDate && (
                       <div style={{ fontSize: '10px', color: palette.bodyTextSoft, marginTop: '2px' }}>
                         {formattedDate}

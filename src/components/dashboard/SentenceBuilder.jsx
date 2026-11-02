@@ -1,6 +1,10 @@
 // src/components/dashboard/SentenceBuilder.jsx
+// ✅ FIXED: Desktop scroll jitter (Isolated fixed background layer)
+// ✅ ALL DATA (Points, Diamonds, Hearts, Progress, Hints) SYNCED VIA FIREBASE
+// ✅ Hint system: Single button, 3 FREE hints per DAY
+// ✅ NEW: Level Completion Reward (Score x 2) - ONLY ONCE PER LEVEL
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import useSound from '../../hooks/useSound';
 import { auth } from '../../pages/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -8,6 +12,22 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../pages/firebase'; 
 
 import { sentenceBuilderCourses } from '../../data/sentenceBuilderData';
+
+const STOP_WORDS = [
+  'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 
+  'my', 'your', 'his', 'its', 'our', 'their', 'a', 'an', 'the', 'and', 'but', 'or', 
+  'so', 'for', 'nor', 'yet', 'at', 'by', 'for', 'from', 'in', 'into', 'of', 'on', 
+  'onto', 'to', 'with', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 
+  'have', 'has', 'had', 'do', 'does', 'did', 'can', 'could', 'will', 'would', 
+  'shall', 'should', 'may', 'might', 'must', 'this', 'that', 'these', 'those', 
+  'where', 'when', 'why', 'how', 'who', 'whom', 'whose', 'which', 'what', 'there', 
+  'here', 'not', 's', 't', 'don\'t', 'doesn\'t', 'didn\'t', 'can\'t', 'won\'t', 
+  'wouldn\'t', 'shouldn\'t', 'couldn\'t', 'isn\'t', 'aren\'t', 'wasn\'t', 'weren\'t', 
+  'haven\'t', 'hasn\'t', 'hadn\'t', 'every', 'some', 'any', 'all', 'more', 'most',
+  'up', 'down', 'out', 'in', 'off', 'on', 'over'
+];
+
+const DAILY_HINT_LIMIT = 3;
 
 const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
   const [gameState, setGameState] = useState('topic_selection'); 
@@ -40,18 +60,170 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   const [diamonds, setDiamonds] = useState(150);
   const [unlockedLevels, setUnlockedLevels] = useState(getInitialUnlockedLevels());
   const [levelProgress, setLevelProgress] = useState({});
+  const [rewardedLevels, setRewardedLevels] = useState({});
 
   const [currentUser, setCurrentUser] = useState(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
 
-  // ✅ FUNCTION PARA MAG-SAVE SA FIREBASE
+  const [learnedWords, setLearnedWords] = useState({});
+
+  const [dailyHintsRemaining, setDailyHintsRemaining] = useState(DAILY_HINT_LIMIT);
+  const [dailyHintsData, setDailyHintsData] = useState({ date: '', used: 0 }); 
+  const [hintUsed, setHintUsed] = useState(false);
+
+  const [earnedDiamondsThisLevel, setEarnedDiamondsThisLevel] = useState(0);
+  const rewardClaimedRef = useRef(false); 
+
+  const getTodayString = () => new Date().toDateString();
+
   const syncToFirebase = async (updates) => {
     if (!currentUser) return;
     try {
       const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, { sentenceBuilderData: updates });
+      const updateObj = {};
+      Object.keys(updates).forEach(key => {
+        updateObj[`sentenceBuilderData.${key}`] = updates[key];
+      });
+      await updateDoc(userRef, updateObj);
     } catch (error) {
       console.error("Error syncing to Firebase:", error);
+    }
+  };
+
+  const syncPointsToFirebase = async (newPoints) => {
+    if (!currentUser) return;
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, { totalPoints: newPoints });
+    } catch (error) {
+      console.error("Error syncing points:", error);
+    }
+  };
+
+  const syncLearnedWordsToFirebase = async () => {
+    if (!currentUser) return;
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const localLearned = JSON.parse(localStorage.getItem(`learnedWords_${currentUser.uid}`) || '{}');
+      
+      const userSnap = await getDoc(userRef);
+      let finalLearned = localLearned;
+      
+      if (userSnap.exists() && userSnap.data().learnedWords) {
+        finalLearned = { ...userSnap.data().learnedWords, ...localLearned };
+      }
+      
+      await updateDoc(userRef, { learnedWords: finalLearned });
+      setLearnedWords(finalLearned);
+    } catch (error) {
+      console.error("Error syncing learned words:", error);
+    }
+  };
+
+  const extractTargetWords = (sentence) => {
+    if (!sentence) return [];
+    const words = sentence.toLowerCase().replace(/[^a-z\s]/g, '').split(' ').filter(w => w.length > 0);
+    const filtered = words.filter(w => !STOP_WORDS.includes(w) && w.length > 1);
+    return [...new Set(filtered)];
+  };
+
+  const saveWordsLocally = (wordsArray, level) => {
+    if (!currentUser || !wordsArray || wordsArray.length === 0) return;
+    setLearnedWords(prev => {
+      const newLearned = { ...prev };
+      wordsArray.forEach(word => {
+        newLearned[word] = level;
+      });
+      localStorage.setItem(`learnedWords_${currentUser.uid}`, JSON.stringify(newLearned));
+      return newLearned;
+    });
+  };
+
+  const checkAndSyncDailyHints = async (userId = null) => {
+    const today = getTodayString();
+    let data = { date: today, used: 0 };
+
+    if (userId) {
+      try {
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const fbData = userSnap.data().sentenceBuilderData?.dailyHints;
+          if (fbData) {
+            if (fbData.date === today) {
+              data = fbData;
+            } else {
+              data = { date: today, used: 0 };
+              await updateDoc(userRef, { 'sentenceBuilderData.dailyHints': data });
+            }
+          } else {
+            await updateDoc(userRef, { 'sentenceBuilderData.dailyHints': data });
+          }
+        }
+      } catch (error) {
+        console.error("Error reading hints from Firebase:", error);
+      }
+    } else {
+      const key = 'sb_daily_hints_guest';
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.date === today) {
+            data = parsed;
+          } else {
+            localStorage.setItem(key, JSON.stringify(data));
+          }
+        } catch (e) {
+          localStorage.setItem(key, JSON.stringify(data));
+        }
+      } else {
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+    }
+
+    setDailyHintsData(data);
+    setDailyHintsRemaining(Math.max(0, DAILY_HINT_LIMIT - data.used));
+  };
+
+  const consumeDailyHint = async () => {
+    const today = getTodayString();
+    let newData = { ...dailyHintsData };
+
+    if (newData.date !== today) {
+      newData = { date: today, used: 1 };
+    } else {
+      newData.used = (newData.used || 0) + 1;
+    }
+
+    setDailyHintsData(newData);
+    setDailyHintsRemaining(Math.max(0, DAILY_HINT_LIMIT - newData.used));
+
+    if (currentUser) {
+      await syncToFirebase({ dailyHints: newData });
+    } else {
+      localStorage.setItem('sb_daily_hints_guest', JSON.stringify(newData));
+    }
+  };
+
+  const awardLevelDiamonds = async (rewardAmount) => {
+    if (!currentUser || rewardAmount <= 0 || rewardClaimedRef.current) return;
+    
+    rewardClaimedRef.current = true;
+
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const currentDiamondsFB = userSnap.data().totalDiamonds || 0;
+        const newDiamonds = currentDiamondsFB + rewardAmount;
+        
+        await updateDoc(userRef, { totalDiamonds: newDiamonds });
+        setDiamonds(newDiamonds); 
+      }
+    } catch (error) {
+      console.error("Error awarding level diamonds:", error);
     }
   };
 
@@ -71,12 +243,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                setDiamonds(userData.totalDiamonds);
             }
 
+            const fbLearned = userData.learnedWords || {};
+            const localLearned = JSON.parse(localStorage.getItem(`learnedWords_${user.uid}`) || '{}');
+            setLearnedWords({ ...fbLearned, ...localLearned });
+
             const sbData = userData.sentenceBuilderData || {};
             
             setLives(sbData.lives !== undefined ? sbData.lives : MAX_LIVES);
             setNextRefillTime(sbData.nextRefillTime || null);
             setUnlockedLevels(sbData.unlockedLevels ? { ...getInitialUnlockedLevels(), ...sbData.unlockedLevels } : getInitialUnlockedLevels());
             setLevelProgress(sbData.levelProgress || {});
+            setRewardedLevels(sbData.rewardedLevels || {});
 
             localStorage.setItem(`sb_lives_${user.uid}`, (sbData.lives !== undefined ? sbData.lives : MAX_LIVES).toString());
             if (sbData.nextRefillTime) localStorage.setItem(`sb_next_refill_${user.uid}`, sbData.nextRefillTime.toString());
@@ -86,6 +263,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
+        
+        await checkAndSyncDailyHints(user.uid);
         setIsUserLoaded(true);
       } else {
         setCurrentUser(null);
@@ -94,6 +273,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         setDiamonds(150);
         setUnlockedLevels(getInitialUnlockedLevels());
         setLevelProgress({});
+        setRewardedLevels({});
+        setLearnedWords({});
+        checkAndSyncDailyHints(null);
         setIsUserLoaded(true);
       }
     });
@@ -192,6 +374,44 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     setSelectedWords([]);
     setAnswered(false);
     setIsCorrect(null);
+    setHintUsed(false); 
+  };
+
+  const useHint = () => {
+    if (answered || !currentQuestion || hintUsed) return;
+    if (dailyHintsRemaining <= 0) return;
+    
+    const correctWords = currentQuestion.correctAnswer.split(' ');
+    if (selectedWords.length >= correctWords.length) return;
+    
+    let matchLen = 0;
+    for (let i = 0; i < selectedWords.length; i++) {
+      if (normalizeString(selectedWords[i]) === normalizeString(correctWords[i])) {
+        matchLen = i + 1;
+      } else {
+        break;
+      }
+    }
+    
+    if (matchLen >= correctWords.length) return;
+    
+    const targetWord = correctWords[matchLen];
+    const normTarget = normalizeString(targetWord);
+    
+    const wrongWords = selectedWords.slice(matchLen);
+    let newBank = [...wordBank, ...wrongWords];
+    
+    const bankIdx = newBank.findIndex(w => normalizeString(w) === normTarget);
+    if (bankIdx === -1) return;
+    
+    const placedWord = newBank[bankIdx];
+    newBank.splice(bankIdx, 1);
+    
+    setWordBank(newBank);
+    setSelectedWords([...selectedWords.slice(0, matchLen), placedWord]);
+    
+    setHintUsed(true); 
+    consumeDailyHint(); 
   };
 
   const handleSelectTopic = (topic) => {
@@ -212,6 +432,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       alert("You are out of hearts! Please wait for a refill or buy more.");
       return;
     }
+
+    checkAndSyncDailyHints(currentUser ? currentUser.uid : null);
+
+    setEarnedDiamondsThisLevel(0);
+    rewardClaimedRef.current = false;
 
     const savedIndex = levelProgress[selectedTopic.id]?.[levelKey] || 0;
     const questionsInLevel = selectedTopic.levels[levelKey];
@@ -247,8 +472,16 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       setIsCorrect(true);
       playCorrect();
       setScore(prev => prev + 1);
-      setTotalPoints(prev => prev + 1); 
+      
+      const newPoints = totalPoints + 1;
+      setTotalPoints(newPoints); 
+      syncPointsToFirebase(newPoints);
+
       setFeedbackMessage('✅ Great job! The sentence is correct.');
+
+      const targetWords = extractTargetWords(currentQuestion.correctAnswer);
+      saveWordsLocally(targetWords, selectedLevel);
+
     } else {
       setIsCorrect(false);
       playWrong();
@@ -276,15 +509,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     initQuestion(currentQuestion);
   };
 
-  const handleExitGame = () => {
+  const handleExitGame = async () => {
+    await syncLearnedWordsToFirebase();
+    
     if (score > 0 && currentUser && recordGame) {
-      recordGame(
-        'sentence-builder', 
-        score, 
-        score, 
-        currentIndex + 1, 
-        [] 
-      );
+      recordGame('sentence-builder', score, score, currentIndex + 1, [] );
     }
     if (onExitToGames) {
       onExitToGames();
@@ -293,7 +522,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (lives <= 0) {
       setGameState('gameover');
       return;
@@ -316,7 +545,30 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
       initQuestion(activeQuestions[nextIdx]);
     } else {
+      await syncLearnedWordsToFirebase();
+      
       playVictory();
+      
+      const currentRewarded = rewardedLevels[selectedTopic.id] || [];
+      const isFirstTime = !currentRewarded.includes(selectedLevel);
+
+      let rewardAmount = 0;
+      let updatedRewarded = rewardedLevels;
+
+      if (isFirstTime) {
+        rewardAmount = score * 2;
+        setEarnedDiamondsThisLevel(rewardAmount);
+        await awardLevelDiamonds(rewardAmount);
+
+        updatedRewarded = {
+          ...rewardedLevels,
+          [selectedTopic.id]: [...currentRewarded, selectedLevel]
+        };
+        setRewardedLevels(updatedRewarded);
+      } else {
+        setEarnedDiamondsThisLevel(0); 
+      }
+
       const currentLevelIdx = CEFR_LEVELS.indexOf(selectedLevel);
       let updatedUnlocked = { ...unlockedLevels };
 
@@ -340,17 +592,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
       syncToFirebase({ 
         unlockedLevels: updatedUnlocked, 
-        levelProgress: updatedProgress 
+        levelProgress: updatedProgress,
+        rewardedLevels: updatedRewarded 
       });
 
       if (currentUser && recordGame) {
-        recordGame(
-          'sentence-builder', 
-          score, 
-          score, 
-          activeQuestions.length, 
-          [] 
-        );
+        recordGame('sentence-builder', score, score, activeQuestions.length, [] );
       }
       setGameState('finished');
     }
@@ -427,31 +674,40 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return <div style={{ padding: '40px', textAlign: 'center', color: '#333', background: '#fdfbf7', minHeight: '100vh' }}>Loading...</div>;
   }
 
+  // ✅ FIXED: CozyThemeWrapper separates the background from the scroll container
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', 
+      position: 'fixed', top: 0, left: 0, width: '100%', // Changed from 100vw to 100% to prevent horizontal shifting
       height: '100dvh', minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden',
-      backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed',
       fontFamily: "'Fredoka', 'Poppins', sans-serif",
       color: '#4a3b32',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      WebkitOverflowScrolling: 'touch'
     }}>
+      {/* ✅ FIXED BACKGROUND LAYER - Prevents jitter on scroll */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, width: '100%', height: '100dvh',
+        backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
       <style>{`
         /* GLOBAL LAYOUT PARA SA DESKTOP */
         .sb-container {
           max-width: 1200px;
           width: 100%;
-          z-index: 1;
+          z-index: 1; /* Sits on top of the background */
           padding: 24px;
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
+          position: relative;
         }
 
         .sb-header-hud {
@@ -513,11 +769,29 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           touch-action: manipulation;
         }
 
-        /* ✅ MOBILE FIX (Eksaktong kapareho ng Image 2) */
+        /* ✅ HINT BUTTON STYLES */
+        .sb-hint-btn {
+          transition: all 0.15s ease;
+          font-family: inherit;
+          touch-action: manipulation;
+        }
+        .sb-hint-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        }
+        .sb-hint-btn:active:not(:disabled) {
+          transform: translateY(1px);
+          box-shadow: none;
+        }
+        .sb-hint-btn:disabled {
+          cursor: not-allowed !important;
+        }
+
+        /* ✅ MOBILE FIX */
         @media (max-width: 1024px) {
           .sb-container { 
             padding: 8px !important; 
-            padding-bottom: 80px !important; /* ESPASYO PARA SA BACK TO GAMES */
+            padding-bottom: 80px !important; 
             height: auto !important; 
             min-height: 100dvh !important;
             overflow-y: auto !important; 
@@ -526,14 +800,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             flex-direction: column !important;
           }
 
-          /* PAG SA LARO LANG, NAKA-LOCK ANG HEIGHT AT WALANG SCROLL */
           .sb-container.is-playing {
             height: 100dvh !important;
             overflow: hidden !important;
             padding-bottom: 8px !important;
           }
 
-          /* HEADER: Row layout, maliit pero bukas lahat */
           .sb-header-hud {
             display: flex !important;
             flex-direction: row !important;
@@ -579,12 +851,10 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-stat-badge span { font-size: 14px !important; font-weight: 900 !important; }
           .sb-stat-badge button { width: 18px !important; height: 18px !important; font-size: 10px !important; }
 
-          /* ITAGO HEADER PAG NAGLALARO NA PARA STEADY */
           .sb-container.is-playing .sb-header-hud {
             display: none !important;
           }
 
-          /* TOPIC CARDS: BALIK SA 2 COLUMNS PARA KUMPYANSA */
           .sb-topic-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 8px !important;
@@ -592,7 +862,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
           .sb-topic-card { border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 2.5px 0 var(--border-color) !important; }
           
-          /* ✅ ITO YUNG BINAGO KO: PINALAKI KO YUNG HEIGHT NG IMAGE PARA KLARO AT ISAGAD */
           .sb-topic-card .card-image { height: 110px !important; border-bottom-width: 2px !important; }
           .sb-topic-card .card-image img { object-fit: cover !important; object-position: center !important; }
           
@@ -605,14 +874,12 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-topic-card .card-arrow { width: 20px !important; height: 20px !important; border-width: 2px !important; }
           .sb-topic-card .card-arrow svg { width: 10px !important; height: 10px !important; }
 
-          /* FOOTER BUTTON */
           .sb-footer-btn {
             padding: 8px 16px !important;
             font-size: 12px !important;
             border-width: 2.5px !important;
           }
 
-          /* PLAYING SCREEN FIXES (HINDI GINALAW, STEADY PA RIN) */
           .sb-playing-wrapper { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
           .sb-playing-wrapper > div { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
@@ -626,8 +893,17 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-progress-bar { height: 4px !important; }
 
           .sb-game-card { padding: 8px 10px !important; border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 3px 0 #8c5728 !important; display: flex !important; flex-direction: column !important; flex: 1 !important; overflow: hidden !important; min-height: 0 !important; }
-          .sb-game-card > div:first-child { margin-bottom: 4px !important; flex-wrap: nowrap !important; height: 22px !important; flex-shrink: 0 !important; }
-          .sb-level-badge, .sb-hint-badge { font-size: 9px !important; padding: 0 6px !important; border-width: 1px !important; border-radius: 4px !important; line-height: 20px !important; }
+          .sb-game-card > div:first-child { margin-bottom: 4px !important; flex-wrap: wrap !important; gap: 4px !important; flex-shrink: 0 !important; }
+          .sb-level-badge { font-size: 9px !important; padding: 0 6px !important; border-width: 1px !important; border-radius: 4px !important; line-height: 20px !important; }
+          
+          /* ✅ Mobile hint buttons */
+          .sb-hint-btn {
+            font-size: 10px !important; 
+            padding: 6px 8px !important; 
+            border-width: 1.5px !important; 
+            border-radius: 8px !important; 
+            line-height: 1 !important;
+          }
           
           .sb-game-card h2 { display: none !important; }
           
@@ -698,6 +974,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             <div className="sb-stat-badge" style={{ background: 'linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%)', border: '3px solid #2980b9', padding: '8px 18px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 0 #1c5980' }}>
               <span className="stat-icon" style={{ fontSize: '20px' }}>💎</span>
               <span style={{ fontSize: '20px', fontWeight: '900', color: '#1c5980' }}>{diamonds}</span>
+            </div>
+
+            <div className="sb-stat-badge" style={{ background: 'linear-gradient(180deg, #d4f1d4 0%, #b8e6b8 100%)', border: '3px solid #27ae60', padding: '8px 18px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 0 #1e7335' }}>
+              <span className="stat-icon" style={{ fontSize: '20px' }}>💡</span>
+              <span style={{ fontSize: '20px', fontWeight: '900', color: '#1e7335' }}>{dailyHintsRemaining}/{DAILY_HINT_LIMIT}</span>
             </div>
 
             <div className="sb-stat-badge" style={{ background: 'linear-gradient(180deg, #ff9a9e 0%, #fecfef 100%)', border: '3px solid #c0392b', padding: '8px 18px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 0 #922b21' }}>
@@ -837,7 +1118,6 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           })}
         </div>
 
-        {/* DINAGDAGAN KO NG MARGIN PARA KITANG-KITA SA MOBILE */}
         <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
           <button onClick={handleExitGame} className="sb-footer-btn" style={{ background: '#7a4b24', border: '4px solid #4a2c12', padding: '12px 32px', borderRadius: '16px', color: '#fff', cursor: 'pointer', fontWeight: '900', fontSize: '16px', boxShadow: '0 6px 0 #3a1f0a, inset 0 4px 6px rgba(255,255,255,0.2)' }}>
             ← Back to Games
@@ -923,6 +1203,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   }
 
   if (gameState === 'playing' && currentQuestion) {
+    const targetWords = extractTargetWords(currentQuestion.correctAnswer);
+
     return (
       <CozyThemeWrapper>
         <div className="sb-playing-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, width: '100%' }}>
@@ -936,6 +1218,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                 <div style={{ background: '#fff', padding: '6px 16px', borderRadius: '16px', border: '3px solid #d4af37', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 0 #b8860b' }}>
                   <span style={{ fontSize: '18px' }}>🪙</span>
                   <span style={{ fontSize: '18px', fontWeight: '900', color: '#8c5728' }}>{totalPoints}</span>
+                </div>
+                
+                <div style={{ background: '#fff', padding: '6px 16px', borderRadius: '16px', border: '3px solid #27ae60', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 0 #1e7335' }}>
+                  <span style={{ fontSize: '18px' }}>💡</span>
+                  <span style={{ fontSize: '18px', fontWeight: '900', color: '#1e7335' }}>{dailyHintsRemaining}/{DAILY_HINT_LIMIT}</span>
                 </div>
                 
                 <div style={{ background: '#fff', padding: '6px 16px', borderRadius: '16px', border: '3px solid #c0392b', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 0 #922b21' }}>
@@ -966,29 +1253,74 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
                 <span className="sb-level-badge" style={{ padding: '4px 14px', borderRadius: '12px', fontSize: '14px', fontWeight: '900', background: '#f5af19', color: '#fff', border: '2px solid #b87a42' }}>{selectedLevel} Level</span>
-                <span className="sb-hint-badge" style={{ fontSize: '14px', color: '#7a4b24', fontStyle: 'italic', fontWeight: '700', background: '#fff', padding: '4px 12px', borderRadius: '10px', border: '2px dashed #d89c63' }}>💡 {currentQuestion.hint}</span>
+                
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: '900',
+                  color: dailyHintsRemaining > 0 ? '#1e7335' : '#c0392b',
+                  background: dailyHintsRemaining > 0 ? '#d4f1d4' : '#fdedec',
+                  padding: '4px 12px',
+                  borderRadius: '10px',
+                  border: `2px solid ${dailyHintsRemaining > 0 ? '#27ae60' : '#c0392b'}`,
+                  whiteSpace: 'nowrap'
+                }}>
+                  💡 {dailyHintsRemaining}/{DAILY_HINT_LIMIT} today
+                </span>
               </div>
 
               <h2 style={{ fontSize: '22px', fontWeight: '900', color: '#3E2723', marginBottom: '24px', textAlign: 'center' }}>Arrange the words to form a sentence.</h2>
+
+              <div style={{ marginBottom: '20px', background: '#fff3e0', padding: '12px', borderRadius: '12px', border: '2px dashed #e67e22' }}>
+                <p style={{ fontSize: '13px', fontWeight: '900', color: '#d35400', letterSpacing: '1px', marginBottom: '8px' }}>🎯 TARGET OXFORD WORDS</p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {targetWords.map((word, idx) => (
+                    <span key={idx} style={{ 
+                      background: '#e67e22', 
+                      color: '#fff', 
+                      padding: '4px 12px', 
+                      borderRadius: '12px', 
+                      fontSize: '12px', 
+                      fontWeight: '900', 
+                      border: '2px solid #b9770e', 
+                      boxShadow: '0 2px 0 #b9770e',
+                      textTransform: 'uppercase'
+                    }}>
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>YOUR SENTENCE</p>
                 
                 <div className="sb-sentence-box" style={{ overflowY: 'auto', border: `3px dashed ${answered ? (isCorrect ? '#27ae60' : '#c0392b') : '#d89c63'}`, borderRadius: '16px', padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px', background: answered ? (isCorrect ? '#e8f8f5' : '#fdedec') : '#fff', alignContent: 'flex-start' }}>
-                  {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below...</span>}
-                  {selectedWords.map((word, index) => (
-                    <button 
-                      key={`selected-${index}`} 
-                      onTouchStart={(e) => e.preventDefault()} 
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleRemoveWord(word, index)} 
-                      disabled={answered} 
-                      className="sb-word-btn" 
-                      style={{ background: answered ? 'transparent' : '#2ecc71', border: '2px solid #1d8348', boxShadow: answered ? 'none' : '0 3px 0 #1d8348' }}
-                    >
-                      {word}
-                    </button>
-                  ))}
+                  {selectedWords.length === 0 && !answered && <span style={{ color: '#b87a42', fontSize: '16px', fontStyle: 'italic', fontWeight: '600' }}>Tap words below or use a hint 💡</span>}
+                  {selectedWords.map((word, index) => {
+                    const isTargetWord = targetWords.includes(word.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                    const showUnderline = answered && isCorrect && isTargetWord;
+                    
+                    return (
+                      <button 
+                        key={`selected-${index}`} 
+                        onTouchStart={(e) => e.preventDefault()} 
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleRemoveWord(word, index)} 
+                        disabled={answered} 
+                        className="sb-word-btn" 
+                        style={{ 
+                          background: answered ? 'transparent' : '#2ecc71', 
+                          border: '2px solid #1d8348', 
+                          boxShadow: answered ? 'none' : '0 3px 0 #1d8348',
+                          textDecoration: showUnderline ? 'underline' : 'none',
+                          textDecorationThickness: showUnderline ? '3px' : 'auto',
+                          textUnderlineOffset: showUnderline ? '4px' : 'auto'
+                        }}
+                      >
+                        {word}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -996,21 +1328,62 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
                 <p style={{ fontSize: '13px', fontWeight: '900', color: '#8c5728', letterSpacing: '1px', marginBottom: '8px' }}>WORD BANK</p>
                 
                 <div className="sb-word-bank-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-start' }}>
-                  {wordBank.map((word, index) => (
-                    <button 
-                      key={`bank-${index}`} 
-                      onTouchStart={(e) => e.preventDefault()} 
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSelectWord(word, index)} 
-                      disabled={answered} 
-                      className="sb-word-btn" 
-                      style={{ background: '#f39c12', border: '2px solid #b9770e', opacity: answered ? 0.3 : 1, boxShadow: answered ? 'none' : '0 3px 0 #b9770e' }}
-                    >
-                      {word}
-                    </button>
-                  ))}
+                  {wordBank.map((word, index) => {
+                    const isTargetWord = targetWords.includes(word.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                    const showUnderline = answered && isCorrect && isTargetWord;
+
+                    return (
+                      <button 
+                        key={`bank-${index}`} 
+                        onTouchStart={(e) => e.preventDefault()} 
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleSelectWord(word, index)} 
+                        disabled={answered} 
+                        className="sb-word-btn" 
+                        style={{ 
+                          background: '#f39c12', 
+                          border: '2px solid #b9770e', 
+                          opacity: answered ? 0.3 : 1, 
+                          boxShadow: answered ? 'none' : '0 3px 0 #b9770e',
+                          textDecoration: showUnderline ? 'underline' : 'none',
+                          textDecorationThickness: showUnderline ? '3px' : 'auto',
+                          textUnderlineOffset: showUnderline ? '4px' : 'auto'
+                        }}
+                      >
+                        {word}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {!answered && (
+                <button
+                  onClick={useHint}
+                  disabled={hintUsed || dailyHintsRemaining <= 0}
+                  className="sb-hint-btn"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: `2px solid ${hintUsed || dailyHintsRemaining <= 0 ? '#e0e0e0' : '#27ae60'}`,
+                    background: hintUsed || dailyHintsRemaining <= 0 ? '#f5f5f5' : '#d4f1d4',
+                    color: hintUsed || dailyHintsRemaining <= 0 ? '#aaa' : '#1e7335',
+                    cursor: hintUsed || dailyHintsRemaining <= 0 ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '900',
+                    marginBottom: '16px',
+                    boxShadow: hintUsed || dailyHintsRemaining <= 0 ? 'none' : '0 3px 0 #1e7335',
+                    touchAction: 'manipulation'
+                  }}
+                >
+                  {hintUsed 
+                    ? '💡 Hint used for this question' 
+                    : dailyHintsRemaining <= 0 
+                      ? '💡 No hints left today — Resets tomorrow' 
+                      : `💡 Use Hint (${dailyHintsRemaining}/${DAILY_HINT_LIMIT} left today)`}
+                </button>
+              )}
 
               {answered && (
                 <div className="sb-feedback-msg" style={{ borderRadius: '16px', background: isCorrect ? '#d4edda' : '#f8d7da', border: `3px solid ${isCorrect ? '#27ae60' : '#c0392b'}`, textAlign: 'center', color: isCorrect ? '#155724' : '#721c24', fontWeight: '900' }}>{feedbackMessage}</div>
@@ -1039,6 +1412,8 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   }
 
   if (gameState === 'finished') {
+    const isReplay = (rewardedLevels[selectedTopic?.id] || []).includes(selectedLevel) && earnedDiamondsThisLevel === 0;
+
     return (
       <CozyThemeWrapper>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1047,14 +1422,56 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
               <div style={{ fontSize: '80px', marginBottom: '12px', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))' }}>🏆</div>
               <h2 style={{ fontSize: '32px', fontWeight: '900', color: '#e67e22', marginBottom: '8px' }}>Level Complete!</h2>
               <p style={{ fontSize: '16px', color: '#3E2723', marginBottom: '24px', fontWeight: '700' }}>You finished <b>{selectedTopic.title}</b> - {selectedLevel}!</p>
+              
               <div style={{ background: '#fff', padding: '16px', borderRadius: '16px', marginBottom: '24px', border: '3px solid #b87a42' }}>
                 <div style={{ fontSize: '14px', color: '#8c5728', textTransform: 'uppercase', fontWeight: '900' }}>Score</div>
                 <div style={{ fontSize: '36px', color: '#e67e22', fontWeight: '900' }}>{score} / {activeQuestions.length}</div>
               </div>
+
+              {earnedDiamondsThisLevel > 0 ? (
+                <div style={{ 
+                  background: `linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)`, 
+                  padding: '16px', 
+                  borderRadius: '16px', 
+                  marginBottom: '24px', 
+                  border: '3px solid #2980b9',
+                  boxShadow: '0 4px 0 #1c5980',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  animation: 'rewardPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}>
+                  <span style={{ fontSize: '28px', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.2))' }}>💎</span>
+                  <span style={{ fontSize: '28px', fontWeight: '900', color: '#1c5980' }}>+{earnedDiamondsThisLevel}</span>
+                  <span style={{ fontSize: '14px', color: '#1c5980', fontWeight: '800', marginTop: '8px' }}>Diamonds</span>
+                </div>
+              ) : isReplay ? (
+                <div style={{ 
+                  background: '#f5f5f5', 
+                  padding: '12px', 
+                  borderRadius: '16px', 
+                  marginBottom: '24px', 
+                  border: '2px dashed #bdc3c7',
+                  color: '#7f8c8d',
+                  fontSize: '13px',
+                  fontWeight: '700'
+                }}>
+                  🔁 Replay Mode: No diamond rewards for already completed levels.
+                </div>
+              ) : null}
+
               <button onClick={() => setGameState('level_selection')} style={{ width: '100%', padding: '16px', background: '#f39c12', color: '#fff', border: '3px solid #b9770e', borderRadius: '16px', cursor: 'pointer', fontSize: '18px', fontWeight: '900', boxShadow: '0 6px 0 #b9770e' }}>Back to Levels →</button>
             </div>
           </div>
         </div>
+        <style>{`
+          @keyframes rewardPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
       </CozyThemeWrapper>
     );
   }
