@@ -1,5 +1,5 @@
 // src/components/dashboard/SentenceBuilder.jsx
-// ✅ FIXED: Desktop scroll bounce/jitter (overscroll-behavior + inset 0)
+// ✅ FIXED: 100% Steady Desktop Scroll (Using native window scroll instead of custom overflow container)
 // ✅ ALL DATA (Points, Diamonds, Hearts, Progress, Hints) SYNCED VIA FIREBASE
 // ✅ Hint system: Single button, 3 FREE hints per DAY
 // ✅ NEW: Level Completion Reward (Score x 2) - ONLY ONCE PER LEVEL
@@ -674,28 +674,22 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
     return <div style={{ padding: '40px', textAlign: 'center', color: '#333', background: '#fdfbf7', minHeight: '100vh' }}>Loading...</div>;
   }
 
-  // ✅ FIXED: Fully stabilized scroll container
+  // ✅ FULLY STABILIZED: Let the native browser window do the scrolling on desktop
   const CozyThemeWrapper = ({ children }) => (
     <div className="sb-outer-wrapper" style={{
-      position: 'fixed', 
-      top: 0, 
-      left: 0, 
-      right: 0, 
-      bottom: 0,
-      overflowY: 'auto', 
-      overflowX: 'hidden',
-      overscrollBehaviorY: 'contain', // ✅ STOPS THE BOUNCE!
+      position: 'relative',
+      width: '100%',
+      minHeight: '100vh',
       fontFamily: "'Fredoka', 'Poppins', sans-serif",
       color: '#4a3b32',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       boxSizing: 'border-box',
-      WebkitOverflowScrolling: 'touch'
     }}>
-      {/* ✅ FIXED BACKGROUND LAYER (No scrolling issues) */}
+      {/* Fixed Background Layer */}
       <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh',
         backgroundImage: `linear-gradient(135deg, rgba(42, 40, 69, 0.4), rgba(58, 55, 87, 0.3)), url('/image/sentence-bg.png')`, 
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -800,12 +794,13 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             padding-bottom: 80px !important; 
             height: auto !important; 
             min-height: 100dvh !important;
-            overflow-y: auto !important; 
+            overflow-y: visible !important; 
             overflow-x: hidden !important;
             display: flex !important;
             flex-direction: column !important;
           }
 
+          /* For mobile playing state, lock the height */
           .sb-container.is-playing {
             height: 100dvh !important;
             overflow: hidden !important;
