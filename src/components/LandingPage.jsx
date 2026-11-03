@@ -1090,7 +1090,8 @@ const Landing = () => {
                 { title: 'Story Quest', desc: 'Read bite-sized narratives and learn vocabulary in context.', color: palette.softGreen, icon: 'chart', comingSoon: false },
                 { title: 'Quiz Master', desc: 'Adaptive multiple-choice quizzes that sharpen recall.', color: palette.warmOrange, icon: 'brain', comingSoon: true },
                 { title: 'GuessWhat', desc: 'Deduce the correct word from visual clues and sentence context.', color: palette.deepNavy, icon: 'play', comingSoon: true },
-                { title: 'Sentence Builder', desc: 'Construct grammatically correct sentences using your vocabulary.', color: palette.teal, icon: 'arrowRight', comingSoon: true },
+                // ✅ CHANGED: Sentence Builder is now LIVE!
+                { title: 'Sentence Builder', desc: 'Construct grammatically correct sentences using your vocabulary.', color: palette.teal, icon: 'arrowRight', comingSoon: false },
               ].map((game, i) => (
                 <div
                   key={i}
@@ -1171,6 +1172,12 @@ const Landing = () => {
                   </p>
                   
                   <button 
+                    onClick={() => {
+                      if (!game.comingSoon) {
+                        // Pwede mong palitan ito kung iba yung route ng games mo (e.g., '/dashboard')
+                        navigate('/games'); 
+                      }
+                    }}
                     disabled={game.comingSoon}
                     style={{
                       ...chunkyButton(game.comingSoon ? palette.border : game.color, game.comingSoon ? palette.border : game.color + 'CC', 'sm'),
