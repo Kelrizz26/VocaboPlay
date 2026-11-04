@@ -1,12 +1,6 @@
 // src/components/dashboard/MyProgress.jsx
-// ✅ FIXED: Imported calculation functions from Dashboard to ensure Level & XP match perfectly.
-// ✅ FIXED: normalizeGameData now checks the ACTUAL Firebase keys first (capital first letter)
-//           to avoid legacy lowercase keys overriding the real game stats.
-// ✅ FIXED: Removed "Best: x/y" text from High Scores modal.
-// ✅ FIXED: Removed "Played xX" text and changed "Best pts" to "pts" in High Scores modal.
-// ✅ NEW: Replaced "Game Performance" with a beautiful "Game Progress" list that includes images, latest score, highest score, and last played date (without confusing fractions).
-// ✅ NEW: Accuracy Card is now clickable and shows a detailed breakdown per game!
-// ✅ All features preserved: clickable cards, modals, demo panel, responsive styles
+// ✅ FIXED: Replaced confusing fractions with "Average Mastery" (Average of best runs per game).
+// ✅ FIXED: UI now clearly shows "X correct out of Y total attempts" to make it 100% clear for panelists.
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -439,12 +433,15 @@ const MyProgress = () => {
     const key = String(gameType).toLowerCase();
     return {
       'quiz': 'Quiz Master',
+      'quizgame': 'Quiz Master',
       'match': 'Match Game',
+      'matchgame': 'Match Game',
       'wordpics': 'SynoQuest',
       'synoquest': 'SynoQuest',
       'guesswhat': 'GuessWhat',
       'short-story': 'Story Quest',
       'story-quest': 'Story Quest',
+      'shortstory': 'Story Quest',
       'sentence-builder': 'Sentence Builder',
       'sentencebuilder': 'Sentence Builder',
     }[key] || 'Game';
@@ -454,12 +451,15 @@ const MyProgress = () => {
     const key = String(gameType).toLowerCase();
     return {
       'quiz': '/image/quizgame.png',
+      'quizgame': '/image/quizgame.png',
       'match': '/image/matchgame.png',
+      'matchgame': '/image/matchgame.png',
       'wordpics': '/image/wordpics.png',
       'synoquest': '/image/wordpics.png',
       'guesswhat': '/image/guesswhatgame.png',
       'short-story': '/image/shortstory.png',
       'story-quest': '/image/shortstory.png',
+      'shortstory': '/image/shortstory.png',
       'sentence-builder': '/image/sentence.png',
       'sentencebuilder': '/image/sentence.png',
     }[key] || null;
@@ -578,8 +578,6 @@ const MyProgress = () => {
     };
   };
 
-  // ✅ FIX: Inuna natin ang CAPITALIZED keys (actual keys na sine-save ng Dashboard.jsx)
-  // para hindi ma-override ng lumang lowercase keys na naka-stuck sa lumang value.
   const gameTypes = [
     {
       key: 'synoQuest',
@@ -631,15 +629,25 @@ const MyProgress = () => {
     return g;
   });
 
-  let totalCorrect = 0;
-  let totalQuestions = 0;
-  gameTypes.forEach(game => {
-    totalCorrect += game.data.correctAnswers || 0;
-    totalQuestions += game.data.totalQuestions || 0;
+  // ✅ NEW LOGIC: Calculate Average Mastery (Average of best accuracy per game)
+  let sumAccuracy = 0;
+  let gamesPlayedCount = 0;
+  
+  gameTypesFinal.forEach(game => {
+    const bestRun = highScores.find(h => 
+      getGameLabel(h.gameType).toLowerCase() === game.label.toLowerCase() || 
+      String(h.gameType).toLowerCase() === game.key.toLowerCase()
+    );
+    
+    if (bestRun && bestRun.bestTotal > 0) {
+      const acc = Math.round((bestRun.bestCorrect / bestRun.bestTotal) * 100);
+      sumAccuracy += acc;
+      gamesPlayedCount++;
+    }
   });
-  const overallAccuracy =
-    totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-  const displayAccuracy = stats?.accuracy || overallAccuracy || 0;
+
+  const overallAccuracy = gamesPlayedCount > 0 ? Math.round(sumAccuracy / gamesPlayedCount) : 0;
+  const displayAccuracy = gamesPlayedCount > 0 ? overallAccuracy : (stats?.accuracy || 0);
 
   // ✅ DITO NATIN GINAGAMIT YUNG COMPUTE FUNCTIONS PARA PANTay SILA NG DASHBOARD
   const rawTotalPoints = stats?.totalPoints || 0;
@@ -719,7 +727,6 @@ const MyProgress = () => {
           border-color: ${palette.warmOrange}50 !important;
           box-shadow: 0 8px 22px ${palette.shadowMd} !important;
         }
-        /* ✅ NEW: Clickable cards */
         .progress-card-clickable {
           cursor: pointer;
         }
@@ -929,7 +936,6 @@ const MyProgress = () => {
       >
         {[
           { icon: 'book', bg: palette.creamSoft, iconColor: palette.warmOrange, value: wordsLearned, label: 'Words Learned', clickable: 'words' },
-          // ✅ CHANGED: Ginawa nang clickable ang Accuracy
           { icon: 'check', bg: palette.creamSoft, iconColor: palette.softGreen, value: `${displayAccuracy}%`, label: 'Accuracy', clickable: 'accuracy' },
           { icon: 'game', bg: palette.creamSoft, iconColor: palette.teal, value: gamesPlayed, label: 'Games Played', clickable: 'games' }
         ].map((stat, index) => {
@@ -1320,12 +1326,12 @@ const MyProgress = () => {
         )}
       </Modal>
 
-      {/* ✅ NEW: Accuracy Breakdown Modal */}
+      {/* ✅ NEW: Accuracy Breakdown Modal (Mastery Average) */}
       <Modal
         isOpen={activeModal === 'accuracy'}
         onClose={() => setActiveModal(null)}
-        title="🎯 Accuracy Breakdown"
-        subtitle="Your overall precision and per-game performance"
+        title="🎯 Mastery Breakdown"
+        subtitle="Your average precision across games you've played"
       >
         {loadingDetails ? (
           <LoadingSpinner />
@@ -1344,26 +1350,28 @@ const MyProgress = () => {
                 {displayAccuracy}%
               </div>
               <div style={{ fontSize: '14px', color: palette.deepNavy, fontWeight: 700, fontFamily: BRAND_FONT_BODY }}>
-                Overall Accuracy
+                Average Mastery
               </div>
               <div style={{ fontSize: '12px', color: palette.bodyTextSoft, marginTop: '4px', fontWeight: 600 }}>
-                {totalCorrect} correct out of {totalQuestions} total questions
+                Average of your best runs across {gamesPlayedCount} games
               </div>
             </div>
 
             {/* Per Game Breakdown */}
             <div>
               <div style={{ fontSize: '13px', fontWeight: 800, color: palette.bodyTextSoft, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', fontFamily: BRAND_FONT_DISPLAY }}>
-                Per Game Breakdown
+                Per Game Mastery
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {gameTypesFinal.map((game) => {
-                  const correct = game.data.correctAnswers || 0;
-                  const total = game.data.totalQuestions || 0;
+                  const bestRun = highScores.find(h => 
+                    getGameLabel(h.gameType).toLowerCase() === game.label.toLowerCase() || 
+                    String(h.gameType).toLowerCase() === game.key.toLowerCase()
+                  );
+
+                  const correct = bestRun ? bestRun.bestCorrect : 0;
+                  const total = bestRun ? bestRun.bestTotal : 0;
                   const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
-                  
-                  // Kung 0 total, wag na ipakita (optional)
-                  if (total === 0) return null;
 
                   return (
                     <div key={game.key} style={{ 
@@ -1384,8 +1392,9 @@ const MyProgress = () => {
                           <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
                             {game.label}
                           </div>
+                          {/* ✅ CHANGED: Mas malinaw na text para sa panelist */}
                           <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600 }}>
-                            {correct} correct / {total} questions
+                            {total > 0 ? `${correct} correct out of ${total} total attempts` : 'Not played yet'}
                           </div>
                         </div>
                       </div>
