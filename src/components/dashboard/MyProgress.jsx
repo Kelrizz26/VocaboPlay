@@ -5,6 +5,7 @@
 // ✅ FIXED: Removed "Best: x/y" text from High Scores modal.
 // ✅ FIXED: Removed "Played xX" text and changed "Best pts" to "pts" in High Scores modal.
 // ✅ NEW: Replaced "Game Performance" with a beautiful "Game Progress" list that includes images, latest score, highest score, and last played date (without confusing fractions).
+// ✅ NEW: Accuracy Card is now clickable and shows a detailed breakdown per game!
 // ✅ All features preserved: clickable cards, modals, demo panel, responsive styles
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -236,7 +237,7 @@ const MyProgress = () => {
   });
 
   // ✅ Modal state
-  const [activeModal, setActiveModal] = useState(null); // 'words' | 'games' | 'points' | null
+  const [activeModal, setActiveModal] = useState(null); // 'words' | 'games' | 'points' | 'accuracy' | null
   const [learnedWords, setLearnedWords] = useState([]);
   const [gameHistory, setGameHistory] = useState([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -928,7 +929,8 @@ const MyProgress = () => {
       >
         {[
           { icon: 'book', bg: palette.creamSoft, iconColor: palette.warmOrange, value: wordsLearned, label: 'Words Learned', clickable: 'words' },
-          { icon: 'check', bg: palette.creamSoft, iconColor: palette.softGreen, value: `${displayAccuracy}%`, label: 'Accuracy', clickable: null },
+          // ✅ CHANGED: Ginawa nang clickable ang Accuracy
+          { icon: 'check', bg: palette.creamSoft, iconColor: palette.softGreen, value: `${displayAccuracy}%`, label: 'Accuracy', clickable: 'accuracy' },
           { icon: 'game', bg: palette.creamSoft, iconColor: palette.teal, value: gamesPlayed, label: 'Games Played', clickable: 'games' }
         ].map((stat, index) => {
           const isClickable = stat.clickable !== null;
@@ -939,6 +941,7 @@ const MyProgress = () => {
               onClick={isClickable ? () => setActiveModal(stat.clickable) : undefined}
               title={
                 stat.clickable === 'words' ? 'Click to see learned words'
+                  : stat.clickable === 'accuracy' ? 'Click to see accuracy breakdown'
                   : stat.clickable === 'games' ? 'Click to see game history'
                   : undefined
               }
@@ -1313,6 +1316,94 @@ const MyProgress = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+      </Modal>
+
+      {/* ✅ NEW: Accuracy Breakdown Modal */}
+      <Modal
+        isOpen={activeModal === 'accuracy'}
+        onClose={() => setActiveModal(null)}
+        title="🎯 Accuracy Breakdown"
+        subtitle="Your overall precision and per-game performance"
+      >
+        {loadingDetails ? (
+          <LoadingSpinner />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* Overall Accuracy Big Display */}
+            <div style={{ 
+              background: `linear-gradient(135deg, ${palette.softGreen}15, ${palette.softGreen}05)`, 
+              padding: '24px', 
+              borderRadius: '16px', 
+              border: `2px solid ${palette.softGreen}40`,
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '48px', fontWeight: 900, color: palette.softGreen, fontFamily: BRAND_FONT_DISPLAY, lineHeight: 1, marginBottom: '8px' }}>
+                {displayAccuracy}%
+              </div>
+              <div style={{ fontSize: '14px', color: palette.deepNavy, fontWeight: 700, fontFamily: BRAND_FONT_BODY }}>
+                Overall Accuracy
+              </div>
+              <div style={{ fontSize: '12px', color: palette.bodyTextSoft, marginTop: '4px', fontWeight: 600 }}>
+                {totalCorrect} correct out of {totalQuestions} total questions
+              </div>
+            </div>
+
+            {/* Per Game Breakdown */}
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: palette.bodyTextSoft, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', fontFamily: BRAND_FONT_DISPLAY }}>
+                Per Game Breakdown
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {gameTypesFinal.map((game) => {
+                  const correct = game.data.correctAnswers || 0;
+                  const total = game.data.totalQuestions || 0;
+                  const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+                  
+                  // Kung 0 total, wag na ipakita (optional)
+                  if (total === 0) return null;
+
+                  return (
+                    <div key={game.key} style={{ 
+                      padding: '14px 16px', 
+                      background: palette.creamSoft, 
+                      borderRadius: '12px', 
+                      border: `1.5px solid ${palette.border}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                          <img src={game.image} alt={game.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
+                            {game.label}
+                          </div>
+                          <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600 }}>
+                            {correct} correct / {total} questions
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: acc >= 80 ? palette.softGreen : acc >= 50 ? palette.warmOrange : palette.coral, fontFamily: BRAND_FONT_DISPLAY, lineHeight: 1 }}>
+                          {acc}%
+                        </div>
+                        <div style={{ width: '60px', height: '4px', background: palette.border, borderRadius: '4px', marginTop: '6px', overflow: 'hidden' }}>
+                          <div style={{ width: `${acc}%`, height: '100%', background: acc >= 80 ? palette.softGreen : acc >= 50 ? palette.warmOrange : palette.coral, borderRadius: '4px' }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
         )}
       </Modal>
