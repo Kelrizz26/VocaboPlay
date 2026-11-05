@@ -4,7 +4,8 @@
 // ✅ Welcome modal shows on Dashboard entry, hides when returning from level
 // ✅ Full character visible (objectFit: contain)
 // ✅ ADDED: classNames para ma-target ng landscape CSS
-// ✅ UPDATED: Swapped the visual positions of A2 (Windmill) and B1 (Village)
+// ✅ FIXED: Swapped visual positions of A2 and B1 so A2 is on the main path.
+// ✅ FIXED: Updated A2 title to "The Lost Pet" to match storyContent.js.
 
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -31,9 +32,9 @@ const speakFallback = () => {
 
 const LEVELS = [
   { level: 'A1', title: "Tom's First Day at School", left: '16%', top: '61%' },
-  // 👇 SWAPPED POSITIONS (A2 napunta sa windmill, B1 napunta sa village) 👇
-  { level: 'A2', title: "The Lost Kitten",           left: '46.5%', top: '64%' }, 
-  { level: 'B1', title: "The Secret Garden",         left: '30%', top: '35%' },   
+  // 👇 INAYOS: A2 ay nasa Main Path (Village), B1 ay nasa Windmill (Side Island) 👇
+  { level: 'A2', title: "The Lost Pet",              left: '30%', top: '35%' }, 
+  { level: 'B1', title: "The Secret Garden",         left: '46.5%', top: '64%' },   
   // 👆 👆
   { level: 'B2', title: "The Time Traveler's Diary", left: '55%', top: '35%' },
   { level: 'C1', title: "The Pianist's Farewell",    left: '86.5%', top: '48%' },

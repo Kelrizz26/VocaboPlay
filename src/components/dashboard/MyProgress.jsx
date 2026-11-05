@@ -593,7 +593,7 @@ const MyProgress = () => {
     },
     {
       key: 'shortStory',
-      label: 'Short Story',
+      label: 'Story Quest',
       image: '/image/shortstory.png',
       data: normalizeGameData('ShortStory', 'shortStory', 'short-story')
     },
