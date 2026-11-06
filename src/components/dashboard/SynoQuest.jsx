@@ -4,6 +4,9 @@
 // ✅ NEW: Level-Up transition modal ("A1 → A2", etc.)
 // ✅ NEW: Accuracy-based rewards — 0-49%=1-2💎, 50%=3💎, 100%=15💎
 // ✅ FIXED: Modals are now render functions (no blink/remount)
+// ✅ FIXED: Word levels strictly follow Oxford 3000/5000 PDF.
+// ✅ FIXED: Added image overrides for specific C1 words (decisive1.png, etc.).
+// ✅ FIXED: Images now use objectFit: 'cover' to fill the boxes completely.
 // ✅ All existing features preserved
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -33,12 +36,16 @@ const FONT_BODY = "'Nunito', sans-serif";
 
 const imageBasePath = '/image/';
 const vocabWords = [
+  // 🟢 A1 (10 words)
   'above','across','action','activity','actress','add','address','adult','beach','change',
+  // 🟢 A2 (10 words)
   'ability','able','accept','achieve','active','decision','education','famous','improve','journey',
-  'balance','benefit','budget','capable','challenge','character','knowledge','opportunity','prepare','successful',
-  'abandon','accurate','confident','conscious','demonstrate','efficient','organize','maintain','relevant','sufficient',
-  'adapt','brilliant','complex','crucial','dominate','establish','flexible','genuine','isolate','vital',
-  'abundant','decisive','exquisite','futile','harmonious','inevitable','lucid','profound','resilient','tranquil'
+  // 🟡 B1 (10 words)
+  'balance','benefit','challenge','character','knowledge','opportunity','successful','afford','advise','aim',
+  // 🟡 B2 (10 words)
+  'abandon','accurate','confident','conscious','demonstrate','efficient','maintain','relevant','sufficient','capable',
+  // 🟠 C1 (10 words)
+  'abundant','decisive','harmonious','profound','aesthetic','compel','contemplate','cease','delicate','articulate'
 ];
 
 const images = {
@@ -195,17 +202,6 @@ const LEVEL_CONFIG = {
   'C1': { timer: 45, label: 'C1 - Advanced', emoji: '🟠', questionsPerLevel: 10 },
 };
 
-// ══════════════════════════════════════════════════════════════
-// ✅ REWARD TABLE — hard to earn, rewarding at the top
-//    0-24%  → 1 💎
-//    25-49% → 2 💎
-//    50-59% → 3 💎   ← base reference
-//    60-69% → 4 💎
-//    70-79% → 6 💎
-//    80-89% → 9 💎
-//    90-99% → 12 💎
-//    100%   → 15 💎  ← max
-// ══════════════════════════════════════════════════════════════
 const getLevelReward = (level, accuracy) => {
   let diamonds, stars, tier, emoji;
   if      (accuracy >= 100) { diamonds = 15; stars = 3; tier = 'PERFECT!';   emoji = '🌟'; }
@@ -221,18 +217,38 @@ const getLevelReward = (level, accuracy) => {
 };
 
 const wordLevelMap = {
+  // 🟢 A1
   'above':'A1','across':'A1','action':'A1','activity':'A1','actress':'A1','add':'A1','address':'A1','adult':'A1','beach':'A1','change':'A1',
+  // 🟢 A2
   'ability':'A2','able':'A2','accept':'A2','achieve':'A2','active':'A2','decision':'A2','education':'A2','famous':'A2','improve':'A2','journey':'A2',
-  'balance':'B1','benefit':'B1','budget':'B1','capable':'B1','challenge':'B1','character':'B1','knowledge':'B1','opportunity':'B1','prepare':'B1','successful':'B1',
-  'abandon':'B2','accurate':'B2','confident':'B2','conscious':'B2','demonstrate':'B2','efficient':'B2','organize':'B2','maintain':'B2','relevant':'B2','sufficient':'B2',
-  'adapt':'C1','brilliant':'C1','complex':'C1','crucial':'C1','dominate':'C1','establish':'C1','flexible':'C1','genuine':'C1','isolate':'C1','vital':'C1',
+  // 🟡 B1
+  'balance':'B1','benefit':'B1','challenge':'B1','character':'B1','knowledge':'B1','opportunity':'B1','successful':'B1','afford':'B1','advise':'B1','aim':'B1',
+  // 🟡 B2
+  'abandon':'B2','accurate':'B2','confident':'B2','conscious':'B2','demonstrate':'B2','efficient':'B2','maintain':'B2','relevant':'B2','sufficient':'B2','capable':'B2',
+  // 🟠 C1
+  'abundant':'C1','decisive':'C1','harmonious':'C1','profound':'C1','aesthetic':'C1','compel':'C1','contemplate':'C1','cease':'C1','delicate':'C1','articulate':'C1'
 };
 
-const allVocabPairs = Object.keys(wordLevelMap).map((word, index) => ({
-  id: index + 1, word: word.toUpperCase(),
-  image1: `${imageBasePath}${word}.png`, image2: `${imageBasePath}${word}1.png`,
-  category: `📚 ${wordLevelMap[word]} Vocabulary`
-}));
+// ✅ Image overrides para sa mga specific na words na may ibang pangalan ng file
+const imageOverrides = {
+  'decisive': { image1: 'decisive1.png', image2: 'decisive2.png' },
+  'profound': { image1: 'profound1.png', image2: 'profound2.png' },
+  'aesthetic': { image1: 'aesthetic1.png', image2: 'aesthetic2.png' },
+  'compel': { image1: 'compel1.png', image2: 'compel2.png' },
+  'contemplate': { image1: 'contemplate1.png', image2: 'contemplate2.png' },
+  'cease': { image1: 'cease1.png', image2: 'cease2.png' },
+  'articulate': { image1: 'articulate1.png', image2: 'articulate2.png' }
+};
+
+const allVocabPairs = Object.keys(wordLevelMap).map((word, index) => {
+  const override = imageOverrides[word] || {};
+  return {
+    id: index + 1, word: word.toUpperCase(),
+    image1: `${imageBasePath}${override.image1 || `${word}.png`}`, 
+    image2: `${imageBasePath}${override.image2 || `${word}1.png`}`,
+    category: `📚 ${wordLevelMap[word]} Vocabulary`
+  };
+});
 
 const wordPairs = {
   'A1': allVocabPairs.filter(p => p.category.includes('A1')),
@@ -1804,11 +1820,11 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
           </div>
           <div className="sq-image-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '18px', padding: '18px', background: theme.surfaceBg, borderRadius: '14px', border: `1.5px solid ${theme.surfaceBorder}`, flexWrap: 'wrap' }}>
             <div className="sq-image-box" style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={currentQuestion.image1} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
+              <img src={currentQuestion.image1} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
             </div>
             <span className="sq-image-arrow" style={{ fontSize: '30px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>↔️</span>
             <div className="sq-image-box" style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={currentQuestion.image2} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
+              <img src={currentQuestion.image2} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
             </div>
             <span className="sq-image-eq" style={{ fontSize: '28px', fontWeight: '800', color: theme.textPrimary, background: theme.chipBg, padding: '0 14px', borderRadius: '10px', border: `1.5px solid ${palette.border}`, fontFamily: FONT_DISPLAY }}>= ?</span>
           </div>

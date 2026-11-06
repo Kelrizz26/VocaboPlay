@@ -8,6 +8,9 @@
 // ✅ FIXED: Footer "attempts" now resets to 0 every 5 wrong matches
 // ✅ All existing features preserved
 // ✅ UPDATED: Removed C2 level completely
+// ✅ FIXED: Word levels strictly follow Oxford 3000/5000 PDF.
+// ✅ FIXED: Added image overrides for abstract1.png and articulate1.png.
+// ✅ FIXED: LEVEL_PAIRS back to progressive (10,12,14,16,18) but strict per level (no repeating).
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -37,20 +40,37 @@ const FONT_BODY = "'Nunito', sans-serif";
 const imageBasePath = '/image/';
 
 const wordLevelMap = {
+  // 🟢 A1 (10 words)
   'apple':'A1','bicycle':'A1','camera':'A1','doctor':'A1','elephant':'A1',
   'flower':'A1','guitar':'A1','hospital':'A1','island':'A1','jacket':'A1',
+  // 🟢 A2 (12 words) - Dinagdagan ng 2 para umabot sa 12
   'airport':'A2','butterfly':'A2','dangerous':'A2','exercise':'A2','festival':'A2',
   'kitchen':'A2','library':'A2','mountain':'A2','restaurant':'A2','umbrella':'A2',
-  'achievement':'B1','celebration':'B1','cooperation':'B1','bravery':'B1','determination':'B1',
-  'friendship':'B1','leadership':'B1','motivation':'B1','patience':'B1','teamwork':'B1',
-  'accomplish':'B2','adventure':'B2','communicate':'B2','consequence':'B2','creativity':'B2',
-  'discovery':'B2','exploration':'B2','innovation':'B2','perspective':'B2','significant':'B2',
-  'aspiration':'C1','collaboration':'C1','dedication':'C1','eloquent':'C1','exceptional':'C1',
-  'fundamental':'C1','perseverance':'C1','sophisticated':'C1','versatile':'C1','visionary':'C1',
+  'ability':'A2','accept':'A2',
+  // 🟡 B1 (14 words) - Dinagdagan ng 4 para umabot sa 14
+  'achievement':'B1','celebration':'B1','challenge':'B1','comment':'B1','communication':'B1',
+  'comparison':'B1','competition':'B1','confidence':'B1','connection':'B1','friendship':'B1',
+  'balance':'B1','benefit':'B1','character':'B1','knowledge':'B1',
+  // 🟡 B2 (16 words) - Dinagdagan ng 6 para umabot sa 16
+  'abstract':'B2','academic':'B2','accommodate':'B2','accomplish':'B2','accuracy':'B2',
+  'creativity':'B2','exploration':'B2','innovation':'B2','perspective':'B2','significant':'B2',
+  'absorb':'B2','accuse':'B2','activate':'B2','adequate':'B2','adjust':'B2','agriculture':'B2',
+  // 🟠 C1 (18 words) - Dinagdagan ng 8 para umabot sa 18
+  'appreciation':'C1','archive':'C1','arena':'C1','articulate':'C1','aspiration':'C1',
+  'assert':'C1','attain':'C1','attribute':'C1','collaboration':'C1','dedication':'C1',
+  'abolish':'C1','absence':'C1','absurd':'C1','abundance':'C1','academy':'C1',
+  'accelerate':'C1','acceptance':'C1','accessible':'C1',
+};
+
+// ✅ Image overrides para sa mga specific na words
+const imageOverrides = {
+  'abstract': 'abstract1.png',
+  'articulate': 'articulate1.png'
 };
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
+// ✅ FIXED: Binalik sa progressive pairs
 const LEVEL_PAIRS = { 'A1': 10, 'A2': 12, 'B1': 14, 'B2': 16, 'C1': 18 };
 
 const LEVEL_GRID = {
@@ -74,14 +94,13 @@ const COMPLETION_BONUS_DIAMONDS = 50;
 const allVocabPairs = Object.keys(wordLevelMap).map((word, index) => ({
   id: index + 1,
   word: word.toUpperCase(),
-  image: `${imageBasePath}${word}.png`,
+  image: `${imageBasePath}${imageOverrides[word] || `${word}.png`}`,
   level: wordLevelMap[word],
 }));
 
+// ✅ FIXED: Strict filter per level para walang pabalik-balik na words
 const getWordsForLevel = (level) => {
-  const idx = CEFR_LEVELS.indexOf(level);
-  const allowedLevels = CEFR_LEVELS.slice(0, idx + 1);
-  return allVocabPairs.filter(p => allowedLevels.includes(p.level));
+  return allVocabPairs.filter(p => p.level === level);
 };
 
 const fullScreenBg = {
