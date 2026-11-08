@@ -120,12 +120,13 @@ const Profile = ({ onBack }) => {
   const [ownedAvatars, setOwnedAvatars] = useState([]);
   const [pendingEquipId, setPendingEquipId] = useState(null);
 
+  // ✅ INALIS NATIN ANG displayName DITO
   const [formData, setFormData] = useState({
-    displayName: '', username: '', bio: '', email: '', phone: '', location: '', website: '',
+    username: '', bio: '', email: '', phone: '', location: '', website: '',
     socialLinks: { twitter: '', instagram: '', linkedin: '' },
     settings: { 
       emailNotifications: true, 
-      soundEffects: true, // ✅ Pinalitan ang darkMode
+      soundEffects: true,
       language: 'en',
       dailyGoal: 10,
       studyReminder: false
@@ -190,9 +191,11 @@ const Profile = ({ onBack }) => {
         };
         setUserProfile(updatedProfile);
         
+        // ✅ FALLBACK: Kung wala pang username, kukunin yung displayName (para sa mga lumang accounts)
+        const resolvedUsername = firestoreData.username || firestoreData.displayName || '';
+
         setFormData({
-          displayName: firestoreData.displayName || '',
-          username: firestoreData.username || '',
+          username: resolvedUsername,
           bio: firestoreData.bio || '',
           email: user.email || '',
           phone: firestoreData.phone || '',
@@ -201,7 +204,7 @@ const Profile = ({ onBack }) => {
           socialLinks: firestoreData.socialLinks || { twitter: '', instagram: '', linkedin: '' },
           settings: { 
             emailNotifications: firestoreData.settings?.emailNotifications ?? true,
-            soundEffects: firestoreData.settings?.soundEffects ?? true, // ✅ Pinalitan ang darkMode
+            soundEffects: firestoreData.settings?.soundEffects ?? true,
             language: firestoreData.settings?.language ?? 'en',
             dailyGoal: firestoreData.settings?.dailyGoal ?? 10,
             studyReminder: firestoreData.settings?.studyReminder ?? false
@@ -239,8 +242,11 @@ const Profile = ({ onBack }) => {
       const user = auth.currentUser;
       if (!user) throw new Error('No user logged in');
 
+      // ✅ IPAPASA NATIN ANG USERNAME SA DISPLAYNAME PARA MAG-PAREHO SILA SA DB
       const profileData = {
-        displayName: formData.displayName, username: formData.username, bio: formData.bio,
+        username: formData.username, 
+        displayName: formData.username, // <-- Sync them to avoid breaking other components
+        bio: formData.bio,
         phone: formData.phone, location: formData.location, website: formData.website,
         socialLinks: formData.socialLinks, settings: formData.settings, updatedAt: new Date().toISOString()
       };
@@ -264,6 +270,15 @@ const Profile = ({ onBack }) => {
       };
 
       localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+      
+      // I-update din natin yung firebaseUserData para synchronized
+      try {
+        const cached = JSON.parse(localStorage.getItem('firebaseUserData') || '{}');
+        cached.displayName = formData.username;
+        cached.username = formData.username;
+        localStorage.setItem('firebaseUserData', JSON.stringify(cached));
+      } catch(e) {}
+
       window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }));
 
       setUserProfile(updatedProfile);
@@ -383,7 +398,8 @@ const Profile = ({ onBack }) => {
               </span>
             )}
           </div>
-          <p style={styles.avatarName}>{formData.displayName || 'Player'}</p>
+          {/* ✅ DITO NATIN GINAMIT ANG USERNAME IMBES NA DISPLAYNAME */}
+          <p style={styles.avatarName}>{formData.username || 'Player'}</p>
           <p style={styles.avatarHandle}>@{formData.username || 'set-a-username'}</p>
           <div style={styles.equippedInfo}>
             <span style={styles.equippedLabel}>
@@ -427,10 +443,9 @@ const Profile = ({ onBack }) => {
         <div style={styles.infoSection}>
           <div className="profile-info-card" style={styles.infoCard}>
             <h2 style={styles.sectionTitle}><span style={styles.sectionEyebrow}>01</span> Basic Information</h2>
-            <div style={styles.infoRow}>
-              <label style={styles.label}>Display Name</label>
-              {editMode ? <input type="text" name="displayName" value={formData.displayName} onChange={handleInputChange} style={styles.input} placeholder="Enter display name" /> : <p style={styles.infoValue}>{formData.displayName || 'Not set'}</p>}
-            </div>
+            
+            {/* ✅ INALIS NATIN YUNG DISPLAY NAME ROW DITO */}
+            
             <div style={styles.infoRow}>
               <label style={styles.label}>Username</label>
               {editMode ? <input type="text" name="username" value={formData.username} onChange={handleInputChange} style={styles.input} placeholder="Enter username" /> : <p style={styles.infoValue}>@{formData.username || 'Not set'}</p>}
@@ -484,7 +499,6 @@ const Profile = ({ onBack }) => {
               {editMode ? <label style={styles.checkboxLabel}><input type="checkbox" checked={formData.settings.emailNotifications} onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)} style={{ accentColor: palette.warmOrange, width: 16, height: 16 }} /> Receive notifications</label> : <p style={{ ...styles.infoValue, ...(formData.settings.emailNotifications ? styles.pillOn : styles.pillOff) }}>{formData.settings.emailNotifications ? 'Enabled' : 'Disabled'}</p>}
             </div>
             
-            {/* ✅ PINALITAN NA ANG DARK MODE NG SOUND EFFECTS */}
             <div style={styles.infoRow}>
               <label style={styles.label}>Sound Effects</label>
               {editMode ? 

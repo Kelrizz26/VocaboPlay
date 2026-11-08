@@ -318,7 +318,7 @@ const Dashboard = () => {
         const data = JSON.parse(cached);
         return {
           uid: userId || 'unknown',
-          displayName: data.displayName || 'User',
+          displayName: data.username || 'User', // ✅ Changed to username
           username: data.username || '',
           email: data.email || '',
           avatar: data.avatar || '👤',
@@ -327,7 +327,7 @@ const Dashboard = () => {
         };
       }
     } catch (e) {}
-    return { uid: userId || 'unknown', displayName: 'New User', username: '', email: '', avatar: '👤', role: 'student', progress: { totalPoints: 0 } };
+    return { uid: userId || 'unknown', displayName: 'User', username: '', email: '', avatar: '👤', role: 'student', progress: { totalPoints: 0 } };
   });
 
   const [progress, setProgress] = useState(() => {
@@ -345,6 +345,18 @@ const Dashboard = () => {
           const userData = userSnap.data();
           if (userData.role !== 'student') { navigate('/admin/dashboard'); return; }
           if (userData.equippedAvatar) setEquippedAvatar(userData.equippedAvatar);
+
+          // ✅ AUTO-FIX: Kung "New User" or empty ang displayName pero may username, gawin nating username ang displayName sa DB
+          const badNames = ['User', 'New User', 'Student', '', undefined, null];
+          if (badNames.includes(userData.displayName) && userData.username) {
+            await updateDoc(userRef, { displayName: userData.username });
+            try {
+              const cached = JSON.parse(localStorage.getItem('firebaseUserData') || '{}');
+              cached.displayName = userData.username;
+              localStorage.setItem('firebaseUserData', JSON.stringify(cached));
+              setUserProfile(prev => ({ ...prev, displayName: userData.username }));
+            } catch (e) {}
+          }
         }
       } catch (error) { console.error('Error fetching student data:', error); }
     };
@@ -421,7 +433,7 @@ const Dashboard = () => {
       'wordpics': 'wordpics',
       'synoquest': 'wordpics',
       'guesswhat': 'guesswhat',
-      'sentence-builder': 'sentence-builder', // ✅ ADDED MAPPING
+      'sentence-builder': 'sentence-builder',
     };
     const gameId = gameMap[selectedActivity.gameType] || 'quiz';
     setCurrentGame(gameId);
@@ -515,7 +527,10 @@ const Dashboard = () => {
       const currentGamesPlayed = userData.gamesPlayed || 0;
       const currentAccuracy = userData.accuracy || 0;
       const currentDiamonds = userData.totalDiamonds || 0;
-      const currentLearnedWords = userData.learnedWordsList || userData.learnedWords || [];
+      
+      // ✅ SAFE EXTRACTION: Handle both Array and Object formats
+      const currentLearnedWordsRaw = userData.learnedWordsList || userData.learnedWords || [];
+      const currentLearnedWords = Array.isArray(currentLearnedWordsRaw) ? currentLearnedWordsRaw : Object.keys(currentLearnedWordsRaw);
 
       let newLearnedWords = Array.isArray(currentLearnedWords) ? [...currentLearnedWords] : [];
       if (updates.newWords && Array.isArray(updates.newWords)) {
@@ -559,7 +574,6 @@ const Dashboard = () => {
           total: (gameStats.MatchGame?.total || 0) + (updates.MatchGame.totalPairs || 0)
         };
       }
-      // ✅ IDINAGDAG NATIN ITO PARA SA SENTENCE BUILDER
       if (updates.SentenceBuilder) {
         gameStats.SentenceBuilder = {
           played: (gameStats.SentenceBuilder?.played || 0) + (updates.SentenceBuilder.gamesCompleted || 0),
@@ -599,12 +613,12 @@ const Dashboard = () => {
         newAccuracy = Math.round((totalCorrect / totalQuestionsAll) * 100);
       }
 
-      const newWordsLearned = currentWordsLearned + (updates.wordsLearned || 0);
+      // ✅ CRITICAL FIX: Auto-calculate count if 'wordsLearned' is not explicitly provided
+      const addedWordsCount = newLearnedWords.length - currentLearnedWords.length;
+      const newWordsLearned = currentWordsLearned + (updates.wordsLearned !== undefined ? updates.wordsLearned : addedWordsCount);
 
-      const rawDisplayName = userProfile.displayName || 'User';
-      const resolvedName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
-        ? userProfile.username 
-        : rawDisplayName;
+      // ✅ Username na lang ang gagamitin natin
+      const resolvedName = userProfile.username || 'User';
 
       const updateData = {
         uid: userId,
@@ -655,10 +669,8 @@ const Dashboard = () => {
       const existingSnap = await getDocs(existingQuery);
       const isFirstAttempt = existingSnap.empty;
 
-      const rawDisplayName = userProfile.displayName || 'User';
-      const fallbackName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
-        ? userProfile.username 
-        : rawDisplayName;
+      // ✅ Username na lang
+      const fallbackName = userProfile.username || 'User';
 
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
@@ -680,14 +692,11 @@ const Dashboard = () => {
     } catch (error) { console.error('Error completing activity:', error); }
   };
 
-  // ✅ IN-UPDATE NATIN ITO PARA MAKAPAG-RECORD NG STATS SA GAME STATS AT POINTS
   const recordSoloGame = async (gameType, score, correctAnswers, totalQuestions, wordsList = []) => {
     if (!userId) return;
     try {
-      const rawDisplayName = userProfile.displayName || 'User';
-      const fallbackName = (['User', 'New User', 'Student'].includes(rawDisplayName) && userProfile.username) 
-        ? userProfile.username 
-        : rawDisplayName;
+      // ✅ Username na lang
+      const fallbackName = userProfile.username || 'User';
 
       await addDoc(collection(db, 'scores'), {
         studentId: userId,
@@ -697,10 +706,9 @@ const Dashboard = () => {
         completedAt: new Date().toISOString()
       });
 
-      // ✅ DITO NATIN IPINAPASA ANG TOTAL POINTS PARA DERETSO SA updateProgress
       const updates = { 
         gamesPlayed: 1,
-        totalPoints: score // ✅ CRITICAL FIX: Idinagdag natin ito para tumaas ang points sa Firebase
+        totalPoints: score 
       };
       
       if (gameType === 'sentence-builder') {
@@ -792,10 +800,8 @@ const Dashboard = () => {
     accuracy: stats?.progress?.accuracy ?? progress.accuracy ?? 0,
   };
 
-  const rawDisplayName = stats?.displayName || userProfile?.displayName || 'User';
-  const displayName = (['User', 'New User', 'Student'].includes(rawDisplayName) && (stats?.username || userProfile?.username)) 
-    ? (stats?.username || userProfile?.username) 
-    : rawDisplayName;
+  // ✅ Username na lang ang boss
+  const displayName = stats?.username || userProfile?.username || 'User';
 
   if (liveView === 'lobby' && liveSession) return <LivePlayerLobby session={liveSession} playerId={livePlayerId} onGameStart={handleLiveGameStart} onCancel={handleLiveExit} />;
   if (liveView === 'game' && liveSession) return <LivePlayerGame session={liveSession} playerId={livePlayerId} onGameEnd={handleLiveGameEnd} completeActivity={completeActivity} />;

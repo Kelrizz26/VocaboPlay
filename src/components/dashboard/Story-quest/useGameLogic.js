@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../../../pages/firebase';
@@ -818,13 +817,6 @@ export const useGameLogic = ({ onBack, updateProgress, recordGame }) => {
     setTotalAnswers(p => p + 1);
     setShowFeedback(true);
 
-    const sceneObj = scenesRef.current[currentSceneRef.current];
-    const word = sceneObj?.vocabulary;
-
-    if (word && !answeredWordsRef.current.includes(word)) {
-      answeredWordsRef.current.push(word);
-    }
-
     if (choice.correct) {
       setFeedbackType('correct');
       setFeedbackMessage('✅ Excellent! +1 point');
@@ -835,6 +827,15 @@ export const useGameLogic = ({ onBack, updateProgress, recordGame }) => {
       setScore(p => p + 1);
       setCorrectAnswers(p => p + 1);
       setLocalPoints(p => p + 1);
+
+      // ✅ CRITICAL FIX: Dinadagdag lang natin sa listahan kung TAMA ang sagot
+      const sceneObj = scenesRef.current[currentSceneRef.current];
+      const word = sceneObj?.vocabulary;
+
+      if (word && !answeredWordsRef.current.includes(word)) {
+        answeredWordsRef.current.push(word);
+      }
+
     } else {
       const penalty = 1;
 

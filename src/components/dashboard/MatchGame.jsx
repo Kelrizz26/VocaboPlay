@@ -11,6 +11,8 @@
 // ✅ FIXED: Word levels strictly follow Oxford 3000/5000 PDF.
 // ✅ FIXED: Added image overrides for abstract1.png and articulate1.png.
 // ✅ FIXED: LEVEL_PAIRS back to progressive (10,12,14,16,18) but strict per level (no repeating).
+// ✅ NEW: Auto-saves unlocked level and learned words immediately upon level completion.
+// ✅ FIXED: Prevented double-counting of wordsLearned on game exit.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -283,6 +285,11 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
           const data = userDoc.data();
           setLocalPoints(data.totalPoints || 0);
           setLocalDiamonds(data.totalDiamonds || 0);
+          
+          // ✅ FIX: Load unlocked level from Firebase
+          if (data.matchGameUnlockedLevel) {
+            setCurrentLevel(data.matchGameUnlockedLevel);
+          }
         }
       } catch (err) { console.error('Error fetching currency:', err); }
     };
@@ -471,7 +478,10 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
       sessionSavedRef.current = false;
       wrongAttemptsRef.current = 0;
       setDisplayAttempts(0);
-      startLevel('A1');
+      
+      // ✅ FIX: Start at currentLevel (loaded from Firebase)
+      startLevel(currentLevel); 
+      
       setGameState('playing');
       setShowNoLivesMessage(false);
     }, 2000);
@@ -576,6 +586,22 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     if (matches === totalPairsNeeded && totalPairsNeeded > 0) {
       if (answeredPairsInLevel === totalPairsNeeded) {
         setTimerRunning(false);
+        
+        // ✅ NEW: Save level progression and words immediately
+        const currentIdx = CEFR_LEVELS.indexOf(currentLevel);
+        const nextLvl = currentIdx < CEFR_LEVELS.length - 1 ? CEFR_LEVELS[currentIdx + 1] : null;
+        
+        if (nextLvl && currentUser) {
+          const userRef = doc(db, 'users', currentUser.uid);
+          updateDoc(userRef, { matchGameUnlockedLevel: nextLvl }).catch(console.error);
+        }
+        
+        const wordsList = [...matchedWordsRef.current];
+        if (wordsList.length > 0 && updateProgressRef.current) {
+          updateProgressRef.current({ newWords: wordsList });
+          matchedWordsRef.current = []; // Clear for next level
+        }
+
         const awardLevelDiamonds = async () => {
           if (!currentUser) return;
           const accuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
@@ -590,12 +616,10 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
         };
         awardLevelDiamonds();
 
-        const currentIdx = CEFR_LEVELS.indexOf(currentLevel);
         if (currentIdx === CEFR_LEVELS.length - 1) {
           playCompletionFanfare();
           setTimeout(() => { setGameState('finished'); }, 1500);
         } else {
-          const nextLvl = CEFR_LEVELS[currentIdx + 1];
           setPreviousLevel(currentLevel);
           setNextLevelName(nextLvl);
           playLevelUpSound();
@@ -626,7 +650,9 @@ const MatchGame = ({ onBack, onExitToGames, updateProgress, recordGame }) => {
     if (progressFn) {
       progressFn({
         gamesPlayed: 1, totalPoints: score, xp: score,
-        wordsLearned: correctAnswers, totalAnswers, correctAnswers,
+        // ✅ FIXED: Removed `wordsLearned: correctAnswers` to prevent double counting.
+        // The words are already saved via `newWords` in the level completion useEffect above.
+        totalAnswers, correctAnswers,
         streak: newStreak,
         MatchGame: { gamesCompleted: 1, correctAnswers, totalQuestions: totalAnswers },
       }).then(() => {

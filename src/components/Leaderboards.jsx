@@ -117,9 +117,10 @@ const PlayerAvatar = ({ user, size = 36, fontSize = 16, borderRadius = '50%' }) 
   const [imgError, setImgError] = useState(false);
   const avatarSrc = getStudentAvatarUrl(user);
   if (!imgError && avatarSrc) {
-    return (<div style={{ width: '100%', height: '100%', backgroundImage: `url(${avatarSrc})`, backgroundSize: '130%', backgroundPosition: 'center 20%', backgroundRepeat: 'no-repeat', borderRadius: borderRadius, display: 'block' }} aria-label={user?.displayName || 'Player'} />);
+    return (<div style={{ width: '100%', height: '100%', backgroundImage: `url(${avatarSrc})`, backgroundSize: '130%', backgroundPosition: 'center 20%', backgroundRepeat: 'no-repeat', borderRadius: borderRadius, display: 'block' }} aria-label={user?.username || user?.displayName || 'Player'} />);
   }
-  return (<span style={{ color: '#fff', fontWeight: '700', fontSize, fontFamily: BRAND_FONT_DISPLAY }}>{user?.displayName?.charAt(0)?.toUpperCase() || '?'}</span>);
+  // ✅ USERNAME MUNA
+  return (<span style={{ color: '#fff', fontWeight: '700', fontSize, fontFamily: BRAND_FONT_DISPLAY }}>{user?.username?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || '?'}</span>);
 };
 
 const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
@@ -155,7 +156,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     }
   }, []);
 
-  // ✅ FIXED: Inuuna natin hanapin yung Root level fields (data.totalPoints) kasi dun nag-sasave si Dashboard.
   const getValue = useCallback((user) => {
     const raw = user.rawData || {}; 
     const stats = user.stats || user.progress || {}; 
@@ -179,7 +179,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
     }
   }, [selectedLeaderboard]);
 
-  // ✅ FIXED: Siniguro na yung Root level yung ginagamit sa sorting query
   const getSortField = useCallback(() => {
     switch (selectedLeaderboard) {
       case 'points': return 'totalPoints';
@@ -210,7 +209,9 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         const data = userDoc.data();
         const stats = data.stats || data.progress || {};
         profileData = {
-          id: userId, displayName: data.displayName || 'Anonymous User', username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
+          // ✅ USERNAME NA ANG PRIORITY
+          id: userId, displayName: data.username || data.displayName || 'Anonymous User', 
+          username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
           email: data.email || 'No email set', equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID, bio: data.bio || 'No bio yet',
           phone: data.phone || 'Not set', location: data.location || 'Not set', website: data.website || 'Not set',
           twitter: data.twitter || 'Not set', instagram: data.instagram || 'Not set', linkedin: data.linkedin || 'Not set',
@@ -265,7 +266,6 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         const data = docSnap.data();
         const stats = data.stats || {};
         
-        // ✅ FIXED: Wag i-filter out kung root totalPoints meron, kahit walang stats object.
         if (!data.totalPoints && (!data.stats || Object.keys(stats).length === 0)) return null;
         if (data.removedFromLeaderboard === true) return null;
         if (data.role === 'admin') return null;
@@ -274,9 +274,13 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
         if (!passesTimeFilter(lastActiveMs)) return null;
 
         return {
-          id: docSnap.id, rank: 0, displayName: data.displayName || 'Anonymous User', equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
-          email: data.email || 'No email', username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
-          rawData: data, // ✅ PASS NATIN YUNG ROOT DATA
+          id: docSnap.id, rank: 0, 
+          // ✅ USERNAME NA ANG PRIORITY
+          displayName: data.username || data.displayName || 'Anonymous User', 
+          equippedAvatar: data.equippedAvatar || DEFAULT_AVATAR_ID,
+          email: data.email || 'No email', 
+          username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
+          rawData: data,
           stats: stats, progress: stats,
           isLocal: false, _source: 'firebase', _lastActiveMs: lastActiveMs,
         };
@@ -298,7 +302,7 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
             mergedMap.set(userId, {
               id: userId, rank: 0, displayName: localUser.username || 'Player', equippedAvatar: localUser.equippedAvatar || DEFAULT_AVATAR_ID,
               email: localUser.email || '', username: `@${localUser.username?.toLowerCase().replace(/\s/g, '') || 'player'}`,
-              rawData: localUser, // Pass as raw data for local
+              rawData: localUser, 
               stats: { totalPoints: localUser.totalPoints || 0, wordsLearned: localUser.wordsLearned || 0, gamesPlayed: localUser.gamesPlayed || 0, longestStreak: localUser.longestStreak || localUser.streak || 0, level: localUser.level || 1 },
               progress: { totalPoints: localUser.totalPoints || 0, wordsLearned: localUser.wordsLearned || 0, gamesPlayed: localUser.gamesPlayed || 0, longestStreak: localUser.longestStreak || localUser.streak || 0, level: localUser.level || 1 },
               isLocal: true, _source: 'local', _lastActiveMs: 0,
@@ -654,7 +658,8 @@ const Leaderboards = ({ onBack, isAdmin = false, currentUserId = null }) => {
                   ))}
                 </div>
                 {[
-                  { title: 'Basic Information', items: [['Display Name', selectedProfile.displayName], ['Username', selectedProfile.username], ['Joined', selectedProfile.joinedAt], ['Bio', selectedProfile.bio]] },
+                  // ✅ INALIS NATIN YUNG DISPLAY NAME DITO
+                  { title: 'Basic Information', items: [['Username', selectedProfile.username], ['Joined', selectedProfile.joinedAt], ['Bio', selectedProfile.bio]] },
                   { title: 'Contact Information', items: [['Phone', selectedProfile.phone], ['Location', selectedProfile.location], ['Website', selectedProfile.website]] },
                   { title: 'Social Links', items: [['Twitter', selectedProfile.twitter], ['Instagram', selectedProfile.instagram], ['LinkedIn', selectedProfile.linkedin]] },
                   { title: 'Settings', items: [['Email Notifications', selectedProfile.emailNotifications ? 'Enabled' : 'Disabled'], ['Account Type', selectedProfile.roleLabel || 'Student'], ['Language', selectedProfile.language]] },

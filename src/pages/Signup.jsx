@@ -167,8 +167,10 @@ const Signup = () => {
   };
 
   const completeSignUp = async () => {
-    if (!username.trim()) return setError('Please enter a username');
+    const cleanUsername = username.trim(); // ✅ TRIM SPACES
+    if (!cleanUsername) return setError('Please enter a username');
     if (!agreeTerms) return setError('Please agree to the Privacy Policy & Terms of Service');
+    
     setLoading(true); setError('');
     try {
       const user = tempUserData;
@@ -184,21 +186,40 @@ const Signup = () => {
         achievements: { firstGame: false, perfectScore: false, threeDayStreak: false, tenWords: false, masterLearner: false, speedDemon: false, vocabularyMaster: false }
       };
       const finalRole = userRole === 'teacher' ? 'admin' : 'student';
+      
+      // ✅ Dito natin sine-save sa Firebase. Parehong value ang displayName at username.
       await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid, email: user.email, displayName: username, username: username,
+        uid: user.uid, email: user.email, displayName: cleanUsername, username: cleanUsername,
         role: finalRole, avatar: user.photoURL || '👤', emailVerified: true, googleAccount: true,
         birthMonth, birthYear, outsidePH,
         createdAt: new Date().toISOString(), lastActive: new Date().toISOString(),
         progress: userProgress, favorites: [],
         settings: { emailNotifications: true, darkMode: false, language: 'en' }
       });
+
+      // ✅ I-set natin lahat ng possible localStorage keys para synchronized lahat ng components
       localStorage.setItem('userId', user.uid);
-      localStorage.setItem('userDisplayName', username);
-      localStorage.setItem('username', username);
+      localStorage.setItem('userDisplayName', cleanUsername);
+      localStorage.setItem('username', cleanUsername);
       localStorage.setItem('userEmail', user.email);
       localStorage.setItem('vocaboplay_progress', JSON.stringify(userProgress));
-      const userProfile = { uid: user.uid, displayName: username, username: username, email: user.email, avatar: user.photoURL || '👤', role: finalRole, emailVerified: true, googleAccount: true, progress: userProgress, settings: { emailNotifications: true, darkMode: false, language: 'en' } };
+      
+      const userProfile = { 
+        uid: user.uid, 
+        displayName: cleanUsername, 
+        username: cleanUsername, 
+        email: user.email, 
+        avatar: user.photoURL || '👤', 
+        role: finalRole, 
+        emailVerified: true, 
+        googleAccount: true, 
+        progress: userProgress, 
+        settings: { emailNotifications: true, darkMode: false, language: 'en' } 
+      };
+      
       localStorage.setItem('userProfile', JSON.stringify(userProfile));
+      localStorage.setItem('firebaseUserData', JSON.stringify(userProfile)); // ✅ CRITICAL FIX: Para mabasa agad ni Dashboard
+
       const token = await auth.currentUser.getIdToken();
 
       // ✅ NEW: Trigger welcome email (fire-and-forget, hindi nag-block sa signup flow)

@@ -6,8 +6,9 @@
 // ✅ FIXED: Modals are now render functions (no blink/remount)
 // ✅ FIXED: Word levels strictly follow Oxford 3000/5000 PDF.
 // ✅ FIXED: Added image overrides for specific C1 words (decisive1.png, etc.).
-// ✅ FIXED: Images now use objectFit: 'cover' to fill the boxes completely.
+// ✅ FIXED: Changed objectFit to 'contain' so images are fully visible and not cropped.
 // ✅ All existing features preserved
+// ✅ NEW: Auto-saves unlocked level and learned words immediately upon level completion.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import backgroundMusic from '../../utils/backgroundMusic';
@@ -237,7 +238,9 @@ const imageOverrides = {
   'compel': { image1: 'compel1.png', image2: 'compel2.png' },
   'contemplate': { image1: 'contemplate1.png', image2: 'contemplate2.png' },
   'cease': { image1: 'cease1.png', image2: 'cease2.png' },
-  'articulate': { image1: 'articulate1.png', image2: 'articulate2.png' }
+  'articulate': { image1: 'articulate1.png', image2: 'articulate2.png' },
+  // Pwede mo lagyan ng override ang adult kung gusto mo palitan ng file name
+  // 'adult': { image1: 'adult-man.png', image2: 'adult-woman.png' }
 };
 
 const allVocabPairs = Object.keys(wordLevelMap).map((word, index) => {
@@ -378,6 +381,11 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
           setLocalPoints(pts);
           setLocalDiamonds(dia);
           if (onPointsChange) onPointsChange(pts);
+          
+          // ✅ FIX: Load unlocked level from Firebase
+          if (data.synoQuestUnlockedLevel && CEFR_LEVELS.includes(data.synoQuestUnlockedLevel)) {
+            setCurrentLevel(data.synoQuestUnlockedLevel);
+          }
         }
       } catch (err) { console.error('Error fetching currency:', err); }
     };
@@ -575,6 +583,20 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     const currentIndex = CEFR_LEVELS.indexOf(currentLevel);
     setHintsUsedThisLevel(0);
     setTimerRunning(false);
+
+    // ✅ NEW: Save level progression to Firebase
+    const nextLvl = currentIndex < CEFR_LEVELS.length - 1 ? CEFR_LEVELS[currentIndex + 1] : null;
+    if (nextLvl && currentUser) {
+      const userRef = doc(db, 'users', currentUser.uid);
+      updateDoc(userRef, { synoQuestUnlockedLevel: nextLvl }).catch(console.error);
+    }
+
+    // ✅ NEW: Save words immediately to prevent loss on exit
+    const wordsList = [...answeredWordsRef.current];
+    if (wordsList.length > 0 && updateProgressRef.current) {
+      updateProgressRef.current({ newWords: wordsList });
+      answeredWordsRef.current = []; // Clear for next level
+    }
 
     // ✅ Compute reward based on accuracy this level
     const accuracy = QUESTIONS_PER_LEVEL > 0 ? Math.round((correctInLevel / QUESTIONS_PER_LEVEL) * 100) : 0;
@@ -845,7 +867,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
     setTimeout(() => {
       setScore(0); setCorrectCount(0); setComboCount(0); setMaxCombo(0);
       setStreak(0); setQuestionNumber(0); setAnswered(false); setHintUsed(false);
-      setCurrentLevel('A1'); setAnsweredInLevel(0); setAnsweredQuestions([]);
+      setAnsweredInLevel(0); setAnsweredQuestions([]);
       setRetryQuestion(null); setWrongQuestions([]); wrongQueueRef.current = [];
       setRetryPhase(false); setRetryIndex(0);
       setUserFilledBlanks({}); setUsedLetters([]);
@@ -865,12 +887,14 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
       progressSavedRef.current = false;
       completionBonusSavedRef.current = false;
       answeredWordsRef.current = [];
-      const newQuestions = generateQuestions('A1');
+      
+      // ✅ Start at the saved currentLevel
+      const newQuestions = generateQuestions(currentLevel);
       setQuestions(newQuestions); setCurrentQuestionIndex(0);
       setBlankPositions(newQuestions[0]?.blankPositions || []);
       setVisiblePositions(newQuestions[0]?.visiblePositions || []);
       setAvailableLetters(newQuestions[0]?.letterOptions || []);
-      setTimer(LEVEL_CONFIG['A1'].timer); setTimerRunning(true);
+      setTimer(LEVEL_CONFIG[currentLevel]?.timer || 25); setTimerRunning(true);
       setGameState('playing'); setShowNoLivesMessage(false);
     }, 2000);
   };
@@ -998,13 +1022,13 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
 
   useEffect(() => {
     if (isUserLoaded && currentUser) {
-      const newQuestions = generateQuestions('A1');
+      const newQuestions = generateQuestions(currentLevel);
       setQuestions(newQuestions); setCurrentQuestionIndex(0);
       setScore(0); setCorrectCount(0); setComboCount(0); setMaxCombo(0); setStreak(0);
       setAnswered(false); setHintUsed(false);
-      setTimer(LEVEL_CONFIG['A1'].timer); setTimerRunning(false);
+      setTimer(LEVEL_CONFIG[currentLevel]?.timer || 25); setTimerRunning(false);
       setGameState('intro'); setShowNoLivesMessage(false);
-      setCurrentLevel('A1'); setQuestionNumber(0); setAnsweredInLevel(0);
+      setQuestionNumber(0); setAnsweredInLevel(0);
       setAnsweredQuestions([]); setRetryQuestion(null); setWrongQuestions([]);
       wrongQueueRef.current = []; setRetryPhase(false); setRetryIndex(0);
       setBlankPositions([]); setVisiblePositions([]);
@@ -1119,7 +1143,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
       
       if (progressFn) {
         progressFn({
-          gamesPlayed: 1, totalPoints: score, xp: score, wordsLearned: correctCount,
+          gamesPlayed: 1, totalPoints: score, xp: score,
           totalAnswers: totalQuestions, correctAnswers, streak: newStreak,
           SynoQuest: { gamesCompleted: 1, correctAnswers, totalQuestions }
         }).then(() => {
@@ -1145,7 +1169,7 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
         const recordFn = recordGameRef.current;
         if (progressFn) {
           progressFn({
-            gamesPlayed: 1, totalPoints: score, xp: score, wordsLearned: correctCount,
+            gamesPlayed: 1, totalPoints: score, xp: score,
             totalAnswers: totalQuestions, correctAnswers,
             SynoQuest: { gamesCompleted: 1, correctAnswers, totalQuestions }
           }).then(() => { if (recordFn) recordFn('synoquest', score, correctCount, totalQuestions, wordsList); })
@@ -1820,11 +1844,13 @@ const SynoQuest = ({ onBack, onExitToGames, updateProgress, recordGame, currentP
           </div>
           <div className="sq-image-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '18px', padding: '18px', background: theme.surfaceBg, borderRadius: '14px', border: `1.5px solid ${theme.surfaceBorder}`, flexWrap: 'wrap' }}>
             <div className="sq-image-box" style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={currentQuestion.image1} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
+              {/* ✅ CHANGED: objectFit is now 'contain' so the whole image is visible */}
+              <img src={currentQuestion.image1} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
             </div>
             <span className="sq-image-arrow" style={{ fontSize: '30px', fontWeight: '800', color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>↔️</span>
             <div className="sq-image-box" style={{ position: 'relative', width: '150px', height: '150px', background: palette.white, borderRadius: '14px', border: `1.5px solid ${palette.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={currentQuestion.image2} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
+              {/* ✅ CHANGED: objectFit is now 'contain' so the whole image is visible */}
+              <img src={currentQuestion.image2} alt={currentQuestion.word} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; const parent = e.target.parentElement; const span = document.createElement('span'); span.style.fontSize = '48px'; span.textContent = '🖼️'; parent.appendChild(span); }} />
             </div>
             <span className="sq-image-eq" style={{ fontSize: '28px', fontWeight: '800', color: theme.textPrimary, background: theme.chipBg, padding: '0 14px', borderRadius: '10px', border: `1.5px solid ${palette.border}`, fontFamily: FONT_DISPLAY }}>= ?</span>
           </div>

@@ -1,5 +1,7 @@
 // src/components/dashboard/SentenceBuilder.jsx
 // ✅ FIXED: Removed backgroundAttachment fixed (causes jitter). No new elements added.
+// ✅ FIXED: Synced learnedWords count to the 'wordsLearned' field in Firebase.
+// ✅ FIXED: Passes sessionLearnedWords to recordGame so MyProgress updates correctly.
 
 import React, { useState, useEffect, useRef } from 'react';
 import useSound from '../../hooks/useSound';
@@ -35,6 +37,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   
   const [score, setScore] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0); 
+
+  // ✅ State para ma-track ang mga salitang natutunan sa session na ito
+  const [sessionLearnedWords, setSessionLearnedWords] = useState([]);
 
   const getInitialUnlockedLevels = () => {
     const defaultLevels = {};
@@ -110,7 +115,14 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         finalLearned = { ...userSnap.data().learnedWords, ...localLearned };
       }
       
-      await updateDoc(userRef, { learnedWords: finalLearned });
+      // ✅ CRITICAL FIX: Count total words and sync both the map and the integer counter
+      const totalWordsCount = Object.keys(finalLearned).length;
+
+      await updateDoc(userRef, { 
+        learnedWords: finalLearned,
+        wordsLearned: totalWordsCount // <--- Dito natin ise-save ang tamang count para lumabas sa MyProgress
+      });
+      
       setLearnedWords(finalLearned);
     } catch (error) {
       console.error("Error syncing learned words:", error);
@@ -434,6 +446,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
 
     setEarnedDiamondsThisLevel(0);
     rewardClaimedRef.current = false;
+    setSessionLearnedWords([]); // ✅ Reset session words pag pumasok sa bagong level
 
     const savedIndex = levelProgress[selectedTopic.id]?.[levelKey] || 0;
     const questionsInLevel = selectedTopic.levels[levelKey];
@@ -479,6 +492,15 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
       const targetWords = extractTargetWords(currentQuestion.correctAnswer);
       saveWordsLocally(targetWords, selectedLevel);
 
+      // ✅ I-add sa session array para maipasa sa recordGame mamaya
+      setSessionLearnedWords(prev => {
+        const newWords = [...prev];
+        targetWords.forEach(w => {
+          if (!newWords.includes(w)) newWords.push(w);
+        });
+        return newWords;
+      });
+
     } else {
       setIsCorrect(false);
       playWrong();
@@ -509,8 +531,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
   const handleExitGame = async () => {
     await syncLearnedWordsToFirebase();
     
+    // ✅ IPINAPASA NATIN YUNG sessionLearnedWords IMBES NA EMPTY ARRAY
     if (score > 0 && currentUser && recordGame) {
-      recordGame('sentence-builder', score, score, currentIndex + 1, [] );
+      recordGame('sentence-builder', score, score, currentIndex + 1, sessionLearnedWords);
     }
     if (onExitToGames) {
       onExitToGames();
@@ -593,8 +616,9 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
         rewardedLevels: updatedRewarded 
       });
 
+      // ✅ IPINAPASA NATIN YUNG sessionLearnedWords DITO RIN
       if (currentUser && recordGame) {
-        recordGame('sentence-builder', score, score, activeQuestions.length, [] );
+        recordGame('sentence-builder', score, score, activeQuestions.length, sessionLearnedWords);
       }
       setGameState('finished');
     }

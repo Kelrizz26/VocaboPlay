@@ -1,6 +1,7 @@
 // src/components/dashboard/MyProgress.jsx
 // ✅ FIXED: Replaced confusing fractions with "Average Mastery" (Average of best runs per game).
 // ✅ FIXED: UI now clearly shows "X correct out of Y total attempts" to make it 100% clear for panelists.
+// ✅ FIXED: Handled learnedWords array mapping from SentenceBuilder perfectly.
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -340,11 +341,20 @@ const MyProgress = () => {
       try {
         if (activeModal === 'words') {
           const currentStats = statsRef.current;
-          const words =
-            currentStats?.progress?.learnedWords ||
+          
+          // ✅ PRIORITIZE ARRAY (learnedWordsList) OVER OBJECT MAP (learnedWords)
+          let words =
+            currentStats?.learnedWordsList ||
             currentStats?.progress?.learnedWordsList ||
             currentStats?.learnedWords ||
+            currentStats?.progress?.learnedWords ||
             [];
+
+          // ✅ FIX: I-convert ang Object (map) into Array kung sakaling object ang nasa DB
+          if (words && typeof words === 'object' && !Array.isArray(words)) {
+            words = Object.keys(words);
+          }
+
           setLearnedWords(Array.isArray(words) ? words : []);
         } else if (activeModal === 'games' || activeModal === 'points') {
           const cacheKey = `myprogress_modal_${userId}_${activeModal}`;
