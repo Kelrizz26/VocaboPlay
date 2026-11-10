@@ -384,9 +384,9 @@ export const STORY_ARCS = {
         ],
       },
       {
-        text: "Some entries described alarm and unsettling visions of the future.",
-        vocabulary: "alarm",
-        definition: "A sudden fear or worry that something bad might happen.",
+        text: "Some entries described anxiety and unsettling visions of the future.",
+        vocabulary: "anxiety",
+        definition: "A feeling of worry or nervousness.",
         question: "What is the effect of the diary containing 'visions of the future'?",
         choices: [
           { text: "It suggests the diary may have supernatural or prophetic powers.", correct: true },
@@ -409,9 +409,9 @@ export const STORY_ARCS = {
         ],
       },
       {
-        text: "After months of interpreting, Maya became aware — the name written in the diary was her own.",
-        vocabulary: "aware",
-        definition: "Knowing that something exists, or having knowledge of a situation.",
+        text: "After months of interpreting, Maya's awareness grew — the name written in the diary was her own.",
+        vocabulary: "awareness",
+        definition: "Knowledge or understanding of a situation.",
         question: "Why is finding her own name in the diary considered a shock?",
         choices: [
           { text: "It reveals a shocking and unexpected connection between Maya and the diary.", correct: true },
@@ -446,9 +446,9 @@ export const STORY_ARCS = {
         ],
       },
       {
-        text: "Her grandmother finally confirmed that the diary was a secret wealth kept hidden for generations.",
-        vocabulary: "confirm",
-        definition: "To state or show that something is definitely true or correct.",
+        text: "Her grandmother finally assured her that the diary was a secret wealth kept hidden for generations.",
+        vocabulary: "assure",
+        definition: "To tell someone confidently that something is true.",
         question: "What does the diary being a 'secret wealth' reveal about the family?",
         choices: [
           { text: "The family has been hiding an important treasure for generations.", correct: true },
@@ -482,10 +482,10 @@ export const STORY_ARCS = {
         ],
       },
       {
-        text: "Now she faced a difficult dilemma: should she share the diary's secrets with her family or keep them hidden?",
-        vocabulary: "dilemma",
-        definition: "A difficult choice between two options.",
-        question: "Why is Maya's situation considered a 'dilemma'?",
+        text: "Now she faced a difficult uncertainty: should she share the diary's secrets with her family or keep them hidden?",
+        vocabulary: "uncertainty",
+        definition: "The state of being uncertain.",
+        question: "Why does Maya face a difficult uncertainty?",
         choices: [
           { text: "She must choose between two difficult options with serious consequences.", correct: true },
           { text: "She has no choice to make at all.", correct: false },
@@ -530,10 +530,10 @@ export const STORY_ARCS = {
         ],
       },
       {
-        text: "The final page contained a consistent pattern of secrets that would change everything.",
-        vocabulary: "consist",
-        definition: "To be made of or formed from something.",
-        question: "What does the 'consistent' pattern suggest about the diary?",
+        text: "The final page contained a consistently clear pattern of secrets that would change everything.",
+        vocabulary: "consistently",
+        definition: "In a way that does not change or vary.",
+        question: "What does the 'consistently clear pattern' suggest about the diary?",
         choices: [
           { text: "The clues were carefully placed together to form a bigger picture.", correct: true },
           { text: "The pages were randomly torn and thrown away.", correct: false },

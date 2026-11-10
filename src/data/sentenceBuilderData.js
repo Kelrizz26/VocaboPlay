@@ -156,7 +156,8 @@ export const sentenceBuilderCourses = [
         { correctAnswer: "The meeting is at three o'clock.", scrambledWords: ["meeting", "The", "is", "at", "three", "o'clock."], hints: ['Preposition of time', 'A specific time in the afternoon.', 'Starts with "The".'] },
         { correctAnswer: "He always arrives early.", scrambledWords: ["always", "He", "arrives", "early."], hints: ['Frequency adverb', 'Not late.', 'The verb is "arrives".'] },
         { correctAnswer: "She can type very fast.", scrambledWords: ["type", "can", "She", "very", "fast."], hints: ['Can for ability', 'Writing on a keyboard.', 'The modal is "can".'] },
-        { correctAnswer: "We need more paper for the printer.", scrambledWords: ["need", "We", "more", "paper", "for", "the", "printer."], hints: ['Uncountable noun', 'A machine that prints documents.', 'Starts with "We".'] },
+        // ✅ CHANGED: printer (A2) -> office (A1)
+        { correctAnswer: "We need more paper for the office.", scrambledWords: ["need", "We", "more", "paper", "for", "the", "office."], hints: ['Uncountable noun', 'A room for working.', 'Starts with "We".'] },
       ],
       'A2': [
         { correctAnswer: "He sent an email to the manager.", scrambledWords: ["an", "sent", "He", "to", "email", "the", "manager."], hints: ['Office tasks', 'Electronic messages.', 'Starts with "He".'] },
@@ -167,7 +168,8 @@ export const sentenceBuilderCourses = [
         { correctAnswer: "I spoke to the client yesterday.", scrambledWords: ["spoke", "I", "to", "the", "client", "yesterday."], hints: ['Past simple', 'A customer.', 'Starts with "I".'] },
         { correctAnswer: "We are going to hire a new assistant.", scrambledWords: ["are", "going", "We", "to", "hire", "a", "new", "assistant."], hints: ['Going to', 'A person who helps with tasks.', 'Starts with "We".'] },
         { correctAnswer: "This office is bigger than the old one.", scrambledWords: ["office", "This", "is", "bigger", "than", "the", "old", "one."], hints: ['Comparative', 'A place where people work.', 'Starts with "This".'] },
-        { correctAnswer: "You must submit the form by noon.", scrambledWords: ["must", "submit", "You", "the", "form", "by", "noon."], hints: ['Must', 'A document with blank spaces to fill.', 'Starts with "You".'] },
+        // ✅ CHANGED: submit (B1) -> sign (A2)
+        { correctAnswer: "You must sign the form by noon.", scrambledWords: ["must", "sign", "You", "the", "form", "by", "noon."], hints: ['Must', 'Write your name on a document.', 'Starts with "You".'] },
         { correctAnswer: "Have you ever worked in a team?", scrambledWords: ["you", "Have", "ever", "worked", "in", "a", "team?"], hints: ['Present perfect experience', 'A group of people working together.', 'Starts with "Have".'] },
       ],
       'B1': [
@@ -190,7 +192,7 @@ export const sentenceBuilderCourses = [
         { correctAnswer: "Innovation is key to staying competitive.", scrambledWords: ["is", "Innovation", "key", "to", "staying", "competitive."], hints: ['Corporate strategy', 'Creating new ideas.', 'Starts with "Innovation".'] },
         { correctAnswer: "This time next week, I will be attending a conference.", scrambledWords: ["time", "This", "next", "week,", "I", "will", "be", "attending", "a", "conference."], hints: ['Future continuous', 'A large meeting of professionals.', 'Starts with "This".'] },
         { correctAnswer: "She had already left the office before I arrived.", scrambledWords: ["had", "She", "already", "left", "the", "office", "before", "I", "arrived."], hints: ['Past perfect', 'A place where people work.', 'Starts with "She".'] },
-        { correctAnswer: "It is believed that the company will join soon.", scrambledWords: ["is", "It", "believed", "that", "the", "company", "will", "join", "soon."], hints: ['Passive reporting', 'Combining two businesses.', 'Starts with "It".'] },
+        { correctAnswer: "It is believed that the company will merge soon.", scrambledWords: ["is", "It", "believed", "that", "the", "company", "will", "merge", "soon."], hints: ['Passive reporting', 'Combining two businesses.', 'Starts with "It".'] },
         { correctAnswer: "Not only did she lead the project, but she also secured the funding.", scrambledWords: ["only", "Not", "did", "she", "lead", "the", "project,", "but", "she", "also", "secured", "the", "funding."], hints: ['Inversion', 'A task or piece of work.', 'Starts with "Not".'] },
         { correctAnswer: "We avoided discussing the budget during the meeting.", scrambledWords: ["avoided", "We", "discussing", "the", "budget", "during", "the", "meeting."], hints: ['Gerund after verb', 'The financial plan.', 'Starts with "We".'] },
       ],
@@ -297,7 +299,8 @@ export const sentenceBuilderCourses = [
         { correctAnswer: "Can I join your game?", scrambledWords: ["join", "Can", "I", "your", "game?"], hints: ['Can for permission', 'An activity played for fun.', 'Starts with "Can".'] },
       ],
       'A2': [
-        { correctAnswer: "I have been learning to play the guitar recently.", scrambledWords: ["have", "play", "I", "learning", "the", "been", "to", "guitar", "recently."], hints: ['Present perfect continuous', 'A stringed instrument.', 'Starts with "I".'] },
+        // ✅ CHANGED: recently (B1) -> this year (A1)
+        { correctAnswer: "I have been learning to play the guitar this year.", scrambledWords: ["have", "play", "I", "learning", "the", "been", "to", "guitar", "this", "year."], hints: ['Present perfect continuous', 'A stringed instrument.', 'Starts with "I".'] },
         { correctAnswer: "Would you like to go to the concert?", scrambledWords: ["like", "Would", "to", "you", "go", "to", "the", "concert?"], hints: ['Invitations', 'A live music performance.', 'Starts with "Would".'] },
         { correctAnswer: "We had a great time at the party.", scrambledWords: ["a", "had", "We", "great", "time", "at", "the", "party."], hints: ['Past experiences', 'A social gathering.', 'Starts with "We".'] },
         { correctAnswer: "She is interested in taking pictures.", scrambledWords: ["interested", "She", "is", "in", "taking", "pictures."], hints: ['Interests', 'Taking photos.', 'Starts with "She".'] },

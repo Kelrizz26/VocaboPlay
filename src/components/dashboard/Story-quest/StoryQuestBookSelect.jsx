@@ -6,6 +6,7 @@
 // ✅ ADDED: classNames para ma-target ng landscape CSS
 // ✅ FIXED: Swapped visual positions of A2 and B1 so A2 is on the main path.
 // ✅ FIXED: Updated A2 title to "The Lost Pet" to match storyContent.js.
+// ✅ FIXED: isUnlocked logic now properly respects completed levels so it doesn't look "locked" if completed via DevPanel.
 
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -221,11 +222,13 @@ const StoryQuestBookSelect = ({
     setIsMusicMuted((prev) => !prev);
   };
 
+  // ✅ FIXED UNLOCK LOGIC HERE
   const isUnlocked = (level) => {
     if (level === 'A1') return true;
     const idx = LEVELS.findIndex(l => l.level === level);
     if (idx <= 0) return true;
-    return completedLevels.includes(LEVELS[idx - 1].level);
+    // Unlocked kung tapos na yung naunang level, O kaya kung na-complete na ito (para di magulo pag dev panel)
+    return completedLevels.includes(LEVELS[idx - 1].level) || completedLevels.includes(level);
   };
 
   const isCompleted = (level) => completedLevels.includes(level);
