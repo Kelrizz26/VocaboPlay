@@ -2,6 +2,7 @@
 // ✅ FIXED: Removed backgroundAttachment fixed (causes jitter). No new elements added.
 // ✅ FIXED: Synced learnedWords count to the 'wordsLearned' field in Firebase.
 // ✅ FIXED: Passes sessionLearnedWords to recordGame so MyProgress updates correctly.
+// ✅ FIXED: Mobile UI layout now shows Hint, Reset, and Check Answer buttons properly.
 
 import React, { useState, useEffect, useRef } from 'react';
 import useSound from '../../hooks/useSound';
@@ -895,7 +896,7 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           }
 
           .sb-playing-wrapper { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
-          .sb-playing-wrapper > div { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+          .sb-playing-wrapper > div { height: 100% !important; display: flex !important; flex-direction: column !important; overflow-y: auto !important; } /* Changed to allow scroll if needed */
           .sb-top-hud { margin-bottom: 4px !important; gap: 4px !important; flex-wrap: nowrap !important; flex-shrink: 0 !important; }
           .sb-top-stats { gap: 4px !important; display: flex !important; }
           .sb-top-stats > div { padding: 2px 8px !important; font-size: 11px !important; border-width: 1.5px !important; box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important; border-radius: 6px !important; gap: 4px !important; height: 24px !important; box-sizing: border-box !important; }
@@ -906,7 +907,11 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
           .sb-progress-text { font-size: 10px !important; margin-bottom: 2px !important; line-height: 1 !important; }
           .sb-progress-bar { height: 4px !important; }
 
-          .sb-game-card { padding: 8px 10px !important; border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 3px 0 #8c5728 !important; display: flex !important; flex-direction: column !important; flex: 1 !important; overflow: hidden !important; min-height: 0 !important; }
+          .sb-game-card { padding: 8px 10px !important; border-width: 2px !important; border-radius: 10px !important; box-shadow: 0 3px 0 #8c5728 !important; display: flex !important; flex-direction: column !important; flex: 1 !important; overflow-y: auto !important; min-height: 0 !important; } /* Changed overflow to auto */
+          
+          /* ✅ Reduce vertical margins inside game card to fit everything */
+          .sb-game-card > div:not(:first-child) { margin-bottom: 8px !important; }
+
           .sb-game-card > div:first-child { margin-bottom: 4px !important; flex-wrap: wrap !important; gap: 4px !important; flex-shrink: 0 !important; }
           .sb-level-badge { font-size: 9px !important; padding: 0 6px !important; border-width: 1px !important; border-radius: 4px !important; line-height: 20px !important; }
           
@@ -917,22 +922,24 @@ const SentenceBuilder = ({ onBack, onExitToGames, updateProgress, recordGame }) 
             border-width: 1.5px !important; 
             border-radius: 8px !important; 
             line-height: 1 !important;
+            margin-bottom: 8px !important; /* Reduced margin */
+            flex-shrink: 0 !important;
           }
           
           .sb-game-card h2 { display: none !important; }
           
           .sb-game-card p { font-size: 10px !important; margin: 4px 0 2px 0 !important; letter-spacing: 0 !important; color: #8c5728 !important; font-weight: 900 !important; line-height: 1 !important; flex-shrink: 0 !important; }
 
-          .sb-sentence-box { flex: 1 1 40% !important; min-height: 50px !important; max-height: 70px !important; height: auto !important; padding: 4px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 0 !important; align-content: flex-start !important; box-sizing: border-box !important; }
+          .sb-sentence-box { flex: 0 1 auto !important; min-height: 50px !important; max-height: 70px !important; height: auto !important; padding: 4px !important; overflow-y: auto !important; border-width: 1.5px !important; gap: 4px !important; border-radius: 6px !important; margin-bottom: 0 !important; align-content: flex-start !important; box-sizing: border-box !important; }
           .sb-sentence-box span { font-size: 10px !important; }
 
-          .sb-word-bank-container { flex: 1 1 60% !important; min-height: 60px !important; max-height: 100px !important; height: auto !important; gap: 4px !important; margin-bottom: 0 !important; align-content: flex-start !important; align-items: flex-start !important; overflow-y: auto !important; padding: 4px !important; border: 1px dashed rgba(0,0,0,0.1) !important; border-radius: 6px !important; box-sizing: border-box !important; }
+          .sb-word-bank-container { flex: 0 1 auto !important; min-height: 60px !important; max-height: 100px !important; height: auto !important; gap: 4px !important; margin-bottom: 0 !important; align-content: flex-start !important; align-items: flex-start !important; overflow-y: auto !important; padding: 4px !important; border: 1px dashed rgba(0,0,0,0.1) !important; border-radius: 6px !important; box-sizing: border-box !important; }
           
           .sb-word-btn { padding: 0 8px !important; height: 26px !important; min-height: 26px !important; max-height: 26px !important; font-size: 11px !important; border-width: 1.5px !important; border-radius: 4px !important; flex: none !important; align-self: flex-start !important; box-sizing: border-box !important; white-space: nowrap !important; line-height: 1 !important; touch-action: manipulation !important; }
 
           .sb-feedback-msg { flex-shrink: 0 !important; height: 24px !important; min-height: 24px !important; max-height: 24px !important; padding: 0 !important; font-size: 10px !important; margin: 4px 0 0 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; overflow: hidden !important; border-width: 1.5px !important; border-radius: 4px !important; box-sizing: border-box !important; }
 
-          .sb-action-buttons { flex-shrink: 0 !important; gap: 6px !important; margin-top: auto !important; padding-top: 6px !important; height: 36px !important; }
+          .sb-action-buttons { flex-shrink: 0 !important; gap: 6px !important; margin-top: 8px !important; padding-top: 0 !important; height: 36px !important; } /* Changed margin-top from auto to 8px */
           .sb-action-btn { height: 100% !important; min-height: 0 !important; padding: 0 !important; font-size: 13px !important; border-width: 1.5px !important; border-radius: 6px !important; box-shadow: 0 2px 0 #8c5728 !important; box-sizing: border-box !important; touch-action: manipulation !important; }
         }
       `}</style>
