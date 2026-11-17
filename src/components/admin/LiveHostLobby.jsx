@@ -1,0 +1,585 @@
+// src/components/admin/LiveHostLobby.jsx
+// ✅ UPDATED: Changed all "players" terminology to "students" for UI and variables.
+// ✅ PRESERVED: Firebase logic (players || students fallback), LocalStorage cache, and CSS styles.
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { auth, db } from '../../pages/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import {
+  createLiveSession,
+  subscribeToSession,
+  startGame,
+  deleteSession
+} from '../../services/LiveGameService';
+import { getAvatarById } from '../../data/avatarShop';
+
+// ===== MUTED DASHBOARD PALETTE (matches Avatar Shop) =====
+const palette = {
+  warmOrange: '#E9A075',
+  warmOrangeShadow: '#C27E4F',
+  coral: '#DB7A64',
+  coralShadow: '#A95845',
+  teal: '#4F9188',
+  tealShadow: '#3A6A63',
+  deepNavy: '#2A2845',
+  deepNavyLight: '#3A3757',
+  bodyText: '#6B6880',
+  bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3',
+  creamSoft: '#F5EFE6',
+  white: '#FFFFFF',
+  border: '#EBE2D5',
+  borderSoft: '#F2EBE0',
+  softGreen: '#7FA574',
+  softGreenShadow: '#5E7F55',
+  gold: '#C9A227',
+  shadow: 'rgba(42, 40, 69, 0.06)',
+  shadowMd: 'rgba(42, 40, 69, 0.10)',
+};
+
+const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
+const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+const LiveHostLobby = ({ activity, onStart, onCancel }) => {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [starting, setStarting] = useState(false);
+
+  // ✅ HELPER: Kinukuha ang students mapa 'players' or 'students' ang tawag sa DB, mapa Array or Object man yan.
+  // Binaliktad natin ngayon, mas priority ang 'students' pero may fallback pa rin sa 'players'.
+  const getStudentsList = (sessionData) => {
+    if (!sessionData) return [];
+    const raw = sessionData.students || sessionData.players; 
+    if (!raw) return [];
+    
+    // Kung object (e.g. { "id1": {...} }), i-convert sa array. Kung array na, iwanan lang.
+    return Array.isArray(raw) ? raw : Object.values(raw);
+  };
+
+  // ============================================================
+  // ✅ Create session on mount + save activity info
+  // ============================================================
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+
+        // ✅ BINALIK NATIN YUNG LOCALSTORAGE CACHE
+        const cacheKey = `liveHost_session_${activity.id}`;
+        const savedSessionStr = localStorage.getItem(cacheKey);
+        
+        if (savedSessionStr) {
+          try {
+            const savedSession = JSON.parse(savedSessionStr);
+            setSession(savedSession);
+            setLoading(false);
+            return; // ✅ Stop dito, huwag nang gumawa ng bago
+          } catch (e) {
+            console.warn('Failed to parse saved session', e);
+          }
+        }
+
+        const newSession = await createLiveSession(
+          activity.id,
+          user.uid,
+          user.displayName || 'Teacher'
+        );
+
+        if (newSession?.sessionId) {
+          try {
+            const sessionRef = doc(db, 'liveSessions', newSession.sessionId);
+            await updateDoc(sessionRef, {
+              activityId: activity.id,
+              gameType: activity.gameType || 'quiz',
+              activityTitle: activity.title || 'Quiz',
+            });
+          } catch (updateErr) {
+            console.warn('⚠️ LiveHostLobby: Could not save activity info:', updateErr);
+          }
+        }
+
+        setSession(newSession);
+        localStorage.setItem(cacheKey, JSON.stringify(newSession)); // ✅ I-save
+        setLoading(false);
+      } catch (err) {
+        console.error('Error creating session:', err);
+        setError(err.message || 'Failed to create session');
+        setLoading(false);
+      }
+    };
+
+    initSession();
+
+    // ❌ TINANGGAL NATIN YUNG return () => deleteSession() dito.
+    // Kung hindi, bawat refresh mo, binubura yung session, tapos gumagawa ng bago.
+  }, [activity.id, activity.gameType, activity.title]);
+
+  // ============================================================
+  // ✅ Subscribe to session updates
+  // ============================================================
+  useEffect(() => {
+    if (!session?.sessionId) return;
+
+    const unsubscribe = subscribeToSession(session.sessionId, (data) => {
+      setSession(data);
+      // ✅ I-update din yung localStorage para synced
+      localStorage.setItem(`liveHost_session_${activity.id}`, JSON.stringify(data));
+    });
+
+    return () => unsubscribe();
+  }, [session?.sessionId, activity.id]);
+
+  const handleStartGame = async () => {
+    const currentStudents = getStudentsList(session); // ✅ Gamitin yung helper
+    
+    if (currentStudents.length === 0) {
+      setError('No students have joined yet');
+      return;
+    }
+
+    setStarting(true);
+    try {
+      await startGame(session.sessionId);
+      onStart(session);
+    } catch (err) {
+      setError(err.message);
+      setStarting(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (session?.sessionId) {
+      await deleteSession(session.sessionId);
+    }
+    localStorage.removeItem(`liveHost_session_${activity.id}`); // ✅ Linisin cache pag cancel
+    onCancel();
+  };
+
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.spinner}></div>
+        <p style={styles.loadingText}>Creating lobby...</p>
+      </div>
+    );
+  }
+
+  // ✅ Dito natin kinukuha yung listahan gamit yung helper, pinalitan natin ng 'students'
+  const students = getStudentsList(session);
+
+  return (
+    // ✅ FULLSCREEN CONTAINER
+    <div style={styles.container}>
+      {/* ✅ CONTENT WRAPPER PARA HINDI SUMAGAD SA GILID */}
+      <div style={styles.contentWrapper}>
+        {/* Header */}
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>🎮 {session?.activityTitle || 'Live Game'}</h1>
+            <p style={styles.subtitle}>Waiting for students to join...</p>
+          </div>
+          <button onClick={handleCancel} style={styles.closeBtn}>✕</button>
+        </div>
+
+        {/* PIN Display - DARK NAVY */}
+        <div style={styles.pinSection}>
+          <p style={styles.pinLabel}>GAME PIN</p>
+          <motion.div
+            style={styles.pinCode}
+            animate={{ scale: [1, 1.04, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {session?.gamePin}
+          </motion.div>
+          <p style={styles.pinHint}>Share this PIN with your students</p>
+        </div>
+
+        {/* Students Grid - DARK NAVY */}
+        <div style={styles.playersSection}>
+          <div style={styles.playersHeader}>
+            <h2 style={styles.playersTitle}>
+              👥 Students Joined
+            </h2>
+            <div style={styles.playerCount}>
+              {students.length} student{students.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {students.length === 0 ? (
+            <div style={styles.emptyState}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                style={styles.emptyIcon}
+              >
+                👋
+              </motion.div>
+              <p style={styles.emptyText}>Waiting for students to join...</p>
+              <p style={styles.emptyHint}>Students will appear here once they enter the PIN</p>
+            </div>
+          ) : (
+            <div style={styles.playersGrid}>
+              <AnimatePresence>
+                {students.map((student, index) => {
+                  const avatarData = getAvatarById(student.avatarId);
+                  return (
+                    <motion.div
+                      key={student.userId || student.id || index}
+                      initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{ delay: index * 0.05 }}
+                      style={styles.playerCard}
+                    >
+                      {/* ✅ FULL BODY AVATAR CONTAINER */}
+                      <div style={styles.playerAvatar}>
+                        {student.avatarImage ? (
+                          <img
+                            src={student.avatarImage}
+                            alt={student.name}
+                            style={styles.avatarImg}
+                          />
+                        ) : (
+                          <span style={styles.avatarEmoji}>👤</span>
+                        )}
+                      </div>
+                      <div style={styles.playerName}>{student.name}</div>
+                      {student.isConnected !== false ? ( 
+                        <div style={styles.onlineDot}></div>
+                      ) : (
+                        <div style={styles.offlineDot}></div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+
+        {/* Error */}
+        {error && <div style={styles.errorMsg}>{error}</div>}
+
+        {/* Start Button */}
+        <div style={styles.footer}>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleStartGame}
+            disabled={students.length === 0 || starting}
+            style={{
+              ...styles.startBtn,
+              opacity: students.length === 0 || starting ? 0.5 : 1,
+              cursor: students.length === 0 || starting ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {starting ? 'Starting...' : `🚀 Start Game (${students.length} student${students.length !== 1 ? 's' : ''})`}
+          </motion.button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    width: '100vw',
+    minHeight: '100vh',
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
+    fontFamily: BRAND_FONT_BODY,
+    color: palette.white,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center', 
+  },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: '1200px',
+    padding: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    width: '100vw',
+    backgroundImage: `url('/image/quiz-bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat',
+    color: palette.white,
+  },
+  spinner: {
+    width: '50px',
+    height: '50px',
+    border: `4px solid rgba(255,255,255,0.3)`,
+    borderTop: `4px solid ${palette.white}`,
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '20px',
+  },
+  loadingText: {
+    fontSize: '16px',
+    fontWeight: '800',
+    fontFamily: BRAND_FONT_DISPLAY,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    letterSpacing: '0.02em',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+    gap: '12px',
+  },
+  title: {
+    fontSize: '28px',
+    fontWeight: '800',
+    margin: '0 0 4px 0',
+    fontFamily: BRAND_FONT_DISPLAY,
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    letterSpacing: '-0.4px',
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: palette.white,
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    margin: 0,
+    fontWeight: 600,
+  },
+  closeBtn: {
+    background: palette.deepNavy,
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    color: palette.white,
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    fontSize: '18px',
+    cursor: 'pointer',
+    fontWeight: 800,
+    fontFamily: BRAND_FONT_DISPLAY,
+    boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
+    flexShrink: 0,
+  },
+  pinSection: {
+    background: palette.deepNavy,
+    borderRadius: '20px',
+    padding: '30px',
+    textAlign: 'center',
+    marginBottom: '24px',
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    borderTop: `6px solid ${palette.warmOrange}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
+  },
+  pinLabel: {
+    fontSize: '12px',
+    color: palette.bodyTextSoft,
+    margin: '0 0 8px 0',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    fontFamily: BRAND_FONT_DISPLAY,
+  },
+  pinCode: {
+    fontSize: '64px',
+    fontWeight: '800',
+    letterSpacing: '8px',
+    margin: '0 0 8px 0',
+    fontFamily: BRAND_FONT_DISPLAY,
+    color: palette.white,
+  },
+  pinHint: {
+    fontSize: '13px',
+    color: palette.bodyTextSoft,
+    margin: 0,
+    fontWeight: 600,
+  },
+  playersSection: {
+    background: palette.deepNavy,
+    borderRadius: '20px',
+    padding: '24px',
+    marginBottom: '24px',
+    border: `1.5px solid ${palette.deepNavyLight}`,
+    boxShadow: `0 12px 32px rgba(0,0,0,0.25)`,
+    minHeight: '300px',
+  },
+  playersHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    paddingBottom: '16px',
+    borderBottom: `1.5px solid ${palette.deepNavyLight}`,
+  },
+  playersTitle: {
+    fontSize: '18px',
+    fontWeight: '800',
+    margin: 0,
+    fontFamily: BRAND_FONT_DISPLAY,
+    color: palette.white,
+    letterSpacing: '-0.2px',
+  },
+  playerCount: {
+    background: palette.deepNavyLight,
+    color: palette.white,
+    padding: '6px 16px',
+    borderRadius: '999px',
+    fontSize: '13px',
+    fontWeight: '800',
+    fontFamily: BRAND_FONT_DISPLAY,
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 2px 4px rgba(0,0,0,0.2)`,
+  },
+  emptyState: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '60px 20px',
+    textAlign: 'center',
+  },
+  emptyIcon: {
+    fontSize: '60px',
+    marginBottom: '16px',
+  },
+  emptyText: {
+    fontSize: '18px',
+    fontWeight: '800',
+    margin: '0 0 8px 0',
+    fontFamily: BRAND_FONT_DISPLAY,
+    color: palette.white,
+  },
+  emptyHint: {
+    fontSize: '14px',
+    color: palette.bodyTextSoft,
+    margin: 0,
+    fontWeight: 600,
+  },
+  playersGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+    gap: '16px',
+  },
+  playerCard: {
+    background: palette.deepNavyLight,
+    borderRadius: '16px',
+    padding: '16px 12px',
+    textAlign: 'center',
+    border: `1.5px solid #4A476B`,
+    boxShadow: `0 4px 12px rgba(0,0,0,0.2)`,
+    position: 'relative',
+  },
+  playerAvatar: {
+    width: 'clamp(60px, 8vw, 80px)',
+    height: 'clamp(80px, 10vw, 100px)',
+    margin: '0 auto 12px',
+    borderRadius: '12px',
+    background: palette.creamSoft,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    border: `1.5px solid ${palette.warmOrange}80`,
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    padding: '4px',
+  },
+  avatarEmoji: {
+    fontSize: '30px',
+  },
+  playerName: {
+    fontSize: '13px',
+    fontWeight: '700',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    color: palette.white,
+    fontFamily: BRAND_FONT_BODY,
+  },
+  onlineDot: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    background: palette.softGreen,
+    boxShadow: `0 0 8px ${palette.softGreen}80`,
+  },
+  offlineDot: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    background: palette.coral,
+  },
+  errorMsg: {
+    background: `${palette.coral}20`,
+    border: `1.5px solid ${palette.coral}80`,
+    color: palette.coral,
+    padding: '12px 20px',
+    borderRadius: '12px',
+    marginBottom: '16px',
+    textAlign: 'center',
+    fontWeight: '800',
+    fontSize: '13px',
+  },
+  footer: {
+    textAlign: 'center',
+  },
+  startBtn: {
+    padding: '18px 48px',
+    background: palette.softGreen,
+    color: palette.white,
+    border: 'none',
+    borderRadius: '16px',
+    fontSize: '18px',
+    fontWeight: '800',
+    cursor: 'pointer',
+    boxShadow: `0 4px 0 ${palette.softGreenShadow}, 0 8px 24px rgba(0,0,0,0.2)`,
+    fontFamily: BRAND_FONT_DISPLAY,
+    transition: 'all 0.15s ease',
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+  },
+};
+
+// Add keyframe animation
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  if (!document.querySelector('#livelobby-styles')) {
+    style.id = 'livelobby-styles';
+    document.head.appendChild(style);
+  }
+}
+
+export default LiveHostLobby;

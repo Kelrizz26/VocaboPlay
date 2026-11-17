@@ -1,0 +1,18 @@
+{
+  "crons": [
+    {
+      "path": "/api/send-reminder?mode=inactivity",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/send-reminder?mode=weekly",
+      "schedule": "0 9 * * 1"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

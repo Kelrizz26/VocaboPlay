@@ -1,0 +1,1426 @@
+// src/components/dashboard/MyProgress.jsx
+// ✅ FIXED: Replaced confusing fractions with "Average Mastery" (Average of best runs per game).
+// ✅ FIXED: UI now clearly shows "X correct out of Y total attempts" to make it 100% clear for panelists.
+// ✅ FIXED: Handled learnedWords array mapping from SentenceBuilder perfectly.
+// ✅ UPDATED: Removed green scores, Completed badges.
+// ✅ RESTORED: Games Played card is clickable again, Game History modal is back (fractions removed).
+// ✅ POLISHED: Swapped Words Learned and High Scores. Removed numbers from Accuracy. Standardized bottom row cards to match top row fonts and colors perfectly.
+
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useUserStats } from '../../hooks/useUserStats';
+import { colors, fontFamily } from './dashboardStyles';
+import { auth, db } from '../../pages/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
+// ✅ IMPORT NATIN YUNG MGA FORMULA GALING SA DASHBOARD
+import { computeLevelFromPoints, computeCurrentXP, computeXpToNext } from '../Dashboard';
+
+// ===== MUTED GAME UI PALETTE (soft, not too bright) =====
+const palette = {
+  warmOrange: '#E9A075',
+  warmOrangeShadow: '#C27E4F',
+  coral: '#DB7A64',
+  coralShadow: '#A95845',
+  teal: '#4F9188',
+  tealShadow: '#3A6A63',
+  deepNavy: '#2A2845',
+  deepNavyLight: '#3A3757',
+  bodyText: '#6B6880',
+  bodyTextSoft: '#8A8799',
+  cream: '#FDF9F3',
+  creamSoft: '#F5EFE6',
+  white: '#FFFFFF',
+  border: '#EBE2D5',
+  borderSoft: '#F2EBE0',
+  softGreen: '#7FA574',
+  softGreenShadow: '#5E7F55',
+  shadow: 'rgba(42, 40, 69, 0.06)',
+  shadowMd: 'rgba(42, 40, 69, 0.10)',
+};
+
+const BRAND_FONT_DISPLAY = "'Fredoka', sans-serif";
+const BRAND_FONT_BODY = "'Nunito', sans-serif";
+
+// ✅ Cache TTL — 2 minutes
+const CACHE_TTL_MS = 2 * 60 * 1000;
+
+// ===== DUOTONE SVG ICONS =====
+const Icon = ({ name, size = 20, color = palette.bodyText, secondaryColor = `${palette.bodyText}55` }) => {
+  const icons = {
+    target: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <circle cx="12" cy="12" r="6" stroke={secondaryColor} strokeWidth="2" fill="none"/>
+        <circle cx="12" cy="12" r="2" stroke={color} strokeWidth="2" fill="none"/>
+      </>
+    ),
+    star: (
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    ),
+    flame: (
+      <path d="M12 2s4 6 4 10a4 4 0 11-8 0c0-2 1-3.5 2-5 0 2 1 3 2 3 0-2-1-5 0-8z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    ),
+    book: (
+      <>
+        <path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 00-3 3V4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M4 4v16" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+      </>
+    ),
+    check: (
+      <>
+        <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" fill="none"/>
+        <path d="M8 12l3 3 5-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    game: (
+      <>
+        <path d="M6 12h4m-2-2v4m6-4h.01M17 12h.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M8 20h8a4 4 0 004-4V8a4 4 0 00-4-4H8a4 4 0 00-4 4v8a4 4 0 004 4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    trophy: (
+      <>
+        <path d="M6 4h12v4a6 6 0 01-12 0V4z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M6 8H4a2 2 0 002 2M18 8h2a2 2 0 01-2 2M9 18h6M10 21h4M12 14v4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </>
+    ),
+    close: (
+      <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    ),
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', flexShrink: 0 }}>
+      {icons[name] || icons.target}
+    </svg>
+  );
+};
+
+// ===== ICON BADGE (3D-style, muted) =====
+const IconBadge = ({ icon, bg, iconColor = palette.bodyText, size = 40 }) => (
+  <div
+    style={{
+      width: size,
+      height: size,
+      borderRadius: '12px',
+      background: bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      border: `1.5px solid ${palette.border}`,
+      boxShadow: `0 2px 0 ${palette.border}`,
+    }}
+  >
+    <Icon name={icon} size={Math.round(size * 0.5)} color={iconColor} />
+  </div>
+);
+
+// ============================================================
+// ✅ Modal Container (reusable)
+// ============================================================
+const Modal = ({ isOpen, onClose, title, subtitle, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(42, 40, 69, 0.55)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px',
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', damping: 22 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: palette.white,
+          borderRadius: '20px',
+          padding: '24px',
+          maxWidth: '640px',
+          width: '100%',
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+          border: `1.5px solid ${palette.border}`,
+          boxShadow: '0 20px 50px rgba(42, 40, 69, 0.3)',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '18px' }}>
+          <div>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: 800,
+              color: palette.deepNavy,
+              margin: 0,
+              fontFamily: BRAND_FONT_DISPLAY,
+              letterSpacing: '-0.3px',
+            }}>
+              {title}
+            </h3>
+            {subtitle && (
+              <p style={{
+                fontSize: '12px',
+                color: palette.bodyTextSoft,
+                margin: '4px 0 0 0',
+                fontWeight: 600,
+              }}>
+                {subtitle}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              background: palette.creamSoft,
+              border: `1.5px solid ${palette.border}`,
+              width: '34px',
+              height: '34px',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon name="close" size={16} color={palette.bodyText} />
+          </button>
+        </div>
+
+        {/* Content (scrollable) */}
+        <div style={{ overflowY: 'auto', flex: 1, margin: '0 -4px', padding: '0 4px' }}>
+          {children}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const MyProgress = () => {
+  const [userId, setUserId] = useState(localStorage.getItem('userId'));
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const { stats, loading, error } = useUserStats(userId);
+  const [fadeIn, setFadeIn] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [progress, setProgress] = useState({
+    wordsLearned: 0,
+    accuracy: 0,
+    gamesPlayed: 0,
+    correctAnswers: 0,
+    gameStats: {}
+  });
+
+  // ✅ Modal state
+  const [activeModal, setActiveModal] = useState(null); // 'words' | 'games' | 'points' | 'accuracy' | null
+  const [learnedWords, setLearnedWords] = useState([]);
+  const [gameHistory, setGameHistory] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // 🧪 DEMO overrides
+  const [demoOverrides, setDemoOverrides] = useState({
+    level: '',
+    xp: '',
+    xpToNext: '',
+    games: {},
+  });
+
+  const statsRef = useRef(stats);
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
+  // 🧪 Listen sa events galing sa DEV/DEMO PANEL
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail) {
+        setDemoOverrides((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('demo-overrides', handler);
+    return () => window.removeEventListener('demo-overrides', handler);
+  }, []);
+
+  useEffect(() => {
+    if (stats) {
+      const gameStats = stats.gameStats || {};
+
+      let totalGames = 0;
+      let totalCorrect = 0;
+      let totalQuestions = 0;
+
+      Object.values(gameStats).forEach(game => {
+        if (game && typeof game === 'object') {
+          totalGames += game.gamesPlayed || game.played || 0;
+          totalCorrect += game.correctAnswers || game.correct || 0;
+          totalQuestions += game.totalQuestions || game.totalSentences || game.total || 0;
+        }
+      });
+
+      const accuracy =
+        totalQuestions > 0
+          ? Math.round((totalCorrect / totalQuestions) * 100)
+          : 0;
+
+      setProgress({
+        wordsLearned: stats.wordsLearned || 0,
+        accuracy: stats.accuracy || accuracy,
+        gamesPlayed: stats.gamesPlayed || totalGames,
+        correctAnswers: stats.correctAnswers || totalCorrect,
+        gameStats: gameStats
+      });
+
+      setShowContent(true);
+      setTimeout(() => {
+        setFadeIn(true);
+      }, 50);
+    }
+  }, [stats, refreshKey]);
+
+  useEffect(() => {
+    if (!loading && !stats) {
+      setShowContent(true);
+      setTimeout(() => {
+        setFadeIn(true);
+      }, 50);
+    }
+  }, [loading, stats]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ Fetch game history on mount para may data agad para sa Game Progress UI
+  useEffect(() => {
+    if (!userId) return;
+    const fetchHistory = async () => {
+      try {
+        const scoresQuery = query(
+          collection(db, 'scores'),
+          where('studentId', '==', userId)
+        );
+        const scoresSnap = await getDocs(scoresQuery);
+        const activities = scoresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        setGameHistory(activities);
+      } catch (err) {
+        console.error('Error fetching history:', err);
+      }
+    };
+    fetchHistory();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      if (!activeModal || !userId) return;
+      setLoadingDetails(true);
+
+      try {
+        if (activeModal === 'words') {
+          const currentStats = statsRef.current;
+          
+          // ✅ PRIORITIZE ARRAY (learnedWordsList) OVER OBJECT MAP (learnedWords)
+          let words =
+            currentStats?.learnedWordsList ||
+            currentStats?.progress?.learnedWordsList ||
+            currentStats?.learnedWords ||
+            currentStats?.progress?.learnedWords ||
+            [];
+
+          // ✅ FIX: I-convert ang Object (map) into Array kung sakaling object ang nasa DB
+          if (words && typeof words === 'object' && !Array.isArray(words)) {
+            words = Object.keys(words);
+          }
+
+          setLearnedWords(Array.isArray(words) ? words : []);
+        } else if (activeModal === 'games' || activeModal === 'points') {
+          const cacheKey = `myprogress_modal_${userId}_${activeModal}`;
+          const currentGamesCount = statsRef.current?.gamesPlayed || 0;
+
+          try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              const isFresh = parsed?.timestamp && (Date.now() - parsed.timestamp < CACHE_TTL_MS);
+              const isSameGameCount = parsed?.gamesCount === currentGamesCount;
+              const hasData = Array.isArray(parsed?.data);
+
+              if (hasData && isFresh && isSameGameCount) {
+                setGameHistory(parsed.data);
+                setLoadingDetails(false);
+                return;
+              }
+            }
+          } catch (e) {}
+
+          const scoresQuery = query(
+            collection(db, 'scores'),
+            where('studentId', '==', userId)
+          );
+          const scoresSnap = await getDocs(scoresQuery);
+          const activities = scoresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+          activities.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+          setGameHistory(activities);
+
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              data: activities,
+              timestamp: Date.now(),
+              gamesCount: currentGamesCount,
+            }));
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.error('Error fetching details:', err);
+      } finally {
+        setLoadingDetails(false);
+      }
+    };
+
+    fetchDetails();
+  }, [activeModal, userId]);
+
+  const highScores = React.useMemo(() => {
+    if (!gameHistory.length) return [];
+    const map = {};
+
+    gameHistory.forEach((entry) => {
+      const key = entry.gameType || entry.activityType || 'Game';
+      const gameTypeLower = String(key).toLowerCase();
+      const correct = entry.correctAnswers || 0;
+      const total = entry.totalQuestions || 0;
+      const score = entry.score || correct;
+
+      if (!map[gameTypeLower]) {
+        map[gameTypeLower] = {
+          gameType: key,
+          bestScore: score,
+          bestCorrect: correct,
+          bestTotal: total,
+          timesPlayed: 0,
+          bestDate: entry.completedAt,
+        };
+      } else {
+        if (score > map[gameTypeLower].bestScore) {
+          map[gameTypeLower].bestScore = score;
+          map[gameTypeLower].bestCorrect = correct;
+          map[gameTypeLower].bestTotal = total;
+          map[gameTypeLower].bestDate = entry.completedAt;
+        }
+      }
+      map[gameTypeLower].timesPlayed += 1;
+    });
+
+    return Object.values(map);
+  }, [gameHistory]);
+
+  // ✅ Game label helper
+  const getGameLabel = (gameType) => {
+    const key = String(gameType).toLowerCase();
+    return {
+      'quiz': 'Quiz Master',
+      'quizgame': 'Quiz Master',
+      'match': 'Match Game',
+      'matchgame': 'Match Game',
+      'wordpics': 'SynoQuest',
+      'synoquest': 'SynoQuest',
+      'guesswhat': 'GuessWhat',
+      'short-story': 'Story Quest',
+      'story-quest': 'Story Quest',
+      'shortstory': 'Story Quest',
+      'sentence-builder': 'Sentence Builder',
+      'sentencebuilder': 'Sentence Builder',
+    }[key] || 'Game';
+  };
+
+  const getGameImage = (gameType) => {
+    const key = String(gameType).toLowerCase();
+    return {
+      'quiz': '/image/quizgame.png',
+      'quizgame': '/image/quizgame.png',
+      'match': '/image/matchgame.png',
+      'matchgame': '/image/matchgame.png',
+      'wordpics': '/image/wordpics.png',
+      'synoquest': '/image/wordpics.png',
+      'guesswhat': '/image/guesswhatgame.png',
+      'short-story': '/image/shortstory.png',
+      'story-quest': '/image/shortstory.png',
+      'shortstory': '/image/shortstory.png',
+      'sentence-builder': '/image/sentence.png',
+      'sentencebuilder': '/image/sentence.png',
+    }[key] || null;
+  };
+
+  // ===== LOADING =====
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+          background: palette.cream,
+          fontFamily: BRAND_FONT_BODY,
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              border: `3px solid ${palette.border}`,
+              borderTop: `3px solid ${palette.warmOrange}`,
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px'
+            }}
+          />
+          <p style={{ color: palette.bodyText, fontWeight: 600 }}>Loading your progress...</p>
+        </div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // ===== ERROR =====
+  if (error) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+          background: palette.cream,
+          fontFamily: BRAND_FONT_BODY,
+        }}
+      >
+        <div style={{ textAlign: 'center', color: palette.coral }}>
+          <p style={{ fontWeight: 700 }}>Error loading data: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '16px',
+              padding: '10px 20px',
+              background: palette.warmOrange,
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontFamily: BRAND_FONT_DISPLAY,
+              boxShadow: `0 3px 0 ${palette.warmOrangeShadow}`,
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== PREPARING =====
+  if (!showContent) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+          background: palette.cream,
+          fontFamily: BRAND_FONT_BODY,
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              border: `3px solid ${palette.border}`,
+              borderTop: `3px solid ${palette.warmOrange}`,
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px'
+            }}
+          />
+          <p style={{ color: palette.bodyText, fontWeight: 600 }}>Preparing your progress...</p>
+        </div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  const gameStatsData = progress.gameStats || {};
+
+  // ✅ Helper para i-normalize ang data (para kahit anong casing/properties, gumana)
+  const normalizeGameData = (gameKey, fallbackKey1, fallbackKey2) => {
+    const raw = gameStatsData[gameKey] || gameStatsData[fallbackKey1] || gameStatsData[fallbackKey2] || {};
+    return {
+      gamesPlayed: raw.gamesPlayed ?? raw.played ?? 0,
+      correctAnswers: raw.correctAnswers ?? raw.correct ?? 0,
+      totalQuestions: raw.totalQuestions ?? raw.totalSentences ?? raw.total ?? 0
+    };
+  };
+
+  const gameTypes = [
+    {
+      key: 'synoQuest',
+      label: 'Syno Quest',
+      image: '/image/wordpics.png',
+      data: normalizeGameData('SynoQuest', 'synoQuest', 'wordpics')
+    },
+    {
+      key: 'matchGame',
+      label: 'Match Game',
+      image: '/image/matchgame.png',
+      data: normalizeGameData('MatchGame', 'matchGame', 'match')
+    },
+    {
+      key: 'shortStory',
+      label: 'Story Quest',
+      image: '/image/shortstory.png',
+      data: normalizeGameData('ShortStory', 'shortStory', 'short-story')
+    },
+    {
+      key: 'quizMaster',
+      label: 'Quiz Master',
+      image: '/image/quizgame.png',
+      data: normalizeGameData('QuizGame', 'quizMaster', 'quiz')
+    },
+    {
+      key: 'guessWhat',
+      label: 'GuessWhat',
+      image: '/image/guesswhatgame.png',
+      data: normalizeGameData('GuessWhat', 'guessWhat', 'guesswhat')
+    },
+    {
+      key: 'sentenceBuilder',
+      label: 'Sentence Builder',
+      image: '/image/sentence.png',
+      data: normalizeGameData('SentenceBuilder', 'sentenceBuilder', 'sentence-builder')
+    }
+  ];
+
+  // 🧪 DEMO: apply per-game overrides
+  const gameTypesFinal = gameTypes.map((g) => {
+    const override = demoOverrides.games[g.key];
+    if (override !== undefined && override !== '') {
+      return {
+        ...g,
+        data: { ...g.data, gamesPlayed: Math.max(0, Number(override) || 0) },
+      };
+    }
+    return g;
+  });
+
+  // ✅ NEW LOGIC: Calculate Average Mastery (Average of best accuracy per game)
+  let sumAccuracy = 0;
+  let gamesPlayedCount = 0;
+  
+  gameTypesFinal.forEach(game => {
+    const bestRun = highScores.find(h => 
+      getGameLabel(h.gameType).toLowerCase() === game.label.toLowerCase() || 
+      String(h.gameType).toLowerCase() === game.key.toLowerCase()
+    );
+    
+    if (bestRun && bestRun.bestTotal > 0) {
+      const acc = Math.round((bestRun.bestCorrect / bestRun.bestTotal) * 100);
+      sumAccuracy += acc;
+      gamesPlayedCount++;
+    }
+  });
+
+  const overallAccuracy = gamesPlayedCount > 0 ? Math.round(sumAccuracy / gamesPlayedCount) : 0;
+  const displayAccuracy = gamesPlayedCount > 0 ? overallAccuracy : (stats?.accuracy || 0);
+
+  // ✅ DITO NATIN GINAGAMIT YUNG COMPUTE FUNCTIONS PARA PANTay SILA NG DASHBOARD
+  const rawTotalPoints = stats?.totalPoints || 0;
+  const computedLevel = computeLevelFromPoints(rawTotalPoints);
+  const computedXP = computeCurrentXP(rawTotalPoints);
+  const computedXpToNext = computeXpToNext(rawTotalPoints);
+
+  const level = demoOverrides.level !== '' ? Number(demoOverrides.level) : computedLevel;
+  const xp = demoOverrides.xp !== '' ? Number(demoOverrides.xp) : computedXP;
+  const xpToNext = demoOverrides.xpToNext !== '' ? Number(demoOverrides.xpToNext) : computedXpToNext;
+
+  const streak = stats?.currentStreak || 0;
+  const wordsLearned = stats?.wordsLearned || 0;
+
+  return (
+    <div
+      className="myprogress-container"
+      style={{
+        maxWidth: '1000px',
+        margin: '0 auto',
+        padding: '0',
+        fontFamily: BRAND_FONT_BODY,
+        background: 'transparent',
+        opacity: fadeIn ? 1 : 0,
+        transform: fadeIn ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+    >
+      {/* ===== HEADER ===== */}
+      <div style={{
+        marginBottom: '22px',
+        borderBottom: `1.5px solid ${palette.border}`,
+        paddingBottom: '16px',
+      }}>
+        <h1 style={{
+          fontSize: '24px',
+          fontWeight: '800',
+          color: palette.deepNavy,
+          margin: '0 0 4px 0',
+          fontFamily: BRAND_FONT_DISPLAY,
+          letterSpacing: '-0.5px',
+        }}>
+          My Progress
+        </h1>
+        <p style={{
+          fontSize: '13px',
+          color: palette.bodyTextSoft,
+          margin: 0,
+          fontWeight: 600,
+        }}>
+          Track your learning journey and celebrate your achievements
+        </p>
+      </div>
+
+      {/* ===== LOCAL RESPONSIVE STYLES ===== */}
+      <style>{`
+        @media (max-width: 768px) {
+          .myprogress-top-row { grid-template-columns: 1fr !important; }
+          .myprogress-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .myprogress-container { padding: 0 !important; }
+        }
+        @media (max-width: 400px) {
+          .myprogress-stats-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 640px) {
+          .game-progress-row { flex-direction: column !important; align-items: flex-start !important; }
+          .game-progress-right { text-align: left !important; align-items: flex-start !important; margin-top: 10px; }
+        }
+        .progress-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .progress-card:hover {
+          transform: translateY(-3px);
+          border-color: ${palette.warmOrange}50 !important;
+          box-shadow: 0 8px 22px ${palette.shadowMd} !important;
+        }
+        .progress-card-clickable {
+          cursor: pointer;
+        }
+        .progress-card-clickable:hover {
+          transform: translateY(-4px) !important;
+          border-color: ${palette.warmOrange} !important;
+          box-shadow: 0 10px 26px ${palette.shadowMd} !important;
+        }
+        .progress-card-clickable:active {
+          transform: translateY(-1px) !important;
+        }
+        .progress-card-clickable .click-hint {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .progress-card-clickable:hover .click-hint {
+          opacity: 1;
+        }
+      `}</style>
+
+      {/* ===== TOP ROW (3 CARDS) ===== */}
+      <div
+        className="myprogress-top-row"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '14px',
+          marginBottom: '14px',
+        }}
+      >
+        {/* Current Level */}
+        <div
+          className="progress-card"
+          style={{
+            background: palette.white,
+            borderRadius: '14px',
+            padding: '18px 20px',
+            border: `1.5px solid ${palette.border}`,
+            boxShadow: `0 2px 0 ${palette.border}`,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+            <IconBadge icon="target" bg={palette.creamSoft} iconColor={palette.warmOrange} size={38} />
+            <span
+              style={{
+                fontSize: '12px',
+                color: palette.bodyTextSoft,
+                fontWeight: 800,
+                fontFamily: BRAND_FONT_DISPLAY,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Current Level
+            </span>
+          </div>
+          <div style={{
+            fontSize: '32px',
+            fontWeight: 800,
+            color: palette.deepNavy,
+            marginBottom: '10px',
+            fontFamily: BRAND_FONT_DISPLAY,
+            lineHeight: 1,
+          }}>
+            {level}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '10px',
+              color: palette.bodyTextSoft,
+              marginBottom: '6px',
+              fontWeight: 800,
+              fontFamily: BRAND_FONT_DISPLAY,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginTop: 'auto'
+            }}
+          >
+            <span>XP Progress</span>
+            <span>{xp} / {xpToNext}</span>
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: '8px',
+              background: palette.creamSoft,
+              borderRadius: '10px',
+              overflow: 'hidden',
+              border: `1px solid ${palette.border}`,
+            }}
+          >
+            <div
+              style={{
+                width: `${Math.min((xp / xpToNext) * 100, 100)}%`,
+                height: '100%',
+                background: `linear-gradient(90deg, ${palette.warmOrange} 0%, ${palette.coral} 100%)`,
+                borderRadius: '10px',
+                transition: 'width 0.5s ease',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ✅ Words Learned (Moved to Top, matched Current Level style) */}
+        <div
+          className="progress-card progress-card-clickable"
+          onClick={() => setActiveModal('words')}
+          title="Click to see learned words"
+          style={{
+            background: palette.white,
+            borderRadius: '14px',
+            padding: '18px 20px',
+            border: `1.5px solid ${palette.border}`,
+            boxShadow: `0 2px 0 ${palette.border}`,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+            <IconBadge icon="book" bg={palette.creamSoft} iconColor={palette.warmOrange} size={38} />
+            <span
+              style={{
+                fontSize: '12px',
+                color: palette.bodyTextSoft,
+                fontWeight: 800,
+                fontFamily: BRAND_FONT_DISPLAY,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Words Learned
+            </span>
+          </div>
+          <div style={{
+            fontSize: '32px',
+            fontWeight: 800,
+            color: palette.deepNavy,
+            marginBottom: '10px',
+            fontFamily: BRAND_FONT_DISPLAY,
+            lineHeight: 1,
+          }}>
+            {wordsLearned}
+          </div>
+          <div style={{ borderTop: `1.5px solid ${palette.borderSoft}`, paddingTop: '8px', marginTop: 'auto' }}>
+            <span className="click-hint" style={{ fontSize: '11px', color: palette.warmOrange, fontWeight: 700, fontFamily: BRAND_FONT_BODY, opacity: 1 }}>
+              • Click to view words
+            </span>
+          </div>
+        </div>
+
+        {/* Current Streak */}
+        <div
+          className="progress-card"
+          style={{
+            background: palette.white,
+            borderRadius: '14px',
+            padding: '18px 20px',
+            border: `1.5px solid ${palette.border}`,
+            boxShadow: `0 2px 0 ${palette.border}`,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+            <IconBadge icon="flame" bg={palette.creamSoft} iconColor={palette.coral} size={38} />
+            <span
+              style={{
+                fontSize: '12px',
+                color: palette.bodyTextSoft,
+                fontWeight: 800,
+                fontFamily: BRAND_FONT_DISPLAY,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              Current Streak
+            </span>
+          </div>
+          <div style={{
+            fontSize: '32px',
+            fontWeight: 800,
+            color: palette.deepNavy,
+            marginBottom: '10px',
+            fontFamily: BRAND_FONT_DISPLAY,
+            lineHeight: 1,
+          }}>
+            {streak}
+          </div>
+          <div style={{ borderTop: `1.5px solid ${palette.borderSoft}`, paddingTop: '8px', marginTop: 'auto' }}>
+            <span style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 700, fontFamily: BRAND_FONT_BODY }}>
+              • {streak === 1 ? '1 day in a row' : `${streak} days in a row`}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== 3 STAT CARDS — High Scores, Accuracy, Games Played ===== */}
+      <div
+        className="myprogress-stats-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '14px',
+          marginBottom: '20px',
+        }}
+      >
+        {[
+          // ✅ High Scores (Moved to Bottom, matched top row style)
+          { icon: 'star', iconColor: '#d4af37', label: 'High Scores', clickable: 'points', hint: '• Click to view best runs' },
+          // ✅ Accuracy (Number removed, matched top row style)
+          { icon: 'check', iconColor: palette.softGreen, label: 'Accuracy', clickable: 'accuracy', hint: '• Click to view breakdown' },
+          // ✅ Games Played (Number removed, matched top row style)
+          { icon: 'game', iconColor: palette.teal, label: 'Games Played', clickable: 'games', hint: '• Click to view history' }
+        ].map((stat, index) => {
+          return (
+            <div
+              key={index}
+              className="progress-card progress-card-clickable"
+              onClick={() => setActiveModal(stat.clickable)}
+              title={`Click to view ${stat.label.toLowerCase()}`}
+              style={{
+                background: palette.white,
+                borderRadius: '14px',
+                padding: '18px 20px',
+                border: `1.5px solid ${palette.border}`,
+                display: 'flex',
+                flexDirection: 'column', // Changed to match top row
+                boxShadow: `0 2px 0 ${palette.border}`,
+                position: 'relative',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                <IconBadge icon={stat.icon} bg={palette.creamSoft} iconColor={stat.iconColor} size={38} />
+                <span
+                  style={{
+                    fontSize: '12px',
+                    color: palette.bodyTextSoft, // Match top row gray color
+                    fontWeight: 800,
+                    fontFamily: BRAND_FONT_DISPLAY,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {stat.label}
+                </span>
+              </div>
+              <div style={{ borderTop: `1.5px solid ${palette.borderSoft}`, paddingTop: '8px', marginTop: 'auto' }}>
+                <span
+                  className="click-hint"
+                  style={{
+                    fontSize: '11px',
+                    color: palette.warmOrange,
+                    fontWeight: 700,
+                    fontFamily: BRAND_FONT_BODY,
+                    opacity: 1, 
+                  }}
+                >
+                  {stat.hint}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ===== GAME PROGRESS (BEAUTIFUL LAYOUT) ===== */}
+      <div
+        style={{
+          background: palette.white,
+          borderRadius: '16px',
+          padding: '24px',
+          border: `1.5px solid ${palette.border}`,
+          boxShadow: `0 2px 0 ${palette.border}`,
+        }}
+      >
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
+            Game Progress
+          </div>
+          <div style={{ fontSize: '12px', color: palette.bodyTextSoft, marginTop: '4px', fontWeight: 600 }}>
+            Your latest scores, highest scores, and attempts
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {gameTypesFinal.map((game, i) => {
+            // Hanapin lahat ng history entries para sa game na ito
+            const entries = gameHistory.filter(entry => {
+              const mappedLabel = getGameLabel(entry.gameType || entry.activityType);
+              return mappedLabel.toLowerCase() === game.label.toLowerCase() ||
+                     String(entry.gameType || entry.activityType).toLowerCase() === game.key.toLowerCase();
+            });
+
+            // Dahil naka-sort ang gameHistory by date (descending), entries[0] ang pinaka-latest
+            const latestEntry = entries[0];
+            
+            const attempts = entries.length > 0 ? entries.length : (game.data.gamesPlayed || 0);
+            const latestScore = latestEntry ? (latestEntry.score || latestEntry.correctAnswers || 0) : 0;
+            
+            // Kunin ang pinakamataas na score
+            const highestScore = entries.length > 0 
+              ? Math.max(...entries.map(e => e.score || e.correctAnswers || 0)) 
+              : (game.data.correctAnswers || 0);
+
+            // Date formatting
+            const lastPlayedDate = latestEntry && latestEntry.completedAt ? new Date(latestEntry.completedAt) : null;
+            const formattedLastPlayed = lastPlayedDate 
+              ? lastPlayedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
+              : 'Not played yet';
+
+            return (
+              <div
+                key={game.key}
+                className="game-progress-row"
+                style={{
+                  padding: '20px 0',
+                  borderBottom: i !== gameTypesFinal.length - 1 ? `1.5px solid ${palette.borderSoft}` : 'none',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
+                  gap: '16px'
+                }}
+              >
+                {/* KALIWA: Image at Scores */}
+                <div style={{ display: 'flex', gap: '16px', flex: 1, minWidth: '250px' }}>
+                  {/* Game Image */}
+                  <img
+                    src={game.image}
+                    alt={game.label}
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '12px',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      border: `1.5px solid ${palette.border}`,
+                      background: palette.creamSoft,
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: palette.deepNavy, margin: '0 0 6px 0', fontFamily: BRAND_FONT_DISPLAY }}>
+                      {game.label}
+                    </h3>
+                    
+                    {/* MGA DETALYE (Removed big green score) */}
+                    <div style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 600, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span>Latest score: <strong style={{ color: palette.deepNavy }}>{latestScore}</strong></span>
+                      <span>Highest score: <strong style={{ color: palette.deepNavy }}>{highestScore}</strong></span>
+                      <span>Last played: {formattedLastPlayed}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* KANAN: Attempts (Removed Completed badge) */}
+                <div className="game-progress-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', paddingTop: '4px' }}>
+                  <span style={{ fontSize: '12px', color: palette.bodyTextSoft, fontWeight: 600 }}>
+                    Attempts: {attempts}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ============================================================
+          ✅ MODALS
+         ============================================================ */}
+
+      {/* ✅ Words Learned Modal */}
+      <Modal
+        isOpen={activeModal === 'words'}
+        onClose={() => setActiveModal(null)}
+        title="📚 Words Learned"
+        subtitle={`${learnedWords.length} ${learnedWords.length === 1 ? 'word' : 'words'} recorded`}
+      >
+        {loadingDetails ? (
+          <LoadingSpinner />
+        ) : learnedWords.length === 0 ? (
+          <EmptyState
+            emoji="📖"
+            title="No words recorded yet"
+            subtitle="Play games to start learning new vocabulary!"
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {learnedWords.map((word, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: '12px 14px',
+                  background: palette.creamSoft,
+                  borderRadius: '10px',
+                  border: `1.5px solid ${palette.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>📖</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_BODY }}>
+                  {typeof word === 'string' ? word : word.word || word.term || JSON.stringify(word)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* ✅ Games Played Modal (Restored, fractions removed) */}
+      <Modal
+        isOpen={activeModal === 'games'}
+        onClose={() => setActiveModal(null)}
+        title="🎮 Game History"
+        subtitle={`${gameHistory.length} ${gameHistory.length === 1 ? 'activity' : 'activities'} played`}
+      >
+        {loadingDetails ? (
+          <LoadingSpinner />
+        ) : gameHistory.length === 0 ? (
+          <EmptyState
+            emoji="🎮"
+            title="No games played yet"
+            subtitle="Start playing to build your history!"
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {gameHistory.map((entry, i) => {
+              const date = entry.completedAt ? new Date(entry.completedAt) : null;
+              const formattedDate = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+              const formattedTime = date ? date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+              const img = getGameImage(entry.gameType || entry.activityType);
+              const label = entry.activityTitle
+                ? `${entry.activityTitle} · ${getGameLabel(entry.gameType)}`
+                : getGameLabel(entry.gameType);
+              const pts = entry.score || entry.correctAnswers || 0;
+
+              return (
+                <div
+                  key={entry.id || i}
+                  style={{
+                    padding: '12px 14px',
+                    background: palette.creamSoft,
+                    borderRadius: '12px',
+                    border: `1.5px solid ${palette.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden', background: palette.white, border: `1.5px solid ${palette.border}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {img ? (
+                      <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '18px' }}>🎮</span>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+                      {entry.source === 'teacher-pin' && (
+                        <span style={{ fontSize: '9px', padding: '2px 6px', background: `${palette.warmOrange}22`, color: palette.warmOrange, borderRadius: '4px', fontWeight: 800 }}>
+                          PIN
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '11px', color: palette.bodyTextSoft, marginTop: '2px', fontWeight: 600 }}>
+                      {formattedDate}{formattedTime ? ` · ${formattedTime}` : ''}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: palette.warmOrange, fontFamily: BRAND_FONT_DISPLAY }}>
+                      +{pts} pts
+                    </div>
+                    {/* ✅ REMOVED: Fractions (correct/total) as requested */}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Modal>
+
+      {/* ✅ Total Points / High Scores Modal */}
+      <Modal
+        isOpen={activeModal === 'points'}
+        onClose={() => setActiveModal(null)}
+        title="🏆 High Scores Per Game"
+        subtitle="Your best score in each game"
+      >
+        {loadingDetails ? (
+          <LoadingSpinner />
+        ) : highScores.length === 0 ? (
+          <EmptyState
+            emoji="🏆"
+            title="No high scores yet"
+            subtitle="Play games to set your personal bests!"
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {highScores.map((entry, i) => {
+              const img = getGameImage(entry.gameType);
+              const label = getGameLabel(entry.gameType);
+              const date = entry.bestDate ? new Date(entry.bestDate) : null;
+              const formattedDate = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+              return (
+                <div
+                  key={entry.gameType || i}
+                  style={{
+                    padding: '14px 16px',
+                    background: palette.creamSoft,
+                    borderRadius: '12px',
+                    border: `1.5px solid ${palette.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                  }}
+                >
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', overflow: 'hidden', background: palette.white, border: `1.5px solid ${palette.border}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {img ? (
+                      <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '22px' }}>🎮</span>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
+                      {label}
+                    </div>
+                    {formattedDate && (
+                      <div style={{ fontSize: '10px', color: palette.bodyTextSoft, marginTop: '2px' }}>
+                        {formattedDate}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '20px', fontWeight: 800, color: palette.warmOrange, fontFamily: BRAND_FONT_DISPLAY, lineHeight: 1 }}>
+                      {entry.bestScore}
+                    </div>
+                    <div style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '3px' }}>
+                      pts
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Modal>
+
+      {/* ✅ NEW: Accuracy Breakdown Modal (Mastery Average) */}
+      <Modal
+        isOpen={activeModal === 'accuracy'}
+        onClose={() => setActiveModal(null)}
+        title="🎯 Mastery Breakdown"
+        subtitle="Your average precision across games you've played"
+      >
+        {loadingDetails ? (
+          <LoadingSpinner />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* Overall Accuracy Big Display */}
+            <div style={{ 
+              background: `linear-gradient(135deg, ${palette.softGreen}15, ${palette.softGreen}05)`, 
+              padding: '24px', 
+              borderRadius: '16px', 
+              border: `2px solid ${palette.softGreen}40`,
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '48px', fontWeight: 900, color: palette.softGreen, fontFamily: BRAND_FONT_DISPLAY, lineHeight: 1, marginBottom: '8px' }}>
+                {displayAccuracy}%
+              </div>
+              <div style={{ fontSize: '14px', color: palette.deepNavy, fontWeight: 700, fontFamily: BRAND_FONT_BODY }}>
+                Average Mastery
+              </div>
+              <div style={{ fontSize: '12px', color: palette.bodyTextSoft, marginTop: '4px', fontWeight: 600 }}>
+                Average of your best runs across {gamesPlayedCount} games
+              </div>
+            </div>
+
+            {/* Per Game Breakdown */}
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: palette.bodyTextSoft, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', fontFamily: BRAND_FONT_DISPLAY }}>
+                Per Game Mastery
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {gameTypesFinal.map((game) => {
+                  const bestRun = highScores.find(h => 
+                    getGameLabel(h.gameType).toLowerCase() === game.label.toLowerCase() || 
+                    String(h.gameType).toLowerCase() === game.key.toLowerCase()
+                  );
+
+                  const correct = bestRun ? bestRun.bestCorrect : 0;
+                  const total = bestRun ? bestRun.bestTotal : 0;
+                  const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+                  return (
+                    <div key={game.key} style={{ 
+                      padding: '14px 16px', 
+                      background: palette.creamSoft, 
+                      borderRadius: '12px', 
+                      border: `1.5px solid ${palette.border}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                          <img src={game.image} alt={game.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: palette.deepNavy, fontFamily: BRAND_FONT_DISPLAY }}>
+                            {game.label}
+                          </div>
+                          {/* ✅ CHANGED: Mas malinaw na text para sa panelist */}
+                          <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600 }}>
+                            {total > 0 ? `${correct} correct out of ${total} total attempts` : 'Not played yet'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: acc >= 80 ? palette.softGreen : acc >= 50 ? palette.warmOrange : palette.coral, fontFamily: BRAND_FONT_DISPLAY, lineHeight: 1 }}>
+                          {acc}%
+                        </div>
+                        <div style={{ width: '60px', height: '4px', background: palette.border, borderRadius: '4px', marginTop: '6px', overflow: 'hidden' }}>
+                          <div style={{ width: `${acc}%`, height: '100%', background: acc >= 80 ? palette.softGreen : acc >= 50 ? palette.warmOrange : palette.coral, borderRadius: '4px' }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+};
+
+// ============================================================
+// ✅ Helper Components
+// ============================================================
+const LoadingSpinner = () => (
+  <div style={{ textAlign: 'center', padding: '40px 0' }}>
+    <div
+      style={{
+        width: '32px',
+        height: '32px',
+        border: `3px solid ${palette.border}`,
+        borderTop: `3px solid ${palette.warmOrange}`,
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '0 auto 12px',
+      }}
+    />
+    <p style={{ fontSize: '13px', color: palette.bodyTextSoft, fontWeight: 600 }}>Loading...</p>
+    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+  </div>
+);
+
+const EmptyState = ({ emoji, title, subtitle }) => (
+  <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+    <div style={{ fontSize: '48px', marginBottom: '12px' }}>{emoji}</div>
+    <p style={{ fontSize: '15px', fontWeight: 700, color: palette.deepNavy, margin: '0 0 4px 0', fontFamily: BRAND_FONT_DISPLAY }}>
+      {title}
+    </p>
+    <p style={{ fontSize: '13px', color: palette.bodyTextSoft, margin: 0, fontWeight: 600 }}>
+      {subtitle}
+    </p>
+  </div>
+);
+
+export default MyProgress;
