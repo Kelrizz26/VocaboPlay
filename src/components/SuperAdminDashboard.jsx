@@ -3,6 +3,7 @@
 // ✅ SUPER ADMIN DASHBOARD - Full Analytics & Management
 // ✅ FIXED: Yearly cards now correctly respond to the Year dropdown (statsYear).
 // ✅ UPDATED: Items without createdAt now only show up in the CURRENT year. Changing the year to a past year will make them 0.
+// ✅ UPDATED: Average Score in Activity Performance is now clearer (shows "pts" and "Qs").
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -494,10 +495,11 @@ const SuperAdminDashboard = () => {
       try { return new Date(d).getFullYear() === statsYear; } catch { return false; }
     });
 
+    // ✅ UPDATED: Ginawang Number yung avgScore para sure na number siya pag ni-render
     const activityPerf = filteredActivitiesForYear.map(a => {
       const relatedScores = scores.filter(s => s.activityId === a.id);
       const avgScore = relatedScores.length > 0
-        ? (relatedScores.reduce((sum, s) => sum + (s.score || 0), 0) / relatedScores.length).toFixed(1)
+        ? Number((relatedScores.reduce((sum, s) => sum + (s.score || 0), 0) / relatedScores.length).toFixed(1))
         : 0;
       return { id: a.id, title: a.title, gamePin: a.gamePin, teacherName: a.teacherName, participants: relatedScores.length, avgScore, totalQuestions: a.totalQuestions || 0, gameType: a.gameType };
     }).sort((a, b) => b.participants - a.participants);
@@ -1088,8 +1090,16 @@ const SuperAdminDashboard = () => {
                           <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '10px', fontWeight: 800, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', background: `${palette.teal}15`, color: palette.teal, border: `1px solid ${palette.teal}40` }}>{a.gameType || 'quiz'}</span>
                         </td>
                         <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800, color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{a.participants}</td>
-                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 800, color: palette.softGreen, fontFamily: FONT_DISPLAY }}>
-                          {a.avgScore} {a.totalQuestions > 0 ? `/ ${a.totalQuestions}` : ''}
+                        {/* ✅ UPDATED: Mas malinaw na display ng score (Points and Questions) */}
+                        <td style={{ padding: '12px', textAlign: 'right' }}>
+                          <div style={{ fontWeight: 800, color: palette.softGreen, fontFamily: FONT_DISPLAY, fontSize: '14px' }}>
+                            {a.avgScore} <span style={{fontSize: '11px', color: palette.bodyTextSoft}}>pts</span>
+                          </div>
+                          {a.totalQuestions > 0 && (
+                            <div style={{ fontSize: '10px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px' }}>
+                              {a.totalQuestions} Qs
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
