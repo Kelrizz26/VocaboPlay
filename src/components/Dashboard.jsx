@@ -72,8 +72,9 @@ const MILESTONE_DIAMOND_REWARDS = {
 
 const getMilestoneDiamonds = (level) => MILESTONE_DIAMOND_REWARDS[level] || 0;
 
+// ✅ FIXED: Ensure points are treated as Numbers to avoid string concatenation
 export const computeLevelFromPoints = (points) => {
-  const total = points || 0;
+  const total = Number(points) || 0;
   let level = 1, accumulated = 0;
   while (level < MAX_LEVEL) {
     const need = XP_BASE + (level - 1) * XP_INCREMENT;
@@ -82,8 +83,9 @@ export const computeLevelFromPoints = (points) => {
   return level;
 };
 
+// ✅ FIXED: Ensure points are treated as Numbers
 export const computeCurrentXP = (points) => {
-  const total = points || 0;
+  const total = Number(points) || 0;
   const level = computeLevelFromPoints(points);
   if (level >= MAX_LEVEL) return 0;
   let accumulated = 0, currentLvl = 1;
@@ -94,6 +96,7 @@ export const computeCurrentXP = (points) => {
   return total - accumulated;
 };
 
+// ✅ FIXED: Ensure points are treated as Numbers
 export const computeXpToNext = (points) => {
   const level = computeLevelFromPoints(points);
   if (level >= MAX_LEVEL) return 0;
@@ -330,7 +333,7 @@ const Dashboard = () => {
           email: data.email || '',
           avatar: data.avatar || '👤',
           role: data.role || 'student',
-          progress: { totalPoints: data.totalPoints || 0 }
+          progress: { totalPoints: Number(data.totalPoints) || 0 } // ✅ FIXED: Force Number
         };
       }
     } catch (e) {}
@@ -339,7 +342,19 @@ const Dashboard = () => {
 
   const [progress, setProgress] = useState(() => {
     const saved = localStorage.getItem('vocaboplay_progress');
-    return saved ? JSON.parse(saved) : { wordsLearned: 0, gamesPlayed: 0, totalPoints: 0, streak: 0, accuracy: 0, gameStats: {} };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // ✅ FIXED: Ensure all numeric fields are Numbers upon load
+      return {
+        ...parsed,
+        wordsLearned: Number(parsed.wordsLearned) || 0,
+        gamesPlayed: Number(parsed.gamesPlayed) || 0,
+        totalPoints: Number(parsed.totalPoints) || 0,
+        streak: Number(parsed.streak) || 0,
+        accuracy: Number(parsed.accuracy) || 0,
+      };
+    }
+    return { wordsLearned: 0, gamesPlayed: 0, totalPoints: 0, streak: 0, accuracy: 0, gameStats: {} };
   });
 
   useEffect(() => {
@@ -524,9 +539,10 @@ const Dashboard = () => {
 
     // ✅ SAFETY GUARD: Pigilan ang double-counting kapag sabay na tinawag ang updateProgress
     let pointsEarned = 0;
-    if (updates.totalPoints !== undefined) pointsEarned = updates.totalPoints;
-    else if (updates.score !== undefined) pointsEarned = updates.score;
-    else if (updates.xp !== undefined) pointsEarned = updates.xp;
+    // ✅ FIXED: Force Number conversion here to avoid string concatenation
+    if (updates.totalPoints !== undefined) pointsEarned = Number(updates.totalPoints) || 0;
+    else if (updates.score !== undefined) pointsEarned = Number(updates.score) || 0;
+    else if (updates.xp !== undefined) pointsEarned = Number(updates.xp) || 0;
 
     if (pointsEarned > 0) {
       const now = Date.now();
@@ -542,13 +558,14 @@ const Dashboard = () => {
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : {};
 
-      const currentTotalPoints = userData.totalPoints || 0;
-      const currentStreak = userData.currentStreak || 0;
+      // ✅ FIXED: Force Number conversion for all numeric fields from DB
+      const currentTotalPoints = Number(userData.totalPoints) || 0;
+      const currentStreak = Number(userData.currentStreak) || 0;
       const currentGameStats = userData.gameStats || {};
-      const currentWordsLearned = userData.wordsLearned || 0;
-      const currentGamesPlayed = userData.gamesPlayed || 0;
-      const currentAccuracy = userData.accuracy || 0;
-      const currentDiamonds = userData.totalDiamonds || 0;
+      const currentWordsLearned = Number(userData.wordsLearned) || 0;
+      const currentGamesPlayed = Number(userData.gamesPlayed) || 0;
+      const currentAccuracy = Number(userData.accuracy) || 0;
+      const currentDiamonds = Number(userData.totalDiamonds) || 0;
       
       const currentLearnedWordsRaw = userData.learnedWordsList || userData.learnedWords || [];
       const currentLearnedWords = Array.isArray(currentLearnedWordsRaw) ? currentLearnedWordsRaw : Object.keys(currentLearnedWordsRaw);
@@ -578,23 +595,23 @@ const Dashboard = () => {
       const gameStats = { ...currentGameStats };
       if (updates.QuizGame) {
         gameStats.QuizGame = {
-          played: (gameStats.QuizGame?.played || 0) + (updates.QuizGame.gamesCompleted || 0),
-          correct: (gameStats.QuizGame?.correct || 0) + (updates.QuizGame.correctAnswers || 0),
-          total: (gameStats.QuizGame?.total || 0) + (updates.QuizGame.totalQuestions || 0)
+          played: (Number(gameStats.QuizGame?.played) || 0) + (Number(updates.QuizGame.gamesCompleted) || 0),
+          correct: (Number(gameStats.QuizGame?.correct) || 0) + (Number(updates.QuizGame.correctAnswers) || 0),
+          total: (Number(gameStats.QuizGame?.total) || 0) + (Number(updates.QuizGame.totalQuestions) || 0)
         };
       }
       if (updates.MatchGame) {
         gameStats.MatchGame = {
-          played: (gameStats.MatchGame?.played || 0) + (updates.MatchGame.gamesCompleted || 0),
-          correct: (gameStats.MatchGame?.correct || 0) + (updates.MatchGame.correctPairs || 0),
-          total: (gameStats.MatchGame?.total || 0) + (updates.MatchGame.totalPairs || 0)
+          played: (Number(gameStats.MatchGame?.played) || 0) + (Number(updates.MatchGame.gamesCompleted) || 0),
+          correct: (Number(gameStats.MatchGame?.correct) || 0) + (Number(updates.MatchGame.correctPairs) || 0),
+          total: (Number(gameStats.MatchGame?.total) || 0) + (Number(updates.MatchGame.totalPairs) || 0)
         };
       }
       if (updates.SentenceBuilder) {
         gameStats.SentenceBuilder = {
-          played: (gameStats.SentenceBuilder?.played || 0) + (updates.SentenceBuilder.gamesCompleted || 0),
-          correct: (gameStats.SentenceBuilder?.correct || 0) + (updates.SentenceBuilder.correctAnswers || 0),
-          total: (gameStats.SentenceBuilder?.total || 0) + (updates.SentenceBuilder.totalQuestions || 0)
+          played: (Number(gameStats.SentenceBuilder?.played) || 0) + (Number(updates.SentenceBuilder.gamesCompleted) || 0),
+          correct: (Number(gameStats.SentenceBuilder?.correct) || 0) + (Number(updates.SentenceBuilder.correctAnswers) || 0),
+          total: (Number(gameStats.SentenceBuilder?.total) || 0) + (Number(updates.SentenceBuilder.totalQuestions) || 0)
         };
       }
 
@@ -614,23 +631,23 @@ const Dashboard = () => {
       const newDiamonds = currentDiamonds + milestoneDiamonds;
 
       let newGamesPlayed = currentGamesPlayed;
-      if (updates.gamesPlayed !== undefined && updates.gamesPlayed > 0) newGamesPlayed = currentGamesPlayed + updates.gamesPlayed;
+      if (updates.gamesPlayed !== undefined && Number(updates.gamesPlayed) > 0) newGamesPlayed = currentGamesPlayed + Number(updates.gamesPlayed);
       else {
         let totalGamesPlayed = 0;
-        Object.values(gameStats).forEach(g => { if (g && typeof g === 'object') totalGamesPlayed += g.played || 0; });
+        Object.values(gameStats).forEach(g => { if (g && typeof g === 'object') totalGamesPlayed += (Number(g.played) || 0); });
         if (totalGamesPlayed > 0) newGamesPlayed = Math.max(totalGamesPlayed, currentGamesPlayed);
       }
 
       let totalQuestionsAll = 0;
-      Object.values(gameStats).forEach(g => { if (g && typeof g === 'object') totalQuestionsAll += g.total || 0; });
+      Object.values(gameStats).forEach(g => { if (g && typeof g === 'object') totalQuestionsAll += (Number(g.total) || 0); });
       let newAccuracy = currentAccuracy;
       if (totalQuestionsAll > 0) {
-        const totalCorrect = Object.values(gameStats).reduce((sum, g) => sum + (g.correct || 0), 0);
+        const totalCorrect = Object.values(gameStats).reduce((sum, g) => sum + (Number(g.correct) || 0), 0);
         newAccuracy = Math.round((totalCorrect / totalQuestionsAll) * 100);
       }
 
       const addedWordsCount = newLearnedWords.length - currentLearnedWords.length;
-      const newWordsLearned = currentWordsLearned + (updates.wordsLearned !== undefined ? updates.wordsLearned : addedWordsCount);
+      const newWordsLearned = currentWordsLearned + (updates.wordsLearned !== undefined ? Number(updates.wordsLearned) : addedWordsCount);
 
       const resolvedName = userProfile.username || 'User';
 
@@ -688,7 +705,10 @@ const Dashboard = () => {
       await addDoc(collection(db, 'scores'), {
         activityId, studentId: userId,
         studentName: overrideName || fallbackName || 'Student',
-        score, correctAnswers, totalQuestions,
+        // ✅ FIXED: Force Number conversion
+        score: Number(score) || 0, 
+        correctAnswers: Number(correctAnswers) || 0, 
+        totalQuestions: Number(totalQuestions) || 0,
         gameType: activityData.gameType || 'quiz',
         activityTitle: activityData.title || '',
         source: 'teacher-pin', answers, wordsList,
@@ -696,10 +716,16 @@ const Dashboard = () => {
       });
 
       if (activitySnap.exists() && isFirstAttempt) {
-        await updateDoc(activityRef, { participants: (activitySnap.data().participants || 0) + 1 });
+        await updateDoc(activityRef, { participants: (Number(activitySnap.data().participants) || 0) + 1 });
       }
       if (updateProgress) {
-        await updateProgress({ totalPoints: score, wordsLearned: correctAnswers, gamesPlayed: 1, newWords: wordsList });
+        // ✅ FIXED: Force Number conversion
+        await updateProgress({ 
+          totalPoints: Number(score) || 0, 
+          wordsLearned: Number(correctAnswers) || 0, 
+          gamesPlayed: 1, 
+          newWords: wordsList 
+        });
       }
       await refreshRecentActivities();
     } catch (error) { console.error('Error completing activity:', error); }
@@ -709,25 +735,28 @@ const Dashboard = () => {
     if (!userId) return;
     try {
       const fallbackName = userProfile.username || 'User';
+      const numScore = Number(score) || 0;
+      const numCorrect = Number(correctAnswers) || 0;
+      const numTotal = Number(totalQuestions) || 0;
 
       await addDoc(collection(db, 'scores'), {
         studentId: userId,
         studentName: fallbackName || 'Student',
-        score: score || 0, correctAnswers: correctAnswers || 0, totalQuestions: totalQuestions || 0,
+        score: numScore, correctAnswers: numCorrect, totalQuestions: numTotal,
         gameType, source: 'solo', wordsList,
         completedAt: new Date().toISOString()
       });
 
       const updates = { 
         gamesPlayed: 1,
-        totalPoints: score 
+        totalPoints: numScore 
       };
       
       if (gameType === 'sentence-builder') {
         updates.SentenceBuilder = {
           gamesCompleted: 1,
-          correctAnswers: correctAnswers,
-          totalQuestions: totalQuestions
+          correctAnswers: numCorrect,
+          totalQuestions: numTotal
         };
       }
 
@@ -801,18 +830,19 @@ const Dashboard = () => {
     { name: 'Avatar Shop', icon: 'shop' },
   ];
 
-  const rawTotalPoints = DEMO_FORCE_LEVEL ? 250 : (stats?.progress?.totalPoints ?? progress.totalPoints ?? 0);
+  // ✅ FIXED: Ensure stats from hook are parsed to Number
+  const rawTotalPoints = DEMO_FORCE_LEVEL ? 250 : (Number(stats?.progress?.totalPoints) || Number(progress.totalPoints) || 0);
 
   const displayProgress = {
-    wordsLearned: stats?.progress?.wordsLearned ?? progress.wordsLearned ?? 0,
-    gamesPlayed: stats?.progress?.gamesPlayed ?? progress.gamesPlayed ?? 0,
+    wordsLearned: Number(stats?.progress?.wordsLearned) || Number(progress.wordsLearned) || 0,
+    gamesPlayed: Number(stats?.progress?.gamesPlayed) || Number(progress.gamesPlayed) || 0,
     totalPoints: rawTotalPoints,
     level: computeLevelFromPoints(rawTotalPoints),
     xp: computeCurrentXP(rawTotalPoints),
     xpToNext: computeXpToNext(rawTotalPoints),
     isMaxLevel: computeLevelFromPoints(rawTotalPoints) >= MAX_LEVEL,
-    streak: stats?.progress?.streak ?? progress.streak ?? 0,
-    accuracy: stats?.progress?.accuracy ?? progress.accuracy ?? 0,
+    streak: Number(stats?.progress?.streak) || Number(progress.streak) || 0,
+    accuracy: Number(stats?.progress?.accuracy) || Number(progress.accuracy) || 0,
   };
 
   const displayName = stats?.username || userProfile?.username || 'User';
@@ -1076,7 +1106,7 @@ const Dashboard = () => {
               updateProgress={updateProgress}
               recordGame={recordSoloGame}
               currentPoints={displayProgress.totalPoints}
-              onPointsChange={(newPoints) => setProgress({ ...progress, totalPoints: newPoints })}
+              onPointsChange={(newPoints) => setProgress({ ...progress, totalPoints: Number(newPoints) || 0 })} // ✅ FIXED
             />
           )}
           {currentGame === 'match' && (
@@ -1136,7 +1166,7 @@ const Dashboard = () => {
           {!currentGame && activeMenu === 'Leaderboards' && <Leaderboards onBack={() => changeMenu('Dashboard')} isAdmin={false} currentUserId={userId} />}
           {!currentGame && activeMenu === 'Favorites' && <FavoritesPage />}
           {!currentGame && activeMenu === 'Avatar Shop' && (
-            <AvatarShop currentPoints={displayProgress.totalPoints} onPointsChange={(newPoints) => setProgress({ ...progress, totalPoints: newPoints })} onEquipChange={(avatarId) => setEquippedAvatar(avatarId)} />
+            <AvatarShop currentPoints={displayProgress.totalPoints} onPointsChange={(newPoints) => setProgress({ ...progress, totalPoints: Number(newPoints) || 0 })} onEquipChange={(avatarId) => setEquippedAvatar(avatarId)} />
           )}
 
           {!currentGame && activeMenu === 'Dashboard' && (
@@ -1200,9 +1230,9 @@ const Dashboard = () => {
                         ? activity.activityTitle
                         : gameLabel;
 
-                      const score = activity.score || 0;
-                      const correct = activity.correctAnswers || 0;
-                      const total = activity.totalQuestions || 0;
+                      const score = Number(activity.score) || 0; // ✅ FIXED
+                      const correct = Number(activity.correctAnswers) || 0; // ✅ FIXED
+                      const total = Number(activity.totalQuestions) || 0; // ✅ FIXED
                       const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 
                       const isClickable = activity.source === 'teacher-pin' && !!activity.activityId;
@@ -1301,7 +1331,7 @@ const Dashboard = () => {
               userId={userId}
               currentLevel={displayProgress.level}
               currentPoints={displayProgress.totalPoints}
-              currentDiamonds={(() => { try { const cached = JSON.parse(localStorage.getItem('firebaseUserData') || '{}'); return cached.totalDiamonds || 0; } catch { return 0; } })()}
+              currentDiamonds={(() => { try { const cached = JSON.parse(localStorage.getItem('firebaseUserData') || '{}'); return Number(cached.totalDiamonds) || 0; } catch { return 0; } })()} // ✅ FIXED
               onRefresh={() => { window.location.reload(); }}
               onTriggerLevelUp={(lvl, diamonds) => { setLevelUpCardLevel(lvl); setLevelUpDiamonds(diamonds); setShowLevelUpCard(true); }}
             />

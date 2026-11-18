@@ -2,6 +2,7 @@
 // ============================================================
 // 📊 EXP BAR — Shows progress to next level
 // ✅ NEW: isMaxLevel prop — shows "MAX LEVEL · 100%" + gold bar
+// ✅ FIXED: Forced Number() conversion to prevent String Concatenation bugs
 // ============================================================
 
 import React, { useEffect, useState } from 'react';
@@ -37,12 +38,18 @@ const ExpBar = ({
   compact = false,
   isMaxLevel = false, // ✅ NEW
 }) => {
+  // ✅ FIX: I-force nating maging Number para iwas "String Concatenation"
+  // Kung sakaling makatanggap tayo ng "01" o "10" na string, magiging 1 at 10 ito.
+  const safeXp = Number(xp) || 0;
+  const safeXpToNext = Number(xpToNext) || 100;
+  const safeLevel = Number(level) || 1;
+
   const [displayWidth, setDisplayWidth] = useState(0);
 
   // ✅ Pag max level, force 100%. Kung hindi, normal computation.
   const percentage = isMaxLevel
     ? 100
-    : Math.min(100, Math.round((xp / xpToNext) * 100));
+    : Math.min(100, Math.round((safeXp / safeXpToNext) * 100));
 
   // ✅ Pag max level, gamitin ang gold color gradient
   const barColor = isMaxLevel ? palette.gold : color;
@@ -143,14 +150,14 @@ const ExpBar = ({
           >
             {/* ✅ Level label — may trophy pag max level */}
             <span className={isMaxLevel ? 'max-level-text' : ''}>
-              {isMaxLevel ? `Level ${level} 🏆` : `Level ${level}`}
+              {isMaxLevel ? `Level ${safeLevel} 🏆` : `Level ${safeLevel}`}
             </span>
 
             {/* ✅ XP text — "MAX LEVEL · 100%" pag naabot na */}
             <span className={isMaxLevel ? 'max-level-text' : ''}>
               {isMaxLevel
                 ? 'MAX LEVEL · 100%'
-                : `${xp} / ${xpToNext} XP · ${percentage}%`
+                : `${safeXp} / ${safeXpToNext} XP · ${percentage}%`
               }
             </span>
           </div>
@@ -175,7 +182,7 @@ const ExpBar = ({
               textShadow: '0 1px 4px rgba(45, 42, 94, 0.5)',
             }}
           >
-            {isMaxLevel ? 'MAX LEVEL 🏆' : `${xp} / ${xpToNext} XP`}
+            {isMaxLevel ? 'MAX LEVEL 🏆' : `${safeXp} / ${safeXpToNext} XP`}
           </div>
         )}
       </div>
@@ -183,4 +190,4 @@ const ExpBar = ({
   );
 };
 
-export default ExpBar;
+export default ExpBar;2
