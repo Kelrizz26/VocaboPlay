@@ -58,25 +58,37 @@ const DIFFICULTY_LABELS = {
   5: { label: 'Expert', color: palette.coral },
 };
 
-// ✅ FIX: Robust function to handle Numbers, CEFR (A1-C2), and Text (Beginner, Easy, etc.)
+// ✅ FIX: Function na hahanapin kung anong field name ang gamit ng Teacher/Student sides niyo
+const extractDifficultyValue = (w) => {
+  if (!w) return null;
+  // Sinusubukan niyang hanapin lahat ng possible field names sa Firebase niyo
+  const raw = w.difficulty ?? w.cefrLevel ?? w.cefr ?? w.level ?? w.difficultyLevel ?? w.CEFR;
+
+  if (raw === undefined || raw === null) return null;
+
+  // Kung naka-object siya (e.g., { label: "Beginner", value: 1 })
+  if (typeof raw === 'object') {
+    return raw.value ?? raw.level ?? raw.label ?? raw.name ?? raw.id ?? null;
+  }
+  return raw;
+};
+
+// ✅ FIX: Robust function to handle Numbers, CEFR (A1-C2), and Text
 const normalizeDifficulty = (d) => {
   if (d === null || d === undefined || d === '') return 0;
   
-  // Kung number na siya mismo (1 to 5)
   if (typeof d === 'number') {
     return (d >= 1 && d <= 5) ? d : 0;
   }
 
   const str = String(d).toUpperCase().trim();
   
-  // CEFR at Text matching
   if (['A1', '1', 'BEGINNER', 'L1'].includes(str)) return 1;
   if (['A2', '2', 'EASY', 'L2'].includes(str)) return 2;
   if (['B1', '3', 'INTERMEDIATE', 'L3'].includes(str)) return 3;
   if (['B2', '4', 'ADVANCED', 'L4'].includes(str)) return 4;
   if (['C1', 'C2', '5', 'EXPERT', 'L5'].includes(str)) return 5;
 
-  // Fallback kung number string like "3"
   const num = parseInt(str, 10);
   return (num >= 1 && num <= 5) ? num : 0;
 };
@@ -119,8 +131,8 @@ const SuperAdminVocabulary = ({ words = [] }) => {
         if (!matchWord && !matchDef && !matchCat) return false;
       }
       if (filterDifficulty !== 'all') {
-        // ✅ FIX: Gamitin ang normalizeDifficulty para gumana ang filtering
-        const d = normalizeDifficulty(w.difficulty);
+        // ✅ Gagamitin ang extractor
+        const d = normalizeDifficulty(extractDifficultyValue(w));
         if (String(d) !== filterDifficulty) return false;
       }
       if (filterCategory !== 'all' && w.category !== filterCategory) return false;
@@ -150,8 +162,8 @@ const SuperAdminVocabulary = ({ words = [] }) => {
   const difficultyCounts = useMemo(() => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, unknown: 0 };
     words.forEach(w => {
-      // ✅ FIX: Gamitin ang normalizeDifficulty para tama ang bilang sa Summary Cards
-      const d = normalizeDifficulty(w.difficulty);
+      // ✅ Gagamitin ang extractor
+      const d = normalizeDifficulty(extractDifficultyValue(w));
       if (d >= 1 && d <= 5) counts[d]++;
       else counts.unknown++;
     });
@@ -212,7 +224,8 @@ const SuperAdminVocabulary = ({ words = [] }) => {
             gap: '10px',
           }}>
             {recentlyAdded.map(w => {
-              const meta = getDifficultyMeta(w.difficulty);
+              // ✅ Gagamitin ang extractor
+              const meta = getDifficultyMeta(extractDifficultyValue(w));
               return (
                 <div key={w.id} style={{
                   padding: '12px 14px',
@@ -370,7 +383,8 @@ const SuperAdminVocabulary = ({ words = [] }) => {
             </thead>
             <tbody>
               {filtered.slice(0, 100).map(w => {
-                const meta = getDifficultyMeta(w.difficulty);
+                // ✅ Gagamitin ang extractor
+                const meta = getDifficultyMeta(extractDifficultyValue(w));
                 return (
                   <tr
                     key={w.id}
