@@ -1,7 +1,7 @@
 // src/components/SuperAdminDashboard.jsx
 // ============================================================
 // ✅ SUPER ADMIN DASHBOARD - Full Analytics & Management
-// ✅ FIXED: Active This Week, New This Month, and Filtering logic
+// ✅ FIXED: Teacher "Last Active" now accurately reflects latest login/activity
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -286,7 +286,7 @@ const SuperAdminDashboard = () => {
     navigate('/');
   };
 
-  // TEACHER STATS
+  // ✅ TEACHER STATS (FIXED: Now gets the absolute latest active date)
   const teacherStats = React.useMemo(() => {
     return teachers.map(teacher => {
       const teacherActivities = activities.filter(a =>
@@ -302,14 +302,22 @@ const SuperAdminDashboard = () => {
         }
       });
 
-      // ✅ FIX: Use parseDate for safe timestamp comparison
       const lastActivityDate = teacherActivities
         .map(a => parseDate(a.createdAt))
         .filter(Boolean)
         .sort((a, b) => b - a)[0];
 
-      const registered = parseDate(teacher.createdAt || teacher.joinDate || teacher.lastActive);
-      const lastActive = lastActivityDate || registered;
+      // ✅ FIX DITO: Hanapin ang PINAKABAGO (Latest) sa lahat ng timestamps
+      const possibleDates = [
+        parseDate(teacher.lastActive),
+        parseDate(teacher.updatedAt),
+        parseDate(teacher.createdAt || teacher.joinDate),
+        lastActivityDate
+      ].filter(Boolean); // Tanggalin ang mga null/undefined
+
+      // Kunin ang highest value (most recent date)
+      const lastActive = possibleDates.length > 0 ? new Date(Math.max(...possibleDates)) : null;
+      const registered = parseDate(teacher.createdAt || teacher.joinDate);
 
       return {
         ...teacher,
