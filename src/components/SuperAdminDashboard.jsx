@@ -1,9 +1,7 @@
 // src/components/SuperAdminDashboard.jsx
 // ============================================================
 // ✅ SUPER ADMIN DASHBOARD - Full Analytics & Management
-// ✅ FIXED: Yearly cards now correctly respond to the Year dropdown (statsYear).
-// ✅ UPDATED: Items without createdAt now only show up in the CURRENT year. Changing the year to a past year will make them 0.
-// ✅ UPDATED: Average Score in Activity Performance is now clearer (shows "pts" and "Qs").
+// ✅ FIXED: Active This Week, New This Month, and Filtering logic
 // ============================================================
 
 import React, { useState, useEffect } from 'react';
@@ -151,11 +149,22 @@ const Icon = ({ name, size = 20, color = palette.bodyTextSoft }) => {
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// ✅ HELPER: Safe Date Parser (Handles Firestore Timestamps and Strings)
+const parseDate = (d) => {
+  if (!d) return null;
+  if (typeof d.toDate === 'function') return d.toDate(); // Firestore Timestamp
+  if (d instanceof Date) return d;
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const timeAgo = (dateStr) => {
   if (!dateStr) return 'Never';
   try {
     const now = new Date();
-    const past = new Date(dateStr);
+    const past = parseDate(dateStr);
+    if (!past) return '—';
+    
     const diffMs = now - past;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
@@ -293,12 +302,13 @@ const SuperAdminDashboard = () => {
         }
       });
 
+      // ✅ FIX: Use parseDate for safe timestamp comparison
       const lastActivityDate = teacherActivities
-        .map(a => a.createdAt)
+        .map(a => parseDate(a.createdAt))
         .filter(Boolean)
-        .sort((a, b) => new Date(b) - new Date(a))[0];
+        .sort((a, b) => b - a)[0];
 
-      const registered = teacher.createdAt || teacher.joinDate || teacher.lastActive;
+      const registered = parseDate(teacher.createdAt || teacher.joinDate || teacher.lastActive);
       const lastActive = lastActivityDate || registered;
 
       return {
@@ -306,6 +316,7 @@ const SuperAdminDashboard = () => {
         _activityCount: teacherActivities.length,
         _studentCount: studentIdsSet.size,
         _lastActive: lastActive,
+        _registered: registered,
       };
     });
   }, [teachers, activities, scores]);
@@ -324,8 +335,9 @@ const SuperAdminDashboard = () => {
       const totalPoints = student.totalPoints || progress.totalPoints || 0;
       const level = student.level || computeLevel(totalPoints);
       const streak = progress.streak || student.currentStreak || 0;
-      const lastActive = student.lastActive || student.updatedAt || student.createdAt;
-      const registered = student.createdAt || student.joinDate;
+      
+      const lastActive = parseDate(student.lastActive || student.updatedAt || student.createdAt);
+      const registered = parseDate(student.createdAt || student.joinDate);
 
       return {
         ...student,
@@ -341,31 +353,42 @@ const SuperAdminDashboard = () => {
     });
   }, [students, scores]);
 
-  // STUDENT SUMMARY
+  // ✅ STUDENT SUMMARY (Fixed Time Logic)
   const studentSummary = React.useMemo(() => {
     const now = new Date();
-    const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
-    const monthAgo = new Date(now); monthAgo.setDate(monthAgo.getDate() - 30);
+    
+    // Start of the day 7 days ago
+    const weekAgo = new Date(now); 
+    weekAgo.setDate(weekAgo.getDate() - 7); 
+    weekAgo.setHours(0, 0, 0, 0);
+    
+    // Start of the day 30 days ago
+    const monthAgo = new Date(now); 
+    monthAgo.setDate(monthAgo.getDate() - 30); 
+    monthAgo.setHours(0, 0, 0, 0);
 
-    const activeThisWeek = studentStats.filter(s => s._lastActive && new Date(s._lastActive) >= weekAgo).length;
-    const newThisMonth = studentStats.filter(s => s._registered && new Date(s._registered) >= monthAgo).length;
+    const activeThisWeek = studentStats.filter(s => s._lastActive && s._lastActive >= weekAgo).length;
+    const newThisMonth = studentStats.filter(s => s._registered && s._registered >= monthAgo).length;
     const totalPoints = studentStats.reduce((sum, s) => sum + s._totalPoints, 0);
     const avgPoints = studentStats.length > 0 ? (totalPoints / studentStats.length).toFixed(1) : '0.0';
 
     return { total: studentStats.length, activeThisWeek, newThisMonth, avgPoints };
   }, [studentStats]);
 
-  // TEACHER SUMMARY
+  // ✅ TEACHER SUMMARY (Fixed Time Logic)
   const teacherSummary = React.useMemo(() => {
     const now = new Date();
-    const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
-    const monthAgo = new Date(now); monthAgo.setDate(monthAgo.getDate() - 30);
+    
+    const weekAgo = new Date(now); 
+    weekAgo.setDate(weekAgo.getDate() - 7); 
+    weekAgo.setHours(0, 0, 0, 0);
+    
+    const monthAgo = new Date(now); 
+    monthAgo.setDate(monthAgo.getDate() - 30); 
+    monthAgo.setHours(0, 0, 0, 0);
 
-    const activeThisWeek = teacherStats.filter(t => t._lastActive && new Date(t._lastActive) >= weekAgo).length;
-    const newThisMonth = teacherStats.filter(t => {
-      const created = t.createdAt || t.joinDate;
-      return created && new Date(created) >= monthAgo;
-    }).length;
+    const activeThisWeek = teacherStats.filter(t => t._lastActive && t._lastActive >= weekAgo).length;
+    const newThisMonth = teacherStats.filter(t => t._registered && t._registered >= monthAgo).length;
     const totalActivities = teacherStats.reduce((sum, t) => sum + t._activityCount, 0);
     const avgActivities = teacherStats.length > 0 ? (totalActivities / teacherStats.length).toFixed(1) : '0.0';
 
@@ -376,7 +399,13 @@ const SuperAdminDashboard = () => {
   const filteredTeachers = React.useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const daysAgo = (days) => { const d = new Date(now); d.setDate(d.getDate() - days); return d; };
+    const daysAgo = (days) => { 
+      const d = new Date(now); 
+      d.setDate(d.getDate() - days); 
+      d.setHours(0,0,0,0); // Set to midnight
+      return d; 
+    };
+    
     const threshold =
       teacherDateFilter === 'today' ? startOfToday :
       teacherDateFilter === 'week' ? daysAgo(7) :
@@ -389,15 +418,15 @@ const SuperAdminDashboard = () => {
         if (!t.displayName?.toLowerCase().includes(q) && !t.email?.toLowerCase().includes(q)) return false;
       }
       if (threshold) {
-        const created = t.createdAt || t.joinDate || t.lastActive;
-        if (!created || new Date(created) < threshold) return false;
+        const created = t._registered || t._lastActive;
+        if (!created || created < threshold) return false;
       }
       return true;
     });
 
     switch (teacherSort) {
-      case 'newest': result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); break;
-      case 'oldest': result.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)); break;
+      case 'newest': result.sort((a, b) => (b._registered || 0) - (a._registered || 0)); break;
+      case 'oldest': result.sort((a, b) => (a._registered || 0) - (b._registered || 0)); break;
       case 'mostActivities': result.sort((a, b) => b._activityCount - a._activityCount); break;
       case 'mostStudents': result.sort((a, b) => b._studentCount - a._studentCount); break;
       case 'nameAZ': result.sort((a, b) => (a.displayName || a.email || '').toLowerCase().localeCompare((b.displayName || b.email || '').toLowerCase())); break;
@@ -411,7 +440,13 @@ const SuperAdminDashboard = () => {
   const filteredStudents = React.useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const daysAgo = (days) => { const d = new Date(now); d.setDate(d.getDate() - days); return d; };
+    const daysAgo = (days) => { 
+      const d = new Date(now); 
+      d.setDate(d.getDate() - days); 
+      d.setHours(0,0,0,0); // Set to midnight
+      return d; 
+    };
+
     const threshold =
       studentDateFilter === 'today' ? startOfToday :
       studentDateFilter === 'week' ? daysAgo(7) :
@@ -425,7 +460,7 @@ const SuperAdminDashboard = () => {
       }
       if (threshold) {
         const created = s._registered;
-        if (!created || new Date(created) < threshold) return false;
+        if (!created || created < threshold) return false;
       }
       return true;
     });
@@ -435,8 +470,8 @@ const SuperAdminDashboard = () => {
       case 'games': result.sort((a, b) => b._gamesPlayed - a._gamesPlayed); break;
       case 'words': result.sort((a, b) => b._wordsLearned - a._wordsLearned); break;
       case 'accuracy': result.sort((a, b) => b._accuracy - a._accuracy); break;
-      case 'newest': result.sort((a, b) => new Date(b._registered || 0) - new Date(a._registered || 0)); break;
-      case 'oldest': result.sort((a, b) => new Date(a._registered || 0) - new Date(b._registered || 0)); break;
+      case 'newest': result.sort((a, b) => (b._registered || 0) - (a._registered || 0)); break;
+      case 'oldest': result.sort((a, b) => (a._registered || 0) - (b._registered || 0)); break;
       case 'nameAZ': result.sort((a, b) => (a.displayName || a.email || '').toLowerCase().localeCompare((b.displayName || b.email || '').toLowerCase())); break;
       case 'nameZA': result.sort((a, b) => (b.displayName || b.email || '').toLowerCase().localeCompare((a.displayName || a.email || '').toLowerCase())); break;
       default: break;
@@ -444,21 +479,19 @@ const SuperAdminDashboard = () => {
     return result;
   }, [studentStats, studentSearch, studentDateFilter, studentSort]);
 
-  // STATS
+  // STATS (Statistics Tab)
   const stats = React.useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
 
     const getYear = (item) => {
-      const d = item.createdAt || item.joinDate || item.lastActive;
-      if (!d) return null;
-      try { return new Date(d).getFullYear(); } catch { return null; }
+      const d = parseDate(item.createdAt || item.joinDate || item.lastActive);
+      return d ? d.getFullYear() : null;
     };
     const getMonth = (item) => {
-      const d = item.createdAt || item.joinDate || item.lastActive;
-      if (!d) return null;
-      try { return new Date(d).getMonth(); } catch { return null; }
+      const d = parseDate(item.createdAt || item.joinDate || item.lastActive);
+      return d ? d.getMonth() : null;
     };
 
     const teachersThisMonth = teachers.filter(t => getYear(t) === currentYear && getMonth(t) === currentMonth).length;
@@ -481,21 +514,18 @@ const SuperAdminDashboard = () => {
     students.forEach(s => { const y = getYear(s); if (y) yearlyStudents[y] = (yearlyStudents[y] || 0) + 1; });
     activities.forEach(a => { const y = getYear(a); if (y) yearlyActivities[y] = (yearlyActivities[y] || 0) + 1; });
 
-    // ✅ FIXED LOGIC DITO TOL: Kung walang date, isasama lang kung ang piniling taon ay kasalukuyang taon.
-    // Kaya pag pinili mo ang 2025, magiging 0 talaga sila.
     const filteredActivitiesForYear = activities.filter(a => {
-      const y = getYear(a);
-      if (y === null) return statsYear === currentYear;
-      return y === statsYear;
+      const d = parseDate(a.createdAt);
+      if (!d) return statsYear === currentYear;
+      return d.getFullYear() === statsYear;
     });
 
     const filteredWordsForYear = words.filter(w => {
-      const d = w.createdAt || w.addedAt || w.lastActive || w.timestamp;
+      const d = parseDate(w.createdAt || w.addedAt || w.lastActive || w.timestamp);
       if (!d) return statsYear === currentYear; 
-      try { return new Date(d).getFullYear() === statsYear; } catch { return false; }
+      return d.getFullYear() === statsYear;
     });
 
-    // ✅ UPDATED: Ginawang Number yung avgScore para sure na number siya pag ni-render
     const activityPerf = filteredActivitiesForYear.map(a => {
       const relatedScores = scores.filter(s => s.activityId === a.id);
       const avgScore = relatedScores.length > 0
@@ -504,7 +534,6 @@ const SuperAdminDashboard = () => {
       return { id: a.id, title: a.title, gamePin: a.gamePin, teacherName: a.teacherName, participants: relatedScores.length, avgScore, totalQuestions: a.totalQuestions || 0, gameType: a.gameType };
     }).sort((a, b) => b.participants - a.participants);
 
-    // ✅ CEFR Level Mapping (A1 to C1) base sa filteredWordsForYear
     const vocabByCEFR = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, unknown: 0 };
     const vocabByCategory = {};
     
@@ -536,17 +565,25 @@ const SuperAdminDashboard = () => {
     });
 
     let recentEvents = [];
-    teachers.forEach(t => { if (t.createdAt) recentEvents.push({ type: 'teacher', icon: 'user', color: palette.warmOrange, title: `New teacher: ${t.displayName || t.email?.split('@')[0]}`, time: t.createdAt }); });
-    students.forEach(s => { if (s.createdAt) recentEvents.push({ type: 'student', icon: 'graduation', color: palette.softGreen, title: `New student: ${s.displayName || s.email?.split('@')[0]}`, time: s.createdAt }); });
-    activities.forEach(a => { if (a.createdAt) recentEvents.push({ type: 'activity', icon: 'clipboard', color: palette.teal, title: `New activity: "${a.title}" (PIN ${a.gamePin})`, time: a.createdAt }); });
-    scores.forEach(s => { if (s.completedAt) recentEvents.push({ type: 'score', icon: 'trophy', color: palette.coral, title: `${s.studentName} scored ${s.score} in "${s.activityTitle || 'Activity'}"`, time: s.completedAt }); });
-    
-    // ✅ Filter Recent Events base sa statsYear
-    recentEvents = recentEvents.filter(e => {
-      try { return new Date(e.time).getFullYear() === statsYear; } catch { return false; }
+    teachers.forEach(t => { 
+      const d = parseDate(t.createdAt);
+      if (d) recentEvents.push({ type: 'teacher', icon: 'user', color: palette.warmOrange, title: `New teacher: ${t.displayName || t.email?.split('@')[0]}`, time: d }); 
     });
-
-    recentEvents.sort((a, b) => new Date(b.time) - new Date(a.time));
+    students.forEach(s => { 
+      const d = parseDate(s.createdAt);
+      if (d) recentEvents.push({ type: 'student', icon: 'graduation', color: palette.softGreen, title: `New student: ${s.displayName || s.email?.split('@')[0]}`, time: d }); 
+    });
+    activities.forEach(a => { 
+      const d = parseDate(a.createdAt);
+      if (d) recentEvents.push({ type: 'activity', icon: 'clipboard', color: palette.teal, title: `New activity: "${a.title}" (PIN ${a.gamePin})`, time: d }); 
+    });
+    scores.forEach(s => { 
+      const d = parseDate(s.completedAt);
+      if (d) recentEvents.push({ type: 'score', icon: 'trophy', color: palette.coral, title: `${s.studentName} scored ${s.score} in "${s.activityTitle || 'Activity'}"`, time: d }); 
+    });
+    
+    recentEvents = recentEvents.filter(e => e.time && e.time.getFullYear() === statsYear);
+    recentEvents.sort((a, b) => b.time - a.time);
     const recentTop = recentEvents.slice(0, 15);
 
     return { 
@@ -577,7 +614,6 @@ const SuperAdminDashboard = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
 
-        /* ============ ✅ GLOBAL — prevent horizontal body scroll ============ */
         html, body {
           overflow-x: hidden !important;
           max-width: 100% !important;
@@ -586,7 +622,6 @@ const SuperAdminDashboard = () => {
         }
         body { font-family: 'Nunito', sans-serif; background: ${palette.cream}; }
 
-        /* ✅ Root container — no horizontal overflow */
         .sad-root {
           overflow-x: hidden !important;
           max-width: 100vw !important;
@@ -594,7 +629,6 @@ const SuperAdminDashboard = () => {
           box-sizing: border-box;
         }
 
-        /* ✅ Content wrapper safety */
         .sad-content, .sad-panel {
           max-width: 100% !important;
           box-sizing: border-box !important;
@@ -611,7 +645,6 @@ const SuperAdminDashboard = () => {
         .profile-menu-item { transition: background 0.15s ease; }
         .profile-menu-item:hover { background: ${palette.creamSoft}; }
 
-        /* ============ ✅ STICKY TOP BAR ============ */
         .sad-topbar {
           position: sticky !important;
           position: -webkit-sticky !important;
@@ -619,7 +652,6 @@ const SuperAdminDashboard = () => {
           z-index: 100 !important;
         }
 
-        /* ============ RESPONSIVE HELPERS ============ */
         .sad-table-wrap {
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-x: contain;
@@ -630,7 +662,6 @@ const SuperAdminDashboard = () => {
         .sad-table-wrap::-webkit-scrollbar-track { background: ${palette.creamSoft}; border-radius: 6px; }
         .sad-table-wrap::-webkit-scrollbar-thumb { background: ${palette.border}; border-radius: 6px; }
 
-        /* ✅ Title */
         .sad-topbar-title {
           display: flex;
           align-items: center;
@@ -645,7 +676,6 @@ const SuperAdminDashboard = () => {
           margin: 0;
         }
 
-        /* ✅ Nav bar — horizontal scrollable, hidden scrollbar desktop ok */
         .sad-nav-bar {
           display: flex;
           align-items: center;
@@ -668,7 +698,6 @@ const SuperAdminDashboard = () => {
           flex-shrink: 0;
         }
 
-        /* ============ ✅ TABLET & BELOW — switch to 2-row topbar ============ */
         @media (max-width: 768px) {
           .sad-topbar {
             flex-wrap: wrap !important;
@@ -700,7 +729,6 @@ const SuperAdminDashboard = () => {
           .sad-filter-bar > select { flex: 1 1 auto; min-width: 0; }
         }
 
-        /* ============ SMALL PHONES ============ */
         @media (max-width: 480px) {
           .sad-topbar { padding: 8px 10px !important; gap: 6px !important; }
           .sad-topbar-title { font-size: 13px !important; gap: 6px !important; }
@@ -716,7 +744,7 @@ const SuperAdminDashboard = () => {
         }
       `}</style>
 
-      {/* ===== TOP BAR (1 row desktop, 2 rows mobile) ===== */}
+      {/* ===== TOP BAR ===== */}
       <div className="sad-topbar" style={{
         background: `linear-gradient(135deg, ${palette.deepNavy} 0%, ${palette.deepNavyLight} 100%)`,
         color: 'white',
@@ -728,13 +756,11 @@ const SuperAdminDashboard = () => {
         gap: '16px',
         borderBottom: `1px solid rgba(233, 160, 117, 0.15)`,
       }}>
-        {/* TITLE */}
         <h1 className="sad-topbar-title">
           <Icon name="crown" size={18} color={palette.warmOrange} />
           Super Admin Dashboard
         </h1>
 
-        {/* NAV TABS */}
         <div className="sad-nav-bar">
           {[
             { id: 'statistics', label: 'Statistics', icon: 'trend' },
@@ -775,7 +801,6 @@ const SuperAdminDashboard = () => {
           })}
         </div>
 
-        {/* PROFILE DROPDOWN */}
         <div className="sad-profile-wrapper" style={{ position: 'relative' }}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -1023,7 +1048,6 @@ const SuperAdminDashboard = () => {
                 )}
               </div>
 
-              {/* ✅ UPDATED: Counts based on filtered year */}
               <div className="sad-panel" style={{ background: palette.white, padding: '24px', borderRadius: '16px', boxShadow: `0 2px 0 ${palette.border}`, border: `1.5px solid ${palette.border}` }}>
                 <h3 className="sad-panel-title" style={{ margin: '0 0 16px 0', fontFamily: FONT_DISPLAY, color: palette.deepNavy, fontWeight: 800, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Icon name="book" size={15} color={palette.gold} />
@@ -1090,7 +1114,6 @@ const SuperAdminDashboard = () => {
                           <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '10px', fontWeight: 800, fontFamily: FONT_DISPLAY, textTransform: 'uppercase', background: `${palette.teal}15`, color: palette.teal, border: `1px solid ${palette.teal}40` }}>{a.gameType || 'quiz'}</span>
                         </td>
                         <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800, color: palette.warmOrange, fontFamily: FONT_DISPLAY }}>{a.participants}</td>
-                        {/* ✅ UPDATED: Mas malinaw na display ng score (Points and Questions) */}
                         <td style={{ padding: '12px', textAlign: 'right' }}>
                           <div style={{ fontWeight: 800, color: palette.softGreen, fontFamily: FONT_DISPLAY, fontSize: '14px' }}>
                             {a.avgScore} <span style={{fontSize: '11px', color: palette.bodyTextSoft}}>pts</span>
@@ -1126,9 +1149,9 @@ const SuperAdminDashboard = () => {
                       <div style={{ fontSize: '13px', fontWeight: 700, color: palette.deepNavy, fontFamily: FONT_BODY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</div>
                       <div style={{ fontSize: '11px', color: palette.bodyTextSoft, fontWeight: 600, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Icon name="clock" size={10} color={palette.bodyTextSoft} />
-                        {new Date(event.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {event.time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         {' · '}
-                        {new Date(event.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        {event.time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                   </div>
@@ -1212,8 +1235,7 @@ const SuperAdminDashboard = () => {
                   </thead>
                   <tbody>
                     {filteredTeachers.map((teacher) => {
-                      const created = teacher.createdAt || teacher.joinDate;
-                      const formatted = created ? new Date(created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+                      const formatted = teacher._registered ? teacher._registered.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
                       return (
                         <tr key={teacher.id} className="super-admin-row" style={{ borderBottom: `1.5px solid ${palette.borderSoft}` }}>
                           <td style={{ padding: '12px' }}>
